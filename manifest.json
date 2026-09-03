@@ -1,0 +1,22 @@
+{
+  "name": "LAX MTB Race Central",
+  "short_name": "LAX MTB",
+  "description": "Offline-capable Live MTB Race Tracker for La Crosse Area Teams",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

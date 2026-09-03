@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>LAX MTB | Race Central (2026 Season)</title>
+  <title>LAX MTB | Race Central (Offline Ready)</title>
   
-  <!-- App Icons -->
+  <!-- PWA Manifest & App Icons -->
+  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -194,6 +195,13 @@
       border: 1px solid rgba(16, 185, 129, 0.3);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+    }
+
+    .live-status-badge.offline {
+      background: rgba(245, 158, 11, 0.12);
+      color: #f59e0b;
+      border-color: rgba(245, 158, 11, 0.3);
     }
 
     .pulse-dot {
@@ -202,6 +210,11 @@
       border-radius: 50%;
       background-color: #10b981;
       animation: pulse 1.6s infinite;
+    }
+
+    .pulse-dot.offline {
+      background-color: #f59e0b;
+      animation: none;
     }
 
     @keyframes pulse {
@@ -701,7 +714,7 @@
           <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
             <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
           </button>
-          <span class="live-status-badge">
+          <span class="live-status-badge" id="liveBadge">
             <span class="pulse-dot" id="liveDot"></span>
             <span id="liveStatusText">Live API</span>
           </span>
@@ -799,7 +812,16 @@
   </main>
 
   <script>
-    // 5 Official Season Races with User Provided High-Res Logos
+    // 1. ServiceWorker Registration for 100% Offline Support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('[LAXMTB] Offline ServiceWorker Active:', reg.scope))
+          .catch(err => console.warn('[LAXMTB] ServiceWorker Registration Failed:', err));
+      });
+    }
+
+    // 2. 5 Official Season Races with High-Res Emblems
     const SEASON_RACES = [
       {
         id: 'bluff-bash',
@@ -873,6 +895,32 @@
       'JV III Boys', 'JV III Girls',
       'Varsity Boys', 'Varsity Girls'
     ];
+
+    // Online/Offline Network Listeners
+    window.addEventListener('online', () => {
+      setOnlineBadge(true);
+      fetchLiveRaceresultData();
+    });
+
+    window.addEventListener('offline', () => {
+      setOnlineBadge(false);
+    });
+
+    function setOnlineBadge(isOnline) {
+      const badge = document.getElementById('liveBadge');
+      const dot = document.getElementById('liveDot');
+      const text = document.getElementById('liveStatusText');
+      if (!badge || !dot || !text) return;
+      if (isOnline) {
+        badge.className = 'live-status-badge';
+        dot.className = 'pulse-dot';
+        text.textContent = 'Live API';
+      } else {
+        badge.className = 'live-status-badge offline';
+        dot.className = 'pulse-dot offline';
+        text.textContent = 'Offline Ready';
+      }
+    }
 
     function renderRaceSwitcher() {
       const bar = document.getElementById('raceSwitcherBar');
@@ -995,12 +1043,19 @@
       fetchLiveRaceresultData();
     }
 
+    // Local Storage Caching & Offline Recovery
     async function fetchLiveRaceresultData() {
       const race = SEASON_RACES[currentRaceIndex];
       if (!race.isPublished || !race.eventId) return;
 
       const selectedListId = document.getElementById('listSelect').value;
       currentListMode = (selectedListId === '747B52' || selectedListId === 'E07F7C') ? 'TEAM' : 'WAVE';
+      const cacheKey = `laxmtb_cache_${race.id}_${currentTab}_${selectedListId}`;
+
+      if (!navigator.onLine) {
+        loadFromLocalStorage(cacheKey);
+        return;
+      }
 
       try {
         const configResp = await fetch(`https://my.raceresult.com/${race.eventId}/${currentTab}/config?lang=en`);
@@ -1025,28 +1080,43 @@
         if (!listResp.ok) throw new Error(`List HTTP ${listResp.status}`);
         const resultData = await listResp.json();
 
-        parseUniversalData(resultData, targetList);
+        parseUniversalData(resultData, targetList, cacheKey);
 
-        document.getElementById('liveDot').style.backgroundColor = '#10b981';
-        document.getElementById('liveStatusText').textContent = 'Live API';
+        setOnlineBadge(true);
         document.getElementById('lastUpdatedText').textContent = 'Updated ' + new Date().toLocaleTimeString();
       } catch (err) {
-        console.warn('Live fetch error, falling back to snapshot:', err);
-        document.getElementById('liveDot').style.backgroundColor = '#707070';
-        document.getElementById('liveStatusText').textContent = 'Snapshot';
-        document.getElementById('lastUpdatedText').textContent = 'Loaded snapshot data';
-        
-        if (currentTab === 'list') {
-          currentRiders = fallbackSnapshot;
-          populateFilterDropdowns();
-          renderData();
-        } else {
-          renderNoResultsNotice('Live race results will stream automatically on race day.');
-        }
+        console.warn('[LAXMTB] Live fetch error, restoring cached data:', err);
+        loadFromLocalStorage(cacheKey);
       }
     }
 
-    function parseUniversalData(resultData, listInfo) {
+    function loadFromLocalStorage(cacheKey) {
+      setOnlineBadge(false);
+      try {
+        const cachedStr = localStorage.getItem(cacheKey);
+        if (cachedStr) {
+          const cached = JSON.parse(cachedStr);
+          currentRiders = cached.riders || [];
+          document.getElementById('lastUpdatedText').textContent = '📶 Offline Snapshot (' + (cached.time || 'Saved') + ')';
+          populateFilterDropdowns();
+          renderData();
+          return;
+        }
+      } catch (e) {
+        console.warn('LocalStorage read error:', e);
+      }
+
+      if (currentTab === 'list') {
+        currentRiders = fallbackSnapshot;
+        document.getElementById('lastUpdatedText').textContent = '📶 Offline Initial Snapshot';
+        populateFilterDropdowns();
+        renderData();
+      } else {
+        renderNoResultsNotice('Live race results will stream automatically on race day.');
+      }
+    }
+
+    function parseUniversalData(resultData, listInfo, cacheKey) {
       const rawData = resultData?.data;
       const listId = listInfo?.ID || document.getElementById('listSelect').value;
 
@@ -1115,6 +1185,17 @@
       traverse(rawData, {});
 
       currentRiders = extracted.length > 0 ? extracted : fallbackSnapshot;
+      
+      // Cache in localStorage for offline use
+      if (extracted.length > 0 && cacheKey) {
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({
+            time: new Date().toLocaleTimeString(),
+            riders: extracted
+          }));
+        } catch(e) {}
+      }
+
       populateFilterDropdowns();
       renderData();
     }
