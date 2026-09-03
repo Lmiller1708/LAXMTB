@@ -1033,16 +1033,31 @@
       justify-content: space-between;
       transition: all 0.2s ease;
       position: relative;
+      cursor: pointer;
+      user-select: none;
     }
 
     .signup-action-card:hover {
       border-color: var(--accent-red);
+      background: var(--bg-card-hover);
       transform: translateY(-2px);
       box-shadow: var(--shadow-card);
     }
 
     .signup-action-card.card-league:hover {
       border-color: #3b82f6;
+    }
+
+    .signup-action-card.active-signup-card {
+      border-color: var(--accent-red);
+      background: rgba(220, 38, 38, 0.08);
+      box-shadow: 0 0 0 1px var(--accent-red);
+    }
+
+    .signup-action-card.card-league.active-signup-card {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.08);
+      box-shadow: 0 0 0 1px #3b82f6;
     }
 
     .signup-card-top {
@@ -1095,65 +1110,22 @@
       font-size: 12px;
       color: var(--text-muted);
       line-height: 1.4;
-      margin-bottom: 14px;
+      margin-bottom: 8px;
       flex: 1;
     }
 
-    .signup-card-actions {
+    .signup-card-hint {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-red);
       display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .btn-signup-direct {
-      flex: 1;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      text-decoration: none;
-      text-align: center;
-      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 5px;
-      background: var(--accent-red);
-      color: #ffffff !important;
-      transition: all 0.15s ease;
-    }
-
-    .btn-signup-direct:hover {
-      background: var(--accent-red-hover);
-      transform: translateY(-1px);
-    }
-
-    .btn-signup-direct.btn-league-direct {
-      background: #2563eb;
-    }
-
-    .btn-signup-direct.btn-league-direct:hover {
-      background: #1d4ed8;
-    }
-
-    .btn-signup-embed {
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      border: 1px solid var(--border);
-      background: var(--bg-card);
-      color: var(--text-main) !important;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
       gap: 4px;
-      transition: all 0.15s ease;
+      margin-top: 4px;
     }
 
-    .btn-signup-embed:hover {
-      background: var(--bg-hover);
-      border-color: var(--text-muted);
+    .card-league .signup-card-hint {
+      color: #3b82f6;
     }
 
     /* Embedded SignUp Viewer */
@@ -1212,6 +1184,40 @@
       color: var(--text-muted);
       background: var(--bg-card);
       border-bottom: 1px solid var(--border);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-viewer-direct {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--accent-red);
+      color: #ffffff !important;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+    }
+
+    .btn-viewer-direct:hover {
+      background: var(--accent-red-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-viewer-direct.btn-league-direct {
+      background: #2563eb;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-viewer-direct.btn-league-direct:hover {
+      background: #1d4ed8;
     }
 
     .signup-iframe-wrapper {
@@ -1236,6 +1242,10 @@
       }
       .signup-iframe-wrapper {
         height: 520px;
+      }
+      .btn-viewer-direct {
+        width: 100%;
+        margin-top: 4px;
       }
     }
 
@@ -1851,11 +1861,11 @@
             </div>
 
             <div class="collapsible-body">
-              <!-- 3 SignUp Action Cards -->
+              <!-- 3 SignUp Action Selector Cards (Clicking anywhere selects & opens embed) -->
               <div class="signup-cards-grid">
                 
                 <!-- 1. LAX Volunteer Card -->
-                <div class="signup-action-card">
+                <div class="signup-action-card active-signup-card" data-signup-card="volunteer" onclick="switchSignUpTab('volunteer')">
                   <div>
                     <div class="signup-card-top">
                       <span class="signup-card-title"><span>🤝</span> Team Volunteers</span>
@@ -1863,18 +1873,13 @@
                     </div>
                     <p class="signup-card-desc">Pit zone setup & teardown, staging grid helpers, feed zone support, and bike checks.</p>
                   </div>
-                  <div class="signup-card-actions">
-                    <a href="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct">
-                      <span>✍️</span> Sign Up Direct ↗
-                    </a>
-                    <button type="button" onclick="switchSignUpTab('volunteer')" class="btn-signup-embed" title="View embed below">
-                      <span>🔽</span> Embed
-                    </button>
+                  <div class="signup-card-hint">
+                    <span>👇</span> Click to View & Sign Up Below
                   </div>
                 </div>
 
                 <!-- 2. LAX Food Card -->
-                <div class="signup-action-card">
+                <div class="signup-action-card" data-signup-card="food" onclick="switchSignUpTab('food')">
                   <div>
                     <div class="signup-card-top">
                       <span class="signup-card-title"><span>🥪</span> Food & Hospitality</span>
@@ -1882,18 +1887,13 @@
                     </div>
                     <p class="signup-card-desc">Team tent meals, racer race-day snacks, hydration coolers, fruit station & grill team.</p>
                   </div>
-                  <div class="signup-card-actions">
-                    <a href="https://signup.com/client/invitation2/secure/502983656067/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct">
-                      <span>🥪</span> Food Sign-Up ↗
-                    </a>
-                    <button type="button" onclick="switchSignUpTab('food')" class="btn-signup-embed" title="View embed below">
-                      <span>🔽</span> Embed
-                    </button>
+                  <div class="signup-card-hint">
+                    <span>👇</span> Click to View & Sign Up Below
                   </div>
                 </div>
 
                 <!-- 3. League Shifts Card -->
-                <div class="signup-action-card card-league">
+                <div class="signup-action-card card-league" data-signup-card="league" onclick="switchSignUpTab('league')">
                   <div>
                     <div class="signup-card-top">
                       <span class="signup-card-title"><span>🌲</span> League Shifts</span>
@@ -1901,20 +1901,15 @@
                     </div>
                     <p class="signup-card-desc">Official League course marshals, staging grid staff, finish line & sweep rider shifts.</p>
                   </div>
-                  <div class="signup-card-actions">
-                    <a href="https://signup.com/client/invitation2/secure/773733678034/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct btn-league-direct">
-                      <span>🌲</span> League Shift ↗
-                    </a>
-                    <button type="button" onclick="switchSignUpTab('league')" class="btn-signup-embed" title="View embed below">
-                      <span>🔽</span> Embed
-                    </button>
+                  <div class="signup-card-hint">
+                    <span>👇</span> Click to View & Sign Up Below
                   </div>
                 </div>
 
               </div>
 
               <!-- Embedded Interactive Viewer Container -->
-              <div class="signup-viewer-container">
+              <div class="signup-viewer-container" id="signupViewerContainer">
                 <div class="signup-tabs-nav">
                   <button type="button" class="signup-tab-pill active" data-signup-key="volunteer" onclick="switchSignUpTab('volunteer')">
                     <span>🤝</span> LAX Team Volunteers
@@ -1927,15 +1922,22 @@
                   </button>
                 </div>
 
-                <div class="signup-viewer-header">
-                  <span id="signupViewerTitle"><span>🤝</span> <strong>LAXMTB Team Volunteers</strong> (LAXMTB)</span>
-                  <a id="signupViewerDirectLink" href="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" target="_blank" rel="noopener" class="btn-icon" style="font-size:11px;padding:4px 10px;">
-                    <span>↗️</span> Open Fullscreen on SignUp.com
-                  </a>
+                <div class="signup-viewer-header collapsible-header" onclick="toggleSignUpViewer(this)">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span id="signupViewerTitle"><span>🤝</span> <strong>LAXMTB Team Volunteers</strong> <span class="signup-badge-lax">LAXMTB</span></span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <a id="signupViewerDirectBtn" href="${getSignUpUrl('81287266078')}" target="_blank" rel="noopener" class="btn-viewer-direct" onclick="event.stopPropagation()">
+                      <span>✍️</span> Sign Up Direct ↗
+                    </a>
+                    <span class="card-toggle-icon" id="signupViewerToggleIcon" title="Toggle Embed Viewer">▼</span>
+                  </div>
                 </div>
 
-                <div class="signup-iframe-wrapper">
-                  <iframe id="signupViewerIframe" src="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" width="100%" height="100%" loading="lazy" title="Interactive SignUp.com Sheet"></iframe>
+                <div class="collapsible-body" id="signupViewerBody">
+                  <div class="signup-iframe-wrapper">
+                    <iframe id="signupViewerIframe" src="${getSignUpUrl('81287266078')}" width="100%" height="100%" loading="lazy" title="Interactive SignUp.com Sheet"></iframe>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2036,41 +2038,69 @@
       document.getElementById('liveDot').style.backgroundColor = '#707070';
     }
 
-    // 3. SignUp.com Volunteer & Hospitality Data
+    // 3. SignUp.com Volunteer & Hospitality Data & Mobile Detection
+    function isMobileDevice() {
+      return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    function getSignUpUrl(activityId) {
+      const isMobile = isMobileDevice();
+      return `https://signup.com/client/invitation2/secure/${activityId}/${isMobile ? 'true' : 'false'}#/invitation`;
+    }
+
     const SIGNUP_DATA = {
       volunteer: {
         id: 'volunteer',
+        activityId: '81287266078',
         title: 'LAXMTB Team Volunteers',
         category: 'LAXMTB',
+        badgeClass: 'signup-badge-lax',
         icon: '🤝',
-        pillClass: '',
-        url: 'https://signup.com/client/invitation2/secure/81287266078/false#/invitation'
+        btnClass: '',
+        pillClass: ''
       },
       food: {
         id: 'food',
+        activityId: '502983656067',
         title: 'LAXMTB Food & Hospitality',
         category: 'LAXMTB',
+        badgeClass: 'signup-badge-lax',
         icon: '🥪',
-        pillClass: '',
-        url: 'https://signup.com/client/invitation2/secure/502983656067/false#/invitation'
+        btnClass: '',
+        pillClass: ''
       },
       league: {
         id: 'league',
+        activityId: '773733678034',
         title: 'Wisconsin League Shifts',
-        category: 'WI League Wide',
+        category: 'WI League',
+        badgeClass: 'signup-badge-league',
         icon: '🌲',
-        pillClass: 'pill-league',
-        url: 'https://signup.com/client/invitation2/secure/773733678034/false#/invitation'
+        btnClass: 'btn-league-direct',
+        pillClass: 'pill-league'
       }
     };
 
     let activeSignUpKey = 'volunteer';
 
-    function switchSignUpTab(key) {
+    function switchSignUpTab(key, autoScroll = true) {
       activeSignUpKey = key;
       const config = SIGNUP_DATA[key];
       if (!config) return;
 
+      const targetUrl = getSignUpUrl(config.activityId);
+
+      // 1. Update selector card highlight
+      document.querySelectorAll('.signup-action-card').forEach(card => {
+        const k = card.getAttribute('data-signup-card');
+        if (k === key) {
+          card.classList.add('active-signup-card');
+        } else {
+          card.classList.remove('active-signup-card');
+        }
+      });
+
+      // 2. Update navigation pills
       document.querySelectorAll('.signup-tab-pill').forEach(btn => {
         const k = btn.getAttribute('data-signup-key');
         if (k === key) {
@@ -2080,27 +2110,66 @@
         }
       });
 
+      // 3. Update Viewer Title and Direct button
       const titleEl = document.getElementById('signupViewerTitle');
       if (titleEl) {
-        titleEl.innerHTML = `<span>${config.icon}</span> <strong>${config.title}</strong> (${config.category})`;
+        titleEl.innerHTML = `<span>${config.icon}</span> <strong>${config.title}</strong> <span class="${config.badgeClass}">${config.category}</span>`;
       }
 
-      const directLinkEl = document.getElementById('signupViewerDirectLink');
-      if (directLinkEl) {
-        directLinkEl.href = config.url;
+      const directBtn = document.getElementById('signupViewerDirectBtn');
+      if (directBtn) {
+        directBtn.href = targetUrl;
+        directBtn.className = `btn-viewer-direct ${config.btnClass || ''}`.trim();
+        directBtn.innerHTML = `<span>✍️</span> Sign Up Direct ↗`;
       }
 
+      // 4. Update iframe URL
       const iframe = document.getElementById('signupViewerIframe');
       if (iframe) {
-        iframe.src = config.url;
+        iframe.src = targetUrl;
       }
 
-      // Scroll to viewer if requested
-      const hub = document.getElementById('signupHubSection');
-      if (hub) {
-        hub.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      // 5. Ensure viewer is open/expanded
+      const viewerBody = document.getElementById('signupViewerBody');
+      const toggleIcon = document.getElementById('signupViewerToggleIcon');
+      if (viewerBody && viewerBody.classList.contains('collapsed')) {
+        viewerBody.classList.remove('collapsed');
+        if (toggleIcon) toggleIcon.classList.remove('collapsed');
+      }
+
+      // 6. Smooth scroll to viewer
+      if (autoScroll) {
+        const viewer = document.getElementById('signupViewerContainer');
+        if (viewer) {
+          viewer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       }
     }
+
+    function toggleSignUpViewer(headerEl) {
+      const viewerBody = document.getElementById('signupViewerBody');
+      const toggleIcon = document.getElementById('signupViewerToggleIcon');
+      if (viewerBody) {
+        const isCollapsed = viewerBody.classList.toggle('collapsed');
+        if (toggleIcon) toggleIcon.classList.toggle('collapsed', isCollapsed);
+      }
+    }
+
+    // Automatically adapt iframe view mode on mobile orientation / screen resize
+    let lastWasMobile = isMobileDevice();
+    window.addEventListener('resize', () => {
+      const currentlyMobile = isMobileDevice();
+      if (currentlyMobile !== lastWasMobile) {
+        lastWasMobile = currentlyMobile;
+        if (currentTab === 'details') {
+          const config = SIGNUP_DATA[activeSignUpKey];
+          if (config) {
+            const iframe = document.getElementById('signupViewerIframe');
+            if (iframe) iframe.src = getSignUpUrl(config.activityId);
+          }
+        }
+      }
+    });
 
     function initTheme() {
       const savedTheme = localStorage.getItem('laxmtb_theme') || 'dark';
