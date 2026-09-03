@@ -23,21 +23,49 @@
       "league": "773733678034"
     },
     "schedule": [
-      { "time": "Friday 2:00 PM - 6:00 PM", "desc": "Pre-Ride Open (Coaches, JV3, Varsity)" },
-      { "time": "Friday 3:00 PM", "desc": "Camping Opens & Pit Zone Setup" },
-      { "time": "Saturday 8:00 AM - 4:00 PM", "desc": "South Conference Racing Waves & Podiums" },
-      { "time": "Saturday 10:00 AM - 4:00 PM", "desc": "North Conference Adventure Ride" },
-      { "time": "Saturday 5:00 PM - 6:00 PM", "desc": "North Conference Coaches Pre-Ride" },
-      { "time": "Saturday 5:30 PM", "desc": "LAXMTB Team Dinner" },
-      { "time": "Saturday 6:00 PM - 7:00 PM", "desc": "Varsity / JV3 Only Pre-Ride" },
-      { "time": "Sunday 7:00 AM - 8:00 AM", "desc": "LAXMTB Team Breakfast" },
-      { "time": "Sunday 7:00 AM", "desc": "Pre-Rides Start (All Athletes • Registered Riders & Coaches)" },
-      { "time": "Sunday 8:00 AM", "desc": "North Conference Race Waves (High School & Middle School)" },
-      { "time": "Sunday 8:00 AM", "desc": "Registered Riders & Coaches Course Pre-Ride" },
-      { "time": "Sunday 8:45 AM", "desc": "Warmups Start (Varsity & JV3 Boys)" },
-      { "time": "Sunday 9:00 AM - 9:30 AM", "desc": "Registered Riders & Coaches Pre-Ride (Emily)" },
-      { "time": "Sunday 4:30 PM", "desc": "North Conference Awards & Season Opener Celebration" },
-      { "time": "Monday (Labor Day)", "desc": "Camping Closes" }
+      {
+        "day": "Friday",
+        "date": "Sept 4",
+        "subtitle": "Camping & Pit Setup",
+        "events": [
+          { "time": "3:00 PM", "desc": "Camping Opens & Pit Zone Setup", "tag": "Venue" }
+        ]
+      },
+      {
+        "day": "Saturday",
+        "date": "Sept 5",
+        "subtitle": "Adventure Ride, Pre-Rides & Team Dinner",
+        "events": [
+          { "time": "8:00 AM - 4:00 PM", "desc": "South Conference Racing Waves & Podiums", "tag": "Spectating" },
+          { "time": "10:00 AM - 4:00 PM", "desc": "North Conference Adventure Ride", "tag": "Team Ride" },
+          { "time": "5:00 PM - 6:00 PM", "desc": "Coaches Only Pre-Ride", "tag": "Pre-Ride" },
+          { "time": "5:30 PM", "desc": "LAXMTB Team Dinner", "tag": "Team Event", "isSpecial": true },
+          { "time": "6:00 PM - 7:00 PM", "desc": "Varsity / JV3 Only Pre-Ride", "tag": "Pre-Ride" }
+        ]
+      },
+      {
+        "day": "Sunday",
+        "date": "Sept 6",
+        "subtitle": "North Conference Race Day",
+        "isRaceDay": true,
+        "events": [
+          { "time": "7:00 AM - 8:00 AM", "desc": "LAXMTB Team Breakfast", "tag": "Team Event", "isSpecial": true },
+          { "time": "7:00 AM", "desc": "Pre-Rides Start (All Athletes • Registered Riders & Coaches)", "tag": "Pre-Ride" },
+          { "time": "8:00 AM", "desc": "North Conference Race Waves (High School & Middle School)", "tag": "Racing", "isRace": true },
+          { "time": "8:00 AM", "desc": "Registered Riders & Coaches Course Pre-Ride", "tag": "Pre-Ride" },
+          { "time": "8:45 AM", "desc": "Warmups Start (Varsity & JV3 Boys)", "tag": "Warmup" },
+          { "time": "9:00 AM - 9:30 AM", "desc": "Registered Riders & Coaches Pre-Ride (Emily)", "tag": "Pre-Ride" },
+          { "time": "4:30 PM", "desc": "North Conference Awards & Season Opener Celebration", "tag": "Awards", "isSpecial": true }
+        ]
+      },
+      {
+        "day": "Monday",
+        "date": "Sept 7 (Labor Day)",
+        "subtitle": "Departure",
+        "events": [
+          { "time": "Morning", "desc": "Camping Closes", "tag": "Venue" }
+        ]
+      }
     ],
     "guidelines": [
       "<strong>North Trailhead Only:</strong> Use North Trailhead entrance for parking, staging grids, and pit zones.",

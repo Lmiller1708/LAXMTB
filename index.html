@@ -1540,6 +1540,146 @@
       gap: 6px;
     }
 
+    /* Day-Grouped Schedule Highlights */
+    .schedule-days-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .schedule-day-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .schedule-day-header {
+      padding: 6px 10px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+    }
+
+    .schedule-day-header.day-raceday {
+      background: rgba(220, 38, 38, 0.12);
+      border-bottom-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .schedule-day-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .schedule-day-header.day-raceday .schedule-day-badge {
+      background: var(--accent-red);
+      color: #ffffff;
+      border-color: var(--accent-red);
+    }
+
+    .schedule-day-list {
+      list-style: none;
+      margin: 0;
+      padding: 4px 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .schedule-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px dashed var(--border);
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .schedule-row:last-child {
+      border-bottom: none;
+    }
+
+    .schedule-row-time {
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      min-width: 80px;
+      font-size: 11.5px;
+    }
+
+    .schedule-row-desc {
+      flex: 1;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      flex-wrap: wrap;
+      text-align: right;
+    }
+
+    .schedule-row.special-event {
+      background: rgba(220, 38, 38, 0.05);
+      border-radius: 4px;
+      padding: 5px 6px;
+      margin: 2px 0;
+    }
+
+    .schedule-row.special-event .schedule-row-time {
+      color: var(--accent-red);
+      font-weight: 800;
+    }
+
+    .schedule-row.special-event .schedule-row-desc {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .schedule-tag {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .schedule-tag.tag-special {
+      background: rgba(220, 38, 38, 0.15);
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .schedule-tag.tag-preride {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: #3b82f6;
+      color: #60a5fa;
+    }
+
+    :root[data-theme="light"] .schedule-tag.tag-preride {
+      color: #2563eb;
+      background: #eff6ff;
+    }
+
+    /* Fallback flat schedule list */
     .schedule-list {
       list-style: none;
       display: flex;
@@ -1808,6 +1948,53 @@
         padding-bottom: 4pt !important;
       }
 
+      .schedule-day-group {
+        background: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+        margin-bottom: 6pt !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .schedule-day-header {
+        background: #f3f4f6 !important;
+        border-bottom: 1pt solid #d1d5db !important;
+        color: #111827 !important;
+        padding: 4pt 6pt !important;
+      }
+
+      .schedule-day-header.day-raceday {
+        border-bottom: 1.5pt solid #dc2626 !important;
+        color: #dc2626 !important;
+      }
+
+      .schedule-day-badge {
+        border: 1px solid #d1d5db !important;
+        background: #ffffff !important;
+        color: #374151 !important;
+      }
+
+      .schedule-row {
+        border-bottom: 1px solid #e5e7eb !important;
+        padding: 3pt 0 !important;
+      }
+
+      .schedule-row-time {
+        color: #111827 !important;
+        font-weight: 700 !important;
+      }
+
+      .schedule-row-desc {
+        color: #374151 !important;
+      }
+
+      .schedule-tag {
+        border: 1px solid #d1d5db !important;
+        background: #f3f4f6 !important;
+        color: #111827 !important;
+      }
+
       .schedule-item {
         border-bottom: 1px solid #e5e7eb !important;
         padding: 3pt 0 !important;
@@ -2027,21 +2214,49 @@
           league: '773733678034'
         },
         schedule: [
-          { time: 'Friday 2:00 PM - 6:00 PM', desc: 'Pre-Ride Open (Coaches, JV3, Varsity)' },
-          { time: 'Friday 3:00 PM', desc: 'Camping Opens & Pit Zone Setup' },
-          { time: 'Saturday 8:00 AM - 4:00 PM', desc: 'South Conference Racing Waves & Podiums' },
-          { time: 'Saturday 10:00 AM - 4:00 PM', desc: 'North Conference Adventure Ride' },
-          { time: 'Saturday 5:00 PM - 6:00 PM', desc: 'North Conference Coaches Pre-Ride' },
-          { time: 'Saturday 5:30 PM', desc: 'LAXMTB Team Dinner' },
-          { time: 'Saturday 6:00 PM - 7:00 PM', desc: 'Varsity / JV3 Only Pre-Ride' },
-          { time: 'Sunday 7:00 AM - 8:00 AM', desc: 'LAXMTB Team Breakfast' },
-          { time: 'Sunday 7:00 AM', desc: 'Pre-Rides Start (All Athletes • Registered Riders & Coaches)' },
-          { time: 'Sunday 8:00 AM', desc: 'North Conference Race Waves (High School & Middle School)' },
-          { time: 'Sunday 8:00 AM', desc: 'Registered Riders & Coaches Course Pre-Ride' },
-          { time: 'Sunday 8:45 AM', desc: 'Warmups Start (Varsity & JV3 Boys)' },
-          { time: 'Sunday 9:00 AM - 9:30 AM', desc: 'Registered Riders & Coaches Pre-Ride (Emily)' },
-          { time: 'Sunday 4:30 PM', desc: 'North Conference Awards & Season Opener Celebration' },
-          { time: 'Monday (Labor Day)', desc: 'Camping Closes' }
+          {
+            day: 'Friday',
+            date: 'Sept 4',
+            subtitle: 'Camping & Pit Setup',
+            events: [
+              { time: '3:00 PM', desc: 'Camping Opens & Pit Zone Setup', tag: 'Venue' }
+            ]
+          },
+          {
+            day: 'Saturday',
+            date: 'Sept 5',
+            subtitle: 'Adventure Ride, Pre-Rides & Team Dinner',
+            events: [
+              { time: '8:00 AM - 4:00 PM', desc: 'South Conference Racing Waves & Podiums', tag: 'Spectating' },
+              { time: '10:00 AM - 4:00 PM', desc: 'North Conference Adventure Ride', tag: 'Team Ride' },
+              { time: '5:00 PM - 6:00 PM', desc: 'Coaches Only Pre-Ride', tag: 'Pre-Ride' },
+              { time: '5:30 PM', desc: 'LAXMTB Team Dinner', tag: 'Team Event', isSpecial: true },
+              { time: '6:00 PM - 7:00 PM', desc: 'Varsity / JV3 Only Pre-Ride', tag: 'Pre-Ride' }
+            ]
+          },
+          {
+            day: 'Sunday',
+            date: 'Sept 6',
+            subtitle: 'North Conference Race Day',
+            isRaceDay: true,
+            events: [
+              { time: '7:00 AM - 8:00 AM', desc: 'LAXMTB Team Breakfast', tag: 'Team Event', isSpecial: true },
+              { time: '7:00 AM', desc: 'Pre-Rides Start (All Athletes • Registered Riders & Coaches)', tag: 'Pre-Ride' },
+              { time: '8:00 AM', desc: 'North Conference Race Waves (High School & Middle School)', tag: 'Racing', isRace: true },
+              { time: '8:00 AM', desc: 'Registered Riders & Coaches Course Pre-Ride', tag: 'Pre-Ride' },
+              { time: '8:45 AM', desc: 'Warmups Start (Varsity & JV3 Boys)', tag: 'Warmup' },
+              { time: '9:00 AM - 9:30 AM', desc: 'Registered Riders & Coaches Pre-Ride (Emily)', tag: 'Pre-Ride' },
+              { time: '4:30 PM', desc: 'North Conference Awards & Season Opener Celebration', tag: 'Awards', isSpecial: true }
+            ]
+          },
+          {
+            day: 'Monday',
+            date: 'Sept 7 (Labor Day)',
+            subtitle: 'Departure',
+            events: [
+              { time: 'Morning', desc: 'Camping Closes', tag: 'Venue' }
+            ]
+          }
         ],
         guidelines: [
           '<strong>North Trailhead Only:</strong> Use North Trailhead entrance for parking, staging grids, and pit zones.',
@@ -2498,6 +2713,79 @@
       updateUrlState();
     }
 
+    function renderScheduleGrouped(schedule) {
+      if (!schedule || !Array.isArray(schedule) || schedule.length === 0) {
+        return '<p class="no-results" style="padding:16px;">Schedule details coming soon.</p>';
+      }
+
+      // Check if already in day-grouped format
+      let dayGroups = [];
+      if (schedule[0].day && schedule[0].events) {
+        dayGroups = schedule;
+      } else {
+        // Automatically group flat schedule items by day
+        const daysMap = {};
+        schedule.forEach(item => {
+          let dayName = 'Weekend';
+          let timeText = item.time || '';
+          const match = timeText.match(/^(Friday|Saturday|Sunday|Monday)/i);
+          if (match) {
+            dayName = match[1];
+            timeText = timeText.replace(/^(Friday|Saturday|Sunday|Monday)\s*/i, '');
+          }
+          if (!daysMap[dayName]) {
+            daysMap[dayName] = { day: dayName, events: [] };
+            dayGroups.push(daysMap[dayName]);
+          }
+          daysMap[dayName].events.push({
+            time: timeText,
+            desc: item.desc,
+            tag: item.tag || null,
+            isSpecial: item.isSpecial || item.desc.toLowerCase().includes('dinner') || item.desc.toLowerCase().includes('breakfast')
+          });
+        });
+      }
+
+      return `
+        <div class="schedule-days-container">
+          ${dayGroups.map(grp => {
+            const isRaceDay = grp.isRaceDay || grp.day.toLowerCase().includes('sun');
+            const dayIcon = grp.day.toLowerCase().includes('sun') ? '🏁' : grp.day.toLowerCase().includes('sat') ? '🚵' : grp.day.toLowerCase().includes('fri') ? '⛺' : '📅';
+            return `
+              <div class="schedule-day-group ${isRaceDay ? 'group-raceday' : ''}">
+                <div class="schedule-day-header ${isRaceDay ? 'day-raceday' : ''}">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span>${dayIcon}</span>
+                    <span style="font-weight:800;">${escapeHtml(grp.day)}</span>
+                    ${grp.date ? `<span style="font-weight:600;opacity:0.85;font-size:10px;">• ${escapeHtml(grp.date)}</span>` : ''}
+                  </div>
+                  ${grp.subtitle ? `<span class="schedule-day-badge">${escapeHtml(grp.subtitle)}</span>` : (isRaceDay ? `<span class="schedule-day-badge">RACE DAY</span>` : '')}
+                </div>
+                <ul class="schedule-day-list">
+                  ${grp.events.map(ev => {
+                    const isSpecial = ev.isSpecial || ev.desc.toLowerCase().includes('team dinner') || ev.desc.toLowerCase().includes('team breakfast');
+                    const isPreRide = ev.tag === 'Pre-Ride' || ev.desc.toLowerCase().includes('pre-ride');
+                    const isRace = ev.isRace || ev.tag === 'Racing' || ev.desc.toLowerCase().includes('race waves');
+                    return `
+                      <li class="schedule-row ${isSpecial ? 'special-event' : ''}">
+                        <span class="schedule-row-time">${escapeHtml(ev.time)}</span>
+                        <div class="schedule-row-desc">
+                          <span>${escapeHtml(ev.desc)}</span>
+                          ${isSpecial ? `<span class="schedule-tag tag-special">${ev.desc.toLowerCase().includes('dinner') ? '🍕 Team Dinner' : ev.desc.toLowerCase().includes('breakfast') ? '🥞 Team Breakfast' : '★ Team Event'}</span>` : ''}
+                          ${isPreRide && !isSpecial ? `<span class="schedule-tag tag-preride">Pre-Ride</span>` : ''}
+                          ${isRace ? `<span class="schedule-tag tag-special">Race Waves</span>` : ''}
+                        </div>
+                      </li>
+                    `;
+                  }).join('')}
+                </ul>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
     function renderEventDetails(race) {
       if (currentTab !== 'details') return;
       document.getElementById('noticeContainer').innerHTML = '';
@@ -2676,14 +2964,7 @@
               <div style="display:flex;align-items:center;margin-bottom:12px;">
                 <h3 style="margin:0;"><span>⏱️</span> LAXMTB TEAM SCHEDULE HIGHLIGHTS</h3>
               </div>
-              <ul class="schedule-list">
-                ${race.schedule.map(s => `
-                  <li class="schedule-item">
-                    <span class="schedule-time">${s.time}</span>
-                    <span class="schedule-desc">${s.desc}</span>
-                  </li>
-                `).join('')}
-              </ul>
+              ${renderScheduleGrouped(race.schedule)}
             </div>
 
             <!-- Guidelines & Venue Info Section -->
