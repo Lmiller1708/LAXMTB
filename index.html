@@ -1940,41 +1940,36 @@
       const container = document.getElementById('tablesContainer');
       container.innerHTML = `
         <div class="event-details-card">
-          <div class="event-details-hero collapsible-header" onclick="toggleCard(this)" style="justify-content:space-between;">
-            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-              <img src="${race.logo}" alt="${race.name}" class="event-hero-logo" onerror="this.style.display='none'">
-              <div class="event-hero-meta">
-                <h2>${race.name}</h2>
-                <p>📅 <strong>${race.dateStr}</strong> • 🏆 ${race.conference}</p>
+          <div class="event-details-hero">
+            <img src="${race.logo}" alt="${race.name}" class="event-hero-logo" onerror="this.style.display='none'">
+            <div class="event-hero-meta" style="flex:1;">
+              <h2>${race.name}</h2>
+              <p>📅 <strong>${race.dateStr}</strong> • 🏆 ${race.conference}</p>
+              
+              <!-- Location Info & Address -->
+              <div class="event-location-box" style="margin-top:12px;">
+                <div class="location-venue"><span>📍</span> ${race.exactTrailhead || race.venue}</div>
+                <div class="location-address">${race.address}</div>
+                ${race.warning ? `
+                  <div class="event-warning-banner">
+                    <span>${race.warning}</span>
+                  </div>
+                ` : ''}
               </div>
-            </div>
-            <span class="card-toggle-icon" title="Toggle Location Info">▼</span>
-          </div>
-
-          <div class="collapsible-body" style="padding:16px;">
-            <!-- Location Info & Address -->
-            <div class="event-location-box">
-              <div class="location-venue"><span>📍</span> ${race.exactTrailhead || race.venue}</div>
-              <div class="location-address">${race.address}</div>
-              ${race.warning ? `
-                <div class="event-warning-banner">
-                  <span>${race.warning}</span>
-                </div>
-              ` : ''}
-            </div>
-            
-            <div class="event-action-buttons">
-              <a href="${race.googleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-google-maps">
-                <span>🗺️</span> Google Maps
-              </a>
-              <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps">
-                <span>🍏</span> Apple Maps (iPhone)
-              </a>
-              ${race.eventGuideUrl ? `
-                <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-maps btn-league-page">
-                  <span>🌐</span> Wisconsin League Page
+              
+              <div class="event-action-buttons">
+                <a href="${race.googleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-google-maps">
+                  <span>🗺️</span> Google Maps
                 </a>
-              ` : ''}
+                <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps">
+                  <span>🍏</span> Apple Maps (iPhone)
+                </a>
+                ${race.eventGuideUrl ? `
+                  <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-maps btn-league-page">
+                    <span>🌐</span> Wisconsin League Page
+                  </a>
+                ` : ''}
+              </div>
             </div>
           </div>
 
