@@ -323,14 +323,80 @@
     }
 
     .current-race-badge {
-      font-size: 11px;
-      color: var(--text-muted);
+      display: none;
+    }
+
+    /* Event Location & Maps Links */
+    .event-location-box {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .event-location-box .location-venue {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
       display: flex;
       align-items: center;
       gap: 6px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    }
+
+    .event-location-box .location-address {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    .btn-maps {
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-height: 36px;
+    }
+
+    .btn-google-maps {
+      background: #1a73e8;
+      border: 1px solid #1a73e8;
+      color: #ffffff !important;
+    }
+
+    .btn-google-maps:hover {
+      background: #1557b0;
+      border-color: #1557b0;
+      transform: translateY(-1px);
+    }
+
+    .btn-apple-maps {
+      background: #242424;
+      border: 1px solid #3d3d3d;
+      color: #ffffff !important;
+    }
+
+    .btn-apple-maps:hover {
+      background: #333333;
+      border-color: #555555;
+      transform: translateY(-1px);
+    }
+
+    :root[data-theme="light"] .btn-apple-maps {
+      background: #e8e8e8;
+      border-color: #cccccc;
+      color: #141414 !important;
+    }
+
+    :root[data-theme="light"] .btn-apple-maps:hover {
+      background: #d8d8d8;
     }
 
     /* Main Container */
@@ -756,6 +822,63 @@
       }
     }
 
+    /* Embedded Interactive Course Map */
+    .event-map-container {
+      margin: 0 16px 16px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    .event-map-header {
+      padding: 10px 14px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .event-map-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-red);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .map-iframe-wrapper {
+      position: relative;
+      width: 100%;
+      height: 420px;
+      background: #111111;
+    }
+
+    .map-iframe-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    @media (max-width: 600px) {
+      .event-map-container {
+        margin: 0 10px 12px 10px;
+      }
+      .map-iframe-wrapper {
+        height: 320px;
+      }
+    }
+
     .detail-section {
       background: var(--bg-subtle);
       border: 1px solid var(--border);
@@ -870,10 +993,6 @@
             <span>📍</span> Event Details
           </div>
         </nav>
-
-        <div class="current-race-badge" id="currentRaceMeta">
-          <!-- Rendered by JS -->
-        </div>
       </div>
 
     </div>
@@ -990,8 +1109,11 @@
         venue: 'Powers Bluff County Park',
         address: '6990 Bluff Dr, Arpin, WI 54410 (Wood County)',
         city: 'Marshfield, WI',
-        mapsUrl: 'https://maps.google.com/?q=Powers+Bluff+County+Park+Arpin+WI',
-        infoUrl: 'https://wisconsinmtb.org/event-calendar/',
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Powers+Bluff+County+Park+6990+Bluff+Dr+Arpin+WI+54410',
+        appleMapsUrl: 'https://maps.apple.com/?daddr=6990+Bluff+Dr,+Arpin,+WI+54410&q=Powers+Bluff+County+Park',
+        eventGuideUrl: 'https://wisconsinmtb.org/events/bluff-bash-festival/',
+        embedMapUrl: 'https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F',
+        fullMapUrl: 'https://www.google.com/maps/d/viewer?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI',
         conference: 'North Conference',
         logo: 'logos/bluff-bash.png',
         eventId: 418104,
@@ -1018,8 +1140,11 @@
         venue: 'Mt Telemark Village',
         address: '42225 Telemark Rd, Cable, WI 54821',
         city: 'Cable, WI',
-        mapsUrl: 'https://maps.google.com/?q=Mt+Telemark+Village+Cable+WI',
-        infoUrl: 'https://wisconsinmtb.org/event-calendar/',
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Mt+Telemark+Village+42225+Telemark+Rd+Cable+WI+54821',
+        appleMapsUrl: 'https://maps.apple.com/?daddr=42225+Telemark+Rd,+Cable,+WI+54821&q=Mt+Telemark+Village',
+        eventGuideUrl: 'https://wisconsinmtb.org/events/cable-conquest-festival/',
+        embedMapUrl: null,
+        fullMapUrl: null,
         conference: 'North Conference',
         logo: 'logos/cable-conquest.png',
         eventId: null,
@@ -1041,8 +1166,11 @@
         venue: 'Camp Tesomas',
         address: '5403 Camp Tesomas Rd, Rhinelander, WI 54501',
         city: 'Rhinelander, WI',
-        mapsUrl: 'https://maps.google.com/?q=Camp+Tesomas+Rhinelander+WI',
-        infoUrl: 'https://wisconsinmtb.org/event-calendar/',
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Camp+Tesomas+5403+Camp+Tesomas+Rd+Rhinelander+WI+54501',
+        appleMapsUrl: 'https://maps.apple.com/?daddr=5403+Camp+Tesomas+Rd,+Rhinelander,+WI+54501&q=Camp+Tesomas',
+        eventGuideUrl: 'https://wisconsinmtb.org/events/hodag-hustle-festival/',
+        embedMapUrl: null,
+        fullMapUrl: null,
         conference: 'North Conference',
         logo: 'logos/hodag-hustle.png',
         eventId: null,
@@ -1064,8 +1192,11 @@
         venue: 'Nordic Mountain Ski Resort',
         address: 'W5806 County Rd W, Wild Rose, WI 54984',
         city: 'Wild Rose, WI',
-        mapsUrl: 'https://maps.google.com/?q=Nordic+Mountain+Wild+Rose+WI',
-        infoUrl: 'https://wisconsinmtb.org/event-calendar/',
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984',
+        appleMapsUrl: 'https://maps.apple.com/?daddr=W5806+County+Rd+W,+Wild+Rose,+WI+54984&q=Nordic+Mountain',
+        eventGuideUrl: 'https://wisconsinmtb.org/events/gnarly-nordic-festival/',
+        embedMapUrl: null,
+        fullMapUrl: null,
         conference: 'North Conference',
         logo: 'logos/gnarly-nordic.png',
         eventId: null,
@@ -1087,8 +1218,11 @@
         venue: 'Trek Trails (Trek HQ)',
         address: '97 Canal Rd, Waterloo, WI 53594',
         city: 'Waterloo, WI',
-        mapsUrl: 'https://maps.google.com/?q=Trek+Trails+Waterloo+WI',
-        infoUrl: 'https://wisconsinmtb.org/event-calendar/',
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Trek+Trails+97+Canal+Rd+Waterloo+WI+53594',
+        appleMapsUrl: 'https://maps.apple.com/?daddr=97+Canal+Rd,+Waterloo,+WI+53594&q=Trek+Trails',
+        eventGuideUrl: 'https://wisconsinmtb.org/events/red-barn-state-championship/',
+        embedMapUrl: null,
+        fullMapUrl: null,
         conference: 'State Championship (All Conferences)',
         logo: 'logos/red-barn.png',
         eventId: null,
@@ -1218,13 +1352,6 @@
         `;
         bar.appendChild(btn);
       });
-
-      const activeRace = SEASON_RACES[currentRaceIndex];
-      document.getElementById('currentRaceMeta').innerHTML = `
-        <span><strong>${activeRace.name}</strong></span>
-        <span>•</span>
-        <span>📍 ${activeRace.city}</span>
-      `;
     }
 
     function selectRace(idx) {
@@ -1297,18 +1424,45 @@
             <div class="event-hero-meta">
               <h2>${race.name}</h2>
               <p>📅 <strong>${race.dateStr}</strong> • 🏆 ${race.conference}</p>
-              <p>📍 ${race.address}</p>
+              
+              <!-- Location Info & Address -->
+              <div class="event-location-box">
+                <div class="location-venue"><span>📍</span> ${race.venue}</div>
+                <div class="location-address">${race.address}</div>
+              </div>
               
               <div class="event-action-buttons">
-                <a href="${race.mapsUrl}" target="_blank" rel="noopener" class="btn-icon" style="background:var(--accent-red);border-color:var(--accent-red);color:#fff;">
-                  <span>🗺️</span> Open in Maps / Directions
+                <a href="${race.googleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-google-maps">
+                  <span>🗺️</span> Google Maps
                 </a>
-                <a href="${race.infoUrl}" target="_blank" rel="noopener" class="btn-icon">
-                  <span>🌐</span> Wisconsin League Page
+                <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps">
+                  <span>🍏</span> Apple Maps (iPhone)
                 </a>
+                ${race.eventGuideUrl ? `
+                  <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-icon">
+                    <span>🌐</span> Official Event Page
+                  </a>
+                ` : ''}
               </div>
             </div>
           </div>
+
+          <!-- Interactive Course & Venue Map Section -->
+          ${race.embedMapUrl ? `
+            <div class="event-map-container">
+              <div class="event-map-header">
+                <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
+                ${race.fullMapUrl ? `
+                  <a href="${race.fullMapUrl}" target="_blank" rel="noopener" class="btn-icon" style="font-size:11px;padding:4px 8px;">
+                    <span>↗️</span> Fullscreen Map
+                  </a>
+                ` : ''}
+              </div>
+              <div class="map-iframe-wrapper">
+                <iframe src="${race.embedMapUrl}" width="100%" height="100%" loading="lazy" title="Course & Venue Map for ${race.name}"></iframe>
+              </div>
+            </div>
+          ` : ''}
 
           <div class="event-details-grid">
             
