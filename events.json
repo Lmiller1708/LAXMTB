@@ -23,11 +23,19 @@
       "league": "773733678034"
     },
     "schedule": [
-      { "time": "Friday 1:00 PM", "desc": "Camping Opens & Pit Zone Setup" },
       { "time": "Friday 2:00 PM - 6:00 PM", "desc": "Pre-Ride Open (Coaches, JV3, Varsity)" },
+      { "time": "Friday 3:00 PM", "desc": "Camping Opens & Pit Zone Setup" },
       { "time": "Saturday 8:00 AM - 4:00 PM", "desc": "South Conference Racing Waves & Podiums" },
-      { "time": "Saturday All Day", "desc": "North Conference (LAX Teams) Adventure Rides & Spectating" },
+      { "time": "Saturday 10:00 AM - 4:00 PM", "desc": "North Conference Adventure Ride" },
+      { "time": "Saturday 5:00 PM - 6:00 PM", "desc": "North Conference Coaches Pre-Ride" },
+      { "time": "Saturday 5:30 PM", "desc": "LAXMTB Team Dinner" },
+      { "time": "Saturday 6:00 PM - 7:00 PM", "desc": "Varsity / JV3 Only Pre-Ride" },
+      { "time": "Sunday 7:00 AM - 8:00 AM", "desc": "LAXMTB Team Breakfast" },
+      { "time": "Sunday 7:00 AM", "desc": "Pre-Rides Start (All Athletes • Registered Riders & Coaches)" },
       { "time": "Sunday 8:00 AM", "desc": "North Conference Race Waves (High School & Middle School)" },
+      { "time": "Sunday 8:00 AM", "desc": "Registered Riders & Coaches Course Pre-Ride" },
+      { "time": "Sunday 8:45 AM", "desc": "Warmups Start (Varsity & JV3 Boys)" },
+      { "time": "Sunday 9:00 AM - 9:30 AM", "desc": "Registered Riders & Coaches Pre-Ride (Emily)" },
       { "time": "Sunday 4:30 PM", "desc": "North Conference Awards & Season Opener Celebration" },
       { "time": "Monday (Labor Day)", "desc": "Camping Closes" }
     ],

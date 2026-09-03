@@ -1584,10 +1584,247 @@
       color: var(--text-main);
     }
 
+    /* Dedicated Print Header Styling */
+    .print-header {
+      display: none;
+    }
+
+    /* Professional High-Contrast Print & PDF Stylesheet */
     @media print {
-      body { background: #fff !important; color: #000 !important; }
-      .compact-toolbar, .site-header, .race-switcher-bar { box-shadow: none; }
-      .theme-toggle-btn { display: none; }
+      @page {
+        margin: 10mm 12mm;
+        size: letter portrait;
+      }
+
+      html, body {
+        background: #ffffff !important;
+        color: #111827 !important;
+        font-size: 10pt !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .main-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Hide All Navigation Chrome, UI Controls, & Interactive Overlays */
+      .site-header,
+      .race-switcher-bar,
+      .sub-nav-row,
+      .compact-toolbar,
+      #controlsPanel,
+      #statusBar,
+      .filter-summary-chips,
+      .theme-toggle-btn,
+      .btn-icon,
+      .btn-action-pill,
+      .card-toggle-icon,
+      .btn-hero-league,
+      .event-hero-actions,
+      .event-action-buttons,
+      .map-iframe-wrapper,
+      .signup-hub-section,
+      .event-map-container,
+      .search-input-wrapper {
+        display: none !important;
+      }
+
+      /* Display Official Printable Header */
+      .print-header {
+        display: block !important;
+        margin-bottom: 12pt !important;
+      }
+
+      /* FORCE EXPAND ALL COLLAPSED CARDS ON PAPER */
+      .collapsible-body,
+      .collapsible-body.collapsed {
+        display: block !important;
+        opacity: 1 !important;
+        height: auto !important;
+        visibility: visible !important;
+      }
+
+      /* Crisp High-Contrast Table Cards */
+      .table-card {
+        background: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+        border-radius: 4px !important;
+        margin-bottom: 12pt !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .category-header {
+        background: #f3f4f6 !important;
+        color: #111827 !important;
+        border-bottom: 1.5pt solid #dc2626 !important;
+        padding: 5pt 8pt !important;
+        font-size: 11pt !important;
+        font-weight: 800 !important;
+      }
+
+      .category-badge {
+        background: #e5e7eb !important;
+        color: #374151 !important;
+        border: 1px solid #d1d5db !important;
+        font-size: 8pt !important;
+        font-weight: 700 !important;
+      }
+
+      .wave-divider {
+        background: #f9fafb !important;
+        color: #111827 !important;
+        border-left: 3pt solid #dc2626 !important;
+        border-top: 1px solid #e5e7eb !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        padding: 3pt 6pt !important;
+        font-size: 9pt !important;
+        font-weight: 700 !important;
+      }
+
+      /* High-Contrast Print Tables */
+      .table-responsive-wrapper {
+        overflow: visible !important;
+      }
+
+      .results-table {
+        width: 100% !important;
+        min-width: 0 !important;
+        font-size: 8.5pt !important;
+        border-collapse: collapse !important;
+      }
+
+      .results-table th {
+        background: #f3f4f6 !important;
+        color: #374151 !important;
+        font-size: 8pt !important;
+        padding: 4pt 5pt !important;
+        border-bottom: 1.5pt solid #9ca3af !important;
+        text-transform: uppercase !important;
+      }
+
+      .results-table td {
+        padding: 3.5pt 5pt !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        color: #111827 !important;
+        background: transparent !important;
+      }
+
+      .results-table tr:nth-child(even) td {
+        background: #fbfbfb !important;
+      }
+
+      .plate-number {
+        background: #ffffff !important;
+        border: 1px solid #9ca3af !important;
+        color: #111827 !important;
+        font-weight: 800 !important;
+        padding: 1pt 3pt !important;
+        font-size: 8pt !important;
+      }
+
+      .rider-name {
+        color: #111827 !important;
+        font-weight: 700 !important;
+      }
+
+      .team-name-lax {
+        color: #dc2626 !important;
+        font-weight: 800 !important;
+      }
+
+      .team-name {
+        color: #4b5563 !important;
+      }
+
+      .div-tag {
+        background: #e5e7eb !important;
+        border: 1px solid #d1d5db !important;
+        color: #111827 !important;
+        font-weight: 700 !important;
+      }
+
+      /* Event Details Print Styling */
+      .event-hero-card {
+        background: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+        padding: 10pt !important;
+        margin-bottom: 10pt !important;
+      }
+
+      .event-hero-card h2 {
+        color: #111827 !important;
+        font-size: 15pt !important;
+      }
+
+      .event-meta-pill {
+        background: #f3f4f6 !important;
+        border: 1px solid #d1d5db !important;
+        color: #111827 !important;
+      }
+
+      .event-location-card {
+        background: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+        margin-bottom: 10pt !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      .location-card-header {
+        background: #f3f4f6 !important;
+        border-bottom: 1px solid #d1d5db !important;
+        color: #111827 !important;
+      }
+
+      .location-venue-name {
+        color: #111827 !important;
+        font-size: 11pt !important;
+      }
+
+      .location-address-text {
+        color: #4b5563 !important;
+      }
+
+      .detail-section {
+        background: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 10pt !important;
+      }
+
+      .detail-section h3 {
+        color: #dc2626 !important;
+        font-size: 11pt !important;
+        border-bottom: 1pt solid #e5e7eb !important;
+        padding-bottom: 4pt !important;
+      }
+
+      .schedule-item {
+        border-bottom: 1px solid #e5e7eb !important;
+        padding: 3pt 0 !important;
+      }
+
+      .schedule-time {
+        color: #111827 !important;
+        font-weight: 700 !important;
+      }
+
+      .schedule-desc {
+        color: #374151 !important;
+      }
+
+      .guideline-item {
+        color: #374151 !important;
+      }
     }
   </style>
 </head>
@@ -1642,6 +1879,20 @@
 
   <!-- Main Content -->
   <main class="main-container">
+
+    <!-- Dedicated High-Quality Printable Header (Paper / PDF export only) -->
+    <div class="print-header" id="printHeader">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2pt solid #dc2626;padding-bottom:6pt;margin-bottom:12pt;">
+        <div>
+          <div style="font-size:18pt;font-weight:900;color:#111827;letter-spacing:-0.5px;">LAX MTB // RACE CENTRAL</div>
+          <div id="printSubTitle" style="font-size:11pt;color:#dc2626;font-weight:700;margin-top:2pt;">Bluff Bash Festival • Start Lists</div>
+        </div>
+        <div style="text-align:right;">
+          <div id="printScopeText" style="font-size:9pt;color:#374151;font-weight:700;">Scope: LAXMTB Team</div>
+          <div id="printDateText" style="font-size:8pt;color:#6b7280;margin-top:2pt;">Generated on Race Day</div>
+        </div>
+      </div>
+    </div>
 
     <div id="noticeContainer"></div>
     
@@ -1726,7 +1977,7 @@
         <button class="btn-action-pill" id="toggleAllCardsBtn" onclick="toggleAllCardsState()" title="Expand or Collapse All Cards">
           <span>↕️</span> <span id="toggleAllCardsLabel">Expand All</span>
         </button>
-        <button class="btn-action-pill" onclick="window.print()" title="Print page or save as PDF">
+        <button class="btn-action-pill" onclick="triggerPrint()" title="Print page or save as PDF">
           <span>📄</span> Print / PDF
         </button>
       </div>
@@ -1776,11 +2027,19 @@
           league: '773733678034'
         },
         schedule: [
-          { time: 'Friday 1:00 PM', desc: 'Camping Opens & Pit Zone Setup' },
           { time: 'Friday 2:00 PM - 6:00 PM', desc: 'Pre-Ride Open (Coaches, JV3, Varsity)' },
+          { time: 'Friday 3:00 PM', desc: 'Camping Opens & Pit Zone Setup' },
           { time: 'Saturday 8:00 AM - 4:00 PM', desc: 'South Conference Racing Waves & Podiums' },
-          { time: 'Saturday All Day', desc: 'North Conference (LAX Teams) Adventure Rides & Spectating' },
+          { time: 'Saturday 10:00 AM - 4:00 PM', desc: 'North Conference Adventure Ride' },
+          { time: 'Saturday 5:00 PM - 6:00 PM', desc: 'North Conference Coaches Pre-Ride' },
+          { time: 'Saturday 5:30 PM', desc: 'LAXMTB Team Dinner' },
+          { time: 'Saturday 6:00 PM - 7:00 PM', desc: 'Varsity / JV3 Only Pre-Ride' },
+          { time: 'Sunday 7:00 AM - 8:00 AM', desc: 'LAXMTB Team Breakfast' },
+          { time: 'Sunday 7:00 AM', desc: 'Pre-Rides Start (All Athletes • Registered Riders & Coaches)' },
           { time: 'Sunday 8:00 AM', desc: 'North Conference Race Waves (High School & Middle School)' },
+          { time: 'Sunday 8:00 AM', desc: 'Registered Riders & Coaches Course Pre-Ride' },
+          { time: 'Sunday 8:45 AM', desc: 'Warmups Start (Varsity & JV3 Boys)' },
+          { time: 'Sunday 9:00 AM - 9:30 AM', desc: 'Registered Riders & Coaches Pre-Ride (Emily)' },
           { time: 'Sunday 4:30 PM', desc: 'North Conference Awards & Season Opener Celebration' },
           { time: 'Monday (Labor Day)', desc: 'Camping Closes' }
         ],
@@ -2415,7 +2674,7 @@
             <!-- Schedule Section -->
             <div class="detail-section">
               <div style="display:flex;align-items:center;margin-bottom:12px;">
-                <h3 style="margin:0;"><span>⏱️</span> Weekend Schedule Highlights</h3>
+                <h3 style="margin:0;"><span>⏱️</span> LAXMTB TEAM SCHEDULE HIGHLIGHTS</h3>
               </div>
               <ul class="schedule-list">
                 ${race.schedule.map(s => `
@@ -3157,6 +3416,27 @@
       if (label) {
         label.textContent = allCardsCollapsed ? 'Expand All' : 'Collapse All';
       }
+    }
+
+    function triggerPrint() {
+      const race = SEASON_RACES[currentRaceIndex];
+      const tabName = currentTab === 'results' ? 'Live Results' : currentTab === 'details' ? 'Event Details & Schedule' : 'Start Lists';
+      const teamScope = document.getElementById('teamFilter')?.value === 'ALL' ? 'All 44 Teams' : 'LAXMTB Team (La Crosse, Holmen, La Crescent)';
+      
+      const subTitleEl = document.getElementById('printSubTitle');
+      if (subTitleEl && race) {
+        subTitleEl.textContent = `${race.name} • ${tabName} (${race.dateStr})`;
+      }
+      const scopeEl = document.getElementById('printScopeText');
+      if (scopeEl) {
+        scopeEl.textContent = `Scope: ${teamScope}`;
+      }
+      const dateEl = document.getElementById('printDateText');
+      if (dateEl) {
+        dateEl.textContent = `Printed: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      }
+
+      window.print();
     }
 
     function setupAutoRefresh() {
