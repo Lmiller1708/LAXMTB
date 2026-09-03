@@ -2771,7 +2771,7 @@
                         <span class="schedule-row-time">${escapeHtml(ev.time)}</span>
                         <div class="schedule-row-desc">
                           <span>${escapeHtml(ev.desc)}</span>
-                          ${isSpecial ? `<span class="schedule-tag tag-special">${ev.desc.toLowerCase().includes('dinner') ? '🍕 Team Dinner' : ev.desc.toLowerCase().includes('breakfast') ? '🥞 Team Breakfast' : '★ Team Event'}</span>` : ''}
+                          ${isSpecial ? `<span class="schedule-tag tag-special">${ev.desc.toLowerCase().includes('dinner') ? '🍽️ Team Dinner' : ev.desc.toLowerCase().includes('breakfast') ? '🍽️ Team Breakfast' : '★ Team Event'}</span>` : ''}
                           ${isPreRide && !isSpecial ? `<span class="schedule-tag tag-preride">Pre-Ride</span>` : ''}
                           ${isRace ? `<span class="schedule-tag tag-special">Race Waves</span>` : ''}
                         </div>
