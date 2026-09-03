@@ -2038,18 +2038,6 @@
 
               <!-- Embedded Interactive Viewer Container -->
               <div class="signup-viewer-container" id="signupViewerContainer">
-                <div class="signup-tabs-nav">
-                  <button type="button" class="signup-tab-pill active" data-signup-key="volunteer" onclick="switchSignUpTab('volunteer')">
-                    <span>🤝</span> LAX Team Volunteers
-                  </button>
-                  <button type="button" class="signup-tab-pill" data-signup-key="food" onclick="switchSignUpTab('food')">
-                    <span>🥪</span> LAX Food & Hospitality
-                  </button>
-                  <button type="button" class="signup-tab-pill" data-signup-key="league" onclick="switchSignUpTab('league')">
-                    <span>🌲</span> Wisconsin League Shifts
-                  </button>
-                </div>
-
                 <div class="signup-viewer-header collapsible-header" onclick="toggleSignUpViewer(this)">
                   <div style="display:flex;align-items:center;gap:8px;">
                     <span id="signupViewerTitle"><span>🤝</span> <strong>LAXMTB Team Volunteers</strong> <span class="signup-badge-lax">LAXMTB</span></span>
@@ -2228,17 +2216,7 @@
         }
       });
 
-      // 2. Update navigation pills
-      document.querySelectorAll('.signup-tab-pill').forEach(btn => {
-        const k = btn.getAttribute('data-signup-key');
-        if (k === key) {
-          btn.className = `signup-tab-pill active ${config.pillClass || ''}`.trim();
-        } else {
-          btn.className = 'signup-tab-pill';
-        }
-      });
-
-      // 3. Update Viewer Title and Direct button
+      // 2. Update Viewer Title and Direct button
       const titleEl = document.getElementById('signupViewerTitle');
       if (titleEl) {
         titleEl.innerHTML = `<span>${config.icon}</span> <strong>${config.title}</strong> <span class="${config.badgeClass}">${config.category}</span>`;
