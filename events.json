@@ -26,9 +26,9 @@
       {
         "day": "Friday",
         "date": "Sept 4",
-        "subtitle": "Camping & Pit Setup",
+        "subtitle": "Camping Opens",
         "events": [
-          { "time": "3:00 PM", "desc": "Camping Opens & Pit Zone Setup", "tag": "Venue" }
+          { "time": "3:00 PM", "desc": "Camping Opens", "tag": "Venue" }
         ]
       },
       {
