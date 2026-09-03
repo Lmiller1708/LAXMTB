@@ -652,13 +652,67 @@
       font-size: 14px;
       font-weight: 800;
       color: var(--text-main);
-      padding: 8px 12px;
+      padding: 9px 12px;
       background: var(--bg-subtle);
       border-bottom: 1px solid var(--border);
       border-left: 3px solid var(--accent-red);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+
+    .category-header:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .collapsible-header {
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+
+    .collapsible-header:hover {
+      background: var(--bg-card-hover) !important;
+    }
+
+    .card-toggle-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 800;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.15s ease, color 0.15s ease;
+      cursor: pointer;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+
+    .category-header:hover .card-toggle-icon,
+    .collapsible-header:hover .card-toggle-icon {
+      color: var(--text-main);
+      border-color: var(--border-strong);
+    }
+
+    .card-toggle-icon.collapsed,
+    .collapsed .card-toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .collapsible-body {
+      transition: opacity 0.2s ease;
+    }
+
+    .collapsible-body.collapsed {
+      display: none !important;
     }
 
     .category-badge {
@@ -1360,7 +1414,7 @@
 
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;gap:6px;flex-wrap:wrap;">
           <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
             <span>Auto-Refresh:</span>
             <select id="autoRefreshInterval" class="select-dropdown" style="width:auto;min-height:28px;padding:2px 6px;" onchange="setupAutoRefresh()">
@@ -1371,9 +1425,14 @@
             </select>
           </div>
 
-          <button class="btn-icon" style="min-height:28px;padding:3px 8px;font-size:11px;" onclick="window.print()">
-            <span>📄</span> Print / PDF
-          </button>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-icon" id="toggleAllCardsBtn" style="min-height:28px;padding:3px 8px;font-size:11px;" onclick="toggleAllCardsState()">
+              <span>↕️</span> <span id="toggleAllCardsLabel">Collapse All</span>
+            </button>
+            <button class="btn-icon" style="min-height:28px;padding:3px 8px;font-size:11px;" onclick="window.print()">
+              <span>📄</span> Print / PDF
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1743,131 +1802,141 @@
       const container = document.getElementById('tablesContainer');
       container.innerHTML = `
         <div class="event-details-card">
-          <div class="event-details-hero">
-            <img src="${race.logo}" alt="${race.name}" class="event-hero-logo" onerror="this.style.display='none'">
-            <div class="event-hero-meta">
-              <h2>${race.name}</h2>
-              <p>📅 <strong>${race.dateStr}</strong> • 🏆 ${race.conference}</p>
-              
-              <!-- Location Info & Address -->
-              <div class="event-location-box">
-                <div class="location-venue"><span>📍</span> ${race.exactTrailhead || race.venue}</div>
-                <div class="location-address">${race.address}</div>
-                ${race.warning ? `
-                  <div class="event-warning-banner">
-                    <span>${race.warning}</span>
-                  </div>
-                ` : ''}
+          <div class="event-details-hero collapsible-header" onclick="toggleCard(this)" style="justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+              <img src="${race.logo}" alt="${race.name}" class="event-hero-logo" onerror="this.style.display='none'">
+              <div class="event-hero-meta">
+                <h2>${race.name}</h2>
+                <p>📅 <strong>${race.dateStr}</strong> • 🏆 ${race.conference}</p>
               </div>
-              
-              <div class="event-action-buttons">
-                <a href="${race.googleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-google-maps">
-                  <span>🗺️</span> Google Maps
+            </div>
+            <span class="card-toggle-icon" title="Toggle Location Info">▼</span>
+          </div>
+
+          <div class="collapsible-body" style="padding:16px;">
+            <!-- Location Info & Address -->
+            <div class="event-location-box">
+              <div class="location-venue"><span>📍</span> ${race.exactTrailhead || race.venue}</div>
+              <div class="location-address">${race.address}</div>
+              ${race.warning ? `
+                <div class="event-warning-banner">
+                  <span>${race.warning}</span>
+                </div>
+              ` : ''}
+            </div>
+            
+            <div class="event-action-buttons">
+              <a href="${race.googleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-google-maps">
+                <span>🗺️</span> Google Maps
+              </a>
+              <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps">
+                <span>🍏</span> Apple Maps (iPhone)
+              </a>
+              ${race.eventGuideUrl ? `
+                <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-maps btn-league-page">
+                  <span>🌐</span> Wisconsin League Page
                 </a>
-                <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps">
-                  <span>🍏</span> Apple Maps (iPhone)
-                </a>
-                ${race.eventGuideUrl ? `
-                  <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-maps btn-league-page">
-                    <span>🌐</span> Wisconsin League Page
-                  </a>
-                ` : ''}
-              </div>
+              ` : ''}
             </div>
           </div>
 
           <!-- Volunteer & Team Hospitality SignUp Hub -->
           <div class="signup-hub-section" id="signupHubSection">
-            <div class="signup-hub-header">
-              <span class="signup-hub-title"><span>🤝</span> Team Volunteers & Race Hospitality</span>
-              <span style="font-size:12px;color:var(--text-muted);">Sign up for LAXMTB squad duties or official Wisconsin League shifts</span>
+            <div class="signup-hub-header collapsible-header" onclick="toggleCard(this)">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="signup-hub-title"><span>🤝</span> Team Volunteers & Race Hospitality</span>
+                <span class="category-badge" style="border-color:var(--accent-red);color:var(--accent-red);">3 AREAS</span>
+              </div>
+              <span class="card-toggle-icon" title="Toggle Volunteers & Food">▼</span>
             </div>
 
-            <!-- 3 SignUp Action Cards -->
-            <div class="signup-cards-grid">
-              
-              <!-- 1. LAX Volunteer Card -->
-              <div class="signup-action-card">
-                <div>
-                  <div class="signup-card-top">
-                    <span class="signup-card-title"><span>🤝</span> Team Volunteers</span>
-                    <span class="signup-badge-lax">LAXMTB</span>
+            <div class="collapsible-body">
+              <!-- 3 SignUp Action Cards -->
+              <div class="signup-cards-grid">
+                
+                <!-- 1. LAX Volunteer Card -->
+                <div class="signup-action-card">
+                  <div>
+                    <div class="signup-card-top">
+                      <span class="signup-card-title"><span>🤝</span> Team Volunteers</span>
+                      <span class="signup-badge-lax">LAXMTB</span>
+                    </div>
+                    <p class="signup-card-desc">Pit zone setup & teardown, staging grid helpers, feed zone support, and bike checks.</p>
                   </div>
-                  <p class="signup-card-desc">Pit zone setup & teardown, staging grid helpers, feed zone support, and bike checks.</p>
+                  <div class="signup-card-actions">
+                    <a href="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct">
+                      <span>✍️</span> Sign Up Direct ↗
+                    </a>
+                    <button type="button" onclick="switchSignUpTab('volunteer')" class="btn-signup-embed" title="View embed below">
+                      <span>🔽</span> Embed
+                    </button>
+                  </div>
                 </div>
-                <div class="signup-card-actions">
-                  <a href="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct">
-                    <span>✍️</span> Sign Up Direct ↗
-                  </a>
-                  <button type="button" onclick="switchSignUpTab('volunteer')" class="btn-signup-embed" title="View embed below">
-                    <span>🔽</span> Embed
+
+                <!-- 2. LAX Food Card -->
+                <div class="signup-action-card">
+                  <div>
+                    <div class="signup-card-top">
+                      <span class="signup-card-title"><span>🥪</span> Food & Hospitality</span>
+                      <span class="signup-badge-lax">LAXMTB</span>
+                    </div>
+                    <p class="signup-card-desc">Team tent meals, racer race-day snacks, hydration coolers, fruit station & grill team.</p>
+                  </div>
+                  <div class="signup-card-actions">
+                    <a href="https://signup.com/client/invitation2/secure/502983656067/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct">
+                      <span>🥪</span> Food Sign-Up ↗
+                    </a>
+                    <button type="button" onclick="switchSignUpTab('food')" class="btn-signup-embed" title="View embed below">
+                      <span>🔽</span> Embed
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 3. League Shifts Card -->
+                <div class="signup-action-card card-league">
+                  <div>
+                    <div class="signup-card-top">
+                      <span class="signup-card-title"><span>🌲</span> League Shifts</span>
+                      <span class="signup-badge-league">WI League</span>
+                    </div>
+                    <p class="signup-card-desc">Official League course marshals, staging grid staff, finish line & sweep rider shifts.</p>
+                  </div>
+                  <div class="signup-card-actions">
+                    <a href="https://signup.com/client/invitation2/secure/773733678034/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct btn-league-direct">
+                      <span>🌲</span> League Shift ↗
+                    </a>
+                    <button type="button" onclick="switchSignUpTab('league')" class="btn-signup-embed" title="View embed below">
+                      <span>🔽</span> Embed
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Embedded Interactive Viewer Container -->
+              <div class="signup-viewer-container">
+                <div class="signup-tabs-nav">
+                  <button type="button" class="signup-tab-pill active" data-signup-key="volunteer" onclick="switchSignUpTab('volunteer')">
+                    <span>🤝</span> LAX Team Volunteers
+                  </button>
+                  <button type="button" class="signup-tab-pill" data-signup-key="food" onclick="switchSignUpTab('food')">
+                    <span>🥪</span> LAX Food & Hospitality
+                  </button>
+                  <button type="button" class="signup-tab-pill" data-signup-key="league" onclick="switchSignUpTab('league')">
+                    <span>🌲</span> Wisconsin League Shifts
                   </button>
                 </div>
-              </div>
 
-              <!-- 2. LAX Food Card -->
-              <div class="signup-action-card">
-                <div>
-                  <div class="signup-card-top">
-                    <span class="signup-card-title"><span>🥪</span> Food & Hospitality</span>
-                    <span class="signup-badge-lax">LAXMTB</span>
-                  </div>
-                  <p class="signup-card-desc">Team tent meals, racer race-day snacks, hydration coolers, fruit station & grill team.</p>
-                </div>
-                <div class="signup-card-actions">
-                  <a href="https://signup.com/client/invitation2/secure/502983656067/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct">
-                    <span>🥪</span> Food Sign-Up ↗
+                <div class="signup-viewer-header">
+                  <span id="signupViewerTitle"><span>🤝</span> <strong>LAXMTB Team Volunteers</strong> (LAXMTB)</span>
+                  <a id="signupViewerDirectLink" href="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" target="_blank" rel="noopener" class="btn-icon" style="font-size:11px;padding:4px 10px;">
+                    <span>↗️</span> Open Fullscreen on SignUp.com
                   </a>
-                  <button type="button" onclick="switchSignUpTab('food')" class="btn-signup-embed" title="View embed below">
-                    <span>🔽</span> Embed
-                  </button>
                 </div>
-              </div>
 
-              <!-- 3. League Shifts Card -->
-              <div class="signup-action-card card-league">
-                <div>
-                  <div class="signup-card-top">
-                    <span class="signup-card-title"><span>🌲</span> League Shifts</span>
-                    <span class="signup-badge-league">WI League</span>
-                  </div>
-                  <p class="signup-card-desc">Official League course marshals, staging grid staff, finish line & sweep rider shifts.</p>
+                <div class="signup-iframe-wrapper">
+                  <iframe id="signupViewerIframe" src="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" width="100%" height="100%" loading="lazy" title="Interactive SignUp.com Sheet"></iframe>
                 </div>
-                <div class="signup-card-actions">
-                  <a href="https://signup.com/client/invitation2/secure/773733678034/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct btn-league-direct">
-                    <span>🌲</span> League Shift ↗
-                  </a>
-                  <button type="button" onclick="switchSignUpTab('league')" class="btn-signup-embed" title="View embed below">
-                    <span>🔽</span> Embed
-                  </button>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Embedded Interactive Viewer Container -->
-            <div class="signup-viewer-container">
-              <div class="signup-tabs-nav">
-                <button type="button" class="signup-tab-pill active" data-signup-key="volunteer" onclick="switchSignUpTab('volunteer')">
-                  <span>🤝</span> LAX Team Volunteers
-                </button>
-                <button type="button" class="signup-tab-pill" data-signup-key="food" onclick="switchSignUpTab('food')">
-                  <span>🥪</span> LAX Food & Hospitality
-                </button>
-                <button type="button" class="signup-tab-pill" data-signup-key="league" onclick="switchSignUpTab('league')">
-                  <span>🌲</span> Wisconsin League Shifts
-                </button>
-              </div>
-
-              <div class="signup-viewer-header">
-                <span id="signupViewerTitle"><span>🤝</span> <strong>LAXMTB Team Volunteers</strong> (LAXMTB)</span>
-                <a id="signupViewerDirectLink" href="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" target="_blank" rel="noopener" class="btn-icon" style="font-size:11px;padding:4px 10px;">
-                  <span>↗️</span> Open Fullscreen on SignUp.com
-                </a>
-              </div>
-
-              <div class="signup-iframe-wrapper">
-                <iframe id="signupViewerIframe" src="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" width="100%" height="100%" loading="lazy" title="Interactive SignUp.com Sheet"></iframe>
               </div>
             </div>
 
@@ -1876,16 +1945,21 @@
           <!-- Interactive Course & Venue Map Section -->
           ${race.embedMapUrl ? `
             <div class="event-map-container">
-              <div class="event-map-header">
+              <div class="event-map-header collapsible-header" onclick="toggleCard(this)">
                 <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
-                ${race.fullMapUrl ? `
-                  <a href="${race.fullMapUrl}" target="_blank" rel="noopener" class="btn-icon" style="font-size:11px;padding:4px 8px;">
-                    <span>↗️</span> Fullscreen Map
-                  </a>
-                ` : ''}
+                <div style="display:flex;align-items:center;gap:6px;">
+                  ${race.fullMapUrl ? `
+                    <a href="${race.fullMapUrl}" target="_blank" rel="noopener" class="btn-icon" onclick="event.stopPropagation()" style="font-size:11px;padding:4px 8px;">
+                      <span>↗️</span> Fullscreen Map
+                    </a>
+                  ` : ''}
+                  <span class="card-toggle-icon" title="Toggle Map">▼</span>
+                </div>
               </div>
-              <div class="map-iframe-wrapper">
-                <iframe src="${race.embedMapUrl}" width="100%" height="100%" loading="lazy" title="Course & Venue Map for ${race.name}"></iframe>
+              <div class="collapsible-body">
+                <div class="map-iframe-wrapper">
+                  <iframe src="${race.embedMapUrl}" width="100%" height="100%" loading="lazy" title="Course & Venue Map for ${race.name}"></iframe>
+                </div>
               </div>
             </div>
           ` : ''}
@@ -1894,22 +1968,32 @@
             
             <!-- Schedule Section -->
             <div class="detail-section">
-              <h3><span>⏱️</span> Weekend Schedule Highlights</h3>
-              <ul class="schedule-list">
-                ${race.schedule.map(s => `
-                  <li class="schedule-item">
-                    <span class="schedule-time">${s.time}</span>
-                    <span class="schedule-desc">${s.desc}</span>
-                  </li>
-                `).join('')}
-              </ul>
+              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <h3 style="margin:0;"><span>⏱️</span> Weekend Schedule Highlights</h3>
+                <span class="card-toggle-icon" title="Toggle Schedule">▼</span>
+              </div>
+              <div class="collapsible-body">
+                <ul class="schedule-list">
+                  ${race.schedule.map(s => `
+                    <li class="schedule-item">
+                      <span class="schedule-time">${s.time}</span>
+                      <span class="schedule-desc">${s.desc}</span>
+                    </li>
+                  `).join('')}
+                </ul>
+              </div>
             </div>
 
             <!-- Guidelines & Venue Info Section -->
             <div class="detail-section">
-              <h3><span>🏕️</span> Venue Guidelines & Spectator Info</h3>
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                ${race.guidelines.map(g => `<p class="guideline-item">• ${g}</p>`).join('')}
+              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <h3 style="margin:0;"><span>🏕️</span> Venue Guidelines & Spectator Info</h3>
+                <span class="card-toggle-icon" title="Toggle Guidelines">▼</span>
+              </div>
+              <div class="collapsible-body">
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  ${race.guidelines.map(g => `<p class="guideline-item">• ${g}</p>`).join('')}
+                </div>
               </div>
             </div>
 
@@ -2337,12 +2421,19 @@
         const totalInCat = Object.values(grouped[cat]).reduce((acc, list) => acc + list.length, 0);
 
         const catTitle = document.createElement('div');
-        catTitle.className = 'category-header';
+        catTitle.className = 'category-header collapsible-header';
+        catTitle.onclick = function() { toggleCard(this); };
         catTitle.innerHTML = `
-          <span>${cat}</span>
-          <span class="category-badge">${totalInCat} RIDERS</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>${cat}</span>
+            <span class="category-badge">${totalInCat} RIDERS</span>
+          </div>
+          <span class="card-toggle-icon" title="Toggle ${cat}">▼</span>
         `;
         catCard.appendChild(catTitle);
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'collapsible-body';
 
         const waves = grouped[cat];
         const sortedWaveKeys = Object.keys(waves).sort();
@@ -2351,7 +2442,7 @@
           const waveHeader = document.createElement('div');
           waveHeader.className = 'wave-divider';
           waveHeader.innerHTML = `<span>🚩</span> ${wKey.includes('Wave') ? wKey : `Wave: ${wKey}`}`;
-          catCard.appendChild(waveHeader);
+          cardBody.appendChild(waveHeader);
 
           const tableWrapper = document.createElement('div');
           tableWrapper.className = 'table-responsive-wrapper';
@@ -2396,9 +2487,10 @@
           });
 
           tableWrapper.appendChild(table);
-          catCard.appendChild(tableWrapper);
+          cardBody.appendChild(tableWrapper);
         });
 
+        catCard.appendChild(cardBody);
         container.appendChild(catCard);
       });
     }
@@ -2418,12 +2510,19 @@
         teamCard.className = 'table-card';
 
         const teamHeader = document.createElement('div');
-        teamHeader.className = 'category-header';
+        teamHeader.className = 'category-header collapsible-header';
+        teamHeader.onclick = function() { toggleCard(this); };
         teamHeader.innerHTML = `
-          <span>${team}</span>
-          <span class="category-badge">${grouped[team].length} RIDERS</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>${team}</span>
+            <span class="category-badge">${grouped[team].length} RIDERS</span>
+          </div>
+          <span class="card-toggle-icon" title="Toggle ${team}">▼</span>
         `;
         teamCard.appendChild(teamHeader);
+
+        const cardBody = document.createElement('div');
+        cardBody.className = 'collapsible-body';
 
         const tableWrapper = document.createElement('div');
         tableWrapper.className = 'table-responsive-wrapper';
@@ -2467,9 +2566,52 @@
         });
 
         tableWrapper.appendChild(table);
-        teamCard.appendChild(tableWrapper);
+        cardBody.appendChild(tableWrapper);
+        teamCard.appendChild(cardBody);
         container.appendChild(teamCard);
       });
+    }
+
+    let allCardsCollapsed = false;
+
+    function toggleCard(headerEl) {
+      const card = headerEl.closest('.table-card, .signup-hub-section, .event-map-container, .detail-section, .event-details-card');
+      if (!card) return;
+      const body = card.querySelector('.collapsible-body');
+      const toggleIcon = headerEl.querySelector('.card-toggle-icon');
+      if (body) {
+        const isCollapsed = body.classList.toggle('collapsed');
+        if (toggleIcon) {
+          toggleIcon.classList.toggle('collapsed', isCollapsed);
+        }
+      }
+    }
+
+    function toggleAllCardsState() {
+      allCardsCollapsed = !allCardsCollapsed;
+      const bodies = document.querySelectorAll('.collapsible-body');
+      const icons = document.querySelectorAll('.card-toggle-icon');
+      
+      bodies.forEach(b => {
+        if (allCardsCollapsed) {
+          b.classList.add('collapsed');
+        } else {
+          b.classList.remove('collapsed');
+        }
+      });
+
+      icons.forEach(i => {
+        if (allCardsCollapsed) {
+          i.classList.add('collapsed');
+        } else {
+          i.classList.remove('collapsed');
+        }
+      });
+
+      const label = document.getElementById('toggleAllCardsLabel');
+      if (label) {
+        label.textContent = allCardsCollapsed ? 'Expand All' : 'Collapse All';
+      }
     }
 
     function setupAutoRefresh() {
