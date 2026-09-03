@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>LAX MTB | Race Central (2026 Season)</title>
   
   <!-- App Icons -->
@@ -42,7 +42,7 @@
       --plate-text: #ffffff;
       --plate-border: #3d3d3d;
       
-      --race-tab-active-bg: #242424;
+      --race-tab-active-bg: #222222;
       --race-tab-active-border: #ef4444;
       --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.6);
     }
@@ -90,6 +90,7 @@
       line-height: 1.45;
       transition: background-color 0.15s ease, color 0.15s ease;
       padding-bottom: 60px;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* Header */
@@ -113,7 +114,7 @@
     .header-container {
       max-width: 1220px;
       margin: 0 auto;
-      padding: 18px 20px 0 20px;
+      padding: 16px 16px 0 16px;
     }
 
     .header-top {
@@ -121,26 +122,27 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 16px;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
     .brand-box {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .team-logo {
-      width: 74px;
-      height: 64px;
+      width: 64px;
+      height: 56px;
       object-fit: contain;
       filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+      flex-shrink: 0;
     }
 
     .brand-text h1 {
       font-family: 'Teko', sans-serif;
-      font-size: 34px;
+      font-size: 30px;
       line-height: 0.95;
       letter-spacing: 0.8px;
       color: var(--text-main);
@@ -154,14 +156,15 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .theme-toggle-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       padding: 6px 12px;
+      min-height: 36px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
@@ -182,6 +185,7 @@
       align-items: center;
       gap: 6px;
       padding: 5px 12px;
+      min-height: 36px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 700;
@@ -206,11 +210,12 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
-    /* Season Race Switcher Tabs (5 Races) */
+    /* Season Race Switcher Tabs (5 Races with Mini-Logos) */
     .race-switcher-bar {
       display: flex;
       gap: 8px;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
       padding-bottom: 12px;
       border-bottom: 1px solid var(--border);
       scrollbar-width: thin;
@@ -218,9 +223,10 @@
 
     .race-tab-btn {
       display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      padding: 8px 14px;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      min-height: 52px;
       border-radius: 6px;
       border: 1px solid var(--border);
       background: var(--bg-subtle);
@@ -228,7 +234,8 @@
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.15s ease;
-      min-width: 170px;
+      flex-shrink: 0;
+      text-align: left;
     }
 
     .race-tab-btn:hover {
@@ -245,8 +252,23 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
+    .tab-mini-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px;
+      flex-shrink: 0;
+    }
+
+    .tab-text-col {
+      display: flex;
+      flex-direction: column;
+    }
+
     .race-tab-date {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: var(--accent-red);
       text-transform: uppercase;
@@ -254,13 +276,13 @@
     }
 
     .race-tab-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      margin-top: 2px;
+      margin-top: 1px;
     }
 
     .race-tab-location {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-dim);
     }
 
@@ -271,17 +293,17 @@
       align-items: center;
       flex-wrap: wrap;
       gap: 12px;
-      padding-top: 10px;
+      padding-top: 8px;
     }
 
     .nav-tabs {
       display: flex;
-      gap: 24px;
+      gap: 20px;
     }
 
     .nav-tab {
-      padding: 10px 4px 12px 4px;
-      font-size: 14px;
+      padding: 8px 2px 10px 2px;
+      font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.6px;
@@ -314,18 +336,19 @@
     }
 
     .current-race-badge {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-wrap: wrap;
     }
 
     /* Main Container */
     .main-container {
       max-width: 1220px;
-      margin: 18px auto 0 auto;
-      padding: 0 16px;
+      margin: 16px auto 0 auto;
+      padding: 0 12px;
     }
 
     /* Controls Panel */
@@ -333,8 +356,8 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
       box-shadow: var(--shadow-card);
     }
 
@@ -343,16 +366,16 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 12px;
-      padding-bottom: 12px;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
       border-bottom: 1px solid var(--border);
     }
 
     .actions-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -361,6 +384,7 @@
       align-items: center;
       gap: 6px;
       padding: 6px 12px;
+      min-height: 38px;
       font-size: 12px;
       font-weight: 600;
       border-radius: 6px;
@@ -392,14 +416,17 @@
       display: flex;
       align-items: center;
       gap: 4px;
+      flex-grow: 1;
+      max-width: 320px;
     }
 
     .search-input {
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 6px 12px;
+      padding: 8px 12px;
+      min-height: 38px;
       font-size: 13px;
-      width: 250px;
+      width: 100%;
       outline: none;
       background: var(--bg-subtle);
       color: var(--text-main);
@@ -411,19 +438,20 @@
 
     .filters-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
     .select-dropdown {
-      padding: 7px 12px;
+      padding: 8px 12px;
+      min-height: 38px;
       font-size: 13px;
       border: 1px solid var(--border);
       border-radius: 6px;
       background-color: var(--bg-subtle);
       color: var(--text-main);
       outline: none;
-      min-width: 190px;
+      flex: 1 1 180px;
       cursor: pointer;
     }
 
@@ -436,9 +464,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       padding: 0 4px;
     }
 
@@ -453,15 +481,15 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       box-shadow: var(--shadow-card);
     }
 
     .category-header {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
       color: var(--text-main);
-      padding: 12px 16px;
+      padding: 10px 14px;
       background: var(--bg-subtle);
       border-bottom: 1px solid var(--border);
       border-left: 4px solid var(--accent-red);
@@ -481,7 +509,6 @@
       letter-spacing: 0.3px;
     }
 
-    /* Clean Neutral Wave Divider (No Muddy Colors) */
     .wave-divider {
       background: var(--wave-bg);
       color: var(--wave-text);
@@ -489,7 +516,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.6px;
-      padding: 7px 16px;
+      padding: 7px 14px;
       border-left: 3px solid var(--wave-border);
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
@@ -498,11 +525,19 @@
       gap: 6px;
     }
 
+    /* Responsive Table Container */
+    .table-responsive-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
     .results-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
       text-align: left;
+      min-width: 580px;
     }
 
     .results-table th {
@@ -512,13 +547,13 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      padding: 9px 14px;
+      padding: 9px 12px;
       border-bottom: 1px solid var(--border);
       white-space: nowrap;
     }
 
     .results-table td {
-      padding: 9px 14px;
+      padding: 9px 12px;
       border-bottom: 1px solid var(--border);
       color: var(--text-main);
       white-space: nowrap;
@@ -580,32 +615,61 @@
       border-radius: 8px;
     }
 
+    /* Prominent Official Upcoming Race Card with Extracted Logo */
     .upcoming-race-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 40px 24px;
+      padding: 36px 20px;
       text-align: center;
       box-shadow: var(--shadow-card);
       margin-bottom: 24px;
     }
 
-    .upcoming-icon {
-      font-size: 42px;
-      margin-bottom: 12px;
+    .upcoming-logo-hero {
+      max-width: 220px;
+      max-height: 100px;
+      object-fit: contain;
+      margin: 0 auto 16px auto;
+      display: block;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
     }
 
     .notice-box {
       background: var(--accent-red-subtle);
       border: 1px solid rgba(220, 38, 38, 0.25);
       border-radius: 6px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
       font-size: 13px;
       color: var(--accent-red);
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    /* Mobile Responsive Optimizations */
+    @media (max-width: 768px) {
+      .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-controls {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .search-box {
+        max-width: 100%;
+      }
+      .actions-left {
+        width: 100%;
+      }
+      .filters-row {
+        flex-direction: column;
+      }
+      .select-dropdown {
+        width: 100%;
+      }
     }
 
     @media print {
@@ -641,7 +705,7 @@
 
       </div>
 
-      <!-- 5-Race Season Switcher Tabs -->
+      <!-- 5-Race Season Switcher Tabs with Mini Logos -->
       <div class="race-switcher-bar" id="raceSwitcherBar">
         <!-- Rendered by JS -->
       </div>
@@ -681,12 +745,12 @@
             <span>📄</span> Print / PDF
           </button>
           <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
-            <span>Auto-Refresh:</span>
-            <select id="autoRefreshInterval" class="select-dropdown" style="min-width:105px;padding:4px 8px;" onchange="setupAutoRefresh()">
+            <span>Auto:</span>
+            <select id="autoRefreshInterval" class="select-dropdown" style="min-width:90px;min-height:36px;padding:4px 8px;flex:none;" onchange="setupAutoRefresh()">
               <option value="0">Off</option>
-              <option value="15">Every 15s</option>
-              <option value="30" selected>Every 30s</option>
-              <option value="60">Every 60s</option>
+              <option value="15">15s</option>
+              <option value="30" selected>30s</option>
+              <option value="60">60s</option>
             </select>
           </div>
         </div>
@@ -731,7 +795,7 @@
   </main>
 
   <script>
-    // 5 Official Season Races
+    // 5 Official Season Races with Logos
     const SEASON_RACES = [
       {
         id: 'bluff-bash',
@@ -739,6 +803,7 @@
         dateStr: '04 - 07 Sept 2026',
         venue: 'Powers Bluff County Park',
         city: 'Marshfield, WI',
+        logo: 'logos/bluff-bash.png',
         eventId: 418104,
         isPublished: true
       },
@@ -748,6 +813,7 @@
         dateStr: '11 - 13 Sept 2026',
         venue: 'Mt Telemark Village',
         city: 'Cable, WI',
+        logo: 'logos/cable-conquest.png',
         eventId: null,
         isPublished: false
       },
@@ -757,6 +823,7 @@
         dateStr: '02 - 04 Oct 2026',
         venue: 'Camp Tesomas',
         city: 'Rhinelander, WI',
+        logo: 'logos/hodag-hustle.png',
         eventId: null,
         isPublished: false
       },
@@ -766,6 +833,7 @@
         dateStr: '09 - 11 Oct 2026',
         venue: 'Nordic Mountain',
         city: 'Wild Rose, WI',
+        logo: 'logos/gnarly-nordic.png',
         eventId: null,
         isPublished: false
       },
@@ -775,6 +843,7 @@
         dateStr: '23 - 25 Oct 2026',
         venue: 'Trek Trails',
         city: 'Waterloo, WI',
+        logo: 'logos/red-barn.png',
         eventId: null,
         isPublished: false
       }
@@ -809,9 +878,12 @@
         btn.className = 'race-tab-btn' + (idx === currentRaceIndex ? ' active' : '');
         btn.onclick = () => selectRace(idx);
         btn.innerHTML = `
-          <span class="race-tab-date">Race ${idx + 1} • ${race.dateStr.split('2026')[0].trim()}</span>
-          <span class="race-tab-title">${race.name}</span>
-          <span class="race-tab-location">${race.city}</span>
+          <img src="${race.logo}" alt="${race.name}" class="tab-mini-logo" onerror="this.style.display='none'">
+          <div class="tab-text-col">
+            <span class="race-tab-date">Race ${idx + 1} • ${race.dateStr.split('2026')[0].trim()}</span>
+            <span class="race-tab-title">${race.name}</span>
+            <span class="race-tab-location">${race.city}</span>
+          </div>
         `;
         bar.appendChild(btn);
       });
@@ -843,11 +915,11 @@
       document.getElementById('noticeContainer').innerHTML = '';
       document.getElementById('tablesContainer').innerHTML = `
         <div class="upcoming-race-card">
-          <div class="upcoming-icon">🚵</div>
-          <h2 style="font-size:24px;font-weight:800;color:var(--text-main);">${race.name}</h2>
-          <p style="margin-top:6px;font-size:15px;color:var(--accent-red);font-weight:700;">📅 ${race.dateStr}</p>
-          <p style="margin-top:4px;font-size:14px;color:var(--text-muted);">📍 ${race.venue} • ${race.city}</p>
-          <div style="margin-top:24px;padding:16px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;max-width:500px;margin-left:auto;margin-right:auto;">
+          <img src="${race.logo}" alt="${race.name}" class="upcoming-logo-hero" onerror="this.style.display='none'">
+          <h2 style="font-size:22px;font-weight:800;color:var(--text-main);">${race.name}</h2>
+          <p style="margin-top:6px;font-size:14px;color:var(--accent-red);font-weight:700;">📅 ${race.dateStr}</p>
+          <p style="margin-top:4px;font-size:13px;color:var(--text-muted);">📍 ${race.venue} • ${race.city}</p>
+          <div style="margin-top:22px;padding:14px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;max-width:480px;margin-left:auto;margin-right:auto;">
             <p style="font-size:13px;color:var(--text-main);">
               🏁 <strong>Start lists & wave assignments</strong> for this race will be published by the race timer during race week.
             </p>
@@ -861,7 +933,6 @@
       document.getElementById('liveDot').style.backgroundColor = '#707070';
     }
 
-    // Theme Switcher Logic
     function initTheme() {
       const savedTheme = localStorage.getItem('laxmtb_theme') || 'dark';
       document.documentElement.setAttribute('data-theme', savedTheme);
@@ -1051,7 +1122,7 @@
       `;
       document.getElementById('tablesContainer').innerHTML = `
         <div class="no-results">
-          <h3 style="font-size:17px;font-weight:700;">No Results Recorded Yet</h3>
+          <h3 style="font-size:16px;font-weight:700;">No Results Recorded Yet</h3>
           <p style="margin-top:6px;color:var(--text-muted);">The race has not started yet. Switch to <strong>Start Lists</strong> to view wave placements and rider plate numbers.</p>
         </div>
       `;
@@ -1187,6 +1258,9 @@
           waveHeader.innerHTML = `<span>🚩</span> ${wKey.includes('Wave') ? wKey : `Wave: ${wKey}`}`;
           catCard.appendChild(waveHeader);
 
+          const tableWrapper = document.createElement('div');
+          tableWrapper.className = 'table-responsive-wrapper';
+
           const table = document.createElement('table');
           table.className = 'results-table';
           table.innerHTML = `
@@ -1226,7 +1300,8 @@
             tbody.appendChild(tr);
           });
 
-          catCard.appendChild(table);
+          tableWrapper.appendChild(table);
+          catCard.appendChild(tableWrapper);
         });
 
         container.appendChild(catCard);
@@ -1254,6 +1329,9 @@
           <span class="category-badge">${grouped[team].length} RIDERS</span>
         `;
         teamCard.appendChild(teamHeader);
+
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'table-responsive-wrapper';
 
         const table = document.createElement('table');
         table.className = 'results-table';
@@ -1293,7 +1371,8 @@
           tbody.appendChild(tr);
         });
 
-        teamCard.appendChild(table);
+        tableWrapper.appendChild(table);
+        teamCard.appendChild(tableWrapper);
         container.appendChild(teamCard);
       });
     }
