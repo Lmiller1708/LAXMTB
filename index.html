@@ -1493,7 +1493,7 @@
           <div class="filter-group">
             <label class="filter-label">Team Scope</label>
             <select id="teamFilter" class="select-dropdown" onchange="onFilterChange()">
-              <option value="DEFAULT_TEAMS">All LAX Area Teams (La Crosse, Holmen, La Crescent)</option>
+              <option value="DEFAULT_TEAMS">LAXMTB Team (La Crosse, Holmen, La Crescent)</option>
               <option value="ALL">&lt;Show All 44 Event Teams&gt;</option>
             </select>
           </div>
@@ -1590,7 +1590,7 @@
           '<strong>North Trailhead Only:</strong> Use North Trailhead entrance for parking, staging grids, and pit zones.',
           '<strong>Parking Pass:</strong> Wood County Park vehicle pass or daily entrance fee required at park entry.',
           '<strong>Staging & Call-ups:</strong> Riders must report to staging grids 15 minutes prior to their wave start.',
-          '<strong>Pit Zone & Camping:</strong> Team tents in designated LAX Area space. Quiet hours 10 PM - 6 AM.',
+          '<strong>Pit Zone & Camping:</strong> Team tents in designated LAXMTB Team space. Quiet hours 10 PM - 6 AM.',
           '<strong>Leashed Pets Only:</strong> Dogs prohibited in active course areas and staging grid zones.'
         ]
       },
@@ -1820,7 +1820,7 @@
       }
 
       if (team === 'DEFAULT_TEAMS') {
-        html += '<span class="filter-chip" style="border-color:var(--accent-red);color:var(--accent-red);">Scope: <strong>LAX Area</strong></span>';
+        html += '<span class="filter-chip" style="border-color:var(--accent-red);color:var(--accent-red);">Scope: <strong>LAXMTB Team</strong></span>';
       } else if (team === 'ALL') {
         html += '<span class="filter-chip">Scope: <strong>All Teams</strong></span>';
       } else {
@@ -2159,11 +2159,11 @@
                     <a id="signupViewerDirectBtn" href="${race.signups?.volunteer ? getSignUpUrl(race.signups.volunteer) : '#'}" ${race.signups?.volunteer ? 'target="_blank" rel="noopener"' : ''} class="btn-viewer-direct" ${race.signups?.volunteer ? '' : 'style="opacity:0.6;pointer-events:none;box-shadow:none;"'} onclick="event.stopPropagation()">
                       <span>${race.signups?.volunteer ? '✍️' : '⏳'}</span> ${race.signups?.volunteer ? 'Sign Up Direct ↗' : 'Shifts Opening Soon'}
                     </a>
-                    <span class="card-toggle-icon" id="signupViewerToggleIcon" title="Toggle Embed Viewer">▼</span>
+                    <span class="card-toggle-icon collapsed" id="signupViewerToggleIcon" title="Toggle Embed Viewer">▼</span>
                   </div>
                 </div>
 
-                <div class="collapsible-body" id="signupViewerBody">
+                <div class="collapsible-body collapsed" id="signupViewerBody">
                   <div class="signup-iframe-wrapper" id="signupViewerContent">
                     ${race.signups?.volunteer ? `
                       <iframe id="signupViewerIframe" src="${getSignUpUrl(race.signups.volunteer)}" width="100%" height="100%" loading="lazy" title="Interactive SignUp.com Sheet"></iframe>
@@ -2414,10 +2414,11 @@
       if (currentlyMobile !== lastWasMobile) {
         lastWasMobile = currentlyMobile;
         if (currentTab === 'details') {
-          const config = SIGNUP_DATA[activeSignUpKey];
-          if (config) {
+          const race = SEASON_RACES[currentRaceIndex];
+          const activityId = race?.signups?.[activeSignUpKey];
+          if (activityId) {
             const iframe = document.getElementById('signupViewerIframe');
-            if (iframe) iframe.src = getSignUpUrl(config.activityId);
+            if (iframe) iframe.src = getSignUpUrl(activityId);
           }
         }
       }
@@ -2652,7 +2653,7 @@
       const teams = [...new Set(currentRiders.map(r => r.team).filter(Boolean))].sort();
 
       teamSelect.innerHTML = `
-        <option value="DEFAULT_TEAMS">All LAX Area Teams (La Crosse, Holmen, La Crescent)</option>
+        <option value="DEFAULT_TEAMS">LAXMTB Team (La Crosse, Holmen, La Crescent)</option>
         <option value="ALL">&lt;Show All ${teams.length} Event Teams&gt;</option>
       `;
       teams.forEach(t => {
