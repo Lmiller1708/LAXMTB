@@ -1724,7 +1724,7 @@
       </div>
       <div class="status-actions-group">
         <button class="btn-action-pill" id="toggleAllCardsBtn" onclick="toggleAllCardsState()" title="Expand or Collapse All Cards">
-          <span>↕️</span> <span id="toggleAllCardsLabel">Collapse All</span>
+          <span>↕️</span> <span id="toggleAllCardsLabel">Expand All</span>
         </button>
         <button class="btn-action-pill" onclick="window.print()" title="Print page or save as PDF">
           <span>📄</span> Print / PDF
@@ -2158,6 +2158,10 @@
         renderEventDetails(race);
         return;
       }
+
+      allCardsCollapsed = true;
+      const toggleLabel = document.getElementById('toggleAllCardsLabel');
+      if (toggleLabel) toggleLabel.textContent = 'Expand All';
 
       const listDropdown = document.getElementById('listSelect');
       listDropdown.innerHTML = '';
@@ -2930,13 +2934,13 @@
       }
 
       if (currentListMode === 'TEAM') {
-        renderGroupedByTeam(filtered, container);
+        renderGroupedByTeam(filtered, container, query);
       } else {
-        renderGroupedByCategoryWave(filtered, container);
+        renderGroupedByCategoryWave(filtered, container, query);
       }
     }
 
-    function renderGroupedByCategoryWave(riders, container) {
+    function renderGroupedByCategoryWave(riders, container, query = '') {
       const grouped = {};
       riders.forEach(r => {
         const cat = r.category || 'General';
@@ -2959,6 +2963,7 @@
 
         const totalInCat = Object.values(grouped[cat]).reduce((acc, list) => acc + list.length, 0);
 
+        const isCardCollapsed = query ? false : allCardsCollapsed;
         const catTitle = document.createElement('div');
         catTitle.className = 'category-header collapsible-header';
         catTitle.onclick = function() { toggleCard(this); };
@@ -2967,12 +2972,12 @@
             <span>${escapeHtml(cat)}</span>
             <span class="category-badge">${totalInCat} RIDERS</span>
           </div>
-          <span class="card-toggle-icon" title="Toggle ${escapeHtml(cat)}">▼</span>
+          <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(cat)}">▼</span>
         `;
         catCard.appendChild(catTitle);
 
         const cardBody = document.createElement('div');
-        cardBody.className = 'collapsible-body';
+        cardBody.className = isCardCollapsed ? 'collapsible-body collapsed' : 'collapsible-body';
 
         const waves = grouped[cat];
         const sortedWaveKeys = Object.keys(waves).sort();
@@ -3034,7 +3039,7 @@
       });
     }
 
-    function renderGroupedByTeam(riders, container) {
+    function renderGroupedByTeam(riders, container, query = '') {
       const grouped = {};
       riders.forEach(r => {
         const team = r.team || 'Independent';
@@ -3048,6 +3053,7 @@
         const teamCard = document.createElement('div');
         teamCard.className = 'table-card';
 
+        const isCardCollapsed = query ? false : allCardsCollapsed;
         const teamHeader = document.createElement('div');
         teamHeader.className = 'category-header collapsible-header';
         teamHeader.onclick = function() { toggleCard(this); };
@@ -3056,12 +3062,12 @@
             <span>${escapeHtml(team)}</span>
             <span class="category-badge">${grouped[team].length} RIDERS</span>
           </div>
-          <span class="card-toggle-icon" title="Toggle ${escapeHtml(team)}">▼</span>
+          <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(team)}">▼</span>
         `;
         teamCard.appendChild(teamHeader);
 
         const cardBody = document.createElement('div');
-        cardBody.className = 'collapsible-body';
+        cardBody.className = isCardCollapsed ? 'collapsible-body collapsed' : 'collapsible-body';
 
         const tableWrapper = document.createElement('div');
         tableWrapper.className = 'table-responsive-wrapper';
@@ -3111,7 +3117,7 @@
       });
     }
 
-    let allCardsCollapsed = false;
+    let allCardsCollapsed = true;
 
     function toggleCard(headerEl) {
       const card = headerEl.closest('.table-card, .signup-hub-section, .event-map-container, .detail-section, .event-location-card');
@@ -3128,8 +3134,8 @@
 
     function toggleAllCardsState() {
       allCardsCollapsed = !allCardsCollapsed;
-      const bodies = document.querySelectorAll('.collapsible-body');
-      const icons = document.querySelectorAll('.card-toggle-icon');
+      const bodies = document.querySelectorAll('#tablesContainer .collapsible-body');
+      const icons = document.querySelectorAll('#tablesContainer .card-toggle-icon');
       
       bodies.forEach(b => {
         if (allCardsCollapsed) {
