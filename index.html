@@ -210,7 +210,7 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
-    /* Season Race Switcher Tabs (5 Races with Mini-Logos) */
+    /* Season Race Switcher Tabs (5 Races with Official Logos) */
     .race-switcher-bar {
       display: flex;
       gap: 8px;
@@ -253,13 +253,11 @@
     }
 
     .tab-mini-logo {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       object-fit: contain;
-      border-radius: 4px;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 2px;
       flex-shrink: 0;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
 
     .tab-text-col {
@@ -340,8 +338,14 @@
       color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       flex-wrap: wrap;
+    }
+
+    .header-race-thumb {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
     }
 
     /* Main Container */
@@ -627,12 +631,12 @@
     }
 
     .upcoming-logo-hero {
-      max-width: 220px;
-      max-height: 100px;
+      max-width: 240px;
+      max-height: 130px;
       object-fit: contain;
       margin: 0 auto 16px auto;
       display: block;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
     }
 
     .notice-box {
@@ -705,7 +709,7 @@
 
       </div>
 
-      <!-- 5-Race Season Switcher Tabs with Mini Logos -->
+      <!-- 5-Race Season Switcher Tabs with Official Logos -->
       <div class="race-switcher-bar" id="raceSwitcherBar">
         <!-- Rendered by JS -->
       </div>
@@ -795,7 +799,7 @@
   </main>
 
   <script>
-    // 5 Official Season Races with Logos
+    // 5 Official Season Races with User Provided High-Res Logos
     const SEASON_RACES = [
       {
         id: 'bluff-bash',
@@ -890,7 +894,9 @@
 
       const activeRace = SEASON_RACES[currentRaceIndex];
       document.getElementById('currentRaceMeta').innerHTML = `
-        <span>🚵 <strong>${activeRace.name}</strong></span>
+        <img src="${activeRace.logo}" alt="${activeRace.name}" class="header-race-thumb" onerror="this.style.display='none'">
+        <span><strong>${activeRace.name}</strong></span>
+        <span>•</span>
         <span>📍 ${activeRace.venue}, ${activeRace.city}</span>
       `;
     }
@@ -924,7 +930,7 @@
               🏁 <strong>Start lists & wave assignments</strong> for this race will be published by the race timer during race week.
             </p>
             <p style="margin-top:6px;font-size:12px;color:var(--text-dim);">
-              Live timing and lap splits will automatically connect here once published on race day.
+              Live timing and lap splits will automatically stream here once published on race day.
             </p>
           </div>
         </div>
