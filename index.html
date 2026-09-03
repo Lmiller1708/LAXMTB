@@ -3542,7 +3542,7 @@
                 <th>Team / School</th>
                 <th style="text-align:center;width:50px;">Div</th>
                 <th style="text-align:center;width:50px;">Wave</th>
-                <th style="text-align:center;width:50px;">Status</th>
+                ${currentTab === 'results' ? '<th style="text-align:center;width:50px;">Status</th>' : ''}
               </tr>
             </thead>
             <tbody></tbody>
@@ -3565,7 +3565,7 @@
               <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${escapeHtml(r.team)}</span></td>
               <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
               <td style="text-align:center;color:var(--text-muted);">${escapeHtml(r.wv || '1')}</td>
-              <td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>
+              ${currentTab === 'results' ? `<td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>` : ''}
             `;
             tbody.appendChild(tr);
           });
@@ -3622,7 +3622,7 @@
               <th>Category</th>
               <th style="text-align:center;width:50px;">Div</th>
               <th style="text-align:center;width:70px;">Wave</th>
-              <th style="text-align:center;width:50px;">Status</th>
+              ${currentTab === 'results' ? '<th style="text-align:center;width:50px;">Status</th>' : ''}
             </tr>
           </thead>
           <tbody></tbody>
@@ -3645,7 +3645,7 @@
             <td><strong style="color:var(--text-main);">${escapeHtml(r.category || '')}</strong></td>
             <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
             <td style="text-align:center;color:var(--text-muted);">${escapeHtml(r.wave || 'Wave 1')}</td>
-            <td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>
+            ${currentTab === 'results' ? `<td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>` : ''}
           `;
           tbody.appendChild(tr);
         });
