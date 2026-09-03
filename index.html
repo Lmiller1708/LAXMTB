@@ -4,61 +4,72 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LAX MTB | Bluff Bash Live Race Central</title>
+  
+  <!-- App Icons -->
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LAX MTB">
+  <meta name="theme-color" content="#121212">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
   <style>
-    /* Design Tokens for Dark & Light Themes */
+    /* Design Tokens: True Black & Charcoal Dark Theme + Crisp Light Theme */
     :root[data-theme="dark"] {
-      --bg-body: #0b0f17;
-      --bg-header: #111722;
-      --bg-card: #141c28;
-      --bg-card-hover: #1b2434;
-      --bg-subtle: #1a2332;
-      --border: rgba(255, 255, 255, 0.08);
-      --border-strong: rgba(255, 255, 255, 0.16);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
+      --bg-body: #111111;
+      --bg-header: #181818;
+      --bg-card: #1c1c1c;
+      --bg-card-hover: #262626;
+      --bg-subtle: #222222;
+      --border: #2e2e2e;
+      --border-strong: #404040;
+      --text-main: #f5f5f5;
+      --text-muted: #a3a3a3;
+      --text-dim: #737373;
       
       --accent-red: #ef4444;
       --accent-red-hover: #dc2626;
       --accent-red-subtle: rgba(239, 68, 68, 0.12);
-      --wave-bg: rgba(249, 115, 22, 0.1);
+      
+      --wave-bg: #221a15;
       --wave-text: #fb923c;
-      --wave-border: #f97316;
+      --wave-border: #ea580c;
       
-      --plate-bg: #1e293b;
-      --plate-text: #f8fafc;
-      --plate-border: #334155;
+      --plate-bg: #262626;
+      --plate-text: #ffffff;
+      --plate-border: #3f3f46;
       
-      --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+      --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
 
     :root[data-theme="light"] {
-      --bg-body: #f4f6f9;
+      --bg-body: #f5f5f5;
       --bg-header: #ffffff;
       --bg-card: #ffffff;
-      --bg-card-hover: #f8fafc;
-      --bg-subtle: #f1f5f9;
-      --border: #e2e8f0;
-      --border-strong: #cbd5e1;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --text-dim: #94a3b8;
+      --bg-card-hover: #fafafa;
+      --bg-subtle: #f0f0f0;
+      --border: #e0e0e0;
+      --border-strong: #cccccc;
+      --text-main: #171717;
+      --text-muted: #666666;
+      --text-dim: #888888;
       
       --accent-red: #dc2626;
       --accent-red-hover: #b91c1c;
       --accent-red-subtle: rgba(220, 38, 38, 0.08);
+      
       --wave-bg: #fff7ed;
       --wave-text: #c2410c;
       --wave-border: #ea580c;
       
-      --plate-bg: #f8fafc;
-      --plate-text: #0f172a;
-      --plate-border: #cbd5e1;
+      --plate-bg: #ffffff;
+      --plate-text: #171717;
+      --plate-border: #d4d4d4;
       
-      --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.04);
+      --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
     * {
@@ -82,7 +93,7 @@
       background: var(--bg-header);
       border-bottom: 1px solid var(--border);
       position: relative;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
 
     .site-header::before {
@@ -98,7 +109,7 @@
     .header-container {
       max-width: 1220px;
       margin: 0 auto;
-      padding: 20px 20px 0 20px;
+      padding: 18px 20px 0 20px;
     }
 
     .header-top {
@@ -117,10 +128,10 @@
     }
 
     .team-logo {
-      width: 68px;
-      height: 68px;
+      width: 72px;
+      height: 62px;
       object-fit: contain;
-      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
     }
 
     .brand-text h1 {
@@ -175,6 +186,7 @@
 
     .theme-toggle-btn:hover {
       border-color: var(--border-strong);
+      background: var(--bg-card-hover);
     }
 
     .live-status-badge {
@@ -406,7 +418,7 @@
       letter-spacing: 0.3px;
     }
 
-    /* Sleek, Non-Intrusive Wave Divider */
+    /* Sleek, Subtle Wave Divider */
     .wave-divider {
       background: var(--wave-bg);
       color: var(--wave-text);
