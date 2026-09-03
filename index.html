@@ -2241,12 +2241,9 @@
             isRaceDay: true,
             events: [
               { time: '7:00 AM - 8:00 AM', desc: 'LAXMTB Team Breakfast', tag: 'Team Event', isSpecial: true },
-              { time: '7:00 AM', desc: 'Pre-Rides Start (All Athletes • Registered Riders & Coaches)', tag: 'Pre-Ride' },
-              { time: '8:00 AM', desc: 'North Conference Race Waves (High School & Middle School)', tag: 'Racing', isRace: true },
-              { time: '8:00 AM', desc: 'Registered Riders & Coaches Course Pre-Ride', tag: 'Pre-Ride' },
-              { time: '8:45 AM', desc: 'Warmups Start (Varsity & JV3 Boys)', tag: 'Warmup' },
-              { time: '9:00 AM - 9:30 AM', desc: 'Registered Riders & Coaches Pre-Ride (Emily)', tag: 'Pre-Ride' },
-              { time: '4:30 PM', desc: 'North Conference Awards & Season Opener Celebration', tag: 'Awards', isSpecial: true }
+              { time: '7:00 AM - 9:00 AM', desc: 'Pre-Rides Open (Registered Riders & Coaches)', tag: 'Pre-Ride' },
+              { time: '10:00 AM', desc: 'Racing Starts (North Conference Waves)', tag: 'Racing', isRace: true },
+              { time: '4:30 PM', desc: 'North Conference Awards & Season Opener Celebration', tag: 'Awards' }
             ]
           },
           {
@@ -2765,7 +2762,8 @@
                   ${grp.events.map(ev => {
                     const isSpecial = ev.isSpecial || ev.desc.toLowerCase().includes('team dinner') || ev.desc.toLowerCase().includes('team breakfast');
                     const isPreRide = ev.tag === 'Pre-Ride' || ev.desc.toLowerCase().includes('pre-ride');
-                    const isRace = ev.isRace || ev.tag === 'Racing' || ev.desc.toLowerCase().includes('race waves');
+                    const isRace = ev.isRace || ev.tag === 'Racing' || ev.desc.toLowerCase().includes('racing starts') || ev.desc.toLowerCase().includes('race waves');
+                    const isAwards = ev.tag === 'Awards' || ev.desc.toLowerCase().includes('awards');
                     return `
                       <li class="schedule-row ${isSpecial ? 'special-event' : ''}">
                         <span class="schedule-row-time">${escapeHtml(ev.time)}</span>
@@ -2773,7 +2771,8 @@
                           <span>${escapeHtml(ev.desc)}</span>
                           ${isSpecial ? `<span class="schedule-tag tag-special">${ev.desc.toLowerCase().includes('dinner') ? '🍽️ Team Dinner' : ev.desc.toLowerCase().includes('breakfast') ? '🍽️ Team Breakfast' : '★ Team Event'}</span>` : ''}
                           ${isPreRide && !isSpecial ? `<span class="schedule-tag tag-preride">Pre-Ride</span>` : ''}
-                          ${isRace ? `<span class="schedule-tag tag-special">Race Waves</span>` : ''}
+                          ${isRace ? `<span class="schedule-tag tag-special">🏁 Racing</span>` : ''}
+                          ${isAwards && !isSpecial ? `<span class="schedule-tag">🏆 Awards</span>` : ''}
                         </div>
                       </li>
                     `;

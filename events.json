@@ -50,12 +50,9 @@
         "isRaceDay": true,
         "events": [
           { "time": "7:00 AM - 8:00 AM", "desc": "LAXMTB Team Breakfast", "tag": "Team Event", "isSpecial": true },
-          { "time": "7:00 AM", "desc": "Pre-Rides Start (All Athletes • Registered Riders & Coaches)", "tag": "Pre-Ride" },
-          { "time": "8:00 AM", "desc": "North Conference Race Waves (High School & Middle School)", "tag": "Racing", "isRace": true },
-          { "time": "8:00 AM", "desc": "Registered Riders & Coaches Course Pre-Ride", "tag": "Pre-Ride" },
-          { "time": "8:45 AM", "desc": "Warmups Start (Varsity & JV3 Boys)", "tag": "Warmup" },
-          { "time": "9:00 AM - 9:30 AM", "desc": "Registered Riders & Coaches Pre-Ride (Emily)", "tag": "Pre-Ride" },
-          { "time": "4:30 PM", "desc": "North Conference Awards & Season Opener Celebration", "tag": "Awards", "isSpecial": true }
+          { "time": "7:00 AM - 9:00 AM", "desc": "Pre-Rides Open (Registered Riders & Coaches)", "tag": "Pre-Ride" },
+          { "time": "10:00 AM", "desc": "Racing Starts (North Conference Waves)", "tag": "Racing", "isRace": true },
+          { "time": "4:30 PM", "desc": "North Conference Awards & Season Opener Celebration", "tag": "Awards" }
         ]
       },
       {
