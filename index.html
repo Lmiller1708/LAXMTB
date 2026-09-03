@@ -86,6 +86,31 @@
       margin: 0;
       padding: 0;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-strong) transparent;
+    }
+
+    /* Universal Sleek, Modern Scrollbars (Eliminates Large Ugly White Bars) */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border-radius: 9999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: transparent;
     }
 
     body {
@@ -626,15 +651,70 @@
       color: var(--text-main);
     }
 
-    /* Status Bar */
+    /* Status Bar & Quick Actions Bar */
     .status-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 11px;
       color: var(--text-muted);
-      margin-bottom: 8px;
-      padding: 0 4px;
+      margin-bottom: 10px;
+      padding: 2px 4px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .status-info-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .status-dot-sep {
+      color: var(--text-dim);
+    }
+
+    .status-actions-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .btn-action-pill {
+      min-height: 28px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-action-pill:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-strong);
+      color: var(--text-main);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 520px) {
+      .status-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .status-actions-group {
+        width: 100%;
+        justify-content: flex-end;
+      }
     }
 
     .stat-bold {
@@ -745,11 +825,30 @@
       gap: 4px;
     }
 
-    /* Responsive Table Container */
+    /* Responsive Table Container with Sleek, Subtle Scrollbar */
     .table-responsive-wrapper {
       width: 100%;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-strong) transparent;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar-thumb {
+      background: var(--border-strong);
+      border-radius: 4px;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-red);
     }
 
     .results-table {
@@ -757,7 +856,7 @@
       border-collapse: collapse;
       font-size: 12px;
       text-align: left;
-      min-width: 520px;
+      min-width: 460px;
     }
 
     .results-table th {
@@ -1597,7 +1696,7 @@
 
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;gap:6px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;margin-top:6px;gap:8px;">
           <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
             <span>Auto-Refresh:</span>
             <select id="autoRefreshInterval" class="select-dropdown" style="width:auto;min-height:28px;padding:2px 6px;" onchange="setupAutoRefresh()">
@@ -1606,15 +1705,6 @@
               <option value="30" selected>30s</option>
               <option value="60">60s</option>
             </select>
-          </div>
-
-          <div style="display:flex;gap:6px;">
-            <button class="btn-icon" id="toggleAllCardsBtn" style="min-height:28px;padding:3px 8px;font-size:11px;" onclick="toggleAllCardsState()">
-              <span>↕️</span> <span id="toggleAllCardsLabel">Collapse All</span>
-            </button>
-            <button class="btn-icon" style="min-height:28px;padding:3px 8px;font-size:11px;" onclick="window.print()">
-              <span>📄</span> Print / PDF
-            </button>
           </div>
         </div>
       </div>
@@ -1625,10 +1715,21 @@
       </div>
     </div>
 
-    <!-- Status Bar -->
+    <!-- Status Bar & Quick Actions Bar (Outside of Filter) -->
     <div class="status-bar" id="statusBar">
-      <span id="statusCount">Loading data...</span>
-      <span id="lastUpdatedText">Connecting...</span>
+      <div class="status-info-group">
+        <span id="statusCount">Loading data...</span>
+        <span class="status-dot-sep">•</span>
+        <span id="lastUpdatedText">Connecting...</span>
+      </div>
+      <div class="status-actions-group">
+        <button class="btn-action-pill" id="toggleAllCardsBtn" onclick="toggleAllCardsState()" title="Expand or Collapse All Cards">
+          <span>↕️</span> <span id="toggleAllCardsLabel">Collapse All</span>
+        </button>
+        <button class="btn-action-pill" onclick="window.print()" title="Print page or save as PDF">
+          <span>📄</span> Print / PDF
+        </button>
+      </div>
     </div>
 
     <!-- Tables / Details Container -->
