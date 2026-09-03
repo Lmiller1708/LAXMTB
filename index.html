@@ -3,404 +3,565 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bluff Bash (North Conference) - Live Race Results</title>
+  <title>LAX MTB | Bluff Bash Live Race Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Inter:wght@400;500;600;700;800&family=Bungee&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-dark: #0a0c10;
+      --bg-card: #12161f;
+      --bg-card-hover: #181e2b;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --lax-red: #e52b2b;
+      --lax-red-hover: #ff3b3b;
+      --lax-red-glow: rgba(229, 43, 43, 0.35);
+      --trail-orange: #f97316;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --plate-bg: #1e2533;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
+
     body {
-      background-color: #f4f6f9;
-      color: #333;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 10%, rgba(229, 43, 43, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 90%, rgba(249, 115, 22, 0.08) 0%, transparent 45%),
+        linear-gradient(180deg, #07090c 0%, #0d1017 100%);
+      color: var(--text-main);
+      min-height: 100vh;
       line-height: 1.4;
+      padding-bottom: 60px;
     }
-    /* Top Banner Header */
-    .header-banner {
-      background: linear-gradient(180deg, rgba(235, 240, 245, 0.95) 0%, rgba(220, 228, 238, 0.95) 100%),
-                  radial-gradient(circle at 50% 50%, #4a89dc22, #3bafda22);
-      border-bottom: 1px solid #d5dbe0;
-      padding: 24px 20px 0 20px;
+
+    /* Top Hero Header */
+    .hero-header {
+      background: linear-gradient(180deg, rgba(18, 22, 31, 0.95) 0%, rgba(10, 12, 16, 0.98) 100%);
+      border-bottom: 2px solid rgba(229, 43, 43, 0.4);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
     }
-    .header-container {
-      max-width: 1200px;
+
+    .hero-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #e52b2b, #f97316, #e52b2b);
+    }
+
+    .hero-container {
+      max-width: 1240px;
       margin: 0 auto;
-    }
-    .event-meta {
-      font-size: 13px;
-      color: #555;
+      padding: 24px 20px 0 20px;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 6px;
-    }
-    .meta-left {
-      display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 16px;
     }
-    .meta-left span {
+
+    .hero-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .team-logo {
+      width: 76px;
+      height: 76px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 16px rgba(229, 43, 43, 0.4));
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 50%;
+      padding: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .title-group h1 {
+      font-family: 'Teko', sans-serif;
+      font-size: 38px;
+      line-height: 0.95;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #ffffff;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .title-group h1 span {
+      color: var(--lax-red);
+    }
+
+    .title-group .event-subtext {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .title-group .event-subtext span {
       display: inline-flex;
       align-items: center;
       gap: 5px;
     }
+
+    /* Live Badge Pill */
     .live-status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 3px 10px;
+      gap: 8px;
+      padding: 6px 14px;
       border-radius: 20px;
       font-size: 12px;
-      font-weight: 600;
-      background: #ecfdf5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
+
     .pulse-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       background-color: #10b981;
-      animation: pulse 1.8s infinite;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 1.6s infinite;
     }
+
     @keyframes pulse {
       0% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(1.2); }
+      50% { opacity: 0.3; transform: scale(1.3); }
       100% { opacity: 1; transform: scale(1); }
     }
-    .event-title {
-      font-size: 28px;
-      font-weight: 700;
-      color: #222;
-      margin-bottom: 18px;
-    }
-    /* Tabs */
+
+    /* Navigation Tabs */
     .nav-tabs {
       display: flex;
-      gap: 32px;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: 6px;
     }
+
     .nav-tab {
-      padding: 10px 4px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #b33939;
-      text-decoration: none;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
       cursor: pointer;
       position: relative;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
+
+    .nav-tab:hover {
+      color: #fff;
+    }
+
     .nav-tab.active {
-      color: #d63031;
+      color: #fff;
     }
+
     .nav-tab.active::after {
       content: '';
       position: absolute;
-      bottom: 0;
+      bottom: -1px;
       left: 0;
       right: 0;
       height: 3px;
-      background-color: #d63031;
-    }
-    .nav-tab.inactive {
-      color: #64748b;
-      opacity: 0.85;
-    }
-    .nav-tab.inactive:hover {
-      color: #b33939;
-      opacity: 1;
+      background: linear-gradient(90deg, var(--lax-red), #f97316);
+      box-shadow: 0 0 12px var(--lax-red-glow);
     }
 
-    /* Main Container */
+    /* Main Content */
     .main-content {
-      max-width: 1200px;
-      margin: 20px auto 40px auto;
+      max-width: 1240px;
+      margin: 24px auto 0 auto;
       padding: 0 16px;
     }
 
-    /* Control Bar */
+    /* Control & Filter Panel */
     .controls-panel {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     }
+
     .top-toolbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #edf2f7;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
     }
-    .toolbar-actions {
+
+    .toolbar-left {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       flex-wrap: wrap;
     }
-    .pdf-link {
+
+    .btn-action {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 13px;
-      color: #2d3748;
-      text-decoration: none;
-      font-weight: 500;
-      cursor: pointer;
-    }
-    .pdf-link:hover {
-      color: #d63031;
-    }
-    .refresh-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 5px 12px;
+      padding: 7px 14px;
       font-size: 12px;
-      font-weight: 600;
-      border-radius: 4px;
-      border: 1px solid #cbd5e0;
-      background: #ffffff;
-      color: #334155;
+      font-weight: 700;
+      border-radius: 6px;
       cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .refresh-btn:hover {
-      background: #f8fafc;
-      border-color: #94a3b8;
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
     }
-    .auto-refresh-select {
-      font-size: 12px;
-      padding: 4px 8px;
-      border: 1px solid #cbd5e0;
-      border-radius: 4px;
-      background: #fff;
-      color: #475569;
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--lax-red), #c81e1e);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 12px var(--lax-red-glow);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--lax-red-hover), #dc2626);
+      transform: translateY(-1px);
     }
 
     .search-group {
       display: flex;
       align-items: center;
-      gap: 4px;
-    }
-    .search-input {
-      border: 1px solid #cbd5e0;
-      border-radius: 4px;
-      padding: 6px 12px;
-      font-size: 13px;
-      width: 260px;
-      outline: none;
-    }
-    .search-input:focus {
-      border-color: #718096;
-    }
-    .btn-search {
-      background-color: #6b7280;
-      color: #fff;
-      border: none;
-      padding: 6px 14px;
-      border-radius: 4px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-    .btn-search:hover {
-      background-color: #4b5563;
-    }
-    .btn-icon {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 4px;
-      padding: 6px 10px;
-      cursor: pointer;
-      color: #666;
-    }
-    .btn-icon:hover {
-      background: #e5e7eb;
+      gap: 6px;
     }
 
-    /* Filters Row */
+    .search-input {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 13px;
+      width: 270px;
+      outline: none;
+      background: rgba(0, 0, 0, 0.35);
+      color: #fff;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--lax-red);
+      box-shadow: 0 0 10px var(--lax-red-glow);
+    }
+
     .filter-row {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
     }
+
     .select-dropdown {
-      padding: 6px 12px;
+      padding: 8px 14px;
       font-size: 13px;
-      border: 1px solid #cbd5e0;
-      border-radius: 4px;
-      background-color: #fff;
-      color: #2d3748;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      background-color: rgba(10, 14, 20, 0.9);
+      color: #f1f5f9;
       outline: none;
-      min-width: 180px;
+      min-width: 200px;
+      cursor: pointer;
     }
 
-    /* Results Info Banner */
-    .results-count-bar {
+    .select-dropdown:focus {
+      border-color: var(--lax-red);
+    }
+
+    /* Status Bar */
+    .status-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 13px;
-      color: #64748b;
-      margin-bottom: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
       padding: 0 4px;
     }
 
-    /* Tables & Groupings */
-    .table-container {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 4px;
+    .highlight-stat {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* Table & Card Components */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
       overflow: hidden;
       margin-bottom: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      transition: transform 0.15s ease;
     }
-    .category-title {
-      font-size: 16px;
+
+    .category-header-bar {
+      font-family: 'Teko', sans-serif;
+      font-size: 24px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #ffffff;
+      padding: 12px 18px 8px 18px;
+      background: linear-gradient(90deg, #161c28 0%, #10141d 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .category-count-badge {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
       font-weight: 700;
-      color: #1a202c;
-      padding: 12px 16px 8px 16px;
-      background: #fff;
+      color: #94a3b8;
+      background: rgba(255,255,255,0.06);
+      padding: 2px 10px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
     }
+
     .wave-header {
-      background-color: #ff6f00;
+      background: linear-gradient(90deg, #e52b2b 0%, #f97316 100%);
       color: #ffffff;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 8px 16px;
-      letter-spacing: 0.3px;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2);
     }
+
     .team-header-bar {
-      background-color: #1e293b;
+      background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
       color: #ffffff;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 10px 16px;
-      letter-spacing: 0.3px;
+      font-family: 'Teko', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.8px;
+      padding: 10px 18px 6px 18px;
+      border-left: 4px solid var(--lax-red);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+
     .results-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
       text-align: left;
     }
+
     .results-table th {
-      background-color: #f8fafc;
-      color: #475569;
-      font-weight: 600;
-      padding: 10px 12px;
-      border-bottom: 1px solid #e2e8f0;
-      user-select: none;
-      white-space: nowrap;
-    }
-    .results-table th span {
+      background-color: rgba(10, 14, 20, 0.7);
       color: #94a3b8;
-      font-size: 10px;
-      margin-left: 2px;
-    }
-    .results-table td {
-      padding: 9px 12px;
-      border-bottom: 1px solid #f1f5f9;
-      color: #334155;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border-color);
       white-space: nowrap;
     }
+
+    .results-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #cbd5e1;
+      white-space: nowrap;
+    }
+
     .results-table tr:last-child td {
       border-bottom: none;
     }
-    .results-table tr:hover td {
-      background-color: #f8fafc;
-    }
-    .col-pl { width: 45px; text-align: left; }
-    .col-no { width: 55px; font-weight: 600; color: #1e293b; }
-    .col-name { min-width: 180px; font-weight: 600; color: #0f172a; }
-    .col-team { min-width: 240px; color: #475569; }
-    .col-div { width: 50px; text-align: center; }
-    .col-wv { width: 50px; text-align: center; }
-    .col-wvrank { width: 75px; text-align: center; }
-    .col-return { width: 65px; text-align: center; font-weight: 600; color: #2563eb; }
-    .col-icon { width: 40px; text-align: center; }
 
-    .avatar-icon {
+    .results-table tr:hover td {
+      background-color: var(--bg-card-hover);
+      color: #ffffff;
+    }
+
+    /* Plate Number Chip */
+    .plate-number {
       display: inline-block;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background-color: #e2e8f0;
-      color: #94a3b8;
+      font-family: 'Teko', sans-serif;
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 700;
+      padding: 3px 10px;
+      background: #182030;
+      color: #ffffff;
+      border-radius: 4px;
+      border-top: 2px solid var(--lax-red);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      min-width: 44px;
       text-align: center;
-      line-height: 22px;
+    }
+
+    .rider-name {
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    .team-badge {
+      display: inline-block;
       font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .team-badge-highlight {
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    .div-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.06);
+      font-size: 11px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .status-badge {
+      color: var(--lax-red);
+      font-weight: 800;
     }
 
     .no-results {
-      padding: 40px;
+      padding: 50px 20px;
       text-align: center;
-      color: #64748b;
-      font-size: 14px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 4px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
     }
 
     .loading-state {
-      padding: 40px;
+      padding: 50px 20px;
       text-align: center;
-      color: #475569;
+      color: #94a3b8;
       font-size: 15px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
     }
 
     .notice-box {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: 6px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
+      background: rgba(229, 43, 43, 0.08);
+      border: 1px solid rgba(229, 43, 43, 0.25);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
       font-size: 13px;
-      color: #92400e;
+      color: #fca5a5;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
-    @media print {
-      body { background: #fff; }
-      .controls-panel, .header-banner { box-shadow: none; }
-      .wave-header { background-color: #ff6f00 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .team-header-bar { background-color: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    @media (max-width: 768px) {
+      .hero-top-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .search-input {
+        width: 100%;
+      }
+      .search-group {
+        width: 100%;
+      }
+      .select-dropdown {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header Banner -->
-  <header class="header-banner">
-    <div class="header-container">
-      <div class="event-meta">
-        <div class="meta-left">
-          <span>📅 09/05/2026</span>
-          <span>📍 Marshfield, WI</span>
-          <span>🇺🇸 United States of America</span>
+  <!-- Top Hero Banner -->
+  <header class="hero-header">
+    <div class="hero-container">
+      <div class="hero-top-row">
+        
+        <div class="brand-section">
+          <img src="logo.png" alt="La Crosse Area MTB Team" class="team-logo" onerror="this.style.display='none'">
+          <div class="title-group">
+            <h1>LAX MTB <span>// RACE CENTRAL</span></h1>
+            <div class="event-subtext">
+              <span>🚵 Bluff Bash (North Conference)</span>
+              <span>📅 09/05/2026</span>
+              <span>📍 Marshfield, WI</span>
+            </div>
+          </div>
         </div>
+
         <div>
           <span class="live-status-pill">
             <span class="pulse-dot" id="liveDot"></span>
             <span id="liveStatusText">Connecting...</span>
           </span>
         </div>
+
       </div>
-      <h1 class="event-title">Bluff Bash (North Conference)</h1>
+
+      <!-- Navigation Tabs -->
       <nav class="nav-tabs">
-        <div class="nav-tab active" id="tabStartLists" onclick="switchTab('list')">Start Lists</div>
-        <div class="nav-tab inactive" id="tabLiveResults" onclick="switchTab('results')">Live Results</div>
+        <div class="nav-tab active" id="tabStartLists" onclick="switchTab('list')">
+          <span>🏁</span> Start Lists
+        </div>
+        <div class="nav-tab inactive" id="tabLiveResults" onclick="switchTab('results')">
+          <span>⏱️</span> Live Race Results
+        </div>
       </nav>
     </div>
   </header>
@@ -413,16 +574,16 @@
     <!-- Controls & Filters Panel -->
     <div class="controls-panel">
       <div class="top-toolbar">
-        <div class="toolbar-actions">
-          <a class="pdf-link" href="#" onclick="window.print(); return false;">
-            <span style="color:#e11d48;font-size:16px;">📄</span> Print / PDF
-          </a>
-          <button class="refresh-btn" onclick="fetchLiveRaceresultData()">
-            <span id="refreshIcon">🔄</span> Refresh Now
+        <div class="toolbar-left">
+          <button class="btn-action btn-primary" onclick="fetchLiveRaceresultData()">
+            <span id="refreshIcon">🔄</span> Refresh
           </button>
-          <div style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:6px;">
+          <button class="btn-action" onclick="window.print()">
+            <span>📄</span> Print / PDF
+          </button>
+          <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
             <span>Auto-Refresh:</span>
-            <select id="autoRefreshInterval" class="auto-refresh-select" onchange="setupAutoRefresh()">
+            <select id="autoRefreshInterval" class="select-dropdown" style="min-width:110px;padding:4px 8px;" onchange="setupAutoRefresh()">
               <option value="0">Off</option>
               <option value="15">Every 15s</option>
               <option value="30" selected>Every 30s</option>
@@ -432,36 +593,35 @@
         </div>
 
         <div class="search-group">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search name, bib, team, etc..." oninput="renderData()">
-          <button class="btn-search" onclick="renderData()">Search</button>
-          <button class="btn-icon" title="Clear Search" onclick="clearSearch()">✕</button>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search rider, plate #, team..." oninput="renderData()">
+          <button class="btn-action" onclick="clearSearch()">✕</button>
         </div>
       </div>
 
       <div class="filter-row">
-        <!-- List View Mode Dropdown -->
+        <!-- List View Dropdown -->
         <select id="listSelect" class="select-dropdown" onchange="onListDropdownChange()">
           <option value="22E0EB">Rider List - By Category & Wave</option>
           <option value="747B52">Rider List - By Team</option>
         </select>
 
-        <!-- Category Filter Dropdown -->
+        <!-- Category Dropdown -->
         <select id="categoryFilter" class="select-dropdown" onchange="renderData()">
-          <option value="ALL">&lt;Show All Categories&gt;</option>
+          <option value="ALL">&lt;All Categories&gt;</option>
         </select>
 
-        <!-- Team Filter Dropdown -->
+        <!-- Team Dropdown -->
         <select id="teamFilter" class="select-dropdown" onchange="renderData()">
-          <option value="DEFAULT_TEAMS">All Target Teams (Holmen, La Crescent, La Crosse)</option>
-          <option value="ALL">&lt;Show All Event Teams (All 44 Teams)&gt;</option>
+          <option value="DEFAULT_TEAMS">All LAX Area Teams (La Crosse, Holmen, La Crescent)</option>
+          <option value="ALL">&lt;Show All 44 Event Teams&gt;</option>
         </select>
       </div>
     </div>
 
-    <!-- Results Status Count -->
-    <div class="results-count-bar">
+    <!-- Status Bar -->
+    <div class="status-bar">
       <span id="statusCount">Loading live data...</span>
-      <span id="lastUpdatedText">Last update: Fetching...</span>
+      <span id="lastUpdatedText">Syncing with RACE RESULT...</span>
     </div>
 
     <!-- Data Tables Container -->
@@ -504,7 +664,6 @@
         listDropdown.innerHTML = `
           <option value="22E0EB">Rider List - By Category & Wave</option>
           <option value="747B52">Rider List - By Team</option>
-          <option value="A76F6B">Rider List - Print</option>
         `;
       } else {
         listDropdown.innerHTML = `
@@ -522,10 +681,9 @@
 
     async function fetchLiveRaceresultData() {
       const selectedListId = document.getElementById('listSelect').value;
-      currentListMode = selectedListId === '747B52' || selectedListId === 'E07F7C' ? 'TEAM' : 'WAVE';
+      currentListMode = (selectedListId === '747B52' || selectedListId === 'E07F7C') ? 'TEAM' : 'WAVE';
 
       try {
-        // 1. Fetch config to obtain active session key
         const configResp = await fetch(`https://my.raceresult.com/${EVENT_ID}/${currentTab}/config?lang=en`);
         if (!configResp.ok) throw new Error(`Config HTTP ${configResp.status}`);
         const config = await configResp.json();
@@ -535,7 +693,6 @@
         const targetList = lists.find(l => l.ID === selectedListId) || lists[0];
         const listName = targetList ? targetList.Name : '';
 
-        // 2. Fetch list data
         const params = new URLSearchParams({
           key: key,
           listname: listName,
@@ -553,7 +710,7 @@
 
         document.getElementById('liveDot').style.backgroundColor = '#10b981';
         document.getElementById('liveStatusText').textContent = 'Live API Connected';
-        document.getElementById('lastUpdatedText').textContent = 'Last update: ' + new Date().toLocaleTimeString();
+        document.getElementById('lastUpdatedText').textContent = 'Updated ' + new Date().toLocaleTimeString();
       } catch (err) {
         console.warn('Live fetch error, falling back to snapshot:', err);
         document.getElementById('liveDot').style.backgroundColor = '#f59e0b';
@@ -583,7 +740,6 @@
       document.getElementById('noticeContainer').innerHTML = '';
       const extracted = [];
 
-      // Recursive tree walker
       function traverse(node, context) {
         if (node && typeof node === 'object' && !Array.isArray(node)) {
           for (const [key, val] of Object.entries(node)) {
@@ -605,7 +761,6 @@
               let rider = { ...context };
 
               if (listId === '747B52') {
-                // By Team format: [PID, Bib, Name, Gender, Category, IsComp, IsInd, Pts, Pen]
                 rider.bib = row[1] || '';
                 rider.no = row[1] || '';
                 rider.name = row[2] || '';
@@ -617,7 +772,6 @@
                 rider.wv_rank = '1';
                 rider.return_val = '+';
               } else {
-                // By Category & Wave format: [NO, PID, PL, Name, Team, Div, WV, Return]
                 rider.no = row[0] || '';
                 rider.bib = row[1] || '';
                 rider.pl = row[2] || '';
@@ -655,8 +809,8 @@
       `;
       document.getElementById('tablesContainer').innerHTML = `
         <div class="no-results">
-          <h3>No Results Recorded Yet</h3>
-          <p style="margin-top:8px;color:#64748b;">The race has not started yet. Switch back to <strong>Start Lists</strong> to view wave placements and rider bibs.</p>
+          <h3 style="color:#fff;font-size:18px;">No Results Recorded Yet</h3>
+          <p style="margin-top:8px;color:#94a3b8;">The race has not started yet. Switch to <strong>Start Lists</strong> to view wave placements and rider plate numbers.</p>
         </div>
       `;
       document.getElementById('statusCount').textContent = '0 results recorded';
@@ -672,7 +826,7 @@
         return ia - ib;
       });
 
-      catSelect.innerHTML = '<option value="ALL">&lt;Show All Categories&gt;</option>';
+      catSelect.innerHTML = '<option value="ALL">&lt;All Categories&gt;</option>';
       categories.forEach(c => {
         const opt = document.createElement('option');
         opt.value = c;
@@ -686,8 +840,8 @@
       const teams = [...new Set(currentRiders.map(r => r.team).filter(Boolean))].sort();
 
       teamSelect.innerHTML = `
-        <option value="DEFAULT_TEAMS">All Target Teams (Holmen, La Crescent, La Crosse)</option>
-        <option value="ALL">&lt;Show All Event Teams (${teams.length} Teams)&gt;</option>
+        <option value="DEFAULT_TEAMS">All LAX Area Teams (La Crosse, Holmen, La Crescent)</option>
+        <option value="ALL">&lt;Show All ${teams.length} Event Teams&gt;</option>
       `;
       teams.forEach(t => {
         const opt = document.createElement('option');
@@ -734,13 +888,13 @@
         return true;
       });
 
-      document.getElementById('statusCount').textContent = `Showing ${filtered.length} of ${currentRiders.length} riders`;
+      document.getElementById('statusCount').innerHTML = `Showing <span class="highlight-stat">${filtered.length}</span> of <span class="highlight-stat">${currentRiders.length}</span> riders`;
 
       const container = document.getElementById('tablesContainer');
       container.innerHTML = '';
 
       if (filtered.length === 0) {
-        container.innerHTML = '<div class="no-results">No riders matched your current filter or search criteria.</div>';
+        container.innerHTML = '<div class="no-results">No riders matched your current search / filter.</div>';
         return;
       }
 
@@ -770,11 +924,16 @@
 
       sortedCatKeys.forEach(cat => {
         const catCard = document.createElement('div');
-        catCard.className = 'table-container';
+        catCard.className = 'table-card';
+
+        const totalInCat = Object.values(grouped[cat]).reduce((acc, list) => acc + list.length, 0);
 
         const catTitle = document.createElement('div');
-        catTitle.className = 'category-title';
-        catTitle.textContent = cat;
+        catTitle.className = 'category-header-bar';
+        catTitle.innerHTML = `
+          <span>${cat}</span>
+          <span class="category-count-badge">${totalInCat} RIDERS</span>
+        `;
         catCard.appendChild(catTitle);
 
         const waves = grouped[cat];
@@ -783,7 +942,7 @@
         sortedWaveKeys.forEach(wKey => {
           const waveHeader = document.createElement('div');
           waveHeader.className = 'wave-header';
-          waveHeader.textContent = wKey.includes('Wave') ? wKey : `Wave: ${wKey}`;
+          waveHeader.innerHTML = `<span>🚩</span> ${wKey.includes('Wave') ? wKey : `Wave: ${wKey}`}`;
           catCard.appendChild(waveHeader);
 
           const table = document.createElement('table');
@@ -791,15 +950,13 @@
           table.innerHTML = `
             <thead>
               <tr>
-                <th class="col-pl">PL <span>⇅</span></th>
-                <th class="col-no">NO <span>⇅</span></th>
-                <th class="col-name">Name <span>⇅</span></th>
-                <th class="col-team">Team <span>⇅</span></th>
-                <th class="col-div">Div <span>⇅</span></th>
-                <th class="col-wv">WV <span>⇅</span></th>
-                <th class="col-wvrank">WV Rank <span>⇅</span></th>
-                <th class="col-return">Return <span>⇅</span></th>
-                <th class="col-icon"></th>
+                <th style="width:50px;">PL</th>
+                <th style="width:70px;">Plate #</th>
+                <th>Rider Name</th>
+                <th>Team / School</th>
+                <th style="text-align:center;width:60px;">Div</th>
+                <th style="text-align:center;width:60px;">Wave</th>
+                <th style="text-align:center;width:60px;">Status</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -813,17 +970,16 @@
           });
 
           ridersInWave.forEach(r => {
+            const isTarget = targetTeamKeywords.some(kw => r.team && r.team.toLowerCase().includes(kw));
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td class="col-pl">${r.pl || ''}</td>
-              <td class="col-no">${r.no || r.bib}</td>
-              <td class="col-name">${r.name}</td>
-              <td class="col-team">${r.team}</td>
-              <td class="col-div" style="text-align:center;">${r.div || '1'}</td>
-              <td class="col-wv" style="text-align:center;">${r.wv || '1'}</td>
-              <td class="col-wvrank" style="text-align:center;">${r.wv_rank || r.pl || ''}</td>
-              <td class="col-return" style="text-align:center;">${r.return_val || '+'}</td>
-              <td class="col-icon"><span class="avatar-icon">👤</span></td>
+              <td style="color:#94a3b8;font-weight:600;">${r.pl || '-'}</td>
+              <td><span class="plate-number">#${r.no || r.bib}</span></td>
+              <td><span class="rider-name">${r.name}</span></td>
+              <td><span class="team-badge ${isTarget ? 'team-badge-highlight' : ''}">${r.team}</span></td>
+              <td style="text-align:center;"><span class="div-badge">D${r.div || '1'}</span></td>
+              <td style="text-align:center;color:#94a3b8;">${r.wv || '1'}</td>
+              <td style="text-align:center;" class="status-badge">${r.return_val || '+'}</td>
             `;
             tbody.appendChild(tr);
           });
@@ -847,11 +1003,14 @@
 
       sortedTeams.forEach(team => {
         const teamCard = document.createElement('div');
-        teamCard.className = 'table-container';
+        teamCard.className = 'table-card';
 
         const teamHeader = document.createElement('div');
         teamHeader.className = 'team-header-bar';
-        teamHeader.textContent = `${team} (${grouped[team].length} Riders)`;
+        teamHeader.innerHTML = `
+          <span>${team}</span>
+          <span class="category-count-badge">${grouped[team].length} RIDERS</span>
+        `;
         teamCard.appendChild(teamHeader);
 
         const table = document.createElement('table');
@@ -859,13 +1018,12 @@
         table.innerHTML = `
           <thead>
             <tr>
-              <th class="col-no">Bib <span>⇅</span></th>
-              <th class="col-name">Name <span>⇅</span></th>
-              <th style="min-width:180px;">Category <span>⇅</span></th>
-              <th class="col-div">Div <span>⇅</span></th>
-              <th class="col-wv">Wave <span>⇅</span></th>
-              <th class="col-return">Status <span>⇅</span></th>
-              <th class="col-icon"></th>
+              <th style="width:70px;">Plate #</th>
+              <th>Rider Name</th>
+              <th>Category</th>
+              <th style="text-align:center;width:60px;">Div</th>
+              <th style="text-align:center;width:80px;">Wave</th>
+              <th style="text-align:center;width:60px;">Status</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -883,13 +1041,12 @@
         teamRiders.forEach(r => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td class="col-no">#${r.bib || r.no}</td>
-            <td class="col-name">${r.name}</td>
-            <td><strong>${r.category || ''}</strong></td>
-            <td class="col-div" style="text-align:center;">${r.div || '1'}</td>
-            <td class="col-wv" style="text-align:center;">${r.wave || 'Wave 1'}</td>
-            <td class="col-return" style="text-align:center;">${r.return_val || '+'}</td>
-            <td class="col-icon"><span class="avatar-icon">👤</span></td>
+            <td><span class="plate-number">#${r.bib || r.no}</span></td>
+            <td><span class="rider-name">${r.name}</span></td>
+            <td><span style="color:#f1f5f9;font-weight:600;">${r.category || ''}</span></td>
+            <td style="text-align:center;"><span class="div-badge">D${r.div || '1'}</span></td>
+            <td style="text-align:center;color:#94a3b8;">${r.wave || 'Wave 1'}</td>
+            <td style="text-align:center;" class="status-badge">${r.return_val || '+'}</td>
           `;
           tbody.appendChild(tr);
         });
@@ -907,7 +1064,6 @@
       }
     }
 
-    // Initial load
     fetchLiveRaceresultData();
     setupAutoRefresh();
   </script>
