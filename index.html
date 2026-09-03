@@ -924,6 +924,267 @@
       }
     }
 
+    /* SignUp.com Volunteer & Hospitality Hub */
+    .signup-hub-section {
+      margin: 0 16px 16px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+
+    .signup-hub-header {
+      padding: 12px 16px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .signup-hub-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .signup-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    @media (min-width: 860px) {
+      .signup-cards-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .signup-action-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .signup-action-card:hover {
+      border-color: var(--accent-red);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-card);
+    }
+
+    .signup-action-card.card-league:hover {
+      border-color: #3b82f6;
+    }
+
+    .signup-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .signup-card-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .signup-badge-lax {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 12px;
+      background: rgba(220, 38, 38, 0.15);
+      border: 1px solid var(--accent-red);
+      color: var(--accent-red);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .signup-badge-league {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 12px;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid #3b82f6;
+      color: #60a5fa;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    :root[data-theme="light"] .signup-badge-league {
+      color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .signup-card-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 14px;
+      flex: 1;
+    }
+
+    .signup-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .btn-signup-direct {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      background: var(--accent-red);
+      color: #ffffff !important;
+      transition: all 0.15s ease;
+    }
+
+    .btn-signup-direct:hover {
+      background: var(--accent-red-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-signup-direct.btn-league-direct {
+      background: #2563eb;
+    }
+
+    .btn-signup-direct.btn-league-direct:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-signup-embed {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-main) !important;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-signup-embed:hover {
+      background: var(--bg-hover);
+      border-color: var(--text-muted);
+    }
+
+    /* Embedded SignUp Viewer */
+    .signup-viewer-container {
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+
+    .signup-tabs-nav {
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .signup-tab-pill {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .signup-tab-pill:hover {
+      color: var(--text-main);
+      border-color: var(--border-strong);
+    }
+
+    .signup-tab-pill.active {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+      color: #ffffff;
+    }
+
+    .signup-tab-pill.active.pill-league {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .signup-viewer-header {
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .signup-iframe-wrapper {
+      position: relative;
+      width: 100%;
+      height: 620px;
+      background: #ffffff;
+    }
+
+    .signup-iframe-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    @media (max-width: 600px) {
+      .signup-hub-section {
+        margin: 0 10px 12px 10px;
+      }
+      .signup-iframe-wrapper {
+        height: 520px;
+      }
+    }
+
     .detail-section {
       background: var(--bg-subtle);
       border: 1px solid var(--border);
@@ -1515,6 +1776,103 @@
             </div>
           </div>
 
+          <!-- Volunteer & Team Hospitality SignUp Hub -->
+          <div class="signup-hub-section" id="signupHubSection">
+            <div class="signup-hub-header">
+              <span class="signup-hub-title"><span>🤝</span> Team Volunteers & Race Hospitality</span>
+              <span style="font-size:12px;color:var(--text-muted);">Sign up for LAXMTB squad duties or official Wisconsin League shifts</span>
+            </div>
+
+            <!-- 3 Focus Action Cards -->
+            <div class="signup-cards-grid">
+              
+              <!-- 1. LAX Volunteer Card -->
+              <div class="signup-action-card">
+                <div>
+                  <div class="signup-card-top">
+                    <span class="signup-card-title"><span>🤝</span> Team Volunteers</span>
+                    <span class="signup-badge-lax">LAXMTB Focus</span>
+                  </div>
+                  <p class="signup-card-desc">Pit zone setup & teardown, staging grid helpers, feed zone support, and bike checks.</p>
+                </div>
+                <div class="signup-card-actions">
+                  <a href="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct">
+                    <span>✍️</span> Sign Up Direct ↗
+                  </a>
+                  <button type="button" onclick="switchSignUpTab('volunteer')" class="btn-signup-embed" title="View embed below">
+                    <span>🔽</span> Embed
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. LAX Food Card -->
+              <div class="signup-action-card">
+                <div>
+                  <div class="signup-card-top">
+                    <span class="signup-card-title"><span>🥪</span> Food & Hospitality</span>
+                    <span class="signup-badge-lax">LAXMTB Focus</span>
+                  </div>
+                  <p class="signup-card-desc">Team tent meals, racer race-day snacks, hydration coolers, fruit station & grill team.</p>
+                </div>
+                <div class="signup-card-actions">
+                  <a href="https://signup.com/client/invitation2/secure/502983656067/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct">
+                    <span>🥪</span> Food Sign-Up ↗
+                  </a>
+                  <button type="button" onclick="switchSignUpTab('food')" class="btn-signup-embed" title="View embed below">
+                    <span>🔽</span> Embed
+                  </button>
+                </div>
+              </div>
+
+              <!-- 3. League Shifts Card -->
+              <div class="signup-action-card card-league">
+                <div>
+                  <div class="signup-card-top">
+                    <span class="signup-card-title"><span>🌲</span> League Shifts</span>
+                    <span class="signup-badge-league">WI League</span>
+                  </div>
+                  <p class="signup-card-desc">Official League course marshals, staging grid staff, finish line & sweep rider shifts.</p>
+                </div>
+                <div class="signup-card-actions">
+                  <a href="https://signup.com/client/invitation2/secure/773733678034/false#/invitation" target="_blank" rel="noopener" class="btn-signup-direct btn-league-direct">
+                    <span>🌲</span> League Shift ↗
+                  </a>
+                  <button type="button" onclick="switchSignUpTab('league')" class="btn-signup-embed" title="View embed below">
+                    <span>🔽</span> Embed
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Embedded Interactive Viewer Container -->
+            <div class="signup-viewer-container">
+              <div class="signup-tabs-nav">
+                <button type="button" class="signup-tab-pill active" data-signup-key="volunteer" onclick="switchSignUpTab('volunteer')">
+                  <span>🤝</span> LAX Team Volunteers
+                </button>
+                <button type="button" class="signup-tab-pill" data-signup-key="food" onclick="switchSignUpTab('food')">
+                  <span>🥪</span> LAX Food & Hospitality
+                </button>
+                <button type="button" class="signup-tab-pill" data-signup-key="league" onclick="switchSignUpTab('league')">
+                  <span>🌲</span> Wisconsin League Shifts
+                </button>
+              </div>
+
+              <div class="signup-viewer-header">
+                <span id="signupViewerTitle"><span>🤝</span> <strong>LAXMTB Team Volunteers</strong> (LAXMTB Focus)</span>
+                <a id="signupViewerDirectLink" href="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" target="_blank" rel="noopener" class="btn-icon" style="font-size:11px;padding:4px 10px;">
+                  <span>↗️</span> Open Fullscreen on SignUp.com
+                </a>
+              </div>
+
+              <div class="signup-iframe-wrapper">
+                <iframe id="signupViewerIframe" src="https://signup.com/client/invitation2/secure/81287266078/false#/invitation" width="100%" height="100%" loading="lazy" title="Interactive SignUp.com Sheet"></iframe>
+              </div>
+            </div>
+
+          </div>
+
           <!-- Interactive Course & Venue Map Section -->
           ${race.embedMapUrl ? `
             <div class="event-map-container">
@@ -1582,6 +1940,72 @@
       `;
       document.getElementById('liveStatusText').textContent = 'Upcoming Race';
       document.getElementById('liveDot').style.backgroundColor = '#707070';
+    }
+
+    // 3. SignUp.com Volunteer & Hospitality Data
+    const SIGNUP_DATA = {
+      volunteer: {
+        id: 'volunteer',
+        title: 'LAXMTB Team Volunteers',
+        category: 'LAXMTB Focus',
+        icon: '🤝',
+        pillClass: '',
+        url: 'https://signup.com/client/invitation2/secure/81287266078/false#/invitation'
+      },
+      food: {
+        id: 'food',
+        title: 'LAXMTB Food & Hospitality',
+        category: 'LAXMTB Focus',
+        icon: '🥪',
+        pillClass: '',
+        url: 'https://signup.com/client/invitation2/secure/502983656067/false#/invitation'
+      },
+      league: {
+        id: 'league',
+        title: 'Wisconsin League Shifts',
+        category: 'WI League Wide',
+        icon: '🌲',
+        pillClass: 'pill-league',
+        url: 'https://signup.com/client/invitation2/secure/773733678034/false#/invitation'
+      }
+    };
+
+    let activeSignUpKey = 'volunteer';
+
+    function switchSignUpTab(key) {
+      activeSignUpKey = key;
+      const config = SIGNUP_DATA[key];
+      if (!config) return;
+
+      document.querySelectorAll('.signup-tab-pill').forEach(btn => {
+        const k = btn.getAttribute('data-signup-key');
+        if (k === key) {
+          btn.className = `signup-tab-pill active ${config.pillClass || ''}`.trim();
+        } else {
+          btn.className = 'signup-tab-pill';
+        }
+      });
+
+      const titleEl = document.getElementById('signupViewerTitle');
+      if (titleEl) {
+        titleEl.innerHTML = `<span>${config.icon}</span> <strong>${config.title}</strong> (${config.category})`;
+      }
+
+      const directLinkEl = document.getElementById('signupViewerDirectLink');
+      if (directLinkEl) {
+        directLinkEl.href = config.url;
+      }
+
+      const iframe = document.getElementById('signupViewerIframe');
+      if (iframe) {
+        iframe.src = config.url;
+      }
+
+      // Scroll to viewer if requested
+      const hub = document.getElementById('signupHubSection');
+      if (hub) {
+        hub.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
 
     function initTheme() {
