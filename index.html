@@ -930,6 +930,49 @@
       border-color: #fecaca;
     }
 
+    .event-hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    .btn-hero-league {
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-strong);
+      color: var(--text-main) !important;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-hero-league:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-red);
+      color: var(--accent-red) !important;
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 650px) {
+      .event-hero-actions {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 6px;
+      }
+      .btn-hero-league {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
     /* Dedicated Event Location Card */
     .event-location-card {
       background: var(--bg-card);
@@ -2045,16 +2088,25 @@
 
       const container = document.getElementById('tablesContainer');
       container.innerHTML = `
-        <!-- 1. Event Hero Banner (Logo & Title on its own) -->
+        <!-- 1. Event Hero Banner (Logo & Title on its own + League Page) -->
         <div class="event-hero-card">
-          <img src="${race.logo}" alt="${race.name}" class="event-hero-logo" onerror="this.style.display='none'">
-          <div class="event-hero-meta">
-            <h2>${race.name}</h2>
-            <div class="event-hero-meta-badges">
-              <span class="event-meta-pill">📅 <strong>${race.dateStr}</strong></span>
-              <span class="event-meta-pill pill-conf">🏆 ${race.conference}</span>
+          <div style="display:flex;align-items:center;gap:18px;flex:1;min-width:260px;">
+            <img src="${race.logo}" alt="${race.name}" class="event-hero-logo" onerror="this.style.display='none'">
+            <div class="event-hero-meta">
+              <h2>${race.name}</h2>
+              <div class="event-hero-meta-badges">
+                <span class="event-meta-pill">📅 <strong>${race.dateStr}</strong></span>
+                <span class="event-meta-pill pill-conf">🏆 ${race.conference}</span>
+              </div>
             </div>
           </div>
+          ${race.eventGuideUrl ? `
+            <div class="event-hero-actions">
+              <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-hero-league">
+                <span>🌐</span> Wisconsin League Page
+              </a>
+            </div>
+          ` : ''}
         </div>
 
         <!-- 2. Dedicated Venue & Location Card -->
@@ -2083,11 +2135,6 @@
               <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps">
                 <span>🍏</span> Apple Maps (iPhone)
               </a>
-              ${race.eventGuideUrl ? `
-                <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-maps btn-league-page">
-                  <span>🌐</span> Wisconsin League Page
-                </a>
-              ` : ''}
             </div>
           </div>
         </div>
