@@ -389,6 +389,19 @@
       transform: translateY(-1px);
     }
 
+    .btn-league-page {
+      background: #1c1c1c;
+      border: 1px solid #383838;
+      color: #f0f0f0 !important;
+    }
+
+    .btn-league-page:hover {
+      background: #282828;
+      border-color: var(--accent-red);
+      color: var(--accent-red) !important;
+      transform: translateY(-1px);
+    }
+
     :root[data-theme="light"] .btn-apple-maps {
       background: #e8e8e8;
       border-color: #cccccc;
@@ -397,6 +410,18 @@
 
     :root[data-theme="light"] .btn-apple-maps:hover {
       background: #d8d8d8;
+    }
+
+    :root[data-theme="light"] .btn-league-page {
+      background: #f4f4f4;
+      border-color: #d0d0d0;
+      color: #141414 !important;
+    }
+
+    :root[data-theme="light"] .btn-league-page:hover {
+      background: #e8e8e8;
+      border-color: var(--accent-red);
+      color: var(--accent-red) !important;
     }
 
     /* Main Container */
@@ -1439,8 +1464,8 @@
                   <span>🍏</span> Apple Maps (iPhone)
                 </a>
                 ${race.eventGuideUrl ? `
-                  <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-icon">
-                    <span>🌐</span> Official Event Page
+                  <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-maps btn-league-page">
+                    <span>🌐</span> Wisconsin League Page
                   </a>
                 ` : ''}
               </div>
