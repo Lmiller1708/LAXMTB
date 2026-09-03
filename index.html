@@ -351,6 +351,26 @@
       line-height: 1.4;
     }
 
+    .event-warning-banner {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid var(--accent-red);
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #ff8080;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    :root[data-theme="light"] .event-warning-banner {
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #b91c1c;
+    }
+
     .btn-maps {
       padding: 7px 14px;
       border-radius: 6px;
@@ -1132,41 +1152,47 @@
         name: 'Bluff Bash Festival',
         dateStr: '04 - 07 Sept 2026',
         venue: 'Powers Bluff County Park',
-        address: '6990 Bluff Dr, Arpin, WI 54410 (Wood County)',
+        exactTrailhead: 'Powers Bluff North Trailhead',
+        address: 'Powers Bluff North Trailhead, Arpin, WI 54410 (Wood County)',
         city: 'Marshfield, WI',
-        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Powers+Bluff+County+Park+6990+Bluff+Dr+Arpin+WI+54410',
-        appleMapsUrl: 'https://maps.apple.com/?daddr=6990+Bluff+Dr,+Arpin,+WI+54410&q=Powers+Bluff+County+Park',
+        warning: '<strong>⚠️ Navigation Warning:</strong> Navigating to generic <em>"Powers Bluff County Park"</em> will put you on the wrong side of the venue! Navigate directly to <strong>Powers Bluff North Trailhead</strong>.',
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Powers+Bluff+North+Trailhead+Arpin+WI',
+        appleMapsUrl: 'https://maps.apple.com/?daddr=Powers+Bluff+North+Trailhead,+Arpin,+WI&q=Powers+Bluff+North+Trailhead',
         eventGuideUrl: 'https://wisconsinmtb.org/events/bluff-bash-festival/',
         embedMapUrl: 'https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F',
         fullMapUrl: 'https://www.google.com/maps/d/viewer?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI',
-        conference: 'North Conference',
+        conference: 'North Conference (Sunday Racing) • South Conference (Saturday Racing)',
         logo: 'logos/bluff-bash.png',
         eventId: 418104,
         isPublished: true,
         schedule: [
-          { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pit Zone Setup & Course Pre-Ride' },
-          { time: 'Friday 6:00 PM', desc: 'Coaches Meeting & Volunteer Check-in' },
-          { time: 'Saturday 8:00 AM', desc: 'High School Waves (Freshman, JV2, JV3, Varsity)' },
-          { time: 'Saturday 4:30 PM', desc: 'High School Podium & Awards' },
-          { time: 'Sunday 8:30 AM', desc: 'Middle School Waves (6th, 7th, 8th Grade)' },
-          { time: 'Sunday 2:30 PM', desc: 'Middle School Awards & Season Opener Wrap-up' }
+          { time: 'Friday 1:00 PM', desc: 'Camping Opens & Pit Zone Setup' },
+          { time: 'Friday 2:00 PM - 6:00 PM', desc: 'Pre-Ride Open (Coaches, JV3, Varsity)' },
+          { time: 'Saturday 8:00 AM - 4:00 PM', desc: 'South Conference Racing Waves & Podiums' },
+          { time: 'Saturday All Day', desc: 'North Conference (LAX Teams) Adventure Rides & Spectating' },
+          { time: 'Sunday 8:00 AM', desc: 'North Conference Race Waves (High School & Middle School)' },
+          { time: 'Sunday 4:30 PM', desc: 'North Conference Awards & Season Opener Celebration' },
+          { time: 'Monday (Labor Day)', desc: 'Camping Closes' }
         ],
         guidelines: [
-          '<strong>Parking Pass:</strong> Wood County Park vehicle pass or daily fee required at park entrance.',
-          '<strong>Staging & Call-ups:</strong> Riders must be at staging grids 15 minutes before their wave start.',
+          '<strong>North Trailhead Only:</strong> Use North Trailhead entrance for parking, staging grids, and pit zones.',
+          '<strong>Parking Pass:</strong> Wood County Park vehicle pass or daily entrance fee required at park entry.',
+          '<strong>Staging & Call-ups:</strong> Riders must report to staging grids 15 minutes prior to their wave start.',
           '<strong>Pit Zone & Camping:</strong> Team tents in designated LAX Area space. Quiet hours 10 PM - 6 AM.',
-          '<strong>Dogs Policy:</strong> Leashed pets only. No dogs permitted in staging grids or active course crossing.'
+          '<strong>Leashed Pets Only:</strong> Dogs prohibited in active course areas and staging grid zones.'
         ]
       },
       {
         id: 'cable-conquest',
         name: 'Cable Conquest Festival',
         dateStr: '11 - 13 Sept 2026',
-        venue: 'Mt Telemark Village',
-        address: '42225 Telemark Rd, Cable, WI 54821',
+        venue: 'Mt. Telemark Village',
+        exactTrailhead: 'Carlson Competition Stadium (Birkie Trailhead)',
+        address: '42225 Telemark Village Rd, Cable, WI 54821',
         city: 'Cable, WI',
-        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Mt+Telemark+Village+42225+Telemark+Rd+Cable+WI+54821',
-        appleMapsUrl: 'https://maps.apple.com/?daddr=42225+Telemark+Rd,+Cable,+WI+54821&q=Mt+Telemark+Village',
+        warning: '<strong>📍 Venue Info:</strong> Start & finish located under the iconic American Birkebeiner arch at Carlson Competition Stadium.',
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Mt+Telemark+Village+42225+Telemark+Village+Cable+WI+54821',
+        appleMapsUrl: 'https://maps.apple.com/?daddr=42225+Telemark+Village,+Cable,+WI+54821&q=Mt+Telemark+Village',
         eventGuideUrl: 'https://wisconsinmtb.org/events/cable-conquest-festival/',
         embedMapUrl: null,
         fullMapUrl: null,
@@ -1175,13 +1201,14 @@
         eventId: null,
         isPublished: false,
         schedule: [
-          { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pre-Ride & CAMBA Trail Tour' },
+          { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pit Zone Setup, Pre-Ride & CAMBA Trail Tour' },
           { time: 'Saturday 8:00 AM', desc: 'High School Racing Waves & Time Trials' },
-          { time: 'Sunday 8:30 AM', desc: 'Middle School Races & Festival Activities' }
+          { time: 'Saturday 4:30 PM', desc: 'High School Podiums & Community Dinner' },
+          { time: 'Sunday 8:30 AM', desc: 'Middle School Races & Team Podiums' }
         ],
         guidelines: [
-          '<strong>Venue:</strong> Famous CAMBA singletrack and Mt Telemark village climbs.',
-          '<strong>Camping:</strong> Village festival camping available on-site.'
+          '<strong>Trails:</strong> Trek Trails by OTM and CAMBA world-class singletrack network.',
+          '<strong>Camping:</strong> Village festival camping available on-site (advance booking recommended).'
         ]
       },
       {
@@ -1189,10 +1216,12 @@
         name: 'Hodag Hustle Festival',
         dateStr: '02 - 04 Oct 2026',
         venue: 'Camp Tesomas',
-        address: '5403 Camp Tesomas Rd, Rhinelander, WI 54501',
+        exactTrailhead: 'Camp Tesomas Boy Scout Reservation',
+        address: '5403 Spider Lake Rd, Rhinelander, WI 54501',
         city: 'Rhinelander, WI',
-        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Camp+Tesomas+5403+Camp+Tesomas+Rd+Rhinelander+WI+54501',
-        appleMapsUrl: 'https://maps.apple.com/?daddr=5403+Camp+Tesomas+Rd,+Rhinelander,+WI+54501&q=Camp+Tesomas',
+        warning: '<strong>📍 Scout Camp Venue:</strong> Located on private scout reservation singletrack around Spider Lake.',
+        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Camp+Tesomas+5403+Spider+Lake+Rd+Rhinelander+WI+54501',
+        appleMapsUrl: 'https://maps.apple.com/?daddr=5403+Spider+Lake+Rd,+Rhinelander,+WI+54501&q=Camp+Tesomas',
         eventGuideUrl: 'https://wisconsinmtb.org/events/hodag-hustle-festival/',
         embedMapUrl: null,
         fullMapUrl: null,
@@ -1201,13 +1230,13 @@
         eventId: null,
         isPublished: false,
         schedule: [
-          { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pre-Ride on Camp Scout Trails' },
+          { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pre-Ride on Camp Scout Trails & Pit Setup' },
           { time: 'Saturday 8:00 AM', desc: 'High School Races & Hodag Costume Festivities' },
-          { time: 'Sunday 8:30 AM', desc: 'Middle School Races & Team Podiums' }
+          { time: 'Sunday 8:30 AM', desc: 'Middle School Races & North Conference Podiums' }
         ],
         guidelines: [
-          '<strong>Venue:</strong> Scout reservation lakeside singletrack.',
-          '<strong>Camping:</strong> Scout camp cabin/tent sites by registration.'
+          '<strong>Venue:</strong> Scout reservation lakeside singletrack trails.',
+          '<strong>Camping:</strong> Scout camp cabin/tent sites by advance registration.'
         ]
       },
       {
@@ -1215,8 +1244,10 @@
         name: 'Gnarly Nordic Festival',
         dateStr: '09 - 11 Oct 2026',
         venue: 'Nordic Mountain Ski Resort',
+        exactTrailhead: 'Nordic Mountain Main Chalet & MTB Trailhead',
         address: 'W5806 County Rd W, Wild Rose, WI 54984',
         city: 'Wild Rose, WI',
+        warning: '<strong>📍 Ski Resort Venue:</strong> Staging and viewing located directly in front of the main ski chalet bowl.',
         googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984',
         appleMapsUrl: 'https://maps.apple.com/?daddr=W5806+County+Rd+W,+Wild+Rose,+WI+54984&q=Nordic+Mountain',
         eventGuideUrl: 'https://wisconsinmtb.org/events/gnarly-nordic-festival/',
@@ -1227,12 +1258,12 @@
         eventId: null,
         isPublished: false,
         schedule: [
-          { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pre-Ride on Mountain Slopes' },
-          { time: 'Saturday 8:00 AM', desc: 'High School Races' },
-          { time: 'Sunday 8:30 AM', desc: 'Middle School Races & North Conference Finals' }
+          { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pre-Ride on Mountain Slopes & Bergs' },
+          { time: 'Saturday 8:00 AM', desc: 'High School Races & North Conference Finals' },
+          { time: 'Sunday 8:30 AM', desc: 'Middle School Races & Season Podiums' }
         ],
         guidelines: [
-          '<strong>Course:</strong> Ski hill climbs and bermed descents.',
+          '<strong>Course:</strong> Ski hill climbs, bermed descents, and forested singletrack.',
           '<strong>Spectating:</strong> Outstanding spectator visibility from the main ski chalet bowl.'
         ]
       },
@@ -1240,22 +1271,24 @@
         id: 'red-barn',
         name: 'Red Barn State Championship',
         dateStr: '23 - 25 Oct 2026',
-        venue: 'Trek Trails (Trek HQ)',
+        venue: 'Trek Trails & Historic Red Barn (Trek World HQ)',
+        exactTrailhead: 'Trek Headquarters Trails',
         address: '97 Canal Rd, Waterloo, WI 53594',
         city: 'Waterloo, WI',
+        warning: '<strong>🏆 State Championship Finale:</strong> Exclusive access to private Trek World HQ Trails, historic Red Barn festival, pump track, and night ride.',
         googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Trek+Trails+97+Canal+Rd+Waterloo+WI+53594',
         appleMapsUrl: 'https://maps.apple.com/?daddr=97+Canal+Rd,+Waterloo,+WI+53594&q=Trek+Trails',
         eventGuideUrl: 'https://wisconsinmtb.org/events/red-barn-state-championship/',
         embedMapUrl: null,
         fullMapUrl: null,
-        conference: 'State Championship (All Conferences)',
+        conference: 'State Championship (All Wisconsin Conferences Combined)',
         logo: 'logos/red-barn.png',
         eventId: null,
         isPublished: false,
         schedule: [
-          { time: 'Friday 12:00 PM - 5:30 PM', desc: 'State Championship Pre-Ride' },
-          { time: 'Saturday 8:00 AM', desc: 'High School State Championship Finals' },
-          { time: 'Sunday 8:30 AM', desc: 'Middle School State Championship & Season Finale Podiums' }
+          { time: 'Friday 12:00 PM - 5:30 PM', desc: 'State Championship Pre-Ride & Night Ride Festivities' },
+          { time: 'Saturday 8:00 AM', desc: 'High School State Championship Finals & Night Pump Track' },
+          { time: 'Sunday 8:30 AM', desc: 'Middle School State Championship & Season Finale Awards' }
         ],
         guidelines: [
           '<strong>Championship Venue:</strong> Private Trek World Headquarters Trails & Historic Red Barn.',
@@ -1441,6 +1474,11 @@
     }
 
     function renderEventDetails(race) {
+      if (currentTab !== 'details') return;
+      document.getElementById('noticeContainer').innerHTML = '';
+      document.getElementById('controlsPanel').style.display = 'none';
+      document.getElementById('statusBar').style.display = 'none';
+
       const container = document.getElementById('tablesContainer');
       container.innerHTML = `
         <div class="event-details-card">
@@ -1452,8 +1490,13 @@
               
               <!-- Location Info & Address -->
               <div class="event-location-box">
-                <div class="location-venue"><span>📍</span> ${race.venue}</div>
+                <div class="location-venue"><span>📍</span> ${race.exactTrailhead || race.venue}</div>
                 <div class="location-address">${race.address}</div>
+                ${race.warning ? `
+                  <div class="event-warning-banner">
+                    <span>${race.warning}</span>
+                  </div>
+                ` : ''}
               </div>
               
               <div class="event-action-buttons">
@@ -1573,6 +1616,7 @@
     }
 
     async function fetchLiveRaceresultData() {
+      if (currentTab === 'details') return;
       const race = SEASON_RACES[currentRaceIndex];
       if (!race.isPublished || !race.eventId) return;
 
@@ -1619,6 +1663,7 @@
     }
 
     function loadFromLocalStorage(cacheKey) {
+      if (currentTab === 'details') return;
       setOnlineBadge(false);
       try {
         const cachedStr = localStorage.getItem(cacheKey);
@@ -1643,6 +1688,7 @@
     }
 
     function parseUniversalData(resultData, listInfo, cacheKey) {
+      if (currentTab === 'details') return;
       const rawData = resultData?.data;
       const listId = listInfo?.ID || document.getElementById('listSelect').value;
 
@@ -1727,6 +1773,7 @@
     }
 
     function renderNoResultsNotice(msg) {
+      if (currentTab === 'details') return;
       document.getElementById('noticeContainer').innerHTML = `
         <div class="notice-box">
           <span style="font-size:14px;">ℹ️</span>
@@ -1786,6 +1833,7 @@
     }
 
     function renderData() {
+      if (currentTab === 'details') return;
       if (currentRiders.length === 0) return;
 
       const query = document.getElementById('searchInput').value.toLowerCase().trim();
