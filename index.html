@@ -1436,7 +1436,7 @@
             <span>⏱️</span> Live Results
           </div>
           <div class="nav-tab inactive" id="tabEventDetails" onclick="switchTab('details')">
-            <span>📍</span> Event Details
+            <span>📋</span> Event Details
           </div>
         </nav>
       </div>
@@ -1571,6 +1571,12 @@
         logo: 'logos/bluff-bash.png',
         eventId: 418104,
         isPublished: true,
+        // Dedicated SignUp.com Links for Bluff Bash Festival (3 Areas)
+        signups: {
+          volunteer: '81287266078',
+          food: '502983656067',
+          league: '773733678034'
+        },
         schedule: [
           { time: 'Friday 1:00 PM', desc: 'Camping Opens & Pit Zone Setup' },
           { time: 'Friday 2:00 PM - 6:00 PM', desc: 'Pre-Ride Open (Coaches, JV3, Varsity)' },
@@ -1606,6 +1612,12 @@
         logo: 'logos/cable-conquest.png',
         eventId: null,
         isPublished: false,
+        // Dedicated SignUp.com Links for Cable Conquest Festival (to be populated once released by coordinators)
+        signups: {
+          volunteer: null,
+          food: null,
+          league: null
+        },
         schedule: [
           { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pit Zone Setup, Pre-Ride & CAMBA Trail Tour' },
           { time: 'Saturday 8:00 AM', desc: 'High School Racing Waves & Time Trials' },
@@ -1635,6 +1647,12 @@
         logo: 'logos/hodag-hustle.png',
         eventId: null,
         isPublished: false,
+        // Dedicated SignUp.com Links for Hodag Hustle Festival (to be populated once released by coordinators)
+        signups: {
+          volunteer: null,
+          food: null,
+          league: null
+        },
         schedule: [
           { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pre-Ride on Camp Scout Trails & Pit Setup' },
           { time: 'Saturday 8:00 AM', desc: 'High School Races & Hodag Costume Festivities' },
@@ -1663,6 +1681,12 @@
         logo: 'logos/gnarly-nordic.png',
         eventId: null,
         isPublished: false,
+        // Dedicated SignUp.com Links for Gnarly Nordic Festival (to be populated once released by coordinators)
+        signups: {
+          volunteer: null,
+          food: null,
+          league: null
+        },
         schedule: [
           { time: 'Friday 1:00 PM - 6:00 PM', desc: 'Pre-Ride on Mountain Slopes & Bergs' },
           { time: 'Saturday 8:00 AM', desc: 'High School Races & North Conference Finals' },
@@ -1691,6 +1715,12 @@
         logo: 'logos/red-barn.png',
         eventId: null,
         isPublished: false,
+        // Dedicated SignUp.com Links for Red Barn State Championship (to be populated once released by coordinators)
+        signups: {
+          volunteer: null,
+          food: null,
+          league: null
+        },
         schedule: [
           { time: 'Friday 12:00 PM - 5:30 PM', desc: 'State Championship Pre-Ride & Night Ride Festivities' },
           { time: 'Saturday 8:00 AM', desc: 'High School State Championship Finals & Night Pump Track' },
@@ -2038,7 +2068,7 @@
           </div>
           <div class="collapsible-body location-card-body">
             <div class="location-venue-name">
-              <span>📍</span> ${race.exactTrailhead || race.venue}
+              ${race.exactTrailhead || race.venue}
             </div>
             <div class="location-address-text">${race.address}</div>
             ${race.warning ? `
@@ -2067,7 +2097,6 @@
             <div class="signup-hub-header collapsible-header" onclick="toggleCard(this)">
               <div style="display:flex;align-items:center;gap:8px;">
                 <span class="signup-hub-title"><span>🤝</span> Team Volunteers & Race Hospitality</span>
-                <span class="category-badge" style="border-color:var(--accent-red);color:var(--accent-red);">3 AREAS</span>
               </div>
               <span class="card-toggle-icon" title="Toggle Volunteers & Food">▼</span>
             </div>
@@ -2086,7 +2115,7 @@
                     <p class="signup-card-desc">Pit zone setup & teardown, staging grid helpers, feed zone support, and bike checks.</p>
                   </div>
                   <div class="signup-card-hint">
-                    <span>👇</span> Click to View & Sign Up Below
+                    ${race.signups?.volunteer ? '<span>👇</span> Click to View & Sign Up Below' : '<span>⏳</span> Shifts Opening Soon'}
                   </div>
                 </div>
 
@@ -2100,7 +2129,7 @@
                     <p class="signup-card-desc">Team tent meals, racer race-day snacks, hydration coolers, fruit station & grill team.</p>
                   </div>
                   <div class="signup-card-hint">
-                    <span>👇</span> Click to View & Sign Up Below
+                    ${race.signups?.food ? '<span>👇</span> Click to View & Sign Up Below' : '<span>⏳</span> Shifts Opening Soon'}
                   </div>
                 </div>
 
@@ -2114,7 +2143,7 @@
                     <p class="signup-card-desc">Official League course marshals, staging grid staff, finish line & sweep rider shifts.</p>
                   </div>
                   <div class="signup-card-hint">
-                    <span>👇</span> Click to View & Sign Up Below
+                    ${race.signups?.league ? '<span>👇</span> Click to View & Sign Up Below' : '<span>⏳</span> Shifts Opening Soon'}
                   </div>
                 </div>
 
@@ -2127,16 +2156,26 @@
                     <span id="signupViewerTitle"><span>🤝</span> <strong>LAXMTB Team Volunteers</strong> <span class="signup-badge-lax">LAXMTB</span></span>
                   </div>
                   <div style="display:flex;align-items:center;gap:8px;">
-                    <a id="signupViewerDirectBtn" href="${getSignUpUrl('81287266078')}" target="_blank" rel="noopener" class="btn-viewer-direct" onclick="event.stopPropagation()">
-                      <span>✍️</span> Sign Up Direct ↗
+                    <a id="signupViewerDirectBtn" href="${race.signups?.volunteer ? getSignUpUrl(race.signups.volunteer) : '#'}" ${race.signups?.volunteer ? 'target="_blank" rel="noopener"' : ''} class="btn-viewer-direct" ${race.signups?.volunteer ? '' : 'style="opacity:0.6;pointer-events:none;box-shadow:none;"'} onclick="event.stopPropagation()">
+                      <span>${race.signups?.volunteer ? '✍️' : '⏳'}</span> ${race.signups?.volunteer ? 'Sign Up Direct ↗' : 'Shifts Opening Soon'}
                     </a>
                     <span class="card-toggle-icon" id="signupViewerToggleIcon" title="Toggle Embed Viewer">▼</span>
                   </div>
                 </div>
 
                 <div class="collapsible-body" id="signupViewerBody">
-                  <div class="signup-iframe-wrapper">
-                    <iframe id="signupViewerIframe" src="${getSignUpUrl('81287266078')}" width="100%" height="100%" loading="lazy" title="Interactive SignUp.com Sheet"></iframe>
+                  <div class="signup-iframe-wrapper" id="signupViewerContent">
+                    ${race.signups?.volunteer ? `
+                      <iframe id="signupViewerIframe" src="${getSignUpUrl(race.signups.volunteer)}" width="100%" height="100%" loading="lazy" title="Interactive SignUp.com Sheet"></iframe>
+                    ` : `
+                      <div style="padding:56px 20px;text-align:center;background:var(--bg-card);display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
+                        <span style="font-size:38px;margin-bottom:12px;">📋</span>
+                        <h3 style="font-size:16px;font-weight:700;color:var(--text-main);margin:0 0 6px 0;">LAXMTB Team Volunteers • Opening Soon</h3>
+                        <p style="font-size:13px;color:var(--text-muted);max-width:440px;margin:0 auto;line-height:1.5;">
+                          SignUp.com shifts for <strong>${race.name}</strong> will open 2 weeks prior to race weekend. Links will automatically appear here once released!
+                        </p>
+                      </div>
+                    `}
                   </div>
                 </div>
               </div>
@@ -2170,32 +2209,26 @@
             
             <!-- Schedule Section -->
             <div class="detail-section">
-              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;margin-bottom:12px;">
                 <h3 style="margin:0;"><span>⏱️</span> Weekend Schedule Highlights</h3>
-                <span class="card-toggle-icon" title="Toggle Schedule">▼</span>
               </div>
-              <div class="collapsible-body">
-                <ul class="schedule-list">
-                  ${race.schedule.map(s => `
-                    <li class="schedule-item">
-                      <span class="schedule-time">${s.time}</span>
-                      <span class="schedule-desc">${s.desc}</span>
-                    </li>
-                  `).join('')}
-                </ul>
-              </div>
+              <ul class="schedule-list">
+                ${race.schedule.map(s => `
+                  <li class="schedule-item">
+                    <span class="schedule-time">${s.time}</span>
+                    <span class="schedule-desc">${s.desc}</span>
+                  </li>
+                `).join('')}
+              </ul>
             </div>
 
             <!-- Guidelines & Venue Info Section -->
             <div class="detail-section">
-              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;margin-bottom:12px;">
                 <h3 style="margin:0;"><span>🏕️</span> Venue Guidelines & Spectator Info</h3>
-                <span class="card-toggle-icon" title="Toggle Guidelines">▼</span>
               </div>
-              <div class="collapsible-body">
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                  ${race.guidelines.map(g => `<p class="guideline-item">• ${g}</p>`).join('')}
-                </div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                ${race.guidelines.map(g => `<p class="guideline-item">• ${g}</p>`).join('')}
               </div>
             </div>
 
@@ -2287,7 +2320,9 @@
       const config = SIGNUP_DATA[key];
       if (!config) return;
 
-      const targetUrl = getSignUpUrl(config.activityId);
+      const race = SEASON_RACES[currentRaceIndex];
+      const activityId = race?.signups?.[key] || null;
+      const targetUrl = activityId ? getSignUpUrl(activityId) : null;
 
       // 1. Update selector card highlight
       document.querySelectorAll('.signup-action-card').forEach(card => {
@@ -2307,18 +2342,46 @@
 
       const directBtn = document.getElementById('signupViewerDirectBtn');
       if (directBtn) {
-        directBtn.href = targetUrl;
-        directBtn.className = `btn-viewer-direct ${config.btnClass || ''}`.trim();
-        directBtn.innerHTML = `<span>✍️</span> Sign Up Direct ↗`;
+        if (targetUrl) {
+          directBtn.href = targetUrl;
+          directBtn.target = '_blank';
+          directBtn.rel = 'noopener';
+          directBtn.className = `btn-viewer-direct ${config.btnClass || ''}`.trim();
+          directBtn.style.opacity = '1';
+          directBtn.style.pointerEvents = 'auto';
+          directBtn.style.boxShadow = '';
+          directBtn.innerHTML = `<span>✍️</span> Sign Up Direct ↗`;
+        } else {
+          directBtn.href = '#';
+          directBtn.removeAttribute('target');
+          directBtn.removeAttribute('rel');
+          directBtn.className = 'btn-viewer-direct';
+          directBtn.style.opacity = '0.6';
+          directBtn.style.pointerEvents = 'none';
+          directBtn.style.boxShadow = 'none';
+          directBtn.innerHTML = `<span>⏳</span> Shifts Opening Soon`;
+        }
       }
 
-      // 4. Update iframe URL
-      const iframe = document.getElementById('signupViewerIframe');
-      if (iframe) {
-        iframe.src = targetUrl;
+      // 3. Update viewer content (iframe vs placeholder)
+      const contentEl = document.getElementById('signupViewerContent');
+      if (contentEl) {
+        if (targetUrl) {
+          contentEl.innerHTML = `<iframe id="signupViewerIframe" src="${targetUrl}" width="100%" height="100%" loading="lazy" title="Interactive SignUp.com Sheet"></iframe>`;
+        } else {
+          contentEl.innerHTML = `
+            <div style="padding:56px 20px;text-align:center;background:var(--bg-card);display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;">
+              <span style="font-size:38px;margin-bottom:12px;">📋</span>
+              <h3 style="font-size:16px;font-weight:700;color:var(--text-main);margin:0 0 6px 0;">${config.title} • Opening Soon</h3>
+              <p style="font-size:13px;color:var(--text-muted);max-width:440px;margin:0 auto;line-height:1.5;">
+                SignUp.com shifts for <strong>${race ? race.name : 'this event'}</strong> will open 2 weeks prior to race weekend. Links will automatically appear here once released!
+              </p>
+            </div>
+          `;
+        }
       }
 
-      // 5. Ensure viewer is open/expanded
+      // 4. Ensure viewer is open/expanded
       const viewerBody = document.getElementById('signupViewerBody');
       const toggleIcon = document.getElementById('signupViewerToggleIcon');
       if (viewerBody && viewerBody.classList.contains('collapsed')) {
@@ -2326,7 +2389,7 @@
         if (toggleIcon) toggleIcon.classList.remove('collapsed');
       }
 
-      // 6. Smooth scroll to viewer
+      // 5. Smooth scroll to viewer
       if (autoScroll) {
         const viewer = document.getElementById('signupViewerContainer');
         if (viewer) {
