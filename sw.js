@@ -1,4 +1,4 @@
-const CACHE_NAME = 'laxmtb-v2';
+const CACHE_NAME = 'laxmtb-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -10,7 +10,8 @@ const ASSETS_TO_CACHE = [
   './logos/cable-conquest.png',
   './logos/hodag-hustle.png',
   './logos/gnarly-nordic.png',
-  './logos/red-barn.png'
+  './logos/red-barn.png',
+  './logos/nica-logo.png'
 ];
 
 self.addEventListener('install', (event) => {

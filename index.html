@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>LAX MTB | Race Central</title>
   
+  <!-- Security & Privacy Policy -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  
   <!-- PWA Manifest & App Icons -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
@@ -1107,6 +1111,46 @@
       }
     }
 
+    /* In-App Fullscreen Map Mode */
+    .event-map-container.in-app-fullscreen {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      margin: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      z-index: 999999 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: #0d0d0d !important;
+      box-shadow: none !important;
+    }
+
+    .event-map-container.in-app-fullscreen .event-map-header {
+      padding: 12px 18px !important;
+      background: var(--bg-card) !important;
+      border-bottom: 2px solid var(--accent-red) !important;
+      flex-shrink: 0;
+    }
+
+    .event-map-container.in-app-fullscreen .collapsible-body {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      height: calc(100vh - 52px) !important;
+    }
+
+    .event-map-container.in-app-fullscreen .map-iframe-wrapper {
+      flex: 1 !important;
+      width: 100% !important;
+      height: 100% !important;
+      background: #000000;
+    }
+
     /* SignUp.com Volunteer & Hospitality Hub */
     .signup-hub-section {
       margin: 0 0 16px 0;
@@ -2112,7 +2156,7 @@
           </div>
           ${race.eventGuideUrl ? `
             <div class="event-hero-actions">
-              <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-hero-league" title="Visit the official Wisconsin League Event Page on NICA">
+              <a href="${race.eventGuideUrl}" target="_blank" rel="noopener noreferrer" class="btn-hero-league" title="Visit the official Wisconsin League Event Page on NICA">
                 <img src="logos/nica-logo.png" alt="NICA" class="nica-badge-icon" onerror="this.style.display='none'">
                 <span>Wisconsin League Page</span>
               </a>
@@ -2140,10 +2184,10 @@
               </div>
             ` : ''}
             <div class="event-action-buttons">
-              <a href="${race.googleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-google-maps">
+              <a href="${race.googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-google-maps">
                 <span>🗺️</span> Google Maps
               </a>
-              <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps">
+              <a href="${race.appleMapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-apple-maps">
                 <span>🍏</span> Apple Maps (iPhone)
               </a>
             </div>
@@ -2214,7 +2258,7 @@
                     <span id="signupViewerTitle"><span>🤝</span> <strong>LAXMTB Team Volunteers</strong> <span class="signup-badge-lax">LAXMTB</span></span>
                   </div>
                   <div style="display:flex;align-items:center;gap:8px;">
-                    <a id="signupViewerDirectBtn" href="${race.signups?.volunteer ? getSignUpUrl(race.signups.volunteer) : '#'}" ${race.signups?.volunteer ? 'target="_blank" rel="noopener"' : ''} class="btn-viewer-direct" ${race.signups?.volunteer ? '' : 'style="opacity:0.6;pointer-events:none;box-shadow:none;"'} onclick="event.stopPropagation()">
+                    <a id="signupViewerDirectBtn" href="${race.signups?.volunteer ? getSignUpUrl(race.signups.volunteer) : '#'}" ${race.signups?.volunteer ? 'target="_blank" rel="noopener noreferrer"' : ''} class="btn-viewer-direct" ${race.signups?.volunteer ? '' : 'style="opacity:0.6;pointer-events:none;box-shadow:none;"'} onclick="event.stopPropagation()">
                       <span>${race.signups?.volunteer ? '✍️' : '⏳'}</span> ${race.signups?.volunteer ? 'Sign Up Direct ↗' : 'Shifts Opening Soon'}
                     </a>
                     <span class="card-toggle-icon collapsed" id="signupViewerToggleIcon" title="Toggle Embed Viewer">▼</span>
@@ -2243,21 +2287,19 @@
 
           <!-- Interactive Course & Venue Map Section -->
           ${race.embedMapUrl ? `
-            <div class="event-map-container">
+            <div class="event-map-container" id="eventMapContainer">
               <div class="event-map-header collapsible-header" onclick="toggleCard(this)">
                 <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
                 <div style="display:flex;align-items:center;gap:6px;">
-                  ${race.fullMapUrl ? `
-                    <a href="${race.fullMapUrl}" target="_blank" rel="noopener" class="btn-icon" onclick="event.stopPropagation()" style="font-size:11px;padding:4px 8px;">
-                      <span>↗️</span> Fullscreen Map
-                    </a>
-                  ` : ''}
-                  <span class="card-toggle-icon" title="Toggle Map">▼</span>
+                  <button type="button" class="btn-icon" id="mapAppFullscreenBtn" onclick="toggleMapAppFullscreen(event)" style="font-size:11px;padding:4px 10px;font-weight:700;">
+                    <span id="mapFsIcon">⛶</span> <span id="mapFsLabel">Fullscreen Map</span>
+                  </button>
+                  <span class="card-toggle-icon" id="mapToggleChevron" title="Toggle Map">▼</span>
                 </div>
               </div>
               <div class="collapsible-body">
                 <div class="map-iframe-wrapper">
-                  <iframe src="${race.embedMapUrl}" width="100%" height="100%" loading="lazy" title="Course & Venue Map for ${race.name}"></iframe>
+                  <iframe src="${race.embedMapUrl}" width="100%" height="100%" loading="lazy" allowfullscreen title="Course & Venue Map for ${race.name}"></iframe>
                 </div>
               </div>
             </div>
@@ -2306,10 +2348,10 @@
           <p style="margin-top:4px;font-size:12px;color:var(--text-muted);">📍 <strong>${race.exactTrailhead || race.venue}</strong> • ${race.address}</p>
           
           <div style="margin-top:14px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
-            <a href="${race.googleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-google-maps" style="font-size:11px;padding:5px 10px;min-height:30px;">
+            <a href="${race.googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-google-maps" style="font-size:11px;padding:5px 10px;min-height:30px;">
               <span>🗺️</span> Google Maps
             </a>
-            <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps" style="font-size:11px;padding:5px 10px;min-height:30px;">
+            <a href="${race.appleMapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-apple-maps" style="font-size:11px;padding:5px 10px;min-height:30px;">
               <span>🍏</span> Apple Maps
             </a>
             <button class="btn-icon" onclick="switchTab('details')" style="font-size:11px;padding:5px 10px;min-height:30px;">
@@ -2403,7 +2445,7 @@
         if (targetUrl) {
           directBtn.href = targetUrl;
           directBtn.target = '_blank';
-          directBtn.rel = 'noopener';
+          directBtn.rel = 'noopener noreferrer';
           directBtn.className = `btn-viewer-direct ${config.btnClass || ''}`.trim();
           directBtn.style.opacity = '1';
           directBtn.style.pointerEvents = 'auto';
@@ -2558,6 +2600,17 @@
         console.warn('[LAXMTB] Live fetch error, restoring cached data:', err);
         loadFromLocalStorage(cacheKey);
       }
+    }
+
+    // Security HTML Sanitizer to prevent XSS from API payloads
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
     function loadFromLocalStorage(cacheKey) {
@@ -2805,10 +2858,10 @@
         catTitle.onclick = function() { toggleCard(this); };
         catTitle.innerHTML = `
           <div style="display:flex;align-items:center;gap:8px;">
-            <span>${cat}</span>
+            <span>${escapeHtml(cat)}</span>
             <span class="category-badge">${totalInCat} RIDERS</span>
           </div>
-          <span class="card-toggle-icon" title="Toggle ${cat}">▼</span>
+          <span class="card-toggle-icon" title="Toggle ${escapeHtml(cat)}">▼</span>
         `;
         catCard.appendChild(catTitle);
 
@@ -2821,7 +2874,7 @@
         sortedWaveKeys.forEach(wKey => {
           const waveHeader = document.createElement('div');
           waveHeader.className = 'wave-divider';
-          waveHeader.innerHTML = `<span>🚩</span> ${wKey.includes('Wave') ? wKey : `Wave: ${wKey}`}`;
+          waveHeader.innerHTML = `<span>🚩</span> ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}`;
           cardBody.appendChild(waveHeader);
 
           const tableWrapper = document.createElement('div');
@@ -2855,13 +2908,13 @@
             const isTarget = targetTeamKeywords.some(kw => r.team && r.team.toLowerCase().includes(kw));
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td style="color:var(--text-muted);font-weight:600;">${r.pl || '-'}</td>
-              <td><span class="plate-number">#${r.no || r.bib}</span></td>
-              <td><span class="rider-name">${r.name}</span></td>
-              <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${r.team}</span></td>
-              <td style="text-align:center;"><span class="div-tag">D${r.div || '1'}</span></td>
-              <td style="text-align:center;color:var(--text-muted);">${r.wv || '1'}</td>
-              <td style="text-align:center;font-weight:700;color:var(--accent-red);">${r.return_val || '+'}</td>
+              <td style="color:var(--text-muted);font-weight:600;">${escapeHtml(r.pl || '-')}</td>
+              <td><span class="plate-number">#${escapeHtml(r.no || r.bib)}</span></td>
+              <td><span class="rider-name">${escapeHtml(r.name)}</span></td>
+              <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${escapeHtml(r.team)}</span></td>
+              <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
+              <td style="text-align:center;color:var(--text-muted);">${escapeHtml(r.wv || '1')}</td>
+              <td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>
             `;
             tbody.appendChild(tr);
           });
@@ -2894,10 +2947,10 @@
         teamHeader.onclick = function() { toggleCard(this); };
         teamHeader.innerHTML = `
           <div style="display:flex;align-items:center;gap:8px;">
-            <span>${team}</span>
+            <span>${escapeHtml(team)}</span>
             <span class="category-badge">${grouped[team].length} RIDERS</span>
           </div>
-          <span class="card-toggle-icon" title="Toggle ${team}">▼</span>
+          <span class="card-toggle-icon" title="Toggle ${escapeHtml(team)}">▼</span>
         `;
         teamCard.appendChild(teamHeader);
 
@@ -2935,12 +2988,12 @@
         teamRiders.forEach(r => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td><span class="plate-number">#${r.bib || r.no}</span></td>
-            <td><span class="rider-name">${r.name}</span></td>
-            <td><strong style="color:var(--text-main);">${r.category || ''}</strong></td>
-            <td style="text-align:center;"><span class="div-tag">D${r.div || '1'}</span></td>
-            <td style="text-align:center;color:var(--text-muted);">${r.wave || 'Wave 1'}</td>
-            <td style="text-align:center;font-weight:700;color:var(--accent-red);">${r.return_val || '+'}</td>
+            <td><span class="plate-number">#${escapeHtml(r.bib || r.no)}</span></td>
+            <td><span class="rider-name">${escapeHtml(r.name)}</span></td>
+            <td><strong style="color:var(--text-main);">${escapeHtml(r.category || '')}</strong></td>
+            <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
+            <td style="text-align:center;color:var(--text-muted);">${escapeHtml(r.wave || 'Wave 1')}</td>
+            <td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>
           `;
           tbody.appendChild(tr);
         });
@@ -3001,6 +3054,78 @@
         autoRefreshTimer = setInterval(fetchLiveRaceresultData, intervalSec * 1000);
       }
     }
+
+    // In-App Fullscreen Map Controller
+    function toggleMapAppFullscreen(e) {
+      if (e) e.stopPropagation();
+      const mapContainer = document.getElementById('eventMapContainer');
+      if (!mapContainer) return;
+
+      const isFs = mapContainer.classList.toggle('in-app-fullscreen');
+      const icon = document.getElementById('mapFsIcon');
+      const label = document.getElementById('mapFsLabel');
+      const btn = document.getElementById('mapAppFullscreenBtn');
+      const toggleChevron = document.getElementById('mapToggleChevron');
+      const body = mapContainer.querySelector('.collapsible-body');
+
+      if (isFs) {
+        if (body && body.classList.contains('collapsed')) {
+          body.classList.remove('collapsed');
+          if (toggleChevron) toggleChevron.classList.remove('collapsed');
+        }
+        if (icon) icon.textContent = '✕';
+        if (label) label.textContent = 'Exit Fullscreen';
+        if (btn) {
+          btn.style.borderColor = 'var(--accent-red)';
+          btn.style.background = 'rgba(220, 38, 38, 0.15)';
+          btn.style.color = 'var(--accent-red)';
+        }
+        document.body.style.overflow = 'hidden';
+
+        try {
+          if (!document.fullscreenElement && mapContainer.requestFullscreen) {
+            mapContainer.requestFullscreen().catch(() => {});
+          }
+        } catch(err) {}
+      } else {
+        if (icon) icon.textContent = '⛶';
+        if (label) label.textContent = 'Fullscreen Map';
+        if (btn) {
+          btn.style.borderColor = '';
+          btn.style.background = '';
+          btn.style.color = '';
+        }
+        document.body.style.overflow = '';
+
+        try {
+          if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          }
+        } catch(err) {}
+      }
+    }
+
+    function exitMapAppFullscreen() {
+      const mapContainer = document.getElementById('eventMapContainer');
+      if (mapContainer && mapContainer.classList.contains('in-app-fullscreen')) {
+        toggleMapAppFullscreen();
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        const mapContainer = document.getElementById('eventMapContainer');
+        if (mapContainer && mapContainer.classList.contains('in-app-fullscreen')) {
+          exitMapAppFullscreen();
+        }
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        exitMapAppFullscreen();
+      }
+    });
 
     initTheme();
     renderRaceSwitcher();
