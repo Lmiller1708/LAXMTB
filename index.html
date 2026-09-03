@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>LAX MTB | Race Central (Offline Ready)</title>
+  <title>LAX MTB | Race Central</title>
   
   <!-- PWA Manifest & App Icons -->
   <link rel="manifest" href="manifest.json">
@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
   <style>
-    /* Strict Pure Black & Neutral Gray Palette (Zero Brown/Warm Tints) */
+    /* Strict Pure Black & Neutral Gray Palette */
     :root[data-theme="dark"] {
       --bg-body: #0d0d0d;
       --bg-header: #141414;
@@ -88,9 +88,9 @@
       background-color: var(--bg-body);
       color: var(--text-main);
       min-height: 100vh;
-      line-height: 1.45;
+      line-height: 1.4;
       transition: background-color 0.15s ease, color 0.15s ease;
-      padding-bottom: 60px;
+      padding-bottom: 50px;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -99,7 +99,6 @@
       background: var(--bg-header);
       border-bottom: 1px solid var(--border);
       position: relative;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
 
     .site-header::before {
@@ -115,35 +114,34 @@
     .header-container {
       max-width: 1220px;
       margin: 0 auto;
-      padding: 16px 16px 0 16px;
+      padding: 12px 14px 0 14px;
     }
 
     .header-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
     .brand-box {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 10px;
     }
 
     .team-logo {
-      width: 64px;
-      height: 56px;
+      width: 46px;
+      height: 40px;
       object-fit: contain;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
       flex-shrink: 0;
     }
 
     .brand-text h1 {
       font-family: 'Teko', sans-serif;
-      font-size: 30px;
+      font-size: 26px;
       line-height: 0.95;
       letter-spacing: 0.8px;
       color: var(--text-main);
@@ -157,17 +155,17 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .theme-toggle-btn {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 6px 12px;
-      min-height: 36px;
+      gap: 4px;
+      padding: 4px 8px;
+      min-height: 30px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       background: var(--bg-subtle);
@@ -176,26 +174,20 @@
       transition: all 0.15s ease;
     }
 
-    .theme-toggle-btn:hover {
-      border-color: var(--border-strong);
-      background: var(--bg-card-hover);
-    }
-
     .live-status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      min-height: 36px;
-      border-radius: 20px;
-      font-size: 12px;
+      gap: 5px;
+      padding: 4px 8px;
+      min-height: 30px;
+      border-radius: 16px;
+      font-size: 11px;
       font-weight: 700;
       background: rgba(16, 185, 129, 0.12);
       color: #10b981;
       border: 1px solid rgba(16, 185, 129, 0.3);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      transition: all 0.2s ease;
+      letter-spacing: 0.4px;
     }
 
     .live-status-badge.offline {
@@ -205,8 +197,8 @@
     }
 
     .pulse-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background-color: #10b981;
       animation: pulse 1.6s infinite;
@@ -223,23 +215,24 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
-    /* Season Race Switcher Tabs (5 Races with Official Logos) */
+    /* Season Race Switcher Tabs (Ultra-Compact Mobile Swipe) */
     .race-switcher-bar {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: 12px;
+      padding-bottom: 8px;
       border-bottom: 1px solid var(--border);
-      scrollbar-width: thin;
+      scrollbar-width: none;
     }
+    .race-switcher-bar::-webkit-scrollbar { display: none; }
 
     .race-tab-btn {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      min-height: 52px;
+      gap: 8px;
+      padding: 6px 10px;
+      min-height: 44px;
       border-radius: 6px;
       border: 1px solid var(--border);
       background: var(--bg-subtle);
@@ -251,26 +244,18 @@
       text-align: left;
     }
 
-    .race-tab-btn:hover {
-      border-color: var(--border-strong);
-      background: var(--bg-card-hover);
-      color: var(--text-main);
-    }
-
     .race-tab-btn.active {
       background: var(--race-tab-active-bg);
       border-color: var(--race-tab-active-border);
-      border-top: 3px solid var(--race-tab-active-border);
+      border-top: 2px solid var(--race-tab-active-border);
       color: var(--text-main);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
     .tab-mini-logo {
-      width: 36px;
-      height: 36px;
+      width: 28px;
+      height: 28px;
       object-fit: contain;
       flex-shrink: 0;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
     }
 
     .tab-text-col {
@@ -279,7 +264,7 @@
     }
 
     .race-tab-date {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       color: var(--accent-red);
       text-transform: uppercase;
@@ -289,7 +274,6 @@
     .race-tab-title {
       font-size: 12px;
       font-weight: 700;
-      margin-top: 1px;
     }
 
     .race-tab-location {
@@ -302,33 +286,27 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      padding-top: 8px;
+      gap: 8px;
+      padding: 6px 0 8px 0;
     }
 
     .nav-tabs {
       display: flex;
-      gap: 20px;
+      gap: 16px;
     }
 
     .nav-tab {
-      padding: 8px 2px 10px 2px;
+      padding: 6px 2px;
       font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.5px;
       color: var(--text-muted);
       cursor: pointer;
       position: relative;
-      transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-    }
-
-    .nav-tab:hover {
-      color: var(--text-main);
+      gap: 4px;
     }
 
     .nav-tab.active {
@@ -338,70 +316,88 @@
     .nav-tab.active::after {
       content: '';
       position: absolute;
-      bottom: 0;
+      bottom: -8px;
       left: 0;
       right: 0;
-      height: 3px;
+      height: 2px;
       background: var(--accent-red);
-      border-radius: 3px 3px 0 0;
     }
 
     .current-race-badge {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .header-race-thumb {
-      width: 24px;
-      height: 24px;
-      object-fit: contain;
+      gap: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* Main Container */
     .main-container {
       max-width: 1220px;
-      margin: 16px auto 0 auto;
-      padding: 0 12px;
+      margin: 10px auto 0 auto;
+      padding: 0 10px;
     }
 
-    /* Controls Panel */
-    .controls-panel {
+    /* Ultra-Compact Sticky Search & Filter Toolbar */
+    .compact-toolbar {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 12px 14px;
-      margin-bottom: 14px;
-      box-shadow: var(--shadow-card);
-    }
-
-    .top-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
+      padding: 8px 10px;
       margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
-    .actions-left {
+    .toolbar-main-row {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
-      min-height: 38px;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 28px 7px 10px;
+      font-size: 13px;
+      outline: none;
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      min-height: 34px;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-red);
+    }
+
+    .search-clear-btn {
+      position: absolute;
+      right: 6px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px 6px;
+    }
+
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 10px;
+      min-height: 34px;
       font-size: 12px;
       font-weight: 600;
       border-radius: 6px;
@@ -409,66 +405,77 @@
       border: 1px solid var(--border);
       background: var(--bg-subtle);
       color: var(--text-main);
-      transition: all 0.15s ease;
-      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    .btn:hover {
-      border-color: var(--border-strong);
+    .btn-icon:hover {
       background: var(--bg-card-hover);
+      border-color: var(--border-strong);
     }
 
-    .btn-primary {
+    .btn-icon.active-filter {
       background: var(--accent-red);
       border-color: var(--accent-red);
-      color: #ffffff;
+      color: #fff;
     }
 
-    .btn-primary:hover {
-      background: var(--accent-red-hover);
-      border-color: var(--accent-red-hover);
-    }
-
-    .search-box {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-grow: 1;
-      max-width: 320px;
-    }
-
-    .search-input {
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 12px;
-      min-height: 38px;
-      font-size: 13px;
-      width: 100%;
-      outline: none;
-      background: var(--bg-subtle);
-      color: var(--text-main);
-    }
-
-    .search-input:focus {
-      border-color: var(--accent-red);
-    }
-
-    .filters-row {
-      display: flex;
+    /* Collapsible Filter Panel */
+    .collapsible-filters {
+      display: none;
+      padding-top: 10px;
+      margin-top: 8px;
+      border-top: 1px solid var(--border);
       gap: 8px;
-      flex-wrap: wrap;
+      flex-direction: column;
+    }
+
+    .collapsible-filters.show {
+      display: flex;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    @media (min-width: 768px) {
+      .filters-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      .collapsible-filters {
+        display: flex !important;
+      }
+      .toggle-filter-btn {
+        display: none;
+      }
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .filter-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
     }
 
     .select-dropdown {
-      padding: 8px 12px;
-      min-height: 38px;
-      font-size: 13px;
+      padding: 6px 10px;
+      min-height: 34px;
+      font-size: 12px;
       border: 1px solid var(--border);
       border-radius: 6px;
       background-color: var(--bg-subtle);
       color: var(--text-main);
       outline: none;
-      flex: 1 1 180px;
+      width: 100%;
       cursor: pointer;
     }
 
@@ -476,14 +483,42 @@
       border-color: var(--accent-red);
     }
 
+    /* Active Filter Summary Bar */
+    .filter-summary-chips {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .filter-summary-chips::-webkit-scrollbar { display: none; }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .filter-chip strong {
+      color: var(--text-main);
+    }
+
     /* Status Bar */
     .status-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
-      margin-bottom: 14px;
+      margin-bottom: 8px;
       padding: 0 4px;
     }
 
@@ -498,48 +533,47 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
-      margin-bottom: 18px;
+      margin-bottom: 12px;
       box-shadow: var(--shadow-card);
     }
 
     .category-header {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 800;
       color: var(--text-main);
-      padding: 10px 14px;
+      padding: 8px 12px;
       background: var(--bg-subtle);
       border-bottom: 1px solid var(--border);
-      border-left: 4px solid var(--accent-red);
+      border-left: 3px solid var(--accent-red);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .category-badge {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       color: var(--text-muted);
       background: var(--bg-card);
       border: 1px solid var(--border);
-      padding: 2px 8px;
-      border-radius: 12px;
-      letter-spacing: 0.3px;
+      padding: 1px 6px;
+      border-radius: 10px;
     }
 
     .wave-divider {
       background: var(--wave-bg);
       color: var(--wave-text);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
-      padding: 7px 14px;
+      letter-spacing: 0.5px;
+      padding: 5px 12px;
       border-left: 3px solid var(--wave-border);
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
     /* Responsive Table Container */
@@ -552,25 +586,25 @@
     .results-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
+      font-size: 12px;
       text-align: left;
-      min-width: 580px;
+      min-width: 520px;
     }
 
     .results-table th {
       background-color: var(--bg-subtle);
       color: var(--text-muted);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      padding: 9px 12px;
+      padding: 7px 10px;
       border-bottom: 1px solid var(--border);
       white-space: nowrap;
     }
 
     .results-table td {
-      padding: 9px 12px;
+      padding: 7px 10px;
       border-bottom: 1px solid var(--border);
       color: var(--text-main);
       white-space: nowrap;
@@ -588,15 +622,14 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
-      padding: 3px 8px;
+      padding: 2px 6px;
       background: var(--plate-bg);
       color: var(--plate-text);
       border: 1px solid var(--plate-border);
       border-radius: 4px;
-      letter-spacing: 0.3px;
-      min-width: 44px;
+      min-width: 40px;
     }
 
     .rider-name {
@@ -615,16 +648,16 @@
 
     .div-tag {
       display: inline-block;
-      padding: 1px 6px;
+      padding: 1px 5px;
       border-radius: 3px;
       background: var(--bg-subtle);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--text-muted);
     }
 
     .no-results {
-      padding: 40px 16px;
+      padding: 30px 16px;
       text-align: center;
       color: var(--text-muted);
       background: var(--bg-card);
@@ -632,66 +665,41 @@
       border-radius: 8px;
     }
 
-    /* Prominent Official Upcoming Race Card with Extracted Logo */
     .upcoming-race-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 36px 20px;
+      padding: 28px 16px;
       text-align: center;
       box-shadow: var(--shadow-card);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .upcoming-logo-hero {
-      max-width: 240px;
-      max-height: 130px;
+      max-width: 200px;
+      max-height: 110px;
       object-fit: contain;
-      margin: 0 auto 16px auto;
+      margin: 0 auto 12px auto;
       display: block;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
     }
 
     .notice-box {
       background: var(--accent-red-subtle);
       border: 1px solid rgba(220, 38, 38, 0.25);
       border-radius: 6px;
-      padding: 12px 14px;
-      margin-bottom: 14px;
-      font-size: 13px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 12px;
       color: var(--accent-red);
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-
-    /* Mobile Responsive Optimizations */
-    @media (max-width: 768px) {
-      .header-top {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .header-controls {
-        width: 100%;
-        justify-content: space-between;
-      }
-      .search-box {
-        max-width: 100%;
-      }
-      .actions-left {
-        width: 100%;
-      }
-      .filters-row {
-        flex-direction: column;
-      }
-      .select-dropdown {
-        width: 100%;
-      }
+      gap: 6px;
     }
 
     @media print {
       body { background: #fff !important; color: #000 !important; }
-      .controls-panel, .site-header, .race-switcher-bar { box-shadow: none; }
+      .compact-toolbar, .site-header, .race-switcher-bar { box-shadow: none; }
       .theme-toggle-btn { display: none; }
     }
   </style>
@@ -722,7 +730,7 @@
 
       </div>
 
-      <!-- 5-Race Season Switcher Tabs with Official Logos -->
+      <!-- 5-Race Season Switcher Tabs -->
       <div class="race-switcher-bar" id="raceSwitcherBar">
         <!-- Rendered by JS -->
       </div>
@@ -751,60 +759,87 @@
 
     <div id="noticeContainer"></div>
     
-    <!-- Controls Panel -->
-    <div class="controls-panel" id="controlsPanel">
-      <div class="top-toolbar">
-        <div class="actions-left">
-          <button class="btn btn-primary" onclick="fetchLiveRaceresultData()">
-            <span id="refreshIcon">🔄</span> Refresh
-          </button>
-          <button class="btn" onclick="window.print()">
-            <span>📄</span> Print / PDF
-          </button>
-          <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
-            <span>Auto:</span>
-            <select id="autoRefreshInterval" class="select-dropdown" style="min-width:90px;min-height:36px;padding:4px 8px;flex:none;" onchange="setupAutoRefresh()">
+    <!-- Compact Sticky-Style Toolbar (Maximum Screen Space for Lists) -->
+    <div class="compact-toolbar" id="controlsPanel">
+      <div class="toolbar-main-row">
+        
+        <!-- Quick Search -->
+        <div class="search-input-wrapper">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search rider, plate #, team..." oninput="onFilterChange()">
+          <button class="search-clear-btn" onclick="clearSearch()">✕</button>
+        </div>
+
+        <!-- Filter Toggle Button (Mobile) -->
+        <button class="btn-icon toggle-filter-btn" id="filterToggleBtn" onclick="toggleFilterDrawer()">
+          <span>⚙️</span> <span id="filterBtnLabel">Filter</span>
+        </button>
+
+        <!-- Refresh Button -->
+        <button class="btn-icon" onclick="fetchLiveRaceresultData()" title="Refresh live data">
+          <span>🔄</span>
+        </button>
+
+      </div>
+
+      <!-- Collapsible Detailed Filters (Takes zero space when closed on mobile) -->
+      <div class="collapsible-filters" id="collapsibleFilters">
+        <div class="filters-grid">
+          
+          <div class="filter-group">
+            <label class="filter-label">Group By / View</label>
+            <select id="listSelect" class="select-dropdown" onchange="onListDropdownChange()">
+              <option value="22E0EB">Category & Wave</option>
+              <option value="747B52">By Team</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Category</label>
+            <select id="categoryFilter" class="select-dropdown" onchange="onFilterChange()">
+              <option value="ALL">&lt;All Categories&gt;</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Team Scope</label>
+            <select id="teamFilter" class="select-dropdown" onchange="onFilterChange()">
+              <option value="DEFAULT_TEAMS">All LAX Area Teams (La Crosse, Holmen, La Crescent)</option>
+              <option value="ALL">&lt;Show All 44 Event Teams&gt;</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+          <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+            <span>Auto-Refresh:</span>
+            <select id="autoRefreshInterval" class="select-dropdown" style="width:auto;min-height:28px;padding:2px 6px;" onchange="setupAutoRefresh()">
               <option value="0">Off</option>
               <option value="15">15s</option>
               <option value="30" selected>30s</option>
               <option value="60">60s</option>
             </select>
           </div>
-        </div>
 
-        <div class="search-box">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search rider, plate #, team..." oninput="renderData()">
-          <button class="btn" onclick="clearSearch()">✕</button>
+          <button class="btn-icon" style="min-height:28px;padding:3px 8px;font-size:11px;" onclick="window.print()">
+            <span>📄</span> Print / PDF
+          </button>
         </div>
       </div>
 
-      <div class="filters-row">
-        <!-- List View Dropdown -->
-        <select id="listSelect" class="select-dropdown" onchange="onListDropdownChange()">
-          <option value="22E0EB">Rider List - By Category & Wave</option>
-          <option value="747B52">Rider List - By Team</option>
-        </select>
-
-        <!-- Category Dropdown -->
-        <select id="categoryFilter" class="select-dropdown" onchange="renderData()">
-          <option value="ALL">&lt;All Categories&gt;</option>
-        </select>
-
-        <!-- Team Dropdown -->
-        <select id="teamFilter" class="select-dropdown" onchange="renderData()">
-          <option value="DEFAULT_TEAMS">All LAX Area Teams (La Crosse, Holmen, La Crescent)</option>
-          <option value="ALL">&lt;Show All 44 Event Teams&gt;</option>
-        </select>
+      <!-- Active Filter Chips (Instant status without opening drawer) -->
+      <div class="filter-summary-chips" id="filterSummaryChips">
+        <!-- Rendered by JS -->
       </div>
     </div>
 
     <!-- Status Bar -->
     <div class="status-bar" id="statusBar">
       <span id="statusCount">Loading data...</span>
-      <span id="lastUpdatedText">Connecting to RACE RESULT...</span>
+      <span id="lastUpdatedText">Connecting...</span>
     </div>
 
-    <!-- Tables Container -->
+    <!-- Tables Container (Immediately visible near top of screen!) -->
     <div id="tablesContainer">
       <div class="no-results">Connecting to RACE RESULT Live API...</div>
     </div>
@@ -812,16 +847,16 @@
   </main>
 
   <script>
-    // 1. ServiceWorker Registration for 100% Offline Support
+    // 1. ServiceWorker Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
           .then(reg => console.log('[LAXMTB] Offline ServiceWorker Active:', reg.scope))
-          .catch(err => console.warn('[LAXMTB] ServiceWorker Registration Failed:', err));
+          .catch(err => console.warn('[LAXMTB] ServiceWorker Failed:', err));
       });
     }
 
-    // 2. 5 Official Season Races with High-Res Emblems
+    // 2. 5 Official Season Races
     const SEASON_RACES = [
       {
         id: 'bluff-bash',
@@ -880,6 +915,7 @@
     let currentRiders = [];
     let currentListMode = 'WAVE';
     let autoRefreshTimer = null;
+    let isFilterDrawerOpen = false;
 
     const targetTeamKeywords = ['holmen', 'la crescent', 'la crosse'];
     const fallbackSnapshot = [{"category": "Varsity Boys", "wave": "Wave: 1", "pl": "1", "no": "74", "bib": "584", "name": "Leonard, Ethan", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "1", "return_val": "+"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "17", "no": "79", "bib": "624", "name": "Thomsen, Izzy", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "17", "return_val": "-"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "22", "no": "76", "bib": "615", "name": "Ashby, Ezra", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "22", "return_val": "-"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "30", "no": "94", "bib": "619", "name": "Wilde, Landon", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "30", "return_val": "-"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "36", "no": "75", "bib": "612", "name": "Aslesen, Hosea", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "36", "return_val": "-"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "41", "no": "73", "bib": "600", "name": "Hamilton, Theron", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "41", "return_val": "-"}, {"category": "JV III Boys", "wave": "Wave: 1", "pl": "7", "no": "3505", "bib": "519", "name": "Larson, Charlie", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "7", "return_val": "+"}, {"category": "JV III Boys", "wave": "Wave: 1", "pl": "12", "no": "3506", "bib": "536", "name": "Wills, Maxwell", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "12", "return_val": "-"}, {"category": "JV III Boys", "wave": "Wave: 1", "pl": "22", "no": "3525", "bib": "527", "name": "Riffe, Tommy", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "22", "return_val": "-"}, {"category": "JV III Boys", "wave": "Wave: 1", "pl": "25", "no": "3531", "bib": "545", "name": "Gaulke, Jackson", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "25", "return_val": "-"}, {"category": "Varsity Girls", "wave": "Wave: 1", "pl": "12", "no": "167", "bib": "652", "name": "Hale, Lydia", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "12", "return_val": "-"}, {"category": "Varsity Girls", "wave": "Wave: 1", "pl": "17", "no": "164", "bib": "649", "name": "Aslesen, Elizabeth", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "17", "return_val": "-"}, {"category": "JV III Girls", "wave": "Wave: 1", "pl": "17", "no": "3857", "bib": "580", "name": "Meyers, Gracie", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "17", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "6", "no": "5522", "bib": "660", "name": "Riffe, Cole", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "6", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "10", "no": "5511", "bib": "664", "name": "Marti, Stanley", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "10", "return_val": "+"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "19", "no": "5510", "bib": "673", "name": "Oldenburg, Jensen", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "19", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "22", "no": "5521", "bib": "676", "name": "Larson, Benjamin", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "22", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "23", "no": "5508", "bib": "677", "name": "Schloesser, Vincent", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "23", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "24", "no": "5525", "bib": "678", "name": "Davey, Gavin", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "24", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "25", "no": "5515", "bib": "679", "name": "Hansen, Lane", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "25", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "4", "no": "9582", "bib": "289", "name": "Hamilton, Kellen", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "4", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "6", "no": "9567", "bib": "291", "name": "Vanberg, Isaac", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "6", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "7", "no": "9573", "bib": "292", "name": "O'Brien, Lennon", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "7", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "10", "no": "9579", "bib": "295", "name": "Sustar, Henry", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "10", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "23", "no": "9571", "bib": "308", "name": "Strassman, Oliver", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "23", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "36", "no": "9522", "bib": "321", "name": "Plopper, Henry", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "36", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "3", "no": "9504", "bib": "333", "name": "Klessig, Liam", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "3", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "7", "no": "9503", "bib": "337", "name": "Andrjeski, Jace", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "7", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "12", "no": "9515", "bib": "342", "name": "Kenowski, Eli", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "12", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "21", "no": "9569", "bib": "371", "name": "Koepke, Rory", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "21", "return_val": ""}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "26", "no": "9517", "bib": "375", "name": "Maki, Quinn", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "26", "return_val": ""}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "27", "no": "9520", "bib": "368", "name": "Olson, Niels", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "27", "return_val": ""}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "42", "no": "9507", "bib": "356", "name": "Newman, Arlo", "team": "La Crescent High School", "div": "2", "wv": "2", "wv_rank": "42", "return_val": ""}, {"category": "8th Grade Boys", "wave": "Wave: 1", "pl": "2", "no": "8550", "bib": "206", "name": "Holzer, Kiran", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "2", "return_val": "+"}, {"category": "8th Grade Boys", "wave": "Wave: 1", "pl": "3", "no": "8519", "bib": "207", "name": "Riese, Lukas", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "3", "return_val": "+"}, {"category": "8th Grade Boys", "wave": "Wave: 1", "pl": "10", "no": "8534", "bib": "214", "name": "Cherney, Alexander", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "10", "return_val": "+"}, {"category": "8th Grade Boys", "wave": "Wave: 2", "pl": "23", "no": "8516", "bib": "250", "name": "Severson, Abrahm", "team": "La Crosse Central High School", "div": "2", "wv": "2", "wv_rank": "23", "return_val": ""}, {"category": "8th Grade Boys", "wave": "Wave: 2", "pl": "26", "no": "8517", "bib": "253", "name": "Powell, Will", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "26", "return_val": ""}, {"category": "MS2 Girls", "wave": "Wave: 1", "pl": "11", "no": "5863", "bib": "691", "name": "Hynek, Quinet", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "11", "return_val": "-"}, {"category": "MS2 Girls", "wave": "Wave: 1", "pl": "14", "no": "5864", "bib": "694", "name": "Wilde, Hadley", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "14", "return_val": "-"}, {"category": "Freshman Girls", "wave": "Wave: 1", "pl": "1", "no": "9874", "bib": "376", "name": "Olson, Maeven", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "1", "return_val": "-"}, {"category": "Freshman Girls", "wave": "Wave: 1", "pl": "2", "no": "9877", "bib": "377", "name": "Falkenberry, Clara", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "2", "return_val": "-"}, {"category": "Freshman Girls", "wave": "Wave: 1", "pl": "12", "no": "9875", "bib": "387", "name": "Sloan, Matilda", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "12", "return_val": "-"}, {"category": "Freshman Girls", "wave": "Wave: 1", "pl": "25", "no": "9868", "bib": "394", "name": "Kincaid, Stella", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "25", "return_val": ""}, {"category": "JV II Girls", "wave": "Wave: 1", "pl": "1", "no": "2853", "bib": "485", "name": "Jespersen, Gretchen", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "1", "return_val": "+"}, {"category": "JV II Girls", "wave": "Wave: 1", "pl": "21", "no": "2872", "bib": "499", "name": "Ashby, Noella", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "21", "return_val": "-"}, {"category": "JV II Girls", "wave": "Wave: 1", "pl": "28", "no": "2871", "bib": "507", "name": "Passe, Pearl", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "28", "return_val": ""}, {"category": "8th Grade Girls", "wave": "Wave: 1", "pl": "4", "no": "8860", "bib": "265", "name": "Miller, Bella", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "4", "return_val": "+"}, {"category": "8th Grade Girls", "wave": "Wave: 1", "pl": "5", "no": "8868", "bib": "266", "name": "Hegland-Tarr, Adelyn", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "5", "return_val": "+"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "10", "no": "2535", "bib": "418", "name": "Berendes, Eddie", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "10", "return_val": "+"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "11", "no": "2545", "bib": "419", "name": "Rybarik, Aaron", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "11", "return_val": "+"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "17", "no": "2568", "bib": "436", "name": "Gaulke, Colten", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "17", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "21", "no": "2552", "bib": "424", "name": "Gabriel, Asher", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "21", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "27", "no": "2534", "bib": "454", "name": "Berendes, Benet", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "27", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "34", "no": "2533", "bib": "464", "name": "Aslesen, Maxwell", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "34", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "13", "no": "2551", "bib": "446", "name": "Thrush, Lane", "team": "La Crosse Aquinas High School", "div": "2", "wv": "2", "wv_rank": "13", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "20", "no": "2549", "bib": "449", "name": "Moe, Casper", "team": "La Crosse Central High School", "div": "2", "wv": "2", "wv_rank": "20", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "22", "no": "2544", "bib": "484", "name": "Rybarik, David", "team": "La Crescent High School", "div": "2", "wv": "2", "wv_rank": "22", "return_val": ""}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "29", "no": "2532", "bib": "473", "name": "Mueller, Sam", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "29", "return_val": ""}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "33", "no": "2543", "bib": "482", "name": "Denny-Omdahl, Billy", "team": "La Crescent High School", "div": "2", "wv": "2", "wv_rank": "33", "return_val": ""}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "1", "no": "7564", "bib": "92", "name": "Aslesen, Levi", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "1", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "12", "no": "7540", "bib": "103", "name": "Elliott, Jade", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "12", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "13", "no": "7533", "bib": "104", "name": "Sloan, Aj", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "13", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "22", "no": "7537", "bib": "119", "name": "Foley, Nolan", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "22", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "26", "no": "7539", "bib": "122", "name": "Ptacek, John", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "26", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "32", "no": "7534", "bib": "132", "name": "Plopper, Oliver", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "32", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 2", "pl": "5", "no": "7577", "bib": "136", "name": "Smith, Harrison", "team": "Holmen High School MTB Team", "div": "2", "wv": "2", "wv_rank": "5", "return_val": ""}, {"category": "7th Grade Boys", "wave": "Wave: 2", "pl": "12", "no": "7570", "bib": "150", "name": "Kim, Austin", "team": "La Crosse Aquinas High School", "div": "2", "wv": "2", "wv_rank": "12", "return_val": ""}, {"category": "7th Grade Boys", "wave": "Wave: 2", "pl": "19", "no": "7538", "bib": "165", "name": "Ramsey, Soren", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "19", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 1", "pl": "5", "no": "6543", "bib": "8", "name": "Cherney, Eric", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "5", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 1", "pl": "24", "no": "6550", "bib": "1", "name": "Newman, Henry", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "24", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 1", "pl": "27", "no": "6522", "bib": "61", "name": "Wizner, Reece", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "27", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "1", "no": "6521", "bib": "18", "name": "Hamilton, Rowan", "team": "La Crosse Central High School", "div": "2", "wv": "2", "wv_rank": "1", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "4", "no": "6524", "bib": "35", "name": "Sustar, Charlie", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "4", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "8", "no": "6546", "bib": "21", "name": "Wills, Montgomery", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "8", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "15", "no": "6554", "bib": "36", "name": "Lein, Eli", "team": "Holmen High School MTB Team", "div": "2", "wv": "2", "wv_rank": "15", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "21", "no": "6523", "bib": "2", "name": "Drazkowski, Sebastian", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "21", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "23", "no": "6525", "bib": "14", "name": "Staehly, Ethan", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "23", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "28", "no": "6551", "bib": "63", "name": "Hegland-Tarr, Macsen", "team": "La Crescent High School", "div": "2", "wv": "2", "wv_rank": "28", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "29", "no": "6558", "bib": "7", "name": "Nguyen, John", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "29", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "32", "no": "6544", "bib": "59", "name": "Kader, Kylan", "team": "La Crosse Central High School", "div": "2", "wv": "2", "wv_rank": "32", "return_val": ""}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "13", "no": "7864", "bib": "183", "name": "Zouski, Elle", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "13", "return_val": "+"}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "18", "no": "7863", "bib": "203", "name": "Jostad, Nora", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "18", "return_val": ""}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "22", "no": "7881", "bib": "188", "name": "Valencia, Vicenza", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "22", "return_val": ""}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "23", "no": "7868", "bib": "190", "name": "Woolever, Maggie", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "23", "return_val": ""}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "26", "no": "7869", "bib": "184", "name": "Teska, Adelaide", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "26", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "9", "no": "6852", "bib": "71", "name": "Stindt, Julianne", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "9", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "12", "no": "6870", "bib": "78", "name": "Ronsman, Juniper", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "12", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "18", "no": "6853", "bib": "73", "name": "Valencia, Esme", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "18", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "20", "no": "6851", "bib": "69", "name": "Schwaller, Margot", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "20", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "25", "no": "6871", "bib": "84", "name": "Klessig, Adah", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "25", "return_val": ""}, {"category": "HS Open Boys", "wave": "Wave: 1", "pl": "2", "no": "1500", "bib": "406", "name": "Wurzel, Rohan", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "2", "return_val": "-"}];
@@ -922,6 +958,55 @@
       }
     }
 
+    function toggleFilterDrawer() {
+      isFilterDrawerOpen = !isFilterDrawerOpen;
+      const drawer = document.getElementById('collapsibleFilters');
+      const btn = document.getElementById('filterToggleBtn');
+      const label = document.getElementById('filterBtnLabel');
+      if (isFilterDrawerOpen) {
+        drawer.classList.add('show');
+        btn.classList.add('active-filter');
+        label.textContent = 'Close';
+      } else {
+        drawer.classList.remove('show');
+        btn.classList.remove('active-filter');
+        label.textContent = 'Filter';
+      }
+    }
+
+    function onFilterChange() {
+      updateFilterSummaryChips();
+      renderData();
+    }
+
+    function updateFilterSummaryChips() {
+      const chipsContainer = document.getElementById('filterSummaryChips');
+      const cat = document.getElementById('categoryFilter').value;
+      const team = document.getElementById('teamFilter').value;
+      const listVal = document.getElementById('listSelect').value;
+
+      let html = '';
+      if (listVal === '747B52') {
+        html += '<span class="filter-chip">View: <strong>By Team</strong></span>';
+      } else {
+        html += '<span class="filter-chip">View: <strong>Wave & Category</strong></span>';
+      }
+
+      if (cat !== 'ALL') {
+        html += `<span class="filter-chip">Category: <strong>${cat}</strong></span>`;
+      }
+
+      if (team === 'DEFAULT_TEAMS') {
+        html += '<span class="filter-chip" style="border-color:var(--accent-red);color:var(--accent-red);">Scope: <strong>LAX Area</strong></span>';
+      } else if (team === 'ALL') {
+        html += '<span class="filter-chip">Scope: <strong>All Teams</strong></span>';
+      } else {
+        html += `<span class="filter-chip">Team: <strong>${team}</strong></span>`;
+      }
+
+      chipsContainer.innerHTML = html;
+    }
+
     function renderRaceSwitcher() {
       const bar = document.getElementById('raceSwitcherBar');
       bar.innerHTML = '';
@@ -934,7 +1019,6 @@
           <div class="tab-text-col">
             <span class="race-tab-date">Race ${idx + 1} • ${race.dateStr.split('2026')[0].trim()}</span>
             <span class="race-tab-title">${race.name}</span>
-            <span class="race-tab-location">${race.city}</span>
           </div>
         `;
         bar.appendChild(btn);
@@ -942,10 +1026,9 @@
 
       const activeRace = SEASON_RACES[currentRaceIndex];
       document.getElementById('currentRaceMeta').innerHTML = `
-        <img src="${activeRace.logo}" alt="${activeRace.name}" class="header-race-thumb" onerror="this.style.display='none'">
         <span><strong>${activeRace.name}</strong></span>
         <span>•</span>
-        <span>📍 ${activeRace.venue}, ${activeRace.city}</span>
+        <span>📍 ${activeRace.city}</span>
       `;
     }
 
@@ -970,15 +1053,12 @@
       document.getElementById('tablesContainer').innerHTML = `
         <div class="upcoming-race-card">
           <img src="${race.logo}" alt="${race.name}" class="upcoming-logo-hero" onerror="this.style.display='none'">
-          <h2 style="font-size:22px;font-weight:800;color:var(--text-main);">${race.name}</h2>
-          <p style="margin-top:6px;font-size:14px;color:var(--accent-red);font-weight:700;">📅 ${race.dateStr}</p>
-          <p style="margin-top:4px;font-size:13px;color:var(--text-muted);">📍 ${race.venue} • ${race.city}</p>
-          <div style="margin-top:22px;padding:14px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;max-width:480px;margin-left:auto;margin-right:auto;">
-            <p style="font-size:13px;color:var(--text-main);">
-              🏁 <strong>Start lists & wave assignments</strong> for this race will be published by the race timer during race week.
-            </p>
-            <p style="margin-top:6px;font-size:12px;color:var(--text-dim);">
-              Live timing and lap splits will automatically stream here once published on race day.
+          <h2 style="font-size:20px;font-weight:800;color:var(--text-main);">${race.name}</h2>
+          <p style="margin-top:4px;font-size:13px;color:var(--accent-red);font-weight:700;">📅 ${race.dateStr}</p>
+          <p style="margin-top:2px;font-size:12px;color:var(--text-muted);">📍 ${race.venue} • ${race.city}</p>
+          <div style="margin-top:18px;padding:12px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;max-width:440px;margin-left:auto;margin-right:auto;">
+            <p style="font-size:12px;color:var(--text-main);">
+              🏁 <strong>Start lists & wave assignments</strong> will be published by the timer during race week.
             </p>
           </div>
         </div>
@@ -1022,8 +1102,8 @@
       listDropdown.innerHTML = '';
       if (tab === 'list') {
         listDropdown.innerHTML = `
-          <option value="22E0EB">Rider List - By Category & Wave</option>
-          <option value="747B52">Rider List - By Team</option>
+          <option value="22E0EB">Category & Wave</option>
+          <option value="747B52">By Team</option>
         `;
       } else {
         listDropdown.innerHTML = `
@@ -1033,6 +1113,7 @@
         `;
       }
 
+      updateFilterSummaryChips();
       const race = SEASON_RACES[currentRaceIndex];
       if (race.isPublished && race.eventId) {
         fetchLiveRaceresultData();
@@ -1040,10 +1121,10 @@
     }
 
     function onListDropdownChange() {
+      updateFilterSummaryChips();
       fetchLiveRaceresultData();
     }
 
-    // Local Storage Caching & Offline Recovery
     async function fetchLiveRaceresultData() {
       const race = SEASON_RACES[currentRaceIndex];
       if (!race.isPublished || !race.eventId) return;
@@ -1097,18 +1178,16 @@
         if (cachedStr) {
           const cached = JSON.parse(cachedStr);
           currentRiders = cached.riders || [];
-          document.getElementById('lastUpdatedText').textContent = '📶 Offline Snapshot (' + (cached.time || 'Saved') + ')';
+          document.getElementById('lastUpdatedText').textContent = '📶 Offline (' + (cached.time || 'Saved') + ')';
           populateFilterDropdowns();
           renderData();
           return;
         }
-      } catch (e) {
-        console.warn('LocalStorage read error:', e);
-      }
+      } catch (e) {}
 
       if (currentTab === 'list') {
         currentRiders = fallbackSnapshot;
-        document.getElementById('lastUpdatedText').textContent = '📶 Offline Initial Snapshot';
+        document.getElementById('lastUpdatedText').textContent = '📶 Offline Snapshot';
         populateFilterDropdowns();
         renderData();
       } else {
@@ -1121,7 +1200,7 @@
       const listId = listInfo?.ID || document.getElementById('listSelect').value;
 
       if (Array.isArray(rawData) && rawData.length === 0 && currentTab === 'results') {
-        renderNoResultsNotice('No race finishes recorded yet for this event. Results and lap times will appear live on race day.');
+        renderNoResultsNotice('No race finishes recorded yet. Results stream live on race day.');
         currentRiders = [];
         return;
       }
@@ -1186,7 +1265,6 @@
 
       currentRiders = extracted.length > 0 ? extracted : fallbackSnapshot;
       
-      // Cache in localStorage for offline use
       if (extracted.length > 0 && cacheKey) {
         try {
           localStorage.setItem(cacheKey, JSON.stringify({
@@ -1197,20 +1275,21 @@
       }
 
       populateFilterDropdowns();
+      updateFilterSummaryChips();
       renderData();
     }
 
     function renderNoResultsNotice(msg) {
       document.getElementById('noticeContainer').innerHTML = `
         <div class="notice-box">
-          <span style="font-size:16px;">ℹ️</span>
+          <span style="font-size:14px;">ℹ️</span>
           <span>${msg}</span>
         </div>
       `;
       document.getElementById('tablesContainer').innerHTML = `
         <div class="no-results">
-          <h3 style="font-size:16px;font-weight:700;">No Results Recorded Yet</h3>
-          <p style="margin-top:6px;color:var(--text-muted);">The race has not started yet. Switch to <strong>Start Lists</strong> to view wave placements and rider plate numbers.</p>
+          <h3 style="font-size:15px;font-weight:700;">No Results Recorded Yet</h3>
+          <p style="margin-top:4px;color:var(--text-muted);font-size:12px;">Switch to <strong>Start Lists</strong> to view wave placements and rider plate numbers.</p>
         </div>
       `;
       document.getElementById('statusCount').textContent = '0 results recorded';
@@ -1353,13 +1432,13 @@
           table.innerHTML = `
             <thead>
               <tr>
-                <th style="width:45px;">PL</th>
-                <th style="width:75px;">Plate #</th>
+                <th style="width:40px;">PL</th>
+                <th style="width:70px;">Plate #</th>
                 <th>Rider Name</th>
                 <th>Team / School</th>
-                <th style="text-align:center;width:55px;">Div</th>
-                <th style="text-align:center;width:55px;">Wave</th>
-                <th style="text-align:center;width:55px;">Status</th>
+                <th style="text-align:center;width:50px;">Div</th>
+                <th style="text-align:center;width:50px;">Wave</th>
+                <th style="text-align:center;width:50px;">Status</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -1425,12 +1504,12 @@
         table.innerHTML = `
           <thead>
             <tr>
-              <th style="width:75px;">Plate #</th>
+              <th style="width:70px;">Plate #</th>
               <th>Rider Name</th>
               <th>Category</th>
-              <th style="text-align:center;width:55px;">Div</th>
-              <th style="text-align:center;width:75px;">Wave</th>
-              <th style="text-align:center;width:55px;">Status</th>
+              <th style="text-align:center;width:50px;">Div</th>
+              <th style="text-align:center;width:70px;">Wave</th>
+              <th style="text-align:center;width:50px;">Status</th>
             </tr>
           </thead>
           <tbody></tbody>
