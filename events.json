@@ -1,0 +1,175 @@
+[
+  {
+    "id": "bluff-bash",
+    "name": "Bluff Bash Festival",
+    "dateStr": "04 - 07 Sept 2026",
+    "venue": "Powers Bluff County Park",
+    "exactTrailhead": "Powers Bluff North Trailhead",
+    "address": "Powers Bluff North Trailhead, Arpin, WI 54410 (Wood County)",
+    "city": "Marshfield, WI",
+    "warning": "<strong>⚠️ Navigation Warning:</strong> Navigating to generic <em>\"Powers Bluff County Park\"</em> will put you on the wrong side of the venue! Navigate directly to <strong>Powers Bluff North Trailhead</strong>.",
+    "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Powers+Bluff+North+Trailhead+Arpin+WI",
+    "appleMapsUrl": "https://maps.apple.com/?daddr=Powers+Bluff+North+Trailhead,+Arpin,+WI&q=Powers+Bluff+North+Trailhead",
+    "eventGuideUrl": "https://wisconsinmtb.org/events/bluff-bash-festival/",
+    "embedMapUrl": "https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F",
+    "fullMapUrl": "https://www.google.com/maps/d/viewer?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI",
+    "conference": "North Conference (Sunday Racing) • South Conference (Saturday Racing)",
+    "logo": "logos/bluff-bash.png",
+    "eventId": 418104,
+    "isPublished": true,
+    "signups": {
+      "volunteer": "81287266078",
+      "food": "502983656067",
+      "league": "773733678034"
+    },
+    "schedule": [
+      { "time": "Friday 1:00 PM", "desc": "Camping Opens & Pit Zone Setup" },
+      { "time": "Friday 2:00 PM - 6:00 PM", "desc": "Pre-Ride Open (Coaches, JV3, Varsity)" },
+      { "time": "Saturday 8:00 AM - 4:00 PM", "desc": "South Conference Racing Waves & Podiums" },
+      { "time": "Saturday All Day", "desc": "North Conference (LAX Teams) Adventure Rides & Spectating" },
+      { "time": "Sunday 8:00 AM", "desc": "North Conference Race Waves (High School & Middle School)" },
+      { "time": "Sunday 4:30 PM", "desc": "North Conference Awards & Season Opener Celebration" },
+      { "time": "Monday (Labor Day)", "desc": "Camping Closes" }
+    ],
+    "guidelines": [
+      "<strong>North Trailhead Only:</strong> Use North Trailhead entrance for parking, staging grids, and pit zones.",
+      "<strong>Parking Pass:</strong> Wood County Park vehicle pass or daily entrance fee required at park entry.",
+      "<strong>Staging & Call-ups:</strong> Riders must report to staging grids 15 minutes prior to their wave start.",
+      "<strong>Pit Zone & Camping:</strong> Team tents in designated LAXMTB Team space. Quiet hours 10 PM - 6 AM.",
+      "<strong>Leashed Pets Only:</strong> Dogs prohibited in active course areas and staging grid zones."
+    ]
+  },
+  {
+    "id": "cable-conquest",
+    "name": "Cable Conquest Festival",
+    "dateStr": "11 - 13 Sept 2026",
+    "venue": "Mt. Telemark Village",
+    "exactTrailhead": "Carlson Competition Stadium (Birkie Trailhead)",
+    "address": "42225 Telemark Village Rd, Cable, WI 54821",
+    "city": "Cable, WI",
+    "warning": "<strong>📍 Venue Info:</strong> Start & finish located under the iconic American Birkebeiner arch at Carlson Competition Stadium.",
+    "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Mt+Telemark+Village+42225+Telemark+Village+Cable+WI+54821",
+    "appleMapsUrl": "https://maps.apple.com/?daddr=42225+Telemark+Village,+Cable,+WI+54821&q=Mt+Telemark+Village",
+    "eventGuideUrl": "https://wisconsinmtb.org/events/cable-conquest-festival/",
+    "embedMapUrl": null,
+    "fullMapUrl": null,
+    "conference": "North Conference",
+    "logo": "logos/cable-conquest.png",
+    "eventId": null,
+    "isPublished": false,
+    "signups": {
+      "volunteer": null,
+      "food": null,
+      "league": null
+    },
+    "schedule": [
+      { "time": "Friday 1:00 PM - 6:00 PM", "desc": "Pit Zone Setup, Pre-Ride & CAMBA Trail Tour" },
+      { "time": "Saturday 8:00 AM", "desc": "High School Racing Waves & Time Trials" },
+      { "time": "Saturday 4:30 PM", "desc": "High School Podiums & Community Dinner" },
+      { "time": "Sunday 8:30 AM", "desc": "Middle School Races & Team Podiums" }
+    ],
+    "guidelines": [
+      "<strong>Trails:</strong> Trek Trails by OTM and CAMBA world-class singletrack network.",
+      "<strong>Camping:</strong> Village festival camping available on-site (advance booking recommended)."
+    ]
+  },
+  {
+    "id": "hodag-hustle",
+    "name": "Hodag Hustle Festival",
+    "dateStr": "02 - 04 Oct 2026",
+    "venue": "Camp Tesomas",
+    "exactTrailhead": "Camp Tesomas Boy Scout Reservation",
+    "address": "5403 Spider Lake Rd, Rhinelander, WI 54501",
+    "city": "Rhinelander, WI",
+    "warning": "<strong>📍 Scout Camp Venue:</strong> Located on private scout reservation singletrack around Spider Lake.",
+    "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Camp+Tesomas+5403+Spider+Lake+Rd+Rhinelander+WI+54501",
+    "appleMapsUrl": "https://maps.apple.com/?daddr=5403+Spider+Lake+Rd,+Rhinelander,+WI+54501&q=Camp+Tesomas",
+    "eventGuideUrl": "https://wisconsinmtb.org/events/hodag-hustle-festival/",
+    "embedMapUrl": null,
+    "fullMapUrl": null,
+    "conference": "North Conference",
+    "logo": "logos/hodag-hustle.png",
+    "eventId": null,
+    "isPublished": false,
+    "signups": {
+      "volunteer": null,
+      "food": null,
+      "league": null
+    },
+    "schedule": [
+      { "time": "Friday 1:00 PM - 6:00 PM", "desc": "Pre-Ride on Camp Scout Trails & Pit Setup" },
+      { "time": "Saturday 8:00 AM", "desc": "High School Races & Hodag Costume Festivities" },
+      { "time": "Sunday 8:30 AM", "desc": "Middle School Races & North Conference Podiums" }
+    ],
+    "guidelines": [
+      "<strong>Venue:</strong> Scout reservation lakeside singletrack trails.",
+      "<strong>Camping:</strong> Scout camp cabin/tent sites by advance registration."
+    ]
+  },
+  {
+    "id": "gnarly-nordic",
+    "name": "Gnarly Nordic Festival",
+    "dateStr": "09 - 11 Oct 2026",
+    "venue": "Nordic Mountain Ski Resort",
+    "exactTrailhead": "Nordic Mountain Main Chalet & MTB Trailhead",
+    "address": "W5806 County Rd W, Wild Rose, WI 54984",
+    "city": "Wild Rose, WI",
+    "warning": "<strong>📍 Ski Resort Venue:</strong> Staging and viewing located directly in front of the main ski chalet bowl.",
+    "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984",
+    "appleMapsUrl": "https://maps.apple.com/?daddr=W5806+County+Rd+W,+Wild+Rose,+WI+54984&q=Nordic+Mountain",
+    "eventGuideUrl": "https://wisconsinmtb.org/events/gnarly-nordic-festival/",
+    "embedMapUrl": null,
+    "fullMapUrl": null,
+    "conference": "North Conference",
+    "logo": "logos/gnarly-nordic.png",
+    "eventId": null,
+    "isPublished": false,
+    "signups": {
+      "volunteer": null,
+      "food": null,
+      "league": null
+    },
+    "schedule": [
+      { "time": "Friday 1:00 PM - 6:00 PM", "desc": "Pre-Ride on Mountain Slopes & Bergs" },
+      { "time": "Saturday 8:00 AM", "desc": "High School Races & North Conference Finals" },
+      { "time": "Sunday 8:30 AM", "desc": "Middle School Races & Season Podiums" }
+    ],
+    "guidelines": [
+      "<strong>Course:</strong> Ski hill climbs, bermed descents, and forested singletrack.",
+      "<strong>Spectating:</strong> Outstanding spectator visibility from the main ski chalet bowl."
+    ]
+  },
+  {
+    "id": "red-barn",
+    "name": "Red Barn State Championship",
+    "dateStr": "23 - 25 Oct 2026",
+    "venue": "Trek Trails & Historic Red Barn (Trek World HQ)",
+    "exactTrailhead": "Trek Headquarters Trails",
+    "address": "97 Canal Rd, Waterloo, WI 53594",
+    "city": "Waterloo, WI",
+    "warning": "<strong>🏆 State Championship Finale:</strong> Exclusive access to private Trek World HQ Trails, historic Red Barn festival, pump track, and night ride.",
+    "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Trek+Trails+97+Canal+Rd+Waterloo+WI+53594",
+    "appleMapsUrl": "https://maps.apple.com/?daddr=97+Canal+Rd,+Waterloo,+WI+53594&q=Trek+Trails",
+    "eventGuideUrl": "https://wisconsinmtb.org/events/red-barn-state-championship/",
+    "embedMapUrl": null,
+    "fullMapUrl": null,
+    "conference": "State Championship (All Wisconsin Conferences Combined)",
+    "logo": "logos/red-barn.png",
+    "eventId": null,
+    "isPublished": false,
+    "signups": {
+      "volunteer": null,
+      "food": null,
+      "league": null
+    },
+    "schedule": [
+      { "time": "Friday 12:00 PM - 5:30 PM", "desc": "State Championship Pre-Ride & Night Ride Festivities" },
+      { "time": "Saturday 8:00 AM", "desc": "High School State Championship Finals & Night Pump Track" },
+      { "time": "Sunday 8:30 AM", "desc": "Middle School State Championship & Season Finale Awards" }
+    ],
+    "guidelines": [
+      "<strong>Championship Venue:</strong> Private Trek World Headquarters Trails & Historic Red Barn.",
+      "<strong>Season Finale:</strong> State individual jerseys and team division trophies awarded Sunday afternoon."
+    ]
+  }
+]

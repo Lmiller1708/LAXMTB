@@ -1648,8 +1648,8 @@
       });
     }
 
-    // 2. 5 Official Season Races with Comprehensive Event Details
-    const SEASON_RACES = [
+    // 2. 5 Official Season Races with Comprehensive Event Details (Default fallback & populated from events.json)
+    let SEASON_RACES = [
       {
         id: 'bluff-bash',
         name: 'Bluff Bash Festival',
@@ -2376,8 +2376,13 @@
     }
 
     function getSignUpUrl(activityId) {
+      if (!activityId) return '';
+      const str = String(activityId).trim();
+      if (str.startsWith('http://') || str.startsWith('https://')) {
+        return str;
+      }
       const isMobile = isMobileDevice();
-      return `https://signup.com/client/invitation2/secure/${activityId}/${isMobile ? 'true' : 'false'}#/invitation`;
+      return `https://signup.com/client/invitation2/secure/${str}/${isMobile ? 'true' : 'false'}#/invitation`;
     }
 
     const SIGNUP_DATA = {
@@ -3127,10 +3132,46 @@
       }
     });
 
+    // Load dynamic events and schedules from GitHub events.json
+    async function loadEventsConfig() {
+      // 1. Check local cache for instant load
+      try {
+        const cached = localStorage.getItem('laxmtb_events_config');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            SEASON_RACES = parsed;
+          }
+        }
+      } catch(e) {}
+
+      // 2. Fetch fresh events.json from repo with cache-busting timestamp
+      try {
+        const resp = await fetch('./events.json?t=' + Date.now());
+        if (resp.ok) {
+          const fresh = await resp.json();
+          if (Array.isArray(fresh) && fresh.length > 0) {
+            fresh.forEach(r => {
+              if (r.eventId && !r.isPublished) {
+                r.isPublished = true;
+              }
+            });
+            SEASON_RACES = fresh;
+            localStorage.setItem('laxmtb_events_config', JSON.stringify(fresh));
+            renderRaceSwitcher();
+            parseUrlAndNavigate();
+          }
+        }
+      } catch (err) {
+        console.warn('[LAXMTB] Could not fetch events.json, using bundled/cached events:', err);
+      }
+    }
+
     initTheme();
     renderRaceSwitcher();
     parseUrlAndNavigate();
     setupAutoRefresh();
+    loadEventsConfig();
 
     window.addEventListener('hashchange', parseUrlAndNavigate);
     window.addEventListener('popstate', parseUrlAndNavigate);

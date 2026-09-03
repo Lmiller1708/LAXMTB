@@ -1,7 +1,8 @@
-const CACHE_NAME = 'laxmtb-v3';
+const CACHE_NAME = 'laxmtb-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './events.json',
   './logo.png',
   './favicon.png',
   './apple-touch-icon.png',
