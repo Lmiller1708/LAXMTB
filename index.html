@@ -11,51 +11,51 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="LAX MTB">
-  <meta name="theme-color" content="#121212">
+  <meta name="theme-color" content="#0d0d0d">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
   <style>
-    /* Design Tokens: True Black & Charcoal Dark Theme + Crisp Light Theme */
+    /* Strict Pure Black & Neutral Gray Palette (Zero Brown/Warm Tints) */
     :root[data-theme="dark"] {
-      --bg-body: #111111;
-      --bg-header: #181818;
-      --bg-card: #1c1c1c;
-      --bg-card-hover: #262626;
-      --bg-subtle: #222222;
-      --border: #2e2e2e;
-      --border-strong: #404040;
+      --bg-body: #0d0d0d;
+      --bg-header: #141414;
+      --bg-card: #181818;
+      --bg-card-hover: #222222;
+      --bg-subtle: #202020;
+      --border: #2c2c2c;
+      --border-strong: #3f3f3f;
       --text-main: #f5f5f5;
-      --text-muted: #a3a3a3;
-      --text-dim: #737373;
+      --text-muted: #9e9e9e;
+      --text-dim: #707070;
       
       --accent-red: #ef4444;
       --accent-red-hover: #dc2626;
       --accent-red-subtle: rgba(239, 68, 68, 0.12);
       
-      --wave-bg: #221a15;
-      --wave-text: #fb923c;
-      --wave-border: #ea580c;
+      --wave-bg: #1c1c1c;
+      --wave-text: #f5f5f5;
+      --wave-border: #ef4444;
       
-      --plate-bg: #262626;
+      --plate-bg: #242424;
       --plate-text: #ffffff;
-      --plate-border: #3f3f46;
+      --plate-border: #3d3d3d;
       
-      --race-tab-active-bg: #262626;
+      --race-tab-active-bg: #242424;
       --race-tab-active-border: #ef4444;
-      --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);
+      --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.6);
     }
 
     :root[data-theme="light"] {
-      --bg-body: #f5f5f5;
+      --bg-body: #f4f4f4;
       --bg-header: #ffffff;
       --bg-card: #ffffff;
-      --bg-card-hover: #fafafa;
-      --bg-subtle: #f0f0f0;
-      --border: #e0e0e0;
+      --bg-card-hover: #f9f9f9;
+      --bg-subtle: #efefef;
+      --border: #dedede;
       --border-strong: #cccccc;
-      --text-main: #171717;
+      --text-main: #141414;
       --text-muted: #666666;
       --text-dim: #888888;
       
@@ -63,13 +63,13 @@
       --accent-red-hover: #b91c1c;
       --accent-red-subtle: rgba(220, 38, 38, 0.08);
       
-      --wave-bg: #fff7ed;
-      --wave-text: #c2410c;
-      --wave-border: #ea580c;
+      --wave-bg: #f5f5f5;
+      --wave-text: #141414;
+      --wave-border: #dc2626;
       
       --plate-bg: #ffffff;
-      --plate-text: #171717;
-      --plate-border: #d4d4d4;
+      --plate-text: #141414;
+      --plate-border: #d0d0d0;
       
       --race-tab-active-bg: #ffffff;
       --race-tab-active-border: #dc2626;
@@ -88,7 +88,7 @@
       color: var(--text-main);
       min-height: 100vh;
       line-height: 1.45;
-      transition: background-color 0.2s ease, color 0.2s ease;
+      transition: background-color 0.15s ease, color 0.15s ease;
       padding-bottom: 60px;
     }
 
@@ -97,7 +97,7 @@
       background: var(--bg-header);
       border-bottom: 1px solid var(--border);
       position: relative;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
 
     .site-header::before {
@@ -107,13 +107,13 @@
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, #dc2626, #ea580c, #dc2626);
+      background: linear-gradient(90deg, #dc2626, #ef4444, #dc2626);
     }
 
     .header-container {
       max-width: 1220px;
       margin: 0 auto;
-      padding: 16px 20px 0 20px;
+      padding: 18px 20px 0 20px;
     }
 
     .header-top {
@@ -122,7 +122,7 @@
       align-items: center;
       flex-wrap: wrap;
       gap: 16px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .brand-box {
@@ -132,10 +132,10 @@
     }
 
     .team-logo {
-      width: 72px;
-      height: 62px;
+      width: 74px;
+      height: 64px;
       object-fit: contain;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
     }
 
     .brand-text h1 {
@@ -242,7 +242,7 @@
       border-color: var(--race-tab-active-border);
       border-top: 3px solid var(--race-tab-active-border);
       color: var(--text-main);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
     .race-tab-date {
@@ -447,7 +447,7 @@
       font-weight: 700;
     }
 
-    /* Table Cards & Subtle Wave Dividers */
+    /* Table Cards & Clean Black/Gray Wave Dividers */
     .table-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -481,6 +481,7 @@
       letter-spacing: 0.3px;
     }
 
+    /* Clean Neutral Wave Divider (No Muddy Colors) */
     .wave-divider {
       background: var(--wave-bg);
       color: var(--wave-text);
@@ -488,7 +489,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.6px;
-      padding: 6px 16px;
+      padding: 7px 16px;
       border-left: 3px solid var(--wave-border);
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
@@ -730,7 +731,7 @@
   </main>
 
   <script>
-    // 5 Official Season Races (excluding Regionals)
+    // 5 Official Season Races
     const SEASON_RACES = [
       {
         id: 'bluff-bash',
@@ -738,7 +739,7 @@
         dateStr: '04 - 07 Sept 2026',
         venue: 'Powers Bluff County Park',
         city: 'Marshfield, WI',
-        eventId: 418104, // Active on race result
+        eventId: 418104,
         isPublished: true
       },
       {
@@ -857,7 +858,7 @@
         </div>
       `;
       document.getElementById('liveStatusText').textContent = 'Upcoming Race';
-      document.getElementById('liveDot').style.backgroundColor = '#fb923c';
+      document.getElementById('liveDot').style.backgroundColor = '#707070';
     }
 
     // Theme Switcher Logic
@@ -954,7 +955,7 @@
         document.getElementById('lastUpdatedText').textContent = 'Updated ' + new Date().toLocaleTimeString();
       } catch (err) {
         console.warn('Live fetch error, falling back to snapshot:', err);
-        document.getElementById('liveDot').style.backgroundColor = '#f59e0b';
+        document.getElementById('liveDot').style.backgroundColor = '#707070';
         document.getElementById('liveStatusText').textContent = 'Snapshot';
         document.getElementById('lastUpdatedText').textContent = 'Loaded snapshot data';
         
