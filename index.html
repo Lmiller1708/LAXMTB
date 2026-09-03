@@ -1730,7 +1730,7 @@
       SEASON_RACES.forEach((race, idx) => {
         const btn = document.createElement('button');
         btn.className = 'race-tab-btn' + (idx === currentRaceIndex ? ' active' : '');
-        btn.onclick = () => selectRace(idx);
+        btn.onclick = () => selectRace(idx, true);
         btn.innerHTML = `
           <img src="${race.logo}" alt="${race.name}" class="tab-mini-logo" onerror="this.style.display='none'">
           <div class="tab-text-col">
@@ -1742,10 +1742,86 @@
       });
     }
 
-    function selectRace(idx) {
+    // 2. URL Deep Linking & Slug Mapping
+    const RACE_SLUG_MAP = {
+      'bluffbash': 0,
+      'bluffbashfestival': 0,
+      'race1': 0,
+      'powersbluff': 0,
+      'cableconquest': 1,
+      'cableconquestfestival': 1,
+      'race2': 1,
+      'telemark': 1,
+      'carlson': 1,
+      'hodaghustle': 2,
+      'hodaghustlefestival': 2,
+      'race3': 2,
+      'tesomas': 2,
+      'gnarlynordic': 3,
+      'gnarlynordicfestival': 3,
+      'race4': 3,
+      'nordicmountain': 3,
+      'redbarn': 4,
+      'redbarnstatechampionship': 4,
+      'redbarnfestival': 4,
+      'race5': 4,
+      'waterloo': 4,
+      'trek': 4
+    };
+
+    const TAB_SLUG_MAP = {
+      'startlists': 'list',
+      'startlist': 'list',
+      'list': 'list',
+      'start': 'list',
+      'starts': 'list',
+      'liveresults': 'results',
+      'results': 'results',
+      'liveresult': 'results',
+      'result': 'results',
+      'live': 'results',
+      'eventdetails': 'details',
+      'details': 'details',
+      'detail': 'details',
+      'schedule': 'details',
+      'map': 'details',
+      'volunteer': 'details',
+      'food': 'details',
+      'signup': 'details'
+    };
+
+    function getRaceSlug(idx) {
+      const names = [
+        'BluffBashFestival',
+        'CableConquestFestival',
+        'HodagHustleFestival',
+        'GnarlyNordicFestival',
+        'RedBarnFestival'
+      ];
+      return names[idx] || 'BluffBashFestival';
+    }
+
+    function getTabSlug(tab) {
+      if (tab === 'results') return 'LiveResults';
+      if (tab === 'details') return 'EventDetails';
+      return 'StartLists';
+    }
+
+    function updateUrlState() {
+      const raceSlug = getRaceSlug(currentRaceIndex);
+      const tabSlug = getTabSlug(currentTab);
+      const newHash = `#/${raceSlug}/${tabSlug}`;
+      if (window.location.hash !== newHash) {
+        history.replaceState(null, '', newHash);
+      }
+    }
+
+    function selectRace(idx, updateUrl = true) {
       currentRaceIndex = idx;
       renderRaceSwitcher();
       const race = SEASON_RACES[currentRaceIndex];
+
+      if (updateUrl) updateUrlState();
 
       if (currentTab === 'details') {
         renderEventDetails(race);
@@ -1761,13 +1837,15 @@
       }
     }
 
-    function switchTab(tab) {
+    function switchTab(tab, updateUrl = true) {
       currentTab = tab;
       document.getElementById('tabStartLists').className = tab === 'list' ? 'nav-tab active' : 'nav-tab inactive';
       document.getElementById('tabLiveResults').className = tab === 'results' ? 'nav-tab active' : 'nav-tab inactive';
       document.getElementById('tabEventDetails').className = tab === 'details' ? 'nav-tab active' : 'nav-tab inactive';
       
       const race = SEASON_RACES[currentRaceIndex];
+
+      if (updateUrl) updateUrlState();
 
       if (tab === 'details') {
         document.getElementById('controlsPanel').style.display = 'none';
@@ -1801,6 +1879,56 @@
       } else {
         renderUpcomingRace(race);
       }
+    }
+
+    function parseUrlAndNavigate() {
+      const rawHash = window.location.hash.replace(/^#\/?/, '');
+      const rawPath = window.location.pathname.replace(/^\/LAXMTB\/?/, '');
+      const urlParams = new URLSearchParams(window.location.search);
+
+      let raceQuery = urlParams.get('race') || urlParams.get('event') || '';
+      let tabQuery = urlParams.get('tab') || urlParams.get('page') || urlParams.get('view') || '';
+
+      let segments = [];
+      if (rawHash) {
+        segments = rawHash.split('/').filter(Boolean);
+      } else if (rawPath && rawPath !== 'index.html') {
+        segments = rawPath.split('/').filter(Boolean);
+      }
+
+      if (segments.length >= 1 && !raceQuery) {
+        raceQuery = segments[0];
+      }
+      if (segments.length >= 2 && !tabQuery) {
+        tabQuery = segments[1];
+      }
+
+      let targetRaceIndex = 0;
+      if (raceQuery) {
+        const normRace = raceQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (RACE_SLUG_MAP[normRace] !== undefined) {
+          targetRaceIndex = RACE_SLUG_MAP[normRace];
+        } else {
+          const foundIdx = SEASON_RACES.findIndex(r => 
+            r.id.toLowerCase().replace(/[^a-z0-9]/g, '') === normRace ||
+            r.name.toLowerCase().replace(/[^a-z0-9]/g, '') === normRace
+          );
+          if (foundIdx !== -1) targetRaceIndex = foundIdx;
+        }
+      }
+
+      let targetTab = 'list';
+      if (tabQuery) {
+        const normTab = tabQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (TAB_SLUG_MAP[normTab]) {
+          targetTab = TAB_SLUG_MAP[normTab];
+        }
+      }
+
+      currentRaceIndex = targetRaceIndex;
+      switchTab(targetTab, false);
+      selectRace(targetRaceIndex, false);
+      updateUrlState();
     }
 
     function renderEventDetails(race) {
@@ -2693,8 +2821,11 @@
 
     initTheme();
     renderRaceSwitcher();
-    selectRace(0);
+    parseUrlAndNavigate();
     setupAutoRefresh();
+
+    window.addEventListener('hashchange', parseUrlAndNavigate);
+    window.addEventListener('popstate', parseUrlAndNavigate);
   </script>
 </body>
 </html>
