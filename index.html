@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bluff Bash (North Conference) - Live Race Results</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: #f4f6f9;
+      color: #333;
+      line-height: 1.4;
+    }
+    /* Top Banner Header */
+    .header-banner {
+      background: linear-gradient(180deg, rgba(235, 240, 245, 0.95) 0%, rgba(220, 228, 238, 0.95) 100%),
+                  radial-gradient(circle at 50% 50%, #4a89dc22, #3bafda22);
+      border-bottom: 1px solid #d5dbe0;
+      padding: 24px 20px 0 20px;
+    }
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .event-meta {
+      font-size: 13px;
+      color: #555;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .meta-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .meta-left span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .live-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #10b981;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .event-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 18px;
+    }
+    /* Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 32px;
+    }
+    .nav-tab {
+      padding: 10px 4px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #b33939;
+      text-decoration: none;
+      cursor: pointer;
+      position: relative;
+    }
+    .nav-tab.active {
+      color: #d63031;
+    }
+    .nav-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: #d63031;
+    }
+    .nav-tab.inactive {
+      color: #64748b;
+      opacity: 0.85;
+    }
+    .nav-tab.inactive:hover {
+      color: #b33939;
+      opacity: 1;
+    }
+
+    /* Main Container */
+    .main-content {
+      max-width: 1200px;
+      margin: 20px auto 40px auto;
+      padding: 0 16px;
+    }
+
+    /* Control Bar */
+    .controls-panel {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .top-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #edf2f7;
+    }
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .pdf-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #2d3748;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .pdf-link:hover {
+      color: #d63031;
+    }
+    .refresh-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid #cbd5e0;
+      background: #ffffff;
+      color: #334155;
+      cursor: pointer;
+    }
+    .refresh-btn:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+    .auto-refresh-select {
+      font-size: 12px;
+      padding: 4px 8px;
+      border: 1px solid #cbd5e0;
+      border-radius: 4px;
+      background: #fff;
+      color: #475569;
+    }
+
+    .search-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .search-input {
+      border: 1px solid #cbd5e0;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 13px;
+      width: 260px;
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: #718096;
+    }
+    .btn-search {
+      background-color: #6b7280;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-search:hover {
+      background-color: #4b5563;
+    }
+    .btn-icon {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      padding: 6px 10px;
+      cursor: pointer;
+      color: #666;
+    }
+    .btn-icon:hover {
+      background: #e5e7eb;
+    }
+
+    /* Filters Row */
+    .filter-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .select-dropdown {
+      padding: 6px 12px;
+      font-size: 13px;
+      border: 1px solid #cbd5e0;
+      border-radius: 4px;
+      background-color: #fff;
+      color: #2d3748;
+      outline: none;
+      min-width: 180px;
+    }
+
+    /* Results Info Banner */
+    .results-count-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+
+    /* Tables & Groupings */
+    .table-container {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .category-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a202c;
+      padding: 12px 16px 8px 16px;
+      background: #fff;
+    }
+    .wave-header {
+      background-color: #ff6f00;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 8px 16px;
+      letter-spacing: 0.3px;
+    }
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    .results-table th {
+      background-color: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .results-table th span {
+      color: #94a3b8;
+      font-size: 10px;
+      margin-left: 2px;
+    }
+    .results-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      white-space: nowrap;
+    }
+    .results-table tr:last-child td {
+      border-bottom: none;
+    }
+    .results-table tr:hover td {
+      background-color: #f8fafc;
+    }
+    .col-pl { width: 45px; text-align: left; }
+    .col-no { width: 55px; font-weight: 600; color: #1e293b; }
+    .col-name { min-width: 180px; font-weight: 600; color: #0f172a; }
+    .col-team { min-width: 240px; color: #475569; }
+    .col-div { width: 50px; text-align: center; }
+    .col-wv { width: 50px; text-align: center; }
+    .col-wvrank { width: 75px; text-align: center; }
+    .col-return { width: 65px; text-align: center; font-weight: 600; color: #2563eb; }
+    .col-icon { width: 40px; text-align: center; }
+
+    .avatar-icon {
+      display: inline-block;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background-color: #e2e8f0;
+      color: #94a3b8;
+      text-align: center;
+      line-height: 22px;
+      font-size: 12px;
+    }
+
+    .no-results {
+      padding: 40px;
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+    }
+
+    .loading-state {
+      padding: 40px;
+      text-align: center;
+      color: #475569;
+      font-size: 15px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+    }
+
+    .notice-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #92400e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .controls-panel, .header-banner { box-shadow: none; }
+      .wave-header { background-color: #ff6f00 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Banner -->
+  <header class="header-banner">
+    <div class="header-container">
+      <div class="event-meta">
+        <div class="meta-left">
+          <span>📅 09/05/2026</span>
+          <span>📍 Marshfield, WI</span>
+          <span>🇺🇸 United States of America</span>
+        </div>
+        <div>
+          <span class="live-status-pill">
+            <span class="pulse-dot" id="liveDot"></span>
+            <span id="liveStatusText">Live API Connected</span>
+          </span>
+        </div>
+      </div>
+      <h1 class="event-title">Bluff Bash (North Conference)</h1>
+      <nav class="nav-tabs">
+        <div class="nav-tab active" id="tabStartLists" onclick="switchTab('list')">Start Lists</div>
+        <div class="nav-tab inactive" id="tabLiveResults" onclick="switchTab('results')">Live Results</div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <div id="noticeContainer"></div>
+    
+    <!-- Controls & Filters Panel -->
+    <div class="controls-panel">
+      <div class="top-toolbar">
+        <div class="toolbar-actions">
+          <a class="pdf-link" href="#" onclick="window.print(); return false;">
+            <span style="color:#e11d48;font-size:16px;">📄</span> Print / PDF
+          </a>
+          <button class="refresh-btn" onclick="fetchLiveRaceresultData()">
+            <span id="refreshIcon">🔄</span> Refresh Now
+          </button>
+          <div style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:6px;">
+            <span>Auto-Refresh:</span>
+            <select id="autoRefreshInterval" class="auto-refresh-select" onchange="setupAutoRefresh()">
+              <option value="0">Off</option>
+              <option value="15">Every 15s</option>
+              <option value="30" selected>Every 30s</option>
+              <option value="60">Every 60s</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="search-group">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search name, bib, team, etc..." oninput="renderData()">
+          <button class="btn-search" onclick="renderData()">Search</button>
+          <button class="btn-icon" title="Clear Search" onclick="clearSearch()">✕</button>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <select id="listSelect" class="select-dropdown" onchange="onListDropdownChange()">
+          <option value="START_WAVE">Rider List - By Category & Wave</option>
+          <option value="START_TEAM">Rider List - By Team</option>
+        </select>
+
+        <select id="categoryFilter" class="select-dropdown" onchange="renderData()">
+          <option value="ALL">&lt;Show All Categories&gt;</option>
+        </select>
+
+        <select id="teamFilter" class="select-dropdown" onchange="renderData()">
+          <option value="DEFAULT_TEAMS">All Target Teams (Holmen, La Crescent, La Crosse)</option>
+          <option value="ALL">&lt;Show All Event Teams (All 44 Teams)&gt;</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Results Status Count -->
+    <div class="results-count-bar">
+      <span id="statusCount">Loading live data...</span>
+      <span id="lastUpdatedText">Last update: Fetching...</span>
+    </div>
+
+    <!-- Data Tables Container -->
+    <div id="tablesContainer">
+      <div class="loading-state">Connecting to RACE RESULT Live API...</div>
+    </div>
+
+  </main>
+
+  <script>
+    const EVENT_ID = 418104;
+    let currentTab = 'list'; // 'list' or 'results'
+    let currentRiders = [];
+    let currentFields = [];
+    let autoRefreshTimer = null;
+
+    const targetTeamKeywords = ['holmen', 'la crescent', 'la crosse'];
+
+    const fallbackSnapshot = [{"category": "Varsity Boys", "wave": "Wave: 1", "pl": "1", "no": "74", "bib": "584", "name": "Leonard, Ethan", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "1", "return_val": "+"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "17", "no": "79", "bib": "624", "name": "Thomsen, Izzy", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "17", "return_val": "-"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "22", "no": "76", "bib": "615", "name": "Ashby, Ezra", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "22", "return_val": "-"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "30", "no": "94", "bib": "619", "name": "Wilde, Landon", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "30", "return_val": "-"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "36", "no": "75", "bib": "612", "name": "Aslesen, Hosea", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "36", "return_val": "-"}, {"category": "Varsity Boys", "wave": "Wave: 1", "pl": "41", "no": "73", "bib": "600", "name": "Hamilton, Theron", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "41", "return_val": "-"}, {"category": "JV III Boys", "wave": "Wave: 1", "pl": "7", "no": "3505", "bib": "519", "name": "Larson, Charlie", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "7", "return_val": "+"}, {"category": "JV III Boys", "wave": "Wave: 1", "pl": "12", "no": "3506", "bib": "536", "name": "Wills, Maxwell", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "12", "return_val": "-"}, {"category": "JV III Boys", "wave": "Wave: 1", "pl": "22", "no": "3525", "bib": "527", "name": "Riffe, Tommy", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "22", "return_val": "-"}, {"category": "JV III Boys", "wave": "Wave: 1", "pl": "25", "no": "3531", "bib": "545", "name": "Gaulke, Jackson", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "25", "return_val": "-"}, {"category": "Varsity Girls", "wave": "Wave: 1", "pl": "12", "no": "167", "bib": "652", "name": "Hale, Lydia", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "12", "return_val": "-"}, {"category": "Varsity Girls", "wave": "Wave: 1", "pl": "17", "no": "164", "bib": "649", "name": "Aslesen, Elizabeth", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "17", "return_val": "-"}, {"category": "JV III Girls", "wave": "Wave: 1", "pl": "17", "no": "3857", "bib": "580", "name": "Meyers, Gracie", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "17", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "6", "no": "5522", "bib": "660", "name": "Riffe, Cole", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "6", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "10", "no": "5511", "bib": "664", "name": "Marti, Stanley", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "10", "return_val": "+"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "19", "no": "5510", "bib": "673", "name": "Oldenburg, Jensen", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "19", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "22", "no": "5521", "bib": "676", "name": "Larson, Benjamin", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "22", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "23", "no": "5508", "bib": "677", "name": "Schloesser, Vincent", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "23", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "24", "no": "5525", "bib": "678", "name": "Davey, Gavin", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "24", "return_val": "-"}, {"category": "MS2 Boys", "wave": "Wave: 1", "pl": "25", "no": "5515", "bib": "679", "name": "Hansen, Lane", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "25", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "4", "no": "9582", "bib": "289", "name": "Hamilton, Kellen", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "4", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "6", "no": "9567", "bib": "291", "name": "Vanberg, Isaac", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "6", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "7", "no": "9573", "bib": "292", "name": "O'Brien, Lennon", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "7", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "10", "no": "9579", "bib": "295", "name": "Sustar, Henry", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "10", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "23", "no": "9571", "bib": "308", "name": "Strassman, Oliver", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "23", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 1", "pl": "36", "no": "9522", "bib": "321", "name": "Plopper, Henry", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "36", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "3", "no": "9504", "bib": "333", "name": "Klessig, Liam", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "3", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "7", "no": "9503", "bib": "337", "name": "Andrjeski, Jace", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "7", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "12", "no": "9515", "bib": "342", "name": "Kenowski, Eli", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "12", "return_val": "-"}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "21", "no": "9569", "bib": "371", "name": "Koepke, Rory", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "21", "return_val": ""}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "26", "no": "9517", "bib": "375", "name": "Maki, Quinn", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "26", "return_val": ""}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "27", "no": "9520", "bib": "368", "name": "Olson, Niels", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "27", "return_val": ""}, {"category": "Freshman Boys", "wave": "Wave: 2", "pl": "42", "no": "9507", "bib": "356", "name": "Newman, Arlo", "team": "La Crescent High School", "div": "2", "wv": "2", "wv_rank": "42", "return_val": ""}, {"category": "8th Grade Boys", "wave": "Wave: 1", "pl": "2", "no": "8550", "bib": "206", "name": "Holzer, Kiran", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "2", "return_val": "+"}, {"category": "8th Grade Boys", "wave": "Wave: 1", "pl": "3", "no": "8519", "bib": "207", "name": "Riese, Lukas", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "3", "return_val": "+"}, {"category": "8th Grade Boys", "wave": "Wave: 1", "pl": "10", "no": "8534", "bib": "214", "name": "Cherney, Alexander", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "10", "return_val": "+"}, {"category": "8th Grade Boys", "wave": "Wave: 2", "pl": "23", "no": "8516", "bib": "250", "name": "Severson, Abrahm", "team": "La Crosse Central High School", "div": "2", "wv": "2", "wv_rank": "23", "return_val": ""}, {"category": "8th Grade Boys", "wave": "Wave: 2", "pl": "26", "no": "8517", "bib": "253", "name": "Powell, Will", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "26", "return_val": ""}, {"category": "MS2 Girls", "wave": "Wave: 1", "pl": "11", "no": "5863", "bib": "691", "name": "Hynek, Quinet", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "11", "return_val": "-"}, {"category": "MS2 Girls", "wave": "Wave: 1", "pl": "14", "no": "5864", "bib": "694", "name": "Wilde, Hadley", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "14", "return_val": "-"}, {"category": "Freshman Girls", "wave": "Wave: 1", "pl": "1", "no": "9874", "bib": "376", "name": "Olson, Maeven", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "1", "return_val": "-"}, {"category": "Freshman Girls", "wave": "Wave: 1", "pl": "2", "no": "9877", "bib": "377", "name": "Falkenberry, Clara", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "2", "return_val": "-"}, {"category": "Freshman Girls", "wave": "Wave: 1", "pl": "12", "no": "9875", "bib": "387", "name": "Sloan, Matilda", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "12", "return_val": "-"}, {"category": "Freshman Girls", "wave": "Wave: 1", "pl": "25", "no": "9868", "bib": "394", "name": "Kincaid, Stella", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "25", "return_val": ""}, {"category": "JV II Girls", "wave": "Wave: 1", "pl": "1", "no": "2853", "bib": "485", "name": "Jespersen, Gretchen", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "1", "return_val": "+"}, {"category": "JV II Girls", "wave": "Wave: 1", "pl": "21", "no": "2872", "bib": "499", "name": "Ashby, Noella", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "21", "return_val": "-"}, {"category": "JV II Girls", "wave": "Wave: 1", "pl": "28", "no": "2871", "bib": "507", "name": "Passe, Pearl", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "28", "return_val": ""}, {"category": "8th Grade Girls", "wave": "Wave: 1", "pl": "4", "no": "8860", "bib": "265", "name": "Miller, Bella", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "4", "return_val": "+"}, {"category": "8th Grade Girls", "wave": "Wave: 1", "pl": "5", "no": "8868", "bib": "266", "name": "Hegland-Tarr, Adelyn", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "5", "return_val": "+"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "10", "no": "2535", "bib": "418", "name": "Berendes, Eddie", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "10", "return_val": "+"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "11", "no": "2545", "bib": "419", "name": "Rybarik, Aaron", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "11", "return_val": "+"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "17", "no": "2568", "bib": "436", "name": "Gaulke, Colten", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "17", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "21", "no": "2552", "bib": "424", "name": "Gabriel, Asher", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "21", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "27", "no": "2534", "bib": "454", "name": "Berendes, Benet", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "27", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 1", "pl": "34", "no": "2533", "bib": "464", "name": "Aslesen, Maxwell", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "34", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "13", "no": "2551", "bib": "446", "name": "Thrush, Lane", "team": "La Crosse Aquinas High School", "div": "2", "wv": "2", "wv_rank": "13", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "20", "no": "2549", "bib": "449", "name": "Moe, Casper", "team": "La Crosse Central High School", "div": "2", "wv": "2", "wv_rank": "20", "return_val": "-"}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "22", "no": "2544", "bib": "484", "name": "Rybarik, David", "team": "La Crescent High School", "div": "2", "wv": "2", "wv_rank": "22", "return_val": ""}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "29", "no": "2532", "bib": "473", "name": "Mueller, Sam", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "29", "return_val": ""}, {"category": "JV II Boys", "wave": "Wave: 2", "pl": "33", "no": "2543", "bib": "482", "name": "Denny-Omdahl, Billy", "team": "La Crescent High School", "div": "2", "wv": "2", "wv_rank": "33", "return_val": ""}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "1", "no": "7564", "bib": "92", "name": "Aslesen, Levi", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "1", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "12", "no": "7540", "bib": "103", "name": "Elliott, Jade", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "12", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "13", "no": "7533", "bib": "104", "name": "Sloan, Aj", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "13", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "22", "no": "7537", "bib": "119", "name": "Foley, Nolan", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "22", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "26", "no": "7539", "bib": "122", "name": "Ptacek, John", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "26", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 1", "pl": "32", "no": "7534", "bib": "132", "name": "Plopper, Oliver", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "32", "return_val": "+"}, {"category": "7th Grade Boys", "wave": "Wave: 2", "pl": "5", "no": "7577", "bib": "136", "name": "Smith, Harrison", "team": "Holmen High School MTB Team", "div": "2", "wv": "2", "wv_rank": "5", "return_val": ""}, {"category": "7th Grade Boys", "wave": "Wave: 2", "pl": "12", "no": "7570", "bib": "150", "name": "Kim, Austin", "team": "La Crosse Aquinas High School", "div": "2", "wv": "2", "wv_rank": "12", "return_val": ""}, {"category": "7th Grade Boys", "wave": "Wave: 2", "pl": "19", "no": "7538", "bib": "165", "name": "Ramsey, Soren", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "19", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 1", "pl": "5", "no": "6543", "bib": "8", "name": "Cherney, Eric", "team": "Holmen High School MTB Team", "div": "2", "wv": "1", "wv_rank": "5", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 1", "pl": "24", "no": "6550", "bib": "1", "name": "Newman, Henry", "team": "La Crescent High School", "div": "2", "wv": "1", "wv_rank": "24", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 1", "pl": "27", "no": "6522", "bib": "61", "name": "Wizner, Reece", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "27", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "1", "no": "6521", "bib": "18", "name": "Hamilton, Rowan", "team": "La Crosse Central High School", "div": "2", "wv": "2", "wv_rank": "1", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "4", "no": "6524", "bib": "35", "name": "Sustar, Charlie", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "4", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "8", "no": "6546", "bib": "21", "name": "Wills, Montgomery", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "8", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "15", "no": "6554", "bib": "36", "name": "Lein, Eli", "team": "Holmen High School MTB Team", "div": "2", "wv": "2", "wv_rank": "15", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "21", "no": "6523", "bib": "2", "name": "Drazkowski, Sebastian", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "21", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "23", "no": "6525", "bib": "14", "name": "Staehly, Ethan", "team": "La Crosse Logan High School", "div": "2", "wv": "2", "wv_rank": "23", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "28", "no": "6551", "bib": "63", "name": "Hegland-Tarr, Macsen", "team": "La Crescent High School", "div": "2", "wv": "2", "wv_rank": "28", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "29", "no": "6558", "bib": "7", "name": "Nguyen, John", "team": "La Crosse Composite", "div": "2", "wv": "2", "wv_rank": "29", "return_val": ""}, {"category": "6th Grade Boys", "wave": "Wave: 2", "pl": "32", "no": "6544", "bib": "59", "name": "Kader, Kylan", "team": "La Crosse Central High School", "div": "2", "wv": "2", "wv_rank": "32", "return_val": ""}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "13", "no": "7864", "bib": "183", "name": "Zouski, Elle", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "13", "return_val": "+"}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "18", "no": "7863", "bib": "203", "name": "Jostad, Nora", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "18", "return_val": ""}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "22", "no": "7881", "bib": "188", "name": "Valencia, Vicenza", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "22", "return_val": ""}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "23", "no": "7868", "bib": "190", "name": "Woolever, Maggie", "team": "La Crosse Aquinas High School", "div": "2", "wv": "1", "wv_rank": "23", "return_val": ""}, {"category": "7th Grade Girls", "wave": "Wave: 1", "pl": "26", "no": "7869", "bib": "184", "name": "Teska, Adelaide", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "26", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "9", "no": "6852", "bib": "71", "name": "Stindt, Julianne", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "9", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "12", "no": "6870", "bib": "78", "name": "Ronsman, Juniper", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "12", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "18", "no": "6853", "bib": "73", "name": "Valencia, Esme", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "18", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "20", "no": "6851", "bib": "69", "name": "Schwaller, Margot", "team": "La Crosse Logan High School", "div": "2", "wv": "1", "wv_rank": "20", "return_val": ""}, {"category": "6th Grade Girls", "wave": "Wave: 1", "pl": "25", "no": "6871", "bib": "84", "name": "Klessig, Adah", "team": "La Crosse Composite", "div": "2", "wv": "1", "wv_rank": "25", "return_val": ""}, {"category": "HS Open Boys", "wave": "Wave: 1", "pl": "2", "no": "1500", "bib": "406", "name": "Wurzel, Rohan", "team": "La Crosse Central High School", "div": "2", "wv": "1", "wv_rank": "2", "return_val": "-"}];
+
+    const categoryOrder = [
+      '6th Grade Boys', '6th Grade Girls',
+      '7th Grade Boys', '7th Grade Girls',
+      '8th Grade Boys', '8th Grade Girls',
+      'Freshman Boys', 'Freshman Girls',
+      'MS2 Boys', 'MS2 Girls',
+      'HS Open Boys', 'HS Open Girls',
+      'JV II Boys', 'JV II Girls',
+      'JV III Boys', 'JV III Girls',
+      'Varsity Boys', 'Varsity Girls'
+    ];
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('tabStartLists').className = tab === 'list' ? 'nav-tab active' : 'nav-tab inactive';
+      document.getElementById('tabLiveResults').className = tab === 'results' ? 'nav-tab active' : 'nav-tab inactive';
+      
+      const listDropdown = document.getElementById('listSelect');
+      listDropdown.innerHTML = '';
+      if (tab === 'list') {
+        listDropdown.innerHTML = `
+          <option value="22E0EB">Rider List - By Category & Wave</option>
+          <option value="747B52">Rider List - By Team</option>
+        `;
+      } else {
+        listDropdown.innerHTML = `
+          <option value="4C8C1F">Individual Results - ALL</option>
+          <option value="E07F7C">Individual Results - By Team</option>
+          <option value="674D5B">Team Results</option>
+        `;
+      }
+      fetchLiveRaceresultData();
+    }
+
+    async function fetchLiveRaceresultData() {
+      const refreshIcon = document.getElementById('refreshIcon');
+      if (refreshIcon) refreshIcon.style.display = 'inline-block';
+
+      try {
+        // 1. Get session key and list config
+        const configResp = await fetch(`https://my.raceresult.com/${EVENT_ID}/${currentTab}/config?lang=en`);
+        if (!configResp.ok) throw new Error(`HTTP ${configResp.status}`);
+        const config = await configResp.json();
+        const key = config.key;
+
+        const lists = config?.TabConfig?.Lists || [];
+        const selectedListId = document.getElementById('listSelect').value;
+        const targetList = lists.find(l => l.ID === selectedListId) || lists[0];
+        const listName = targetList ? targetList.Name : '';
+
+        // 2. Fetch list data
+        const params = new URLSearchParams({
+          key: key,
+          listname: listName,
+          page: currentTab,
+          contest: '0',
+          r: 'all',
+          l: '0'
+        });
+
+        const listResp = await fetch(`https://my.raceresult.com/${EVENT_ID}/${currentTab}/list?` + params.toString());
+        if (!listResp.ok) throw new Error(`HTTP ${listResp.status}`);
+        const resultData = await listResp.json();
+
+        parseAndLoadData(resultData);
+
+        document.getElementById('liveDot').style.backgroundColor = '#10b981';
+        document.getElementById('liveStatusText').textContent = 'Live API Connected';
+        document.getElementById('lastUpdatedText').textContent = 'Last update: ' + new Date().toLocaleTimeString();
+      } catch (err) {
+        console.warn('Live fetch error, falling back to snapshot:', err);
+        document.getElementById('liveDot').style.backgroundColor = '#f59e0b';
+        document.getElementById('liveStatusText').textContent = 'Cached Snapshot (Offline)';
+        document.getElementById('lastUpdatedText').textContent = 'Snapshot Data';
+        
+        if (currentTab === 'list') {
+          currentRiders = fallbackSnapshot;
+          populateFilterDropdowns();
+          renderData();
+        } else {
+          renderNoResultsNotice('Live race results will appear automatically on race day (09/05/2026) when timing splits are recorded.');
+        }
+      }
+    }
+
+    function parseAndLoadData(resultData) {
+      currentFields = resultData?.list?.Fields || [];
+      const extracted = [];
+      const rawData = resultData?.data || {};
+
+      if (Array.isArray(rawData) && rawData.length === 0 && currentTab === 'results') {
+        renderNoResultsNotice('No race finishes recorded yet for this event. Live times and lap splits will update in real-time on race day (09/05/2026).');
+        currentRiders = [];
+        return;
+      }
+
+      // Clear notice
+      document.getElementById('noticeContainer').innerHTML = '';
+
+      if (typeof rawData === 'object' && !Array.isArray(rawData)) {
+        for (const [catKey, waveData] of Object.entries(rawData)) {
+          const catName = catKey.includes('_') ? catKey.split('_').slice(1).join('_') : catKey;
+          if (typeof waveData === 'object' && !Array.isArray(waveData)) {
+            for (const [waveKey, rows] of Object.entries(waveData)) {
+              const waveName = waveKey.includes('_') ? waveKey.split('_').slice(1).join('_') : waveKey;
+              if (Array.isArray(rows)) {
+                rows.forEach(r => {
+                  if (Array.isArray(r) && r.length >= 5) {
+                    extracted.push({
+                      category: catName,
+                      wave: waveName,
+                      pl: r[2] || '',
+                      no: r[0] || '',
+                      bib: r[1] || '',
+                      name: r[3] || '',
+                      team: r[4] || '',
+                      div: r[5] || '',
+                      wv: r[6] || '',
+                      wv_rank: r[2] || '',
+                      return_val: r[7] || '+'
+                    });
+                  }
+                });
+              }
+            }
+          }
+        }
+      }
+
+      currentRiders = extracted.length > 0 ? extracted : fallbackSnapshot;
+      populateFilterDropdowns();
+      renderData();
+    }
+
+    function renderNoResultsNotice(msg) {
+      document.getElementById('noticeContainer').innerHTML = `
+        <div class="notice-box">
+          <span style="font-size:18px;">ℹ️</span>
+          <span>${msg}</span>
+        </div>
+      `;
+      document.getElementById('tablesContainer').innerHTML = `
+        <div class="no-results">
+          <h3>No Results Recorded Yet</h3>
+          <p style="margin-top:8px;color:#64748b;">The race has not started yet. Switch back to <strong>Start Lists</strong> to view wave placements and rider bibs.</p>
+        </div>
+      `;
+      document.getElementById('statusCount').textContent = '0 results recorded';
+    }
+
+    function populateFilterDropdowns() {
+      const catSelect = document.getElementById('categoryFilter');
+      const prevCat = catSelect.value;
+      const categories = [...new Set(currentRiders.map(r => r.category))].sort((a, b) => {
+        let ia = categoryOrder.indexOf(a), ib = categoryOrder.indexOf(b);
+        if (ia === -1) ia = 99;
+        if (ib === -1) ib = 99;
+        return ia - ib;
+      });
+
+      catSelect.innerHTML = '<option value="ALL">&lt;Show All Categories&gt;</option>';
+      categories.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        catSelect.appendChild(opt);
+      });
+      if (categories.includes(prevCat)) catSelect.value = prevCat;
+
+      const teamSelect = document.getElementById('teamFilter');
+      const prevTeam = teamSelect.value;
+      const teams = [...new Set(currentRiders.map(r => r.team))].sort();
+
+      teamSelect.innerHTML = `
+        <option value="DEFAULT_TEAMS">All Target Teams (Holmen, La Crescent, La Crosse)</option>
+        <option value="ALL">&lt;Show All Event Teams&gt;</option>
+      `;
+      teams.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        teamSelect.appendChild(opt);
+      });
+      if (prevTeam && (prevTeam === 'DEFAULT_TEAMS' || prevTeam === 'ALL' || teams.includes(prevTeam))) {
+        teamSelect.value = prevTeam;
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      renderData();
+    }
+
+    function onListDropdownChange() {
+      fetchLiveRaceresultData();
+    }
+
+    function renderData() {
+      if (currentRiders.length === 0) return;
+
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const selectedCat = document.getElementById('categoryFilter').value;
+      const selectedTeam = document.getElementById('teamFilter').value;
+
+      const filtered = currentRiders.filter(r => {
+        if (selectedCat !== 'ALL' && r.category !== selectedCat) return false;
+
+        if (selectedTeam === 'DEFAULT_TEAMS') {
+          const isTarget = targetTeamKeywords.some(kw => r.team.toLowerCase().includes(kw));
+          if (!isTarget) return false;
+        } else if (selectedTeam !== 'ALL') {
+          if (r.team !== selectedTeam) return false;
+        }
+
+        if (query) {
+          const match = (r.name && r.name.toLowerCase().includes(query)) ||
+                        (r.no && r.no.toLowerCase().includes(query)) ||
+                        (r.bib && r.bib.toLowerCase().includes(query)) ||
+                        (r.team && r.team.toLowerCase().includes(query)) ||
+                        (r.category && r.category.toLowerCase().includes(query)) ||
+                        (r.wave && r.wave.toLowerCase().includes(query));
+          if (!match) return false;
+        }
+        return true;
+      });
+
+      document.getElementById('statusCount').textContent = `Showing ${filtered.length} of ${currentRiders.length} riders`;
+
+      const container = document.getElementById('tablesContainer');
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="no-results">No riders matched your current filter or search criteria.</div>';
+        return;
+      }
+
+      // Group by Category, then Wave
+      const grouped = {};
+      filtered.forEach(r => {
+        if (!grouped[r.category]) grouped[r.category] = {};
+        if (!grouped[r.category][r.wave]) grouped[r.category][r.wave] = [];
+        grouped[r.category][r.wave].push(r);
+      });
+
+      const sortedCatKeys = Object.keys(grouped).sort((a, b) => {
+        let ia = categoryOrder.indexOf(a), ib = categoryOrder.indexOf(b);
+        if (ia === -1) ia = 99;
+        if (ib === -1) ib = 99;
+        return ia - ib;
+      });
+
+      sortedCatKeys.forEach(cat => {
+        const catCard = document.createElement('div');
+        catCard.className = 'table-container';
+
+        const catTitle = document.createElement('div');
+        catTitle.className = 'category-title';
+        catTitle.textContent = cat;
+        catCard.appendChild(catTitle);
+
+        const waves = grouped[cat];
+        const sortedWaveKeys = Object.keys(waves).sort();
+
+        sortedWaveKeys.forEach(wKey => {
+          const waveHeader = document.createElement('div');
+          waveHeader.className = 'wave-header';
+          waveHeader.textContent = wKey.includes('Wave') ? wKey : `Wave: ${wKey}`;
+          catCard.appendChild(waveHeader);
+
+          const table = document.createElement('table');
+          table.className = 'results-table';
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th class="col-pl">PL <span>⇅</span></th>
+                <th class="col-no">NO <span>⇅</span></th>
+                <th class="col-name">Name <span>⇅</span></th>
+                <th class="col-team">Team <span>⇅</span></th>
+                <th class="col-div">Div <span>⇅</span></th>
+                <th class="col-wv">WV <span>⇅</span></th>
+                <th class="col-wvrank">WV Rank <span>⇅</span></th>
+                <th class="col-return">Return <span>⇅</span></th>
+                <th class="col-icon"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          `;
+
+          const tbody = table.querySelector('tbody');
+          const ridersInWave = waves[wKey].sort((a, b) => {
+            const pa = parseInt(a.pl) || 0;
+            const pb = parseInt(b.pl) || 0;
+            return pa - pb;
+          });
+
+          ridersInWave.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="col-pl">${r.pl || ''}</td>
+              <td class="col-no">${r.no || r.bib}</td>
+              <td class="col-name">${r.name}</td>
+              <td class="col-team">${r.team}</td>
+              <td class="col-div" style="text-align:center;">${r.div || '1'}</td>
+              <td class="col-wv" style="text-align:center;">${r.wv || '1'}</td>
+              <td class="col-wvrank" style="text-align:center;">${r.wv_rank || r.pl || ''}</td>
+              <td class="col-return" style="text-align:center;">${r.return_val || '+'}</td>
+              <td class="col-icon"><span class="avatar-icon">👤</span></td>
+            `;
+            tbody.appendChild(tr);
+          });
+
+          catCard.appendChild(table);
+        });
+
+        container.appendChild(catCard);
+      });
+    }
+
+    function setupAutoRefresh() {
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      const intervalSec = parseInt(document.getElementById('autoRefreshInterval').value, 10);
+      if (intervalSec > 0) {
+        autoRefreshTimer = setInterval(fetchLiveRaceresultData, intervalSec * 1000);
+      }
+    }
+
+    // Initialize on load
+    fetchLiveRaceresultData();
+    setupAutoRefresh();
+  </script>
+</body>
+</html>
