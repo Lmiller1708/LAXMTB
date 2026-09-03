@@ -862,49 +862,128 @@
       gap: 6px;
     }
 
-    /* Event Details View Styling */
-    .event-details-card {
+    /* Event Details View Modular Cards */
+    .event-hero-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      overflow: hidden;
-      margin-bottom: 20px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
       box-shadow: var(--shadow-card);
-    }
-
-    .event-details-hero {
-      padding: 20px 16px;
-      background: var(--bg-subtle);
-      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       flex-wrap: wrap;
     }
 
     .event-hero-logo {
-      width: 90px;
-      height: 90px;
+      width: 96px;
+      height: 96px;
       object-fit: contain;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35));
+      flex-shrink: 0;
+    }
+
+    .event-hero-meta {
+      flex: 1;
+      min-width: 240px;
     }
 
     .event-hero-meta h2 {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+      margin: 0 0 10px 0;
+    }
+
+    .event-hero-meta-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .event-meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
       color: var(--text-main);
     }
 
-    .event-hero-meta p {
+    .event-meta-pill.pill-conf {
+      color: var(--accent-red);
+      background: rgba(220, 38, 38, 0.08);
+      border-color: rgba(220, 38, 38, 0.25);
+    }
+
+    :root[data-theme="light"] .event-meta-pill.pill-conf {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+
+    /* Dedicated Event Location Card */
+    .event-location-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .location-card-header {
+      padding: 12px 16px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .location-card-title {
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .location-card-body {
+      padding: 18px 20px;
+    }
+
+    .location-venue-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .location-address-text {
       font-size: 13px;
       color: var(--text-muted);
-      margin-top: 3px;
+      margin-top: 4px;
+      line-height: 1.4;
     }
 
     .event-action-buttons {
       display: flex;
       gap: 8px;
-      margin-top: 12px;
+      margin-top: 14px;
       flex-wrap: wrap;
     }
 
@@ -912,7 +991,7 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 16px;
-      padding: 16px;
+      margin-bottom: 16px;
     }
 
     @media (min-width: 768px) {
@@ -923,7 +1002,7 @@
 
     /* Embedded Interactive Course Map */
     .event-map-container {
-      margin: 0 16px 16px 16px;
+      margin: 0 0 16px 0;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -970,9 +1049,6 @@
     }
 
     @media (max-width: 600px) {
-      .event-map-container {
-        margin: 0 10px 12px 10px;
-      }
       .map-iframe-wrapper {
         height: 320px;
       }
@@ -980,7 +1056,7 @@
 
     /* SignUp.com Volunteer & Hospitality Hub */
     .signup-hub-section {
-      margin: 0 16px 16px 16px;
+      margin: 0 0 16px 0;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -1939,39 +2015,52 @@
 
       const container = document.getElementById('tablesContainer');
       container.innerHTML = `
-        <div class="event-details-card">
-          <div class="event-details-hero">
-            <img src="${race.logo}" alt="${race.name}" class="event-hero-logo" onerror="this.style.display='none'">
-            <div class="event-hero-meta" style="flex:1;">
-              <h2>${race.name}</h2>
-              <p>📅 <strong>${race.dateStr}</strong> • 🏆 ${race.conference}</p>
-              
-              <!-- Location Info & Address -->
-              <div class="event-location-box" style="margin-top:12px;">
-                <div class="location-venue"><span>📍</span> ${race.exactTrailhead || race.venue}</div>
-                <div class="location-address">${race.address}</div>
-                ${race.warning ? `
-                  <div class="event-warning-banner">
-                    <span>${race.warning}</span>
-                  </div>
-                ` : ''}
-              </div>
-              
-              <div class="event-action-buttons">
-                <a href="${race.googleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-google-maps">
-                  <span>🗺️</span> Google Maps
-                </a>
-                <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps">
-                  <span>🍏</span> Apple Maps (iPhone)
-                </a>
-                ${race.eventGuideUrl ? `
-                  <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-maps btn-league-page">
-                    <span>🌐</span> Wisconsin League Page
-                  </a>
-                ` : ''}
-              </div>
+        <!-- 1. Event Hero Banner (Logo & Title on its own) -->
+        <div class="event-hero-card">
+          <img src="${race.logo}" alt="${race.name}" class="event-hero-logo" onerror="this.style.display='none'">
+          <div class="event-hero-meta">
+            <h2>${race.name}</h2>
+            <div class="event-hero-meta-badges">
+              <span class="event-meta-pill">📅 <strong>${race.dateStr}</strong></span>
+              <span class="event-meta-pill pill-conf">🏆 ${race.conference}</span>
             </div>
           </div>
+        </div>
+
+        <!-- 2. Dedicated Venue & Location Card -->
+        <div class="event-location-card">
+          <div class="location-card-header collapsible-header" onclick="toggleCard(this)">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="location-card-title"><span>📍</span> Venue Location & Directions</span>
+              ${race.city ? `<span class="category-badge">${race.city}</span>` : ''}
+            </div>
+            <span class="card-toggle-icon" title="Toggle Location">▼</span>
+          </div>
+          <div class="collapsible-body location-card-body">
+            <div class="location-venue-name">
+              <span>📍</span> ${race.exactTrailhead || race.venue}
+            </div>
+            <div class="location-address-text">${race.address}</div>
+            ${race.warning ? `
+              <div class="event-warning-banner" style="margin-top:10px;">
+                <span>${race.warning}</span>
+              </div>
+            ` : ''}
+            <div class="event-action-buttons">
+              <a href="${race.googleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-google-maps">
+                <span>🗺️</span> Google Maps
+              </a>
+              <a href="${race.appleMapsUrl}" target="_blank" rel="noopener" class="btn-maps btn-apple-maps">
+                <span>🍏</span> Apple Maps (iPhone)
+              </a>
+              ${race.eventGuideUrl ? `
+                <a href="${race.eventGuideUrl}" target="_blank" rel="noopener" class="btn-maps btn-league-page">
+                  <span>🌐</span> Wisconsin League Page
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        </div>
 
           <!-- Volunteer & Team Hospitality SignUp Hub -->
           <div class="signup-hub-section" id="signupHubSection">
@@ -2111,7 +2200,6 @@
             </div>
 
           </div>
-        </div>
       `;
     }
 
@@ -2745,7 +2833,7 @@
     let allCardsCollapsed = false;
 
     function toggleCard(headerEl) {
-      const card = headerEl.closest('.table-card, .signup-hub-section, .event-map-container, .detail-section, .event-details-card');
+      const card = headerEl.closest('.table-card, .signup-hub-section, .event-map-container, .detail-section, .event-location-card');
       if (!card) return;
       const body = card.querySelector('.collapsible-body');
       const toggleIcon = headerEl.querySelector('.card-toggle-icon');
