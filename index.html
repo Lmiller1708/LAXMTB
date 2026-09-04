@@ -5816,10 +5816,27 @@
       scheduleRows.forEach(r => {
         const dayName = r[0] || 'Weekend';
         const dateText = r[1] || '';
-        const timeText = r[2] || '';
-        const descText = r[3] || '';
-        const tagText = r[4] || '';
-        const highlightVal = (r[5] || '').toLowerCase();
+
+        // Detect whether table has separate Start Time and End Time columns (7+ cols)
+        let timeText = '';
+        let descText = '';
+        let tagText = '';
+        let highlightVal = '';
+
+        if (r.length >= 7) {
+          const startTime = (r[2] || '').trim();
+          const endTime = (r[3] || '').trim();
+          timeText = startTime && endTime ? `${startTime} - ${endTime}` : (startTime || endTime);
+          descText = r[4] || '';
+          tagText = r[5] || '';
+          highlightVal = (r[6] || '').toLowerCase();
+        } else {
+          timeText = r[2] || '';
+          descText = r[3] || '';
+          tagText = r[4] || '';
+          highlightVal = (r[5] || '').toLowerCase();
+        }
+
         const isSpecial = highlightVal === 'yes' || highlightVal === 'true' || highlightVal === 'y' || descText.toLowerCase().includes('dinner') || descText.toLowerCase().includes('breakfast');
 
         if (!dayMap[dayName]) {
