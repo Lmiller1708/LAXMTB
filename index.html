@@ -22,6 +22,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
   <style>
+    html {
+      scroll-padding-top: 164px;
+    }
+
+    @media (max-width: 767px) {
+      html {
+        scroll-padding-top: 96px;
+      }
+    }
+
     /* Strict Pure Black & Neutral Gray Palette */
     :root[data-theme="dark"] {
       --bg-body: #0d0d0d;
@@ -123,14 +133,19 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Header */
-    .site-header {
+    /* 1. Fixed Brand Bar (Option 1: Permanently Pinned at Top) */
+    .site-header-fixed {
+      position: sticky;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
       background: var(--bg-header);
       border-bottom: 1px solid var(--border);
-      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
 
-    .site-header::before {
+    .site-header-fixed::before {
       content: '';
       position: absolute;
       top: 0;
@@ -138,12 +153,16 @@
       right: 0;
       height: 3px;
       background: linear-gradient(90deg, #dc2626, #ef4444, #dc2626);
+      z-index: 101;
     }
 
-    .header-container {
+    .header-top-container {
       max-width: 1220px;
       margin: 0 auto;
-      padding: 12px 14px 0 14px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      min-height: 46px;
     }
 
     .header-top {
@@ -151,7 +170,7 @@
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      margin-bottom: 10px;
+      width: 100%;
     }
 
     .brand-box {
@@ -244,14 +263,24 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
-    /* Season Race Switcher Tabs (Ultra-Compact Mobile Swipe) */
+    /* 2. Season Race Switcher Section (Scrolls naturally out of view) */
+    .race-switcher-section {
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .race-switcher-container {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 8px 14px 6px 14px;
+    }
+
     .race-switcher-bar {
       display: flex;
       gap: 6px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
+      padding-bottom: 2px;
       scrollbar-width: none;
     }
     .race-switcher-bar::-webkit-scrollbar { display: none; }
@@ -305,13 +334,30 @@
       font-weight: 700;
     }
 
-    /* Sub Tabs (Start Lists / Live Results / Event Details) */
+    /* 3. Sub Navigation Row: Event Details | Start Lists | Live Results (Sticks underneath Brand Bar) */
+    .sub-nav-sticky-wrapper {
+      position: sticky;
+      top: var(--header-brand-height);
+      left: 0;
+      right: 0;
+      z-index: 95;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    }
+
+    .sub-nav-container {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 0 14px;
+    }
+
     .sub-nav-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 8px;
-      padding: 6px 0 8px 0;
+      min-height: var(--subnav-height);
     }
 
     .nav-tabs {
@@ -320,7 +366,7 @@
     }
 
     .nav-tab {
-      padding: 6px 2px;
+      padding: 8px 4px;
       font-size: 13px;
       font-weight: 700;
       text-transform: uppercase;
@@ -331,6 +377,7 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      line-height: 1.2;
     }
 
     .nav-tab:hover {
@@ -344,7 +391,7 @@
     .nav-tab.active::after {
       content: '';
       position: absolute;
-      bottom: -8px;
+      bottom: 0;
       left: 0;
       right: 0;
       height: 2px;
@@ -353,6 +400,111 @@
 
     .current-race-badge {
       display: none;
+    }
+
+    /* Non-Mobile / Desktop View (>= 768px): Fix the ENTIRE header together as one solid block */
+    @media (min-width: 768px) {
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--bg-header);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      }
+
+      .site-header-fixed {
+        position: static;
+        box-shadow: none;
+      }
+
+      .race-switcher-section {
+        position: static;
+        box-shadow: none;
+      }
+
+      .sub-nav-sticky-wrapper {
+        position: static;
+        box-shadow: none;
+      }
+
+      .compact-toolbar {
+        position: sticky;
+        top: 154px;
+        z-index: 90;
+      }
+
+      html {
+        scroll-padding-top: 164px;
+      }
+    }
+
+    /* Mobile View (< 768px): Brand bar fixed, Race carousel scrolls away, Sub-nav docks with zero overlap */
+    @media (max-width: 767px) {
+      .site-header {
+        display: contents; /* Unwraps children so brand bar and sub-nav participate in page sticky flow */
+      }
+
+      .site-header-fixed {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--bg-header);
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      }
+
+      .race-switcher-section {
+        position: static; /* Scrolls naturally out of view on mobile to maximize table space */
+      }
+
+      .sub-nav-sticky-wrapper {
+        position: sticky;
+        top: 46px; /* Docks right flush under the 46px slim brand bar */
+        z-index: 95;
+        background: var(--bg-header);
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      }
+
+      .compact-toolbar {
+        position: sticky;
+        top: 86px;
+        z-index: 90;
+      }
+
+      html {
+        scroll-padding-top: 96px;
+      }
+
+      /* Slight tweak: Keep title on one line on mobile so the bar NEVER grows tall */
+      .brand-text h1 {
+        font-size: clamp(17px, 4.4vw, 21px);
+        white-space: nowrap;
+      }
+      .team-logo {
+        width: 36px;
+        height: 32px;
+      }
+      .brand-box {
+        gap: 6px;
+      }
+      .header-top {
+        gap: 6px;
+      }
+      .header-top-container {
+        padding: 5px 12px;
+        min-height: 46px;
+      }
+      .theme-toggle-btn {
+        padding: 3px 6px;
+        min-height: 28px;
+        font-size: 10px;
+      }
+      .live-status-badge {
+        padding: 3px 6px;
+        min-height: 28px;
+        font-size: 10px;
+      }
     }
 
     /* Event Location & Maps Links */
@@ -480,14 +632,17 @@
       padding: 0 10px;
     }
 
-    /* Ultra-Compact Sticky Search & Filter Toolbar */
+    /* Ultra-Compact Sticky Search & Filter Toolbar (Docks under sticky sub-nav) */
     .compact-toolbar {
+      position: sticky;
+      top: calc(var(--header-brand-height) + var(--subnav-height) + 6px);
+      z-index: 90;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 8px 10px;
       margin-bottom: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
     }
 
     .toolbar-main-row {
@@ -706,6 +861,24 @@
     }
 
     @media (max-width: 520px) {
+      .brand-text h1 {
+        font-size: 21px;
+      }
+      .team-logo {
+        width: 38px;
+        height: 34px;
+      }
+      .theme-toggle-btn, .live-status-badge {
+        padding: 3px 6px;
+        min-height: 28px;
+        font-size: 10px;
+      }
+      .nav-tabs {
+        gap: 12px;
+      }
+      .nav-tab {
+        font-size: 11px;
+      }
       .status-bar {
         flex-direction: column;
         align-items: flex-start;
@@ -714,6 +887,23 @@
       .status-actions-group {
         width: 100%;
         justify-content: flex-end;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .brand-text h1 {
+        font-size: 18px;
+      }
+      .team-logo {
+        width: 32px;
+        height: 28px;
+      }
+      .nav-tabs {
+        gap: 8px;
+      }
+      .nav-tab {
+        font-size: 10px;
+        padding: 4px 1px;
       }
     }
 
@@ -1772,6 +1962,9 @@
 
       /* Hide All Navigation Chrome, UI Controls, & Interactive Overlays */
       .site-header,
+      .site-header-fixed,
+      .race-switcher-section,
+      .sub-nav-sticky-wrapper,
       .race-switcher-bar,
       .sub-nav-row,
       .compact-toolbar,
@@ -2040,49 +2233,61 @@
 
   <!-- Site Header -->
   <header class="site-header">
-    <div class="header-container">
-      <div class="header-top">
-        
-        <div class="brand-box">
-          <img src="logo.png" alt="La Crosse Area MTB Team" class="team-logo" onerror="this.style.display='none'">
-          <div class="brand-text">
-            <h1>LAX MTB <span>// RACE CENTRAL</span></h1>
+
+    <!-- 1. Fixed Brand Header -->
+    <div class="site-header-fixed">
+      <div class="header-top-container">
+        <div class="header-top">
+          
+          <div class="brand-box">
+            <img src="logo.png" alt="La Crosse Area MTB Team" class="team-logo" onerror="this.style.display='none'">
+            <div class="brand-text">
+              <h1>LAX MTB <span>// RACE CENTRAL</span></h1>
+            </div>
           </div>
+
+          <div class="header-controls">
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
+              <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
+            </button>
+            <span class="live-status-badge" id="liveBadge">
+              <span class="pulse-dot" id="liveDot"></span>
+              <span id="liveStatusText">Live API</span>
+            </span>
+          </div>
+
         </div>
-
-        <div class="header-controls">
-          <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
-            <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
-          </button>
-          <span class="live-status-badge" id="liveBadge">
-            <span class="pulse-dot" id="liveDot"></span>
-            <span id="liveStatusText">Live API</span>
-          </span>
-        </div>
-
       </div>
-
-      <!-- 5-Race Season Switcher Tabs -->
-      <div class="race-switcher-bar" id="raceSwitcherBar">
-        <!-- Rendered by JS -->
-      </div>
-
-      <!-- Sub Navigation Row: Start Lists | Live Results | Event Details -->
-      <div class="sub-nav-row">
-        <nav class="nav-tabs">
-          <div class="nav-tab active" id="tabEventDetails" onclick="switchTab('details')">
-            <span>📋</span> Event Details
-          </div>
-          <div class="nav-tab inactive" id="tabStartLists" onclick="switchTab('list')">
-            <span>🏁</span> Start Lists
-          </div>
-          <div class="nav-tab inactive" id="tabLiveResults" onclick="switchTab('results')">
-            <span>⏱️</span> Live Results
-          </div>
-        </nav>
-      </div>
-
     </div>
+
+    <!-- 2. Season Race Switcher Tabs (Scrolls naturally out of view on mobile) -->
+    <div class="race-switcher-section">
+      <div class="race-switcher-container">
+        <div class="race-switcher-bar" id="raceSwitcherBar">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Sub Navigation Row -->
+    <nav class="sub-nav-sticky-wrapper">
+      <div class="sub-nav-container">
+        <div class="sub-nav-row">
+          <div class="nav-tabs">
+            <div class="nav-tab active" id="tabEventDetails" onclick="switchTab('details')">
+              <span>📋</span> Event Details
+            </div>
+            <div class="nav-tab inactive" id="tabStartLists" onclick="switchTab('list')">
+              <span>🏁</span> Start Lists
+            </div>
+            <div class="nav-tab inactive" id="tabLiveResults" onclick="switchTab('results')">
+              <span>⏱️</span> Live Results
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
   </header>
 
   <!-- Main Content -->
