@@ -1,6 +1,6 @@
-# 📊 LAXMTB Google Sheets Setup Guide (KISS Edition)
+# 📊 LAXMTB Google Sheets Setup Guide
 
-All 5 season races are pre-configured into a single spreadsheet file: **`LAXMTB_Race_Data_Template.xlsx`**.
+All 5 season races are pre-configured into the master spreadsheet file: **`LAXMTB_Race_Data.xlsx`**.
 
 Each race has its own dedicated tab with 3 clear sections:
 1. **`--- SCHEDULE ---`**
@@ -11,9 +11,9 @@ Each race has its own dedicated tab with 3 clear sections:
 
 ## 🚀 2-Step Quick Setup
 
-### Step 1: Open the Pre-Built Spreadsheet in Google Sheets
+### Step 1: Open the Master Spreadsheet in Google Sheets
 1. Go to [Google Drive](https://drive.google.com).
-2. Drag and drop the file **`LAXMTB_Race_Data_Template.xlsx`** (located in the root of this repo) into Google Drive.
+2. Drag and drop **`LAXMTB_Race_Data.xlsx`** (located in the root of this repo) into Google Drive.
 3. Double-click to open it with **Google Sheets**.
 4. In Google Sheets, click **File > Save as Google Sheets**.
 5. Click the green **Share** button in the top right:
