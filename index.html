@@ -2656,7 +2656,7 @@
             isRaceDay: true,
             events: [
               { time: '7:00 AM - 8:00 AM', desc: 'LAXMTB Team Breakfast', tag: 'Team Event', isSpecial: true },
-              { time: '7:00 AM - 9:00 AM', desc: 'Pre-Rides Open (Registered Riders & Coaches)', tag: 'Pre-Ride' },
+              { time: '7:00 AM - 9:30 AM', desc: 'Pre-Rides Open (Registered Riders & Coaches)', tag: 'Pre-Ride' },
               { time: '10:00 AM', desc: 'Racing Starts (North Conference Waves)', tag: 'Racing', isRace: true },
               { time: '4:30 PM', desc: 'North Conference Awards & Season Opener Celebration', tag: 'Awards' }
             ]
@@ -2678,24 +2678,24 @@
           '<strong>Leashed Pets Only:</strong> Dogs prohibited in active course areas and staging grid zones.'
         ],
         waveSchedule: {
-          'Varsity Boys': { '1': '10:00 AM' },
-          'JV III Boys': { '1': '10:05 AM' },
-          'JV II Boys': { '1': '10:40 AM', '2': '10:43 AM' },
-          'Freshman Boys': { '1': '11:15 AM', '2': '11:18 AM' },
-          'HS Open Boys': { '1': '11:20 AM' },
-          'Varsity Girls': { '1': '12:30 PM' },
-          'JV III Girls': { '1': '12:35 PM' },
-          'JV II Girls': { '1': '12:40 PM' },
-          'Freshman Girls': { '1': '12:45 PM' },
-          'HS Open Girls': { '1': '12:48 PM' },
-          '8th Grade Boys': { '1': '1:45 PM', '2': '1:48 PM' },
-          '7th Grade Boys': { '1': '2:15 PM', '2': '2:18 PM' },
-          '6th Grade Boys': { '1': '2:45 PM', '2': '2:48 PM' },
-          'MS2 Boys': { '1': '2:50 PM' },
-          '8th Grade Girls': { '1': '3:15 PM' },
-          '7th Grade Girls': { '1': '3:20 PM' },
-          '6th Grade Girls': { '1': '3:25 PM' },
-          'MS2 Girls': { '1': '3:30 PM' }
+          'Varsity Boys': { '1': { start: '10:00 AM', stage: '9:45 AM' } },
+          'JV III Boys': { '1': { start: '10:05 AM', stage: '9:50 AM' }, '2': { start: '10:06 AM', stage: '10:06 AM' } },
+          'Varsity Girls': { '1': { start: '11:25 AM', stage: '11:10 AM' } },
+          'JV III Girls': { '1': { start: '11:30 AM', stage: '11:15 AM' } },
+          'MS2 Boys': { '1': { start: '1:05 PM', stage: '12:50 PM' } },
+          'Freshman Boys': { '1': { start: '1:10 PM', stage: '12:55 PM' }, '2': { start: '1:11 PM', stage: '12:55 PM' }, '3': { start: '1:12 PM', stage: '12:55 PM' } },
+          '8th Grade Boys': { '1': { start: '1:17 PM', stage: '1:02 PM' }, '2': { start: '1:18 PM', stage: '1:02 PM' } },
+          'MS2 Girls': { '1': { start: '2:00 PM', stage: '1:45 PM' } },
+          'Freshman Girls': { '1': { start: '2:05 PM', stage: '1:50 PM' } },
+          'JV II Girls': { '1': { start: '2:10 PM', stage: '1:55 PM' }, '2': { start: '2:11 PM', stage: '1:55 PM' } },
+          '8th Grade Girls': { '1': { start: '2:16 PM', stage: '2:01 PM' } },
+          'JV II Boys': { '1': { start: '2:55 PM', stage: '2:40 PM' }, '2': { start: '2:56 PM', stage: '2:40 PM' }, '3': { start: '2:57 PM', stage: '2:40 PM' }, '4': { start: '2:58 PM', stage: '2:40 PM' } },
+          '7th Grade Boys': { '1': { start: '3:03 PM', stage: '2:48 PM' }, '2': { start: '3:04 PM', stage: '2:48 PM' } },
+          '6th Grade Boys': { '1': { start: '3:40 PM', stage: '3:25 PM' }, '2': { start: '3:41 PM', stage: '3:25 PM' } },
+          '7th Grade Girls': { '1': { start: '3:46 PM', stage: '3:31 PM' }, '2': { start: '3:47 PM', stage: '3:31 PM' } },
+          '6th Grade Girls': { '1': { start: '3:52 PM', stage: '3:36 PM' } },
+          'HS Open Boys': { '1': { start: '3:53 PM', stage: '3:36 PM' } },
+          'HS Open Girls': { '1': { start: '3:53 PM', stage: '3:36 PM' } }
         }
       },
       {
@@ -2862,44 +2862,64 @@
     ];
 
     const defaultWaveSchedule = {
-      'Varsity Boys': { '1': '10:00 AM', default: '10:00 AM' },
-      'JV III Boys': { '1': '10:05 AM', default: '10:05 AM' },
-      'JV II Boys': { '1': '10:40 AM', '2': '10:43 AM', default: '10:40 AM' },
-      'Freshman Boys': { '1': '11:15 AM', '2': '11:18 AM', default: '11:15 AM' },
-      'HS Open Boys': { '1': '11:20 AM', default: '11:20 AM' },
-      'Varsity Girls': { '1': '12:30 PM', default: '12:30 PM' },
-      'JV III Girls': { '1': '12:35 PM', default: '12:35 PM' },
-      'JV II Girls': { '1': '12:40 PM', default: '12:40 PM' },
-      'Freshman Girls': { '1': '12:45 PM', default: '12:45 PM' },
-      'HS Open Girls': { '1': '12:48 PM', default: '12:48 PM' },
-      '8th Grade Boys': { '1': '1:45 PM', '2': '1:48 PM', default: '1:45 PM' },
-      '7th Grade Boys': { '1': '2:15 PM', '2': '2:18 PM', default: '2:15 PM' },
-      '6th Grade Boys': { '1': '2:45 PM', '2': '2:48 PM', default: '2:45 PM' },
-      'MS2 Boys': { '1': '2:50 PM', default: '2:50 PM' },
-      '8th Grade Girls': { '1': '3:15 PM', default: '3:15 PM' },
-      '7th Grade Girls': { '1': '3:20 PM', default: '3:20 PM' },
-      '6th Grade Girls': { '1': '3:25 PM', default: '3:25 PM' },
-      'MS2 Girls': { '1': '3:30 PM', default: '3:30 PM' }
+      'Varsity Boys': { '1': { start: '10:00 AM', stage: '9:45 AM' } },
+      'JV III Boys': { '1': { start: '10:05 AM', stage: '9:50 AM' }, '2': { start: '10:06 AM', stage: '10:06 AM' } },
+      'Varsity Girls': { '1': { start: '11:25 AM', stage: '11:10 AM' } },
+      'JV III Girls': { '1': { start: '11:30 AM', stage: '11:15 AM' } },
+      'MS2 Boys': { '1': { start: '1:05 PM', stage: '12:50 PM' } },
+      'Freshman Boys': { '1': { start: '1:10 PM', stage: '12:55 PM' }, '2': { start: '1:11 PM', stage: '12:55 PM' }, '3': { start: '1:12 PM', stage: '12:55 PM' } },
+      '8th Grade Boys': { '1': { start: '1:17 PM', stage: '1:02 PM' }, '2': { start: '1:18 PM', stage: '1:02 PM' } },
+      'MS2 Girls': { '1': { start: '2:00 PM', stage: '1:45 PM' } },
+      'Freshman Girls': { '1': { start: '2:05 PM', stage: '1:50 PM' } },
+      'JV II Girls': { '1': { start: '2:10 PM', stage: '1:55 PM' }, '2': { start: '2:11 PM', stage: '1:55 PM' } },
+      '8th Grade Girls': { '1': { start: '2:16 PM', stage: '2:01 PM' } },
+      'JV II Boys': { '1': { start: '2:55 PM', stage: '2:40 PM' }, '2': { start: '2:56 PM', stage: '2:40 PM' }, '3': { start: '2:57 PM', stage: '2:40 PM' }, '4': { start: '2:58 PM', stage: '2:40 PM' } },
+      '7th Grade Boys': { '1': { start: '3:03 PM', stage: '2:48 PM' }, '2': { start: '3:04 PM', stage: '2:48 PM' } },
+      '6th Grade Boys': { '1': { start: '3:40 PM', stage: '3:25 PM' }, '2': { start: '3:41 PM', stage: '3:25 PM' } },
+      '7th Grade Girls': { '1': { start: '3:46 PM', stage: '3:31 PM' }, '2': { start: '3:47 PM', stage: '3:31 PM' } },
+      '6th Grade Girls': { '1': { start: '3:52 PM', stage: '3:36 PM' } },
+      'HS Open Boys': { '1': { start: '3:53 PM', stage: '3:36 PM' } },
+      'HS Open Girls': { '1': { start: '3:53 PM', stage: '3:36 PM' } }
     };
 
-    function getCategoryStartTime(race, category) {
+    function getWaveScheduleEntry(race, category, waveStr) {
       if (!category) return null;
       const sched = (race && race.waveSchedule) || defaultWaveSchedule;
-      const cKey = Object.keys(sched).find(k => k.toLowerCase() === category.toLowerCase()) || category;
-      const catObj = sched[cKey];
-      if (!catObj) return null;
-      return catObj['1'] || catObj['Wave: 1'] || catObj.default || null;
-    }
+      const normCat = category.trim().toLowerCase()
+        .replace(/^9th grade/, 'freshman')
+        .replace(/\bjviii\b/i, 'jv iii')
+        .replace(/\bjvii\b/i, 'jv ii')
+        .replace(/\bhso\b/i, 'hs open');
 
-    function getWaveStartTime(race, category, waveStr) {
-      if (!category) return null;
-      const sched = (race && race.waveSchedule) || defaultWaveSchedule;
-      const cKey = Object.keys(sched).find(k => k.toLowerCase() === category.toLowerCase()) || category;
+      const cKey = Object.keys(sched).find(k => {
+        const kNorm = k.trim().toLowerCase()
+          .replace(/^9th grade/, 'freshman')
+          .replace(/\bjviii\b/i, 'jv iii')
+          .replace(/\bjvii\b/i, 'jv ii')
+          .replace(/\bhso\b/i, 'hs open');
+        return kNorm === normCat;
+      }) || Object.keys(sched).find(k => k.toLowerCase() === category.toLowerCase()) || category;
+
       const catObj = sched[cKey];
       if (!catObj) return null;
       const match = String(waveStr || '').match(/\d+/);
       const waveNum = match ? match[0] : '1';
-      return catObj[waveNum] || catObj['Wave: ' + waveNum] || catObj.default || null;
+      const val = catObj[waveNum] || catObj['Wave: ' + waveNum] || catObj['1'] || catObj.default || null;
+      if (!val) return null;
+      if (typeof val === 'object') {
+        return val;
+      }
+      return { start: val, stage: null };
+    }
+
+    function getCategoryStartTime(race, category) {
+      const entry = getWaveScheduleEntry(race, category, '1');
+      return entry ? entry.start : null;
+    }
+
+    function getWaveStartTime(race, category, waveStr) {
+      const entry = getWaveScheduleEntry(race, category, waveStr);
+      return entry ? entry.start : null;
     }
 
     // Online/Offline Network Listeners
@@ -4050,7 +4070,9 @@
           isCardCollapsed = allCardsCollapsed;
         }
 
-        const catStartTime = getCategoryStartTime(SEASON_RACES[currentRaceIndex], cat);
+        const catEntry = getWaveScheduleEntry(SEASON_RACES[currentRaceIndex], cat, '1');
+        const catStartTime = catEntry ? catEntry.start : null;
+        const catStageTime = catEntry ? catEntry.stage : null;
         const catTitle = document.createElement('div');
         catTitle.className = 'category-header collapsible-header';
         catTitle.onclick = function() { toggleCard(this); };
@@ -4058,7 +4080,7 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span>${escapeHtml(cat)}</span>
             <span class="category-badge">${totalInCat} RIDERS</span>
-            ${catStartTime ? `<span class="category-time-badge" title="Scheduled Category Start Time">⏱️ ${escapeHtml(catStartTime)}</span>` : ''}
+            ${catStartTime ? `<span class="category-time-badge" title="Scheduled Category Start Time${catStageTime ? ` (Stage: ${escapeHtml(catStageTime)})` : ''}">⏱️ ${escapeHtml(catStartTime)}</span>` : ''}
           </div>
           <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(cat)}">▼</span>
         `;
@@ -4071,12 +4093,20 @@
         const sortedWaveKeys = Object.keys(waves).sort();
 
         sortedWaveKeys.forEach(wKey => {
-          const waveTime = getWaveStartTime(SEASON_RACES[currentRaceIndex], cat, wKey);
+          const waveEntry = getWaveScheduleEntry(SEASON_RACES[currentRaceIndex], cat, wKey);
+          const waveTime = waveEntry ? waveEntry.start : null;
+          const stageTime = waveEntry ? waveEntry.stage : null;
           const waveHeader = document.createElement('div');
           waveHeader.className = 'wave-divider';
+          let timeHtml = '';
+          if (waveTime && stageTime) {
+            timeHtml = `<span class="wave-time-tag" title="Stage: ${escapeHtml(stageTime)} | Start: ${escapeHtml(waveTime)}">⏱️ Wave Start: ${escapeHtml(waveTime)} <span style="opacity:0.8;font-size:10px;font-weight:normal;">(Stage: ${escapeHtml(stageTime)})</span></span>`;
+          } else if (waveTime) {
+            timeHtml = `<span class="wave-time-tag" title="Scheduled Wave Start Time">⏱️ Wave Start: ${escapeHtml(waveTime)}</span>`;
+          }
           waveHeader.innerHTML = `
             <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
-            ${waveTime ? `<span class="wave-time-tag" title="Scheduled Wave Start Time">⏱️ Wave Start: ${escapeHtml(waveTime)}</span>` : ''}
+            ${timeHtml}
           `;
           cardBody.appendChild(waveHeader);
 

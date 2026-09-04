@@ -51,7 +51,7 @@
         "isRaceDay": true,
         "events": [
           { "time": "7:00 AM - 8:00 AM", "desc": "LAXMTB Team Breakfast", "tag": "Team Event", "isSpecial": true },
-          { "time": "7:00 AM - 9:00 AM", "desc": "Pre-Rides Open (Registered Riders & Coaches)", "tag": "Pre-Ride" },
+          { "time": "7:00 AM - 9:30 AM", "desc": "Pre-Rides Open (Registered Riders & Coaches)", "tag": "Pre-Ride" },
           { "time": "10:00 AM", "desc": "Racing Starts (North Conference Waves)", "tag": "Racing", "isRace": true },
           { "time": "4:30 PM", "desc": "North Conference Awards & Season Opener Celebration", "tag": "Awards" }
         ]
@@ -73,24 +73,24 @@
       "<strong>Leashed Pets Only:</strong> Dogs prohibited in active course areas and staging grid zones."
     ],
     "waveSchedule": {
-      "Varsity Boys": { "1": "10:00 AM" },
-      "JV III Boys": { "1": "10:05 AM" },
-      "JV II Boys": { "1": "10:40 AM", "2": "10:43 AM" },
-      "Freshman Boys": { "1": "11:15 AM", "2": "11:18 AM" },
-      "HS Open Boys": { "1": "11:20 AM" },
-      "Varsity Girls": { "1": "12:30 PM" },
-      "JV III Girls": { "1": "12:35 PM" },
-      "JV II Girls": { "1": "12:40 PM" },
-      "Freshman Girls": { "1": "12:45 PM" },
-      "HS Open Girls": { "1": "12:48 PM" },
-      "8th Grade Boys": { "1": "1:45 PM", "2": "1:48 PM" },
-      "7th Grade Boys": { "1": "2:15 PM", "2": "2:18 PM" },
-      "6th Grade Boys": { "1": "2:45 PM", "2": "2:48 PM" },
-      "MS2 Boys": { "1": "2:50 PM" },
-      "8th Grade Girls": { "1": "3:15 PM" },
-      "7th Grade Girls": { "1": "3:20 PM" },
-      "6th Grade Girls": { "1": "3:25 PM" },
-      "MS2 Girls": { "1": "3:30 PM" }
+      "Varsity Boys": { "1": { "start": "10:00 AM", "stage": "9:45 AM" } },
+      "JV III Boys": { "1": { "start": "10:05 AM", "stage": "9:50 AM" }, "2": { "start": "10:06 AM", "stage": "10:06 AM" } },
+      "Varsity Girls": { "1": { "start": "11:25 AM", "stage": "11:10 AM" } },
+      "JV III Girls": { "1": { "start": "11:30 AM", "stage": "11:15 AM" } },
+      "MS2 Boys": { "1": { "start": "1:05 PM", "stage": "12:50 PM" } },
+      "Freshman Boys": { "1": { "start": "1:10 PM", "stage": "12:55 PM" }, "2": { "start": "1:11 PM", "stage": "12:55 PM" }, "3": { "start": "1:12 PM", "stage": "12:55 PM" } },
+      "8th Grade Boys": { "1": { "start": "1:17 PM", "stage": "1:02 PM" }, "2": { "start": "1:18 PM", "stage": "1:02 PM" } },
+      "MS2 Girls": { "1": { "start": "2:00 PM", "stage": "1:45 PM" } },
+      "Freshman Girls": { "1": { "start": "2:05 PM", "stage": "1:50 PM" } },
+      "JV II Girls": { "1": { "start": "2:10 PM", "stage": "1:55 PM" }, "2": { "start": "2:11 PM", "stage": "1:55 PM" } },
+      "8th Grade Girls": { "1": { "start": "2:16 PM", "stage": "2:01 PM" } },
+      "JV II Boys": { "1": { "start": "2:55 PM", "stage": "2:40 PM" }, "2": { "start": "2:56 PM", "stage": "2:40 PM" }, "3": { "start": "2:57 PM", "stage": "2:40 PM" }, "4": { "start": "2:58 PM", "stage": "2:40 PM" } },
+      "7th Grade Boys": { "1": { "start": "3:03 PM", "stage": "2:48 PM" }, "2": { "start": "3:04 PM", "stage": "2:48 PM" } },
+      "6th Grade Boys": { "1": { "start": "3:40 PM", "stage": "3:25 PM" }, "2": { "start": "3:41 PM", "stage": "3:25 PM" } },
+      "7th Grade Girls": { "1": { "start": "3:46 PM", "stage": "3:31 PM" }, "2": { "start": "3:47 PM", "stage": "3:31 PM" } },
+      "6th Grade Girls": { "1": { "start": "3:52 PM", "stage": "3:36 PM" } },
+      "HS Open Boys": { "1": { "start": "3:53 PM", "stage": "3:36 PM" } },
+      "HS Open Girls": { "1": { "start": "3:53 PM", "stage": "3:36 PM" } }
     }
   },
   {
