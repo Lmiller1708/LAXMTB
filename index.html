@@ -2134,7 +2134,7 @@
 
         </div>
 
-        <div style="display:flex;align-items:center;margin-top:6px;gap:8px;">
+        <div id="autoRefreshRow" style="display:none;align-items:center;margin-top:6px;gap:8px;">
           <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
             <span>Auto-Refresh:</span>
             <select id="autoRefreshInterval" class="select-dropdown" style="width:auto;min-height:28px;padding:2px 6px;" onchange="setupAutoRefresh()">
@@ -2631,8 +2631,22 @@
       }
 
       allCardsCollapsed = true;
+      cardStateOverrides = {};
       const toggleLabel = document.getElementById('toggleAllCardsLabel');
       if (toggleLabel) toggleLabel.textContent = 'Expand All';
+
+      // Auto-Refresh: ONLY active on 'results' tab; completely disabled on 'list' and 'details'
+      const autoRefreshRow = document.getElementById('autoRefreshRow');
+      if (tab === 'results') {
+        if (autoRefreshRow) autoRefreshRow.style.display = 'flex';
+        setupAutoRefresh();
+      } else {
+        if (autoRefreshRow) autoRefreshRow.style.display = 'none';
+        if (autoRefreshTimer) {
+          clearInterval(autoRefreshTimer);
+          autoRefreshTimer = null;
+        }
+      }
 
       const listDropdown = document.getElementById('listSelect');
       listDropdown.innerHTML = '';
@@ -3465,6 +3479,16 @@
       document.getElementById('statusCount').innerHTML = `Showing <span class="stat-bold">${filtered.length}</span> of <span class="stat-bold">${currentRiders.length}</span> riders`;
 
       const container = document.getElementById('tablesContainer');
+
+      // Preserve currently opened cards before clearing container so refresh never snaps open tabs shut
+      container.querySelectorAll('.table-card[data-card-key]').forEach(c => {
+        const key = c.getAttribute('data-card-key');
+        const body = c.querySelector('.collapsible-body');
+        if (key && body) {
+          cardStateOverrides[key] = body.classList.contains('collapsed');
+        }
+      });
+
       container.innerHTML = '';
 
       if (filtered.length === 0) {
@@ -3497,12 +3521,22 @@
       });
 
       sortedCatKeys.forEach(cat => {
+        const cardKey = 'cat:' + cat;
         const catCard = document.createElement('div');
         catCard.className = 'table-card';
+        catCard.setAttribute('data-card-key', cardKey);
 
         const totalInCat = Object.values(grouped[cat]).reduce((acc, list) => acc + list.length, 0);
 
-        const isCardCollapsed = query ? false : allCardsCollapsed;
+        let isCardCollapsed;
+        if (query) {
+          isCardCollapsed = false;
+        } else if (cardStateOverrides[cardKey] !== undefined) {
+          isCardCollapsed = cardStateOverrides[cardKey];
+        } else {
+          isCardCollapsed = allCardsCollapsed;
+        }
+
         const catTitle = document.createElement('div');
         catTitle.className = 'category-header collapsible-header';
         catTitle.onclick = function() { toggleCard(this); };
@@ -3589,10 +3623,20 @@
       const sortedTeams = Object.keys(grouped).sort();
 
       sortedTeams.forEach(team => {
+        const cardKey = 'team:' + team;
         const teamCard = document.createElement('div');
         teamCard.className = 'table-card';
+        teamCard.setAttribute('data-card-key', cardKey);
 
-        const isCardCollapsed = query ? false : allCardsCollapsed;
+        let isCardCollapsed;
+        if (query) {
+          isCardCollapsed = false;
+        } else if (cardStateOverrides[cardKey] !== undefined) {
+          isCardCollapsed = cardStateOverrides[cardKey];
+        } else {
+          isCardCollapsed = allCardsCollapsed;
+        }
+
         const teamHeader = document.createElement('div');
         teamHeader.className = 'category-header collapsible-header';
         teamHeader.onclick = function() { toggleCard(this); };
@@ -3657,6 +3701,7 @@
     }
 
     let allCardsCollapsed = true;
+    let cardStateOverrides = {}; // Map of cardKey -> boolean (true: collapsed, false: open)
 
     function toggleCard(headerEl) {
       const card = headerEl.closest('.table-card, .signup-hub-section, .event-map-container, .detail-section, .event-location-card');
@@ -3668,11 +3713,16 @@
         if (toggleIcon) {
           toggleIcon.classList.toggle('collapsed', isCollapsed);
         }
+        const cardKey = card.getAttribute('data-card-key');
+        if (cardKey) {
+          cardStateOverrides[cardKey] = isCollapsed;
+        }
       }
     }
 
     function toggleAllCardsState() {
       allCardsCollapsed = !allCardsCollapsed;
+      cardStateOverrides = {}; // Clear individual overrides so global expand/collapse applies to all
       const bodies = document.querySelectorAll('#tablesContainer .collapsible-body');
       const icons = document.querySelectorAll('#tablesContainer .card-toggle-icon');
       
@@ -3720,8 +3770,14 @@
     }
 
     function setupAutoRefresh() {
-      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-      const intervalSec = parseInt(document.getElementById('autoRefreshInterval').value, 10);
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+      }
+      // Never auto-refresh on Start Lists ('list') or Event Details ('details')
+      if (currentTab !== 'results') return;
+
+      const intervalSec = parseInt(document.getElementById('autoRefreshInterval')?.value || '30', 10);
       if (intervalSec > 0) {
         autoRefreshTimer = setInterval(fetchLiveRaceresultData, intervalSec * 1000);
       }
