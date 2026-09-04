@@ -4349,11 +4349,35 @@
       const statusEl = document.getElementById('notifPermissionStatus');
       const btn = document.getElementById('requestPermBtn');
       if (!statusEl || !btn) return;
-      if (!('Notification' in window)) {
-        statusEl.textContent = 'Status: Not supported by browser';
-        btn.style.display = 'none';
+
+      const isFile = window.location.protocol === 'file:';
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+      const isStandalone = (window.navigator && window.navigator.standalone) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+      if (isFile) {
+        statusEl.innerHTML = 'Status: <span style="color:#f59e0b;font-weight:700;">● Local File Preview</span><br><span style="color:var(--text-muted);font-size:10.5px;">In-app alerts & sound active! System push requires HTTPS.</span>';
+        btn.textContent = 'Info';
+        btn.disabled = false;
+        btn.style.opacity = '1';
         return;
       }
+
+      if (isIOS && !isStandalone) {
+        statusEl.innerHTML = 'Status: <span style="color:#f59e0b;font-weight:700;">● iOS Safari Mode</span><br><span style="color:var(--text-muted);font-size:10.5px;">For push: Tap Share ⎋ → "Add to Home Screen". In-app alerts active!</span>';
+        btn.textContent = 'iOS Info';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        return;
+      }
+
+      if (!('Notification' in window)) {
+        statusEl.innerHTML = 'Status: <span style="color:#ef4444;font-weight:700;">● Unsupported</span><br><span style="color:var(--text-muted);font-size:10.5px;">Browser lacks push. In-app alerts & sound active!</span>';
+        btn.textContent = 'Unsupported';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        return;
+      }
+
       const perm = Notification.permission;
       if (perm === 'granted') {
         statusEl.innerHTML = 'Status: <span style="color:#22c55e;font-weight:700;">● Allowed</span>';
@@ -4361,10 +4385,10 @@
         btn.disabled = true;
         btn.style.opacity = '0.6';
       } else if (perm === 'denied') {
-        statusEl.innerHTML = 'Status: <span style="color:#ef4444;font-weight:700;">● Blocked</span>';
-        btn.textContent = 'Blocked';
-        btn.disabled = true;
-        btn.style.opacity = '0.6';
+        statusEl.innerHTML = 'Status: <span style="color:#ef4444;font-weight:700;">● Blocked</span><br><span style="color:var(--text-muted);font-size:10.5px;">Check browser address bar / settings. In-app alerts active!</span>';
+        btn.textContent = 'Help';
+        btn.disabled = false;
+        btn.style.opacity = '1';
       } else {
         statusEl.innerHTML = 'Status: <span style="color:#f59e0b;font-weight:700;">● Needs Permission</span>';
         btn.textContent = 'Enable';
@@ -4374,21 +4398,74 @@
     }
 
     function requestBrowserNotificationPermission() {
-      if (!('Notification' in window)) {
-        showToastNotification('⚠️ Notifications Not Supported', 'Your browser does not support web notifications.');
+      const isFile = window.location.protocol === 'file:';
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+      const isStandalone = (window.navigator && window.navigator.standalone) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+      if (isFile) {
+        showToastNotification('ℹ️ Local File Mode', 'Browser push notifications require HTTPS (like GitHub Pages). In-app visual alerts & sound chimes are 100% active!');
         return;
       }
-      Notification.requestPermission().then(perm => {
-        updatePermissionUI();
-        if (perm === 'granted') {
-          showToastNotification('🔔 Notifications Enabled', 'You will receive race and staging alerts.');
+
+      if (isIOS && !isStandalone) {
+        showToastNotification('📱 iOS Safari Push Tip', 'To get system push alerts on iOS, tap Share ⎋ → "Add to Home Screen". In-app alerts & chimes work right now!');
+        return;
+      }
+
+      if (!('Notification' in window)) {
+        showToastNotification('⚠️ Push Alerts Not Supported', 'Your browser does not support system push. In-app banners and chimes will alert you!');
+        return;
+      }
+
+      if (Notification.permission === 'denied') {
+        showToastNotification('🔒 Notifications Blocked', 'Notifications are blocked in browser settings. Click the lock/settings icon in your browser URL bar to allow.');
+        return;
+      }
+
+      const btn = document.getElementById('requestPermBtn');
+      if (btn) {
+        btn.textContent = 'Prompting...';
+        btn.disabled = true;
+      }
+
+      // Safe cross-browser execution (supports callback-style Safari + promise-style Chrome/Firefox)
+      try {
+        let finished = false;
+        const handleResult = function(perm) {
+          if (finished) return;
+          finished = true;
+          updatePermissionUI();
+          if (perm === 'granted') {
+            showToastNotification('🔔 Push Notifications Enabled', 'You will receive staging and race start alerts on your device!');
+          } else if (perm === 'denied') {
+            showToastNotification('🔒 Notifications Blocked', 'Push notifications were declined. In-app alerts and audio chimes will continue to work!');
+          } else {
+            showToastNotification('ℹ️ Permission Pending', 'Please accept the browser notification prompt.');
+          }
+        };
+
+        const result = Notification.requestPermission(handleResult);
+        if (result && typeof result.then === 'function') {
+          result.then(handleResult).catch(function(err) {
+            console.warn('Notification.requestPermission rejected:', err);
+            handleResult(Notification.permission || 'denied');
+          });
         }
-      });
+      } catch (err) {
+        console.warn('Error during requestPermission:', err);
+        showToastNotification('⚠️ Permission Prompt Issue', 'Could not open prompt: ' + (err.message || err) + '. In-app alerts and audio are active!');
+        updatePermissionUI();
+      }
     }
 
     function checkAndPromptPermission() {
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().then(updatePermissionUI);
+      if ('Notification' in window && Notification.permission === 'default' && window.location.protocol !== 'file:') {
+        try {
+          const res = Notification.requestPermission(updatePermissionUI);
+          if (res && typeof res.then === 'function') {
+            res.then(updatePermissionUI).catch(() => {});
+          }
+        } catch(e) {}
       }
     }
 
