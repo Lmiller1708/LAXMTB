@@ -2806,7 +2806,25 @@
       document.getElementById('statusBar').style.display = 'none';
 
       const container = document.getElementById('tablesContainer');
+      const activeSheetId = googleSheetId || localStorage.getItem('laxmtb_google_sheet_id') || '';
       container.innerHTML = `
+        <!-- Live Team Sheet Sync Bar -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:8px 14px;background:var(--bg-card);border:1px solid var(--border-soft);border-radius:8px;font-size:11px;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${activeSheetId ? `
+              <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,0.6);"></span>
+              <span style="color:var(--text-main);font-weight:700;">🟢 Live Google Sheet Connected</span>
+              <span style="color:var(--text-muted);font-size:10px;">${lastSheetSyncTime ? `• Last synced ${lastSheetSyncTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : ''}</span>
+            ` : `
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--text-muted);"></span>
+              <span style="color:var(--text-muted);">Schedule & Links: using bundled team events</span>
+            `}
+          </div>
+          <button type="button" onclick="promptLinkGoogleSheet()" class="btn-icon" style="font-size:11px;padding:3px 10px;min-height:24px;border:1px solid var(--border-soft);font-weight:600;">
+            <span>📊</span> ${activeSheetId ? 'Edit / Unlink Sheet' : 'Link Google Sheet'}
+          </button>
+        </div>
+
         <!-- 1. Event Hero Banner (Logo & Title on its own + League Page) -->
         <div class="event-hero-card">
           <div style="display:flex;align-items:center;gap:18px;flex:1;min-width:260px;">
@@ -3855,6 +3873,263 @@
       }
     });
 
+    // ==========================================
+    // GOOGLE SHEETS LIVE SYNC ENGINE
+    // ==========================================
+    let googleSheetId = '';
+    let lastSheetSyncTime = null;
+
+    function extractGoogleSheetId(input) {
+      if (!input) return '';
+      const match = input.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match) return match[1];
+      return input.trim();
+    }
+
+    function parseCSV(text) {
+      const lines = [];
+      let row = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        const next = text[i + 1];
+        if (c === '"') {
+          if (inQuotes && next === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (c === ',' && !inQuotes) {
+          row.push(current.trim());
+          current = '';
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+          if (c === '\r' && next === '\n') i++;
+          row.push(current.trim());
+          if (row.length > 1 || (row.length === 1 && row[0] !== '')) {
+            lines.push(row);
+          }
+          row = [];
+          current = '';
+        } else {
+          current += c;
+        }
+      }
+      if (current || row.length > 0) {
+        row.push(current.trim());
+        if (row.length > 1 || (row.length === 1 && row[0] !== '')) {
+          lines.push(row);
+        }
+      }
+      return lines;
+    }
+
+    async function fetchGoogleSheetCSV(sheetId, tabName) {
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}&t=${Date.now()}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Google Sheet HTTP ${res.status}`);
+      const text = await res.text();
+      return parseCSV(text);
+    }
+
+    function convertScheduleRowsToRaceSchedule(rows, raceNameOrId) {
+      if (!rows || rows.length < 2) return null;
+      const header = rows[0].map(h => h.toLowerCase().trim());
+      const raceIdx = header.findIndex(h => h.includes('race') || h.includes('event'));
+      const dayIdx = header.findIndex(h => h.includes('day'));
+      const dateIdx = header.findIndex(h => h.includes('date'));
+      const timeIdx = header.findIndex(h => h.includes('time'));
+      const descIdx = header.findIndex(h => h.includes('desc') || h.includes('activity'));
+      const tagIdx = header.findIndex(h => h.includes('tag'));
+      const highlightIdx = header.findIndex(h => h.includes('highlight') || h.includes('meal') || h.includes('special'));
+
+      const dayMap = {};
+      const dayGroups = [];
+      const targetRace = (raceNameOrId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length < 3) continue;
+        const rowRace = (row[raceIdx] || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (targetRace && rowRace && !rowRace.includes(targetRace) && !targetRace.includes(rowRace)) {
+          continue;
+        }
+
+        const dayName = row[dayIdx] || 'Weekend';
+        const dateText = dateIdx !== -1 ? row[dateIdx] : '';
+        const timeText = timeIdx !== -1 ? row[timeIdx] : '';
+        const descText = descIdx !== -1 ? row[descIdx] : '';
+        const tagText = tagIdx !== -1 ? row[tagIdx] : '';
+        const highlightVal = highlightIdx !== -1 ? (row[highlightIdx] || '').toLowerCase() : '';
+        const isSpecial = highlightVal === 'yes' || highlightVal === 'true' || highlightVal === 'y' || descText.toLowerCase().includes('dinner') || descText.toLowerCase().includes('breakfast');
+
+        if (!dayMap[dayName]) {
+          const isRaceDay = dayName.toLowerCase().includes('sun');
+          let subtitle = '';
+          if (dayName.toLowerCase().includes('fri')) subtitle = 'Camping Opens';
+          else if (dayName.toLowerCase().includes('sat')) subtitle = 'Adventure Ride, Pre-Rides & Team Dinner';
+          else if (dayName.toLowerCase().includes('sun')) subtitle = 'Race Day';
+          else if (dayName.toLowerCase().includes('mon')) subtitle = 'Departure';
+
+          dayMap[dayName] = {
+            day: dayName,
+            date: dateText,
+            subtitle: subtitle,
+            isRaceDay: isRaceDay,
+            events: []
+          };
+          dayGroups.push(dayMap[dayName]);
+        }
+
+        if (dateText && !dayMap[dayName].date) {
+          dayMap[dayName].date = dateText;
+        }
+
+        dayMap[dayName].events.push({
+          time: timeText,
+          desc: descText,
+          tag: tagText || (descText.toLowerCase().includes('pre-ride') ? 'Pre-Ride' : descText.toLowerCase().includes('awards') ? 'Awards' : null),
+          isSpecial: isSpecial,
+          isRace: descText.toLowerCase().includes('racing starts') || descText.toLowerCase().includes('race waves')
+        });
+      }
+
+      return dayGroups.length > 0 ? dayGroups : null;
+    }
+
+    function convertLinksRowsToRaceLinks(rows, raceNameOrId) {
+      if (!rows || rows.length < 2) return null;
+      const header = rows[0].map(h => h.toLowerCase().trim());
+      const raceIdx = header.findIndex(h => h.includes('race') || h.includes('event'));
+      const volIdx = header.findIndex(h => h.includes('volunteer'));
+      const dinnerIdx = header.findIndex(h => h.includes('dinner') || h.includes('food') || h.includes('hospitality'));
+      const coachIdx = header.findIndex(h => h.includes('coach') || h.includes('ride'));
+      const mapIdx = header.findIndex(h => h.includes('map'));
+
+      const targetRace = (raceNameOrId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length < 2) continue;
+        const rowRace = (row[raceIdx] || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (targetRace && rowRace && !rowRace.includes(targetRace) && !targetRace.includes(rowRace)) {
+          continue;
+        }
+
+        return {
+          volunteer: volIdx !== -1 ? row[volIdx] : '',
+          hospitality: dinnerIdx !== -1 ? row[dinnerIdx] : '',
+          coach: coachIdx !== -1 ? row[coachIdx] : '',
+          embedMapUrl: mapIdx !== -1 ? row[mapIdx] : ''
+        };
+      }
+      return null;
+    }
+
+    function convertAnnouncementsRowsToGuidelines(rows, raceNameOrId) {
+      if (!rows || rows.length < 2) return null;
+      const header = rows[0].map(h => h.toLowerCase().trim());
+      const raceIdx = header.findIndex(h => h.includes('race') || h.includes('event'));
+      const textIdx = header.findIndex(h => h.includes('announcement') || h.includes('text') || h.includes('guideline') || h.includes('message'));
+
+      const guidelines = [];
+      const targetRace = (raceNameOrId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length < 2) continue;
+        const rowRace = (row[raceIdx] || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (targetRace && rowRace && !rowRace.includes(targetRace) && !targetRace.includes(rowRace)) {
+          continue;
+        }
+        const text = textIdx !== -1 ? row[textIdx] : row[1];
+        if (text) guidelines.push(text);
+      }
+      return guidelines.length > 0 ? guidelines : null;
+    }
+
+    async function syncWithGoogleSheets() {
+      const activeSheetId = googleSheetId || localStorage.getItem('laxmtb_google_sheet_id') || '';
+      if (!activeSheetId) return;
+
+      try {
+        const [schedRows, linkRows, annRows] = await Promise.allSettled([
+          fetchGoogleSheetCSV(activeSheetId, 'Schedule'),
+          fetchGoogleSheetCSV(activeSheetId, 'Links'),
+          fetchGoogleSheetCSV(activeSheetId, 'Announcements')
+        ]);
+
+        let hasUpdates = false;
+
+        SEASON_RACES.forEach(race => {
+          if (schedRows.status === 'fulfilled' && schedRows.value) {
+            const newSchedule = convertScheduleRowsToRaceSchedule(schedRows.value, race.name);
+            if (newSchedule) {
+              race.schedule = newSchedule;
+              hasUpdates = true;
+            }
+          }
+
+          if (linkRows.status === 'fulfilled' && linkRows.value) {
+            const newLinks = convertLinksRowsToRaceLinks(linkRows.value, race.name);
+            if (newLinks) {
+              if (!race.signups) race.signups = {};
+              if (newLinks.volunteer) race.signups.volunteer = newLinks.volunteer;
+              if (newLinks.hospitality) race.signups.hospitality = newLinks.hospitality;
+              if (newLinks.coach) race.signups.coach = newLinks.coach;
+              if (newLinks.embedMapUrl) race.embedMapUrl = newLinks.embedMapUrl;
+              hasUpdates = true;
+            }
+          }
+
+          if (annRows.status === 'fulfilled' && annRows.value) {
+            const newGuidelines = convertAnnouncementsRowsToGuidelines(annRows.value, race.name);
+            if (newGuidelines) {
+              race.guidelines = newGuidelines;
+              hasUpdates = true;
+            }
+          }
+        });
+
+        if (hasUpdates) {
+          lastSheetSyncTime = new Date();
+          localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
+          localStorage.setItem('laxmtb_sheet_sync_time', lastSheetSyncTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+          if (currentTab === 'details') {
+            renderEventDetails(SEASON_RACES[currentRaceIndex]);
+          }
+        }
+      } catch (err) {
+        console.warn('[LAXMTB] Google Sheet Sync error (using local events):', err);
+      }
+    }
+
+    function promptLinkGoogleSheet() {
+      const current = googleSheetId || localStorage.getItem('laxmtb_google_sheet_id') || '';
+      const input = prompt('Enter your Google Sheet URL or Sheet ID (ensure Sheet is shared as "Anyone with link can view"):', current);
+      if (input !== null) {
+        const id = extractGoogleSheetId(input);
+        if (id) {
+          googleSheetId = id;
+          localStorage.setItem('laxmtb_google_sheet_id', id);
+          syncWithGoogleSheets().then(() => {
+            alert('Google Sheet connected! Refreshing data...');
+            if (currentTab === 'details') {
+              renderEventDetails(SEASON_RACES[currentRaceIndex]);
+            }
+          });
+        } else {
+          localStorage.removeItem('laxmtb_google_sheet_id');
+          googleSheetId = '';
+          alert('Google Sheet unlinked. Using bundled events.json.');
+          if (currentTab === 'details') {
+            renderEventDetails(SEASON_RACES[currentRaceIndex]);
+          }
+        }
+      }
+    }
+
     // Load dynamic events and schedules from GitHub events.json
     async function loadEventsConfig() {
       // 1. Check local cache for instant load
@@ -3873,14 +4148,27 @@
         const resp = await fetch('./events.json?t=' + Date.now());
         if (resp.ok) {
           const fresh = await resp.json();
+          let racesList = [];
           if (Array.isArray(fresh) && fresh.length > 0) {
-            fresh.forEach(r => {
+            racesList = fresh;
+            if (fresh[0] && fresh[0].googleSheetId) {
+              googleSheetId = fresh[0].googleSheetId;
+            }
+          } else if (fresh && fresh.races) {
+            racesList = fresh.races;
+            if (fresh.googleSheetId) {
+              googleSheetId = fresh.googleSheetId;
+            }
+          }
+
+          if (racesList.length > 0) {
+            racesList.forEach(r => {
               if (r.eventId && !r.isPublished) {
                 r.isPublished = true;
               }
             });
-            SEASON_RACES = fresh;
-            localStorage.setItem('laxmtb_events_config', JSON.stringify(fresh));
+            SEASON_RACES = racesList;
+            localStorage.setItem('laxmtb_events_config', JSON.stringify(racesList));
             renderRaceSwitcher();
             parseUrlAndNavigate();
           }
@@ -3888,6 +4176,9 @@
       } catch (err) {
         console.warn('[LAXMTB] Could not fetch events.json, using bundled/cached events:', err);
       }
+
+      // 3. Trigger Google Sheets live sync
+      syncWithGoogleSheets();
     }
 
     initTheme();
