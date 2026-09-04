@@ -194,10 +194,23 @@
       letter-spacing: 0.8px;
       color: var(--text-main);
       text-transform: uppercase;
+      white-space: nowrap;
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
     }
 
-    .brand-text h1 span {
+    .brand-text h1 .brand-slash {
+      font-size: 1em; /* Exact same font size as LAX MTB */
       color: var(--accent-red);
+      letter-spacing: 0.8px;
+    }
+
+    .brand-text h1 .brand-sub {
+      font-size: 18px; /* Proportionately sized */
+      color: var(--accent-red);
+      font-weight: 500;
+      letter-spacing: 0.5px;
     }
 
     .header-controls {
@@ -261,6 +274,491 @@
       0% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.3; transform: scale(1.3); }
       100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Mobile / Site Menu Button & Dropdown */
+    .mobile-menu-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 30px;
+      padding: 0;
+      border-radius: 6px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-menu-btn:hover,
+    .mobile-menu-btn.active {
+      background: var(--bg-card);
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .mobile-menu-dropdown {
+      display: none;
+      position: absolute;
+      top: 48px;
+      right: 12px;
+      min-width: 220px;
+      background-color: #1a1a1a;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+      padding: 6px;
+      z-index: 200;
+      animation: menuFadeIn 0.15s ease;
+    }
+
+    .mobile-menu-dropdown.show {
+      display: block;
+    }
+
+    @keyframes menuFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .mobile-menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-menu-item:hover,
+    .mobile-menu-item:active {
+      background: var(--bg-subtle);
+    }
+
+    .mobile-menu-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mobile-menu-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--accent-red);
+      white-space: nowrap;
+    }
+
+    :root[data-theme="dark"] .mobile-menu-dropdown {
+      background-color: #1c1c1c;
+      border-color: #383838;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.75);
+    }
+
+    :root[data-theme="light"] .mobile-menu-dropdown {
+      background-color: #ffffff;
+      border-color: #d1d5db;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Notification Sub Button (Cards, Waves, Riders) */
+    .notif-sub-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 3px 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      vertical-align: middle;
+      -webkit-tap-highlight-color: transparent;
+      line-height: 1;
+    }
+    .notif-sub-btn:hover {
+      color: var(--accent-red);
+      background: var(--bg-subtle);
+      border-color: var(--border);
+    }
+    .notif-sub-btn.active {
+      color: var(--accent-red);
+      background: rgba(220, 38, 38, 0.15);
+      border-color: var(--accent-red);
+    }
+    .wave-notif-btn {
+      margin-left: auto;
+      padding: 2px 6px;
+    }
+    .rider-notif-btn {
+      padding: 2px 4px;
+      margin-left: 6px;
+      opacity: 0.6;
+    }
+    .rider-notif-btn:hover,
+    .rider-notif-btn.active {
+      opacity: 1;
+    }
+
+    /* Modal Overlay & Card */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .modal-overlay.show {
+      display: flex;
+      animation: modalOverlayFade 0.15s ease;
+    }
+    @keyframes modalOverlayFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      animation: modalScale 0.18s ease;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    @keyframes modalScale {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    :root[data-theme="light"] .modal-card {
+      background: #ffffff;
+      border-color: #d1d5db;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface, var(--bg-card));
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease;
+    }
+    .modal-close-btn:hover {
+      color: var(--accent-red);
+    }
+    .modal-body {
+      padding: 16px 18px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .modal-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    .modal-radio-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .modal-radio-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .modal-radio-card:hover {
+      border-color: var(--border-strong);
+    }
+    .modal-radio-card:has(input:checked) {
+      border-color: var(--accent-red);
+      background: rgba(220, 38, 38, 0.08);
+    }
+    :root[data-theme="light"] .modal-radio-card {
+      background: #f9fafb;
+    }
+    :root[data-theme="light"] .modal-radio-card:has(input:checked) {
+      background: rgba(220, 38, 38, 0.06);
+    }
+    .modal-radio-card input {
+      accent-color: var(--accent-red);
+      margin-top: 2px;
+    }
+    .radio-card-content strong {
+      display: block;
+      font-size: 12.5px;
+      color: var(--text-main);
+    }
+    .radio-card-content small {
+      display: block;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      line-height: 1.25;
+    }
+    .lead-time-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .lead-time-btn {
+      flex: 1;
+      min-width: 70px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .lead-time-btn:hover {
+      border-color: var(--accent-red);
+    }
+    .lead-time-btn.active {
+      background: var(--accent-red);
+      color: #ffffff;
+      border-color: var(--accent-red);
+    }
+    .custom-minutes-input {
+      width: 80px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+    }
+    .custom-minutes-input:focus {
+      border-color: var(--accent-red);
+    }
+    .permission-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .action-mini-btn {
+      padding: 4px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      border-radius: 4px;
+      border: 1px solid var(--accent-red);
+      background: var(--accent-red);
+      color: #ffffff;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+    .action-mini-btn:hover {
+      opacity: 0.9;
+    }
+    .active-subs-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      max-height: 120px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .active-sub-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .clear-subs-btn {
+      align-self: flex-start;
+      background: none;
+      border: none;
+      color: var(--accent-red);
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      margin-top: 4px;
+    }
+    .clear-subs-btn:hover {
+      text-decoration: underline;
+    }
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+      background: var(--bg-surface, var(--bg-card));
+    }
+    .test-alert-btn {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .test-alert-btn:hover {
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+    .done-modal-btn {
+      background: var(--accent-red);
+      color: #ffffff;
+      border: none;
+      padding: 7px 18px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+    .done-modal-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Notification Toast Banner */
+    .notif-toast-container {
+      position: fixed;
+      top: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: calc(100% - 24px);
+      max-width: 440px;
+      pointer-events: none;
+    }
+    .notif-toast {
+      pointer-events: auto;
+      background: #1c1c1c;
+      border: 1px solid var(--accent-red);
+      border-radius: 8px;
+      padding: 10px 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      animation: toastSlide 0.2s ease;
+      font-size: 13px;
+    }
+    :root[data-theme="light"] .notif-toast {
+      background: #ffffff;
+      color: #111827;
+      border-color: #dc2626;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    @keyframes toastSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .notif-toast-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .notif-toast-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--accent-red);
+    }
+    .notif-toast-msg {
+      font-size: 12px;
+      color: var(--text-main);
+    }
+    .notif-toast-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 4px;
+    }
+    .notif-toast-close:hover {
+      color: var(--accent-red);
     }
 
     /* 2. Season Race Switcher Section (Scrolls naturally out of view) */
@@ -476,40 +974,78 @@
         scroll-padding-top: 96px;
       }
 
-      /* Slight tweak: Keep title on one line on mobile so the bar NEVER grows tall */
+      /* Title fixed size on mobile as requested (no wrapping) */
+      .brand-box {
+        min-width: 0;
+        flex-shrink: 0;
+        gap: 8px;
+      }
+      .brand-text {
+        min-width: 0;
+      }
       .brand-text h1 {
-        font-size: clamp(17px, 4.4vw, 21px);
+        font-size: 20px; /* Fixed size on mobile */
         white-space: nowrap;
+        letter-spacing: 0.6px;
+        line-height: 1;
+        display: flex;
+        align-items: baseline;
+        gap: 3px;
+      }
+      .brand-text h1 .brand-slash {
+        font-size: 1em; /* Exact same size as LAX MTB */
+        color: var(--accent-red);
+        display: inline !important;
+      }
+      .brand-text h1 .brand-sub {
+        font-size: 14.5px;
+        letter-spacing: 0.4px;
+        display: inline !important; /* Kept on small screens */
       }
       .team-logo {
-        width: 36px;
-        height: 32px;
-      }
-      .brand-box {
-        gap: 6px;
+        width: 32px;
+        height: 28px;
+        flex-shrink: 0;
       }
       .header-top {
-        gap: 6px;
+        gap: 8px;
+      }
+      .header-controls {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        margin-left: auto;
+        gap: 8px;
       }
       .header-top-container {
         padding: 5px 12px;
+        padding-right: max(12px, env(safe-area-inset-right));
+        padding-left: max(10px, env(safe-area-inset-left));
         min-height: 46px;
+        box-sizing: border-box;
+      }
+      /* Hide desktop theme toggle button on mobile since it lives inside the mobile menu */
+      .theme-toggle-btn {
+        display: none !important;
+      }
+      /* Show mobile menu button */
+      .mobile-menu-btn {
+        display: inline-flex;
       }
       #themeLabel,
       #liveStatusText {
         display: none !important;
       }
-      .theme-toggle-btn {
-        padding: 3px 6px;
-        min-height: 28px;
-        min-width: 28px;
-        justify-content: center;
-      }
       .live-status-badge {
-        padding: 0 7px;
+        display: inline-flex;
+        padding: 0 6px;
         min-height: 28px;
+        height: 28px;
         min-width: 26px;
+        border-radius: 14px;
         justify-content: center;
+        flex-shrink: 0;
+        box-sizing: border-box;
       }
     }
 
@@ -867,12 +1403,13 @@
     }
 
     @media (max-width: 520px) {
-      .brand-text h1 {
-        font-size: 21px;
+      .brand-text h1 .brand-sub {
+        font-size: 13.5px;
+        display: inline !important;
       }
       .team-logo {
-        width: 38px;
-        height: 34px;
+        width: 34px;
+        height: 30px;
       }
       .nav-tabs {
         gap: 12px;
@@ -892,8 +1429,10 @@
     }
 
     @media (max-width: 380px) {
-      .brand-text h1 {
-        font-size: 18px;
+      .brand-text h1 .brand-sub {
+        font-size: 13px;
+        letter-spacing: 0.2px;
+        display: inline !important;
       }
       .team-logo {
         width: 32px;
@@ -1000,6 +1539,26 @@
       border-radius: 10px;
     }
 
+    .category-time-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent-red);
+      background: rgba(220, 38, 38, 0.12);
+      border: 1px solid rgba(220, 38, 38, 0.35);
+      padding: 1px 7px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      letter-spacing: 0.3px;
+    }
+
+    :root[data-theme="light"] .category-time-badge {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fca5a5;
+    }
+
     .wave-divider {
       background: var(--wave-bg);
       color: var(--wave-text);
@@ -1013,7 +1572,29 @@
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .wave-time-tag {
+      display: inline-flex;
+      align-items: center;
       gap: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--accent-red);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      padding: 1px 7px;
+      border-radius: 4px;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    :root[data-theme="light"] .wave-time-tag {
+      background: #ffffff;
+      color: #b91c1c;
+      border-color: #e5e7eb;
     }
 
     /* Responsive Table Container with Sleek, Subtle Scrollbar */
@@ -2243,20 +2824,127 @@
           <div class="brand-box">
             <img src="logo.png" alt="La Crosse Area MTB Team" class="team-logo" onerror="this.style.display='none'">
             <div class="brand-text">
-              <h1>LAX MTB <span>// RACE CENTRAL</span></h1>
+              <h1>LAX MTB <span class="brand-slash">//</span> <span class="brand-sub">RACE CENTRAL</span></h1>
             </div>
           </div>
 
           <div class="header-controls">
-            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
-              <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
-            </button>
             <span class="live-status-badge" id="liveBadge">
               <span class="pulse-dot" id="liveDot"></span>
               <span id="liveStatusText">Live API</span>
             </span>
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle Theme">
+              <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
+            </button>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu(event)" aria-label="Toggle Navigation Menu" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
+        </div>
+      </div>
+
+      <!-- Dropdown Menu -->
+      <div class="mobile-menu-dropdown" id="mobileMenuDropdown">
+        <div class="mobile-menu-item" onclick="toggleTheme();">
+          <div class="mobile-menu-item-left">
+            <span id="menuThemeIcon">☀️</span>
+            <span class="mobile-menu-item-title">Appearance</span>
+          </div>
+          <span class="mobile-menu-badge" id="menuThemeLabel">Light Mode</span>
+        </div>
+        <div class="mobile-menu-item" onclick="openNotificationModal();">
+          <div class="mobile-menu-item-left">
+            <span>🔔</span>
+            <span class="mobile-menu-item-title">Race Notifications</span>
+          </div>
+          <span class="mobile-menu-badge" id="menuNotifBadge">Stage • 15m</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div class="notif-toast-container" id="notifToastContainer"></div>
+
+    <!-- Notification Preferences Modal -->
+    <div class="modal-overlay" id="notifModalOverlay" onclick="handleModalOverlayClick(event)">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="notifModalTitle">
+        <div class="modal-header">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">🔔</span>
+            <h3 id="notifModalTitle" style="margin:0;font-size:16px;font-weight:700;color:var(--text-main);">Race Notifications</h3>
+          </div>
+          <button type="button" class="modal-close-btn" onclick="closeNotificationModal()" aria-label="Close modal">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="modal-section">
+            <label class="modal-label">Alert Target</label>
+            <div class="modal-radio-group">
+              <label class="modal-radio-card">
+                <input type="radio" name="notifTarget" id="targetStageRadio" value="stage" onchange="updateNotifSetting('target', 'stage')" checked>
+                <div class="radio-card-content">
+                  <strong>Staging Time</strong>
+                  <small>Alert prior to staging grid call-up</small>
+                </div>
+              </label>
+              <label class="modal-radio-card">
+                <input type="radio" name="notifTarget" id="targetStartRadio" value="start" onchange="updateNotifSetting('target', 'start')">
+                <div class="radio-card-content">
+                  <strong>Wave Start Time</strong>
+                  <small>Alert prior to official wave gun start</small>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <label class="modal-label">Alert Lead Time</label>
+            <div class="lead-time-buttons" id="leadTimeButtons">
+              <button type="button" class="lead-time-btn" data-time="30" onclick="setNotifLeadTime(30)">30 mins</button>
+              <button type="button" class="lead-time-btn active" data-time="15" onclick="setNotifLeadTime(15)">15 mins</button>
+              <button type="button" class="lead-time-btn" data-time="5" onclick="setNotifLeadTime(5)">5 mins</button>
+              <button type="button" class="lead-time-btn" data-time="custom" onclick="setNotifLeadTime('custom')">Custom</button>
+            </div>
+            <div class="custom-time-row" id="customTimeRow" style="display:none;margin-top:8px;align-items:center;gap:8px;">
+              <input type="number" id="customMinutesInput" min="1" max="180" placeholder="Minutes" class="custom-minutes-input" oninput="onCustomMinutesChange(this.value)">
+              <span style="font-size:12px;color:var(--text-muted);">minutes beforehand</span>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <label class="modal-label">Browser Permissions & Sound</label>
+            <div class="permission-status-row">
+              <div style="display:flex;flex-direction:column;gap:2px;">
+                <span style="font-size:13px;font-weight:600;color:var(--text-main);">Push Notifications</span>
+                <span id="notifPermissionStatus" style="font-size:11px;color:var(--text-muted);">Status: Checking...</span>
+              </div>
+              <button type="button" class="action-mini-btn" id="requestPermBtn" onclick="requestBrowserNotificationPermission()">Enable</button>
+            </div>
+            <div style="margin-top:10px;">
+              <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;width:100%;">
+                <span style="font-size:13px;font-weight:600;color:var(--text-main);">Sound Chime</span>
+                <input type="checkbox" id="notifSoundToggle" checked onchange="updateNotifSetting('sound', this.checked)">
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <label class="modal-label">Active Subscriptions</label>
+            <div id="activeSubsList" class="active-subs-box">
+              <span style="color:var(--text-muted);font-size:12px;">No active alerts. Tap 🔔 on any category, wave, or rider to subscribe.</span>
+            </div>
+            <button type="button" class="clear-subs-btn" id="clearSubsBtn" style="display:none;" onclick="clearAllSubscriptions()">Clear All Subscriptions</button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="test-alert-btn" onclick="triggerTestNotification()">🔔 Test Notification</button>
+          <button type="button" class="done-modal-btn" onclick="closeNotificationModal()">Done</button>
         </div>
       </div>
     </div>
@@ -2468,7 +3156,7 @@
             isRaceDay: true,
             events: [
               { time: '7:00 AM - 8:00 AM', desc: 'LAXMTB Team Breakfast', tag: 'Team Event', isSpecial: true },
-              { time: '7:00 AM - 9:00 AM', desc: 'Pre-Rides Open (Registered Riders & Coaches)', tag: 'Pre-Ride' },
+              { time: '7:00 AM - 9:30 AM', desc: 'Pre-Rides Open (Registered Riders & Coaches)', tag: 'Pre-Ride' },
               { time: '10:00 AM', desc: 'Racing Starts (North Conference Waves)', tag: 'Racing', isRace: true },
               { time: '4:30 PM', desc: 'North Conference Awards & Season Opener Celebration', tag: 'Awards' }
             ]
@@ -2488,7 +3176,27 @@
           '<strong>Staging & Call-ups:</strong> Riders must report to staging grids 15 minutes prior to their wave start.',
           '<strong>Pit Zone & Camping:</strong> Team tents in designated LAXMTB Team space. Quiet hours 10 PM - 6 AM.',
           '<strong>Leashed Pets Only:</strong> Dogs prohibited in active course areas and staging grid zones.'
-        ]
+        ],
+        waveSchedule: {
+          'Varsity Boys': { '1': { start: '10:00 AM', stage: '9:45 AM' } },
+          'JV III Boys': { '1': { start: '10:05 AM', stage: '9:50 AM' }, '2': { start: '10:06 AM', stage: '10:06 AM' } },
+          'Varsity Girls': { '1': { start: '11:25 AM', stage: '11:10 AM' } },
+          'JV III Girls': { '1': { start: '11:30 AM', stage: '11:15 AM' } },
+          'MS2 Boys': { '1': { start: '1:05 PM', stage: '12:50 PM' } },
+          'Freshman Boys': { '1': { start: '1:10 PM', stage: '12:55 PM' }, '2': { start: '1:11 PM', stage: '12:55 PM' }, '3': { start: '1:12 PM', stage: '12:55 PM' } },
+          '8th Grade Boys': { '1': { start: '1:17 PM', stage: '1:02 PM' }, '2': { start: '1:18 PM', stage: '1:02 PM' } },
+          'MS2 Girls': { '1': { start: '2:00 PM', stage: '1:45 PM' } },
+          'Freshman Girls': { '1': { start: '2:05 PM', stage: '1:50 PM' } },
+          'JV II Girls': { '1': { start: '2:10 PM', stage: '1:55 PM' }, '2': { start: '2:11 PM', stage: '1:55 PM' } },
+          '8th Grade Girls': { '1': { start: '2:16 PM', stage: '2:01 PM' } },
+          'JV II Boys': { '1': { start: '2:55 PM', stage: '2:40 PM' }, '2': { start: '2:56 PM', stage: '2:40 PM' }, '3': { start: '2:57 PM', stage: '2:40 PM' }, '4': { start: '2:58 PM', stage: '2:40 PM' } },
+          '7th Grade Boys': { '1': { start: '3:03 PM', stage: '2:48 PM' }, '2': { start: '3:04 PM', stage: '2:48 PM' } },
+          '6th Grade Boys': { '1': { start: '3:40 PM', stage: '3:25 PM' }, '2': { start: '3:41 PM', stage: '3:25 PM' } },
+          '7th Grade Girls': { '1': { start: '3:46 PM', stage: '3:31 PM' }, '2': { start: '3:47 PM', stage: '3:31 PM' } },
+          '6th Grade Girls': { '1': { start: '3:52 PM', stage: '3:36 PM' } },
+          'HS Open Boys': { '1': { start: '3:53 PM', stage: '3:36 PM' } },
+          'HS Open Girls': { '1': { start: '3:53 PM', stage: '3:36 PM' } }
+        }
       },
       {
         id: 'cable-conquest',
@@ -2629,6 +3337,8 @@
       }
     ];
 
+    const racesData = SEASON_RACES;
+
     let currentRaceIndex = 0;
     let currentTab = 'details';
     let currentRiders = [];
@@ -2650,6 +3360,67 @@
       'JV III Boys', 'JV III Girls',
       'Varsity Boys', 'Varsity Girls'
     ];
+
+    const defaultWaveSchedule = {
+      'Varsity Boys': { '1': { start: '10:00 AM', stage: '9:45 AM' } },
+      'JV III Boys': { '1': { start: '10:05 AM', stage: '9:50 AM' }, '2': { start: '10:06 AM', stage: '10:06 AM' } },
+      'Varsity Girls': { '1': { start: '11:25 AM', stage: '11:10 AM' } },
+      'JV III Girls': { '1': { start: '11:30 AM', stage: '11:15 AM' } },
+      'MS2 Boys': { '1': { start: '1:05 PM', stage: '12:50 PM' } },
+      'Freshman Boys': { '1': { start: '1:10 PM', stage: '12:55 PM' }, '2': { start: '1:11 PM', stage: '12:55 PM' }, '3': { start: '1:12 PM', stage: '12:55 PM' } },
+      '8th Grade Boys': { '1': { start: '1:17 PM', stage: '1:02 PM' }, '2': { start: '1:18 PM', stage: '1:02 PM' } },
+      'MS2 Girls': { '1': { start: '2:00 PM', stage: '1:45 PM' } },
+      'Freshman Girls': { '1': { start: '2:05 PM', stage: '1:50 PM' } },
+      'JV II Girls': { '1': { start: '2:10 PM', stage: '1:55 PM' }, '2': { start: '2:11 PM', stage: '1:55 PM' } },
+      '8th Grade Girls': { '1': { start: '2:16 PM', stage: '2:01 PM' } },
+      'JV II Boys': { '1': { start: '2:55 PM', stage: '2:40 PM' }, '2': { start: '2:56 PM', stage: '2:40 PM' }, '3': { start: '2:57 PM', stage: '2:40 PM' }, '4': { start: '2:58 PM', stage: '2:40 PM' } },
+      '7th Grade Boys': { '1': { start: '3:03 PM', stage: '2:48 PM' }, '2': { start: '3:04 PM', stage: '2:48 PM' } },
+      '6th Grade Boys': { '1': { start: '3:40 PM', stage: '3:25 PM' }, '2': { start: '3:41 PM', stage: '3:25 PM' } },
+      '7th Grade Girls': { '1': { start: '3:46 PM', stage: '3:31 PM' }, '2': { start: '3:47 PM', stage: '3:31 PM' } },
+      '6th Grade Girls': { '1': { start: '3:52 PM', stage: '3:36 PM' } },
+      'HS Open Boys': { '1': { start: '3:53 PM', stage: '3:36 PM' } },
+      'HS Open Girls': { '1': { start: '3:53 PM', stage: '3:36 PM' } }
+    };
+
+    function getWaveScheduleEntry(race, category, waveStr) {
+      if (!category) return null;
+      const sched = (race && race.waveSchedule) || defaultWaveSchedule;
+      const normCat = category.trim().toLowerCase()
+        .replace(/^9th grade/, 'freshman')
+        .replace(/\bjviii\b/i, 'jv iii')
+        .replace(/\bjvii\b/i, 'jv ii')
+        .replace(/\bhso\b/i, 'hs open');
+
+      const cKey = Object.keys(sched).find(k => {
+        const kNorm = k.trim().toLowerCase()
+          .replace(/^9th grade/, 'freshman')
+          .replace(/\bjviii\b/i, 'jv iii')
+          .replace(/\bjvii\b/i, 'jv ii')
+          .replace(/\bhso\b/i, 'hs open');
+        return kNorm === normCat;
+      }) || Object.keys(sched).find(k => k.toLowerCase() === category.toLowerCase()) || category;
+
+      const catObj = sched[cKey];
+      if (!catObj) return null;
+      const match = String(waveStr || '').match(/\d+/);
+      const waveNum = match ? match[0] : '1';
+      const val = catObj[waveNum] || catObj['Wave: ' + waveNum] || catObj['1'] || catObj.default || null;
+      if (!val) return null;
+      if (typeof val === 'object') {
+        return val;
+      }
+      return { start: val, stage: null };
+    }
+
+    function getCategoryStartTime(race, category) {
+      const entry = getWaveScheduleEntry(race, category, '1');
+      return entry ? entry.start : null;
+    }
+
+    function getWaveStartTime(race, category, waveStr) {
+      const entry = getWaveScheduleEntry(race, category, waveStr);
+      return entry ? entry.start : null;
+    }
 
     // Online/Offline Network Listeners
     window.addEventListener('online', () => {
@@ -3428,16 +4199,612 @@
       updateThemeUI(next);
     }
 
+    function toggleMobileMenu(e) {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('mobileMenuDropdown');
+      const btn = document.getElementById('mobileMenuBtn');
+      if (!dropdown || !btn) return;
+      const isOpen = dropdown.classList.contains('show');
+      if (isOpen) {
+        closeMobileMenu();
+      } else {
+        dropdown.classList.add('show');
+        btn.classList.add('active');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    function closeMobileMenu() {
+      const dropdown = document.getElementById('mobileMenuDropdown');
+      const btn = document.getElementById('mobileMenuBtn');
+      if (dropdown) dropdown.classList.remove('show');
+      if (btn) {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('mobileMenuDropdown');
+      const btn = document.getElementById('mobileMenuBtn');
+      if (dropdown && dropdown.classList.contains('show')) {
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+          closeMobileMenu();
+        }
+      }
+    });
+
+    // Notification & Staging Alert System
+    const NOTIF_CONFIG_KEY = 'laxmtb_notif_config';
+    const NOTIF_SUBS_KEY = 'laxmtb_notif_subs';
+    const NOTIF_FIRED_KEY = 'laxmtb_notif_fired';
+
+    let notifConfig = {
+      target: 'stage', // 'stage' or 'start'
+      offset: 15,      // minutes (30, 15, 5, or custom number)
+      sound: true
+    };
+
+    let notifSubs = {
+      categories: [],  // ['6th Grade Boys', ...]
+      waves: [],       // ['Varsity Boys::Wave 1', ...]
+      riders: {}       // { 'id': { name: '', cat: '', wave: '' } }
+    };
+
+    let firedAlerts = new Set();
+
+    function loadNotifData() {
+      try {
+        const savedCfg = localStorage.getItem(NOTIF_CONFIG_KEY);
+        if (savedCfg) notifConfig = Object.assign(notifConfig, JSON.parse(savedCfg));
+        const savedSubs = localStorage.getItem(NOTIF_SUBS_KEY);
+        if (savedSubs) notifSubs = Object.assign(notifSubs, JSON.parse(savedSubs));
+        const savedFired = sessionStorage.getItem(NOTIF_FIRED_KEY);
+        if (savedFired) firedAlerts = new Set(JSON.parse(savedFired));
+      } catch (e) {
+        console.warn('Could not load notification data from storage:', e);
+      }
+      syncNotifModalControls();
+      updateMenuNotifBadge();
+    }
+
+    function saveNotifData() {
+      try {
+        localStorage.setItem(NOTIF_CONFIG_KEY, JSON.stringify(notifConfig));
+        localStorage.setItem(NOTIF_SUBS_KEY, JSON.stringify(notifSubs));
+      } catch (e) {}
+      updateMenuNotifBadge();
+    }
+
+    function saveFiredAlerts() {
+      try {
+        sessionStorage.setItem(NOTIF_FIRED_KEY, JSON.stringify(Array.from(firedAlerts)));
+      } catch (e) {}
+    }
+
+    function openNotificationModal() {
+      closeMobileMenu();
+      const modal = document.getElementById('notifModalOverlay');
+      if (modal) {
+        modal.classList.add('show');
+        syncNotifModalControls();
+        renderActiveSubsList();
+        updatePermissionUI();
+      }
+    }
+
+    function closeNotificationModal() {
+      const modal = document.getElementById('notifModalOverlay');
+      if (modal) modal.classList.remove('show');
+    }
+
+    function handleModalOverlayClick(e) {
+      if (e.target && e.target.id === 'notifModalOverlay') {
+        closeNotificationModal();
+      }
+    }
+
+    function syncNotifModalControls() {
+      const stageRadio = document.getElementById('targetStageRadio');
+      const startRadio = document.getElementById('targetStartRadio');
+      if (stageRadio && startRadio) {
+        if (notifConfig.target === 'stage') stageRadio.checked = true;
+        else startRadio.checked = true;
+      }
+
+      const buttons = document.querySelectorAll('#leadTimeButtons .lead-time-btn');
+      const customRow = document.getElementById('customTimeRow');
+      const customInput = document.getElementById('customMinutesInput');
+      let matched = false;
+      buttons.forEach(btn => {
+        const t = btn.getAttribute('data-time');
+        if (t === String(notifConfig.offset)) {
+          btn.classList.add('active');
+          matched = true;
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      if (!matched) {
+        const customBtn = document.querySelector('#leadTimeButtons .lead-time-btn[data-time="custom"]');
+        if (customBtn) customBtn.classList.add('active');
+        if (customRow) customRow.style.display = 'flex';
+        if (customInput) customInput.value = notifConfig.offset;
+      } else {
+        if (customRow) customRow.style.display = 'none';
+      }
+
+      const soundToggle = document.getElementById('notifSoundToggle');
+      if (soundToggle) soundToggle.checked = !!notifConfig.sound;
+    }
+
+    function updateNotifSetting(key, val) {
+      notifConfig[key] = val;
+      saveNotifData();
+      updateMenuNotifBadge();
+    }
+
+    function setNotifLeadTime(val) {
+      const customRow = document.getElementById('customTimeRow');
+      const customInput = document.getElementById('customMinutesInput');
+      if (val === 'custom') {
+        if (customRow) customRow.style.display = 'flex';
+        const num = parseInt(customInput && customInput.value, 10) || 10;
+        notifConfig.offset = num;
+        if (customInput) customInput.value = num;
+      } else {
+        if (customRow) customRow.style.display = 'none';
+        notifConfig.offset = parseInt(val, 10) || 15;
+      }
+      document.querySelectorAll('#leadTimeButtons .lead-time-btn').forEach(b => {
+        if (b.getAttribute('data-time') === String(val)) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+      saveNotifData();
+      updateMenuNotifBadge();
+    }
+
+    function onCustomMinutesChange(val) {
+      const num = parseInt(val, 10);
+      if (num && num > 0) {
+        notifConfig.offset = num;
+        saveNotifData();
+        updateMenuNotifBadge();
+      }
+    }
+
+    function updatePermissionUI() {
+      const statusEl = document.getElementById('notifPermissionStatus');
+      const btn = document.getElementById('requestPermBtn');
+      if (!statusEl || !btn) return;
+
+      const isFile = window.location.protocol === 'file:';
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+      const isStandalone = (window.navigator && window.navigator.standalone) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+      if (isFile) {
+        statusEl.innerHTML = 'Status: <span style="color:#f59e0b;font-weight:700;">● Local File Preview</span><br><span style="color:var(--text-muted);font-size:10.5px;">In-app alerts & sound active! System push requires HTTPS.</span>';
+        btn.textContent = 'Info';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        return;
+      }
+
+      if (isIOS && !isStandalone) {
+        statusEl.innerHTML = 'Status: <span style="color:#f59e0b;font-weight:700;">● iOS Safari Mode</span><br><span style="color:var(--text-muted);font-size:10.5px;">For push: Tap Share ⎋ → "Add to Home Screen". In-app alerts active!</span>';
+        btn.textContent = 'iOS Info';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        return;
+      }
+
+      if (!('Notification' in window)) {
+        statusEl.innerHTML = 'Status: <span style="color:#ef4444;font-weight:700;">● Unsupported</span><br><span style="color:var(--text-muted);font-size:10.5px;">Browser lacks push. In-app alerts & sound active!</span>';
+        btn.textContent = 'Unsupported';
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        return;
+      }
+
+      const perm = Notification.permission;
+      if (perm === 'granted') {
+        statusEl.innerHTML = 'Status: <span style="color:#22c55e;font-weight:700;">● Allowed</span>';
+        btn.textContent = 'Allowed';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+      } else if (perm === 'denied') {
+        statusEl.innerHTML = 'Status: <span style="color:#ef4444;font-weight:700;">● Blocked</span><br><span style="color:var(--text-muted);font-size:10.5px;">Check browser address bar / settings. In-app alerts active!</span>';
+        btn.textContent = 'Help';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      } else {
+        statusEl.innerHTML = 'Status: <span style="color:#f59e0b;font-weight:700;">● Needs Permission</span>';
+        btn.textContent = 'Enable';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    }
+
+    function requestBrowserNotificationPermission() {
+      const isFile = window.location.protocol === 'file:';
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+      const isStandalone = (window.navigator && window.navigator.standalone) || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+      if (isFile) {
+        showToastNotification('ℹ️ Local File Mode', 'Browser push notifications require HTTPS (like GitHub Pages). In-app visual alerts & sound chimes are 100% active!');
+        return;
+      }
+
+      if (isIOS && !isStandalone) {
+        showToastNotification('📱 iOS Safari Push Tip', 'To get system push alerts on iOS, tap Share ⎋ → "Add to Home Screen". In-app alerts & chimes work right now!');
+        return;
+      }
+
+      if (!('Notification' in window)) {
+        showToastNotification('⚠️ Push Alerts Not Supported', 'Your browser does not support system push. In-app banners and chimes will alert you!');
+        return;
+      }
+
+      if (Notification.permission === 'denied') {
+        showToastNotification('🔒 Notifications Blocked', 'Notifications are blocked in browser settings. Click the lock/settings icon in your browser URL bar to allow.');
+        return;
+      }
+
+      const btn = document.getElementById('requestPermBtn');
+      if (btn) {
+        btn.textContent = 'Prompting...';
+        btn.disabled = true;
+      }
+
+      // Safe cross-browser execution (supports callback-style Safari + promise-style Chrome/Firefox)
+      try {
+        let finished = false;
+        const handleResult = function(perm) {
+          if (finished) return;
+          finished = true;
+          updatePermissionUI();
+          if (perm === 'granted') {
+            showToastNotification('🔔 Push Notifications Enabled', 'You will receive staging and race start alerts on your device!');
+          } else if (perm === 'denied') {
+            showToastNotification('🔒 Notifications Blocked', 'Push notifications were declined. In-app alerts and audio chimes will continue to work!');
+          } else {
+            showToastNotification('ℹ️ Permission Pending', 'Please accept the browser notification prompt.');
+          }
+        };
+
+        const result = Notification.requestPermission(handleResult);
+        if (result && typeof result.then === 'function') {
+          result.then(handleResult).catch(function(err) {
+            console.warn('Notification.requestPermission rejected:', err);
+            handleResult(Notification.permission || 'denied');
+          });
+        }
+      } catch (err) {
+        console.warn('Error during requestPermission:', err);
+        showToastNotification('⚠️ Permission Prompt Issue', 'Could not open prompt: ' + (err.message || err) + '. In-app alerts and audio are active!');
+        updatePermissionUI();
+      }
+    }
+
+    function checkAndPromptPermission() {
+      if ('Notification' in window && Notification.permission === 'default' && window.location.protocol !== 'file:') {
+        try {
+          const res = Notification.requestPermission(updatePermissionUI);
+          if (res && typeof res.then === 'function') {
+            res.then(updatePermissionUI).catch(() => {});
+          }
+        } catch(e) {}
+      }
+    }
+
+    function isCatSubscribed(cat) {
+      return notifSubs.categories.includes(cat);
+    }
+
+    function isWaveSubscribed(cat, wKey) {
+      return notifSubs.waves.includes(`${cat}::${wKey}`) || notifSubs.categories.includes(cat);
+    }
+
+    function isRiderSubscribed(riderId) {
+      return !!notifSubs.riders[riderId];
+    }
+
+    function toggleCategoryNotification(e, cat) {
+      if (e) e.stopPropagation();
+      const idx = notifSubs.categories.indexOf(cat);
+      if (idx === -1) {
+        notifSubs.categories.push(cat);
+        checkAndPromptPermission();
+        showToastNotification('🔔 Subscribed to Category', `Alerts set for ${cat} (${notifConfig.target === 'stage' ? 'Staging' : 'Start'} - ${notifConfig.offset}m)`);
+      } else {
+        notifSubs.categories.splice(idx, 1);
+        showToastNotification('🔕 Unsubscribed', `Removed alerts for ${cat}`);
+      }
+      saveNotifData();
+      renderData();
+    }
+
+    function toggleWaveNotification(e, cat, wKey) {
+      if (e) e.stopPropagation();
+      const waveKey = `${cat}::${wKey}`;
+      const idx = notifSubs.waves.indexOf(waveKey);
+      if (idx === -1) {
+        notifSubs.waves.push(waveKey);
+        checkAndPromptPermission();
+        showToastNotification('🔔 Subscribed to Wave', `Alerts set for ${cat} - ${wKey}`);
+      } else {
+        notifSubs.waves.splice(idx, 1);
+        showToastNotification('🔕 Unsubscribed', `Removed alerts for ${cat} - ${wKey}`);
+      }
+      saveNotifData();
+      renderData();
+    }
+
+    function toggleRiderNotification(e, riderId, name, cat, wave) {
+      if (e) e.stopPropagation();
+      if (notifSubs.riders[riderId]) {
+        delete notifSubs.riders[riderId];
+        showToastNotification('🔕 Unsubscribed', `Removed alerts for ${name}`);
+      } else {
+        notifSubs.riders[riderId] = { name, cat, wave };
+        checkAndPromptPermission();
+        showToastNotification('🔔 Subscribed to Rider', `Alerts set for ${name} (${cat})`);
+      }
+      saveNotifData();
+      renderData();
+    }
+
+    function renderActiveSubsList() {
+      const container = document.getElementById('activeSubsList');
+      const clearBtn = document.getElementById('clearSubsBtn');
+      if (!container) return;
+
+      const items = [];
+      notifSubs.categories.forEach(cat => {
+        items.push({ type: 'Category', name: cat, onRemove: () => toggleCategoryNotification(null, cat) });
+      });
+      notifSubs.waves.forEach(waveKey => {
+        const [cat, wKey] = waveKey.split('::');
+        items.push({ type: 'Wave', name: `${cat} (${wKey})`, onRemove: () => toggleWaveNotification(null, cat, wKey) });
+      });
+      Object.keys(notifSubs.riders).forEach(id => {
+        const r = notifSubs.riders[id];
+        items.push({ type: 'Rider', name: `${r.name} (#${id.split('_')[0]})`, onRemove: () => toggleRiderNotification(null, id, r.name, r.cat, r.wave) });
+      });
+
+      if (items.length === 0) {
+        container.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">No active alerts. Tap 🔔 on any category, wave, or rider to subscribe.</span>';
+        if (clearBtn) clearBtn.style.display = 'none';
+        return;
+      }
+
+      if (clearBtn) clearBtn.style.display = 'inline-block';
+      let html = '';
+      items.forEach((item, idx) => {
+        html += `
+          <div class="active-sub-item">
+            <span><strong>${escapeHtml(item.type)}:</strong> ${escapeHtml(item.name)}</span>
+            <button type="button" class="remove-sub-btn" onclick="removeSubByIndex(${idx})" style="background:none;border:none;color:var(--accent-red);cursor:pointer;font-size:14px;padding:0 4px;" title="Remove alert">✕</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      window._activeSubRemovers = items.map(it => it.onRemove);
+    }
+
+    function removeSubByIndex(idx) {
+      if (window._activeSubRemovers && window._activeSubRemovers[idx]) {
+        window._activeSubRemovers[idx]();
+        renderActiveSubsList();
+        updateMenuNotifBadge();
+      }
+    }
+
+    function clearAllSubscriptions() {
+      notifSubs.categories = [];
+      notifSubs.waves = [];
+      notifSubs.riders = {};
+      saveNotifData();
+      renderActiveSubsList();
+      updateMenuNotifBadge();
+      renderData();
+      showToastNotification('🔕 Subscriptions Cleared', 'All notification alerts have been removed.');
+    }
+
+    function updateMenuNotifBadge() {
+      const badge = document.getElementById('menuNotifBadge');
+      if (!badge) return;
+      const totalSubs = notifSubs.categories.length + notifSubs.waves.length + Object.keys(notifSubs.riders).length;
+      const targetStr = notifConfig.target === 'stage' ? 'Stage' : 'Start';
+      if (totalSubs > 0) {
+        badge.textContent = `${totalSubs} Alert${totalSubs > 1 ? 's' : ''} (${targetStr} • ${notifConfig.offset}m)`;
+      } else {
+        badge.textContent = `${targetStr} • ${notifConfig.offset}m`;
+      }
+    }
+
+    function playNotificationChime() {
+      if (!notifConfig.sound) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const now = ctx.currentTime;
+
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now); // D5
+        gain1.gain.setValueAtTime(0.18, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880.00, now + 0.12); // A5
+        gain2.gain.setValueAtTime(0.22, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.55);
+      } catch (e) {}
+    }
+
+    function showToastNotification(title, message) {
+      playNotificationChime();
+      const container = document.getElementById('notifToastContainer');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'notif-toast';
+      toast.innerHTML = `
+        <div class="notif-toast-content">
+          <div class="notif-toast-title">${escapeHtml(title)}</div>
+          <div class="notif-toast-msg">${escapeHtml(message)}</div>
+        </div>
+        <button type="button" class="notif-toast-close" onclick="this.parentElement.remove()" aria-label="Dismiss">✕</button>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => {
+        if (toast && toast.parentElement) toast.remove();
+      }, 6500);
+    }
+
+    function triggerTestNotification() {
+      const targetLabel = notifConfig.target === 'stage' ? 'Staging Grid' : 'Race Start';
+      const title = `🔔 Test Alert: Bluff Bash (${targetLabel})`;
+      const body = `Sample notification! Staging in ${notifConfig.offset} minutes (Stage: 3:25 PM, Start: 3:40 PM).`;
+
+      showToastNotification(title, body);
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification(title, {
+            body: body,
+            icon: 'logo.png'
+          });
+        } catch(e) {}
+      }
+    }
+
+    function parseTimeStrToMinutes(timeStr) {
+      if (!timeStr) return null;
+      const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!match) return null;
+      let hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      const meridiem = match[3].toUpperCase();
+      if (meridiem === 'PM' && hours < 12) hours += 12;
+      if (meridiem === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    }
+
+    function checkScheduledAlerts() {
+      if (!SEASON_RACES || SEASON_RACES.length === 0) return;
+      const race = SEASON_RACES[currentRaceIndex];
+      if (!race) return;
+
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+      // Check category subscriptions
+      notifSubs.categories.forEach(cat => {
+        const entry = getWaveScheduleEntry(race, cat, '1');
+        if (!entry) return;
+        const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
+        const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
+        if (targetMinutes === null) return;
+        const alertMinutes = targetMinutes - notifConfig.offset;
+        const alertKey = `cat_${cat}_${race.id || currentRaceIndex}_${now.toDateString()}`;
+
+        if (nowMinutes >= alertMinutes && nowMinutes <= alertMinutes + 10 && !firedAlerts.has(alertKey)) {
+          firedAlerts.add(alertKey);
+          saveFiredAlerts();
+          const label = notifConfig.target === 'stage' ? 'Staging Call-up' : 'Race Start';
+          const title = `🔔 ${cat} ${label} in ${notifConfig.offset}m`;
+          const body = `${cat} ${label} is at ${targetTimeStr} (Start: ${entry.start}). Head to staging grids!`;
+          showToastNotification(title, body);
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try { new Notification(title, { body, icon: 'logo.png' }); } catch(e) {}
+          }
+        }
+      });
+
+      // Check wave subscriptions
+      notifSubs.waves.forEach(waveKey => {
+        const [cat, wKey] = waveKey.split('::');
+        const entry = getWaveScheduleEntry(race, cat, wKey);
+        if (!entry) return;
+        const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
+        const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
+        if (targetMinutes === null) return;
+        const alertMinutes = targetMinutes - notifConfig.offset;
+        const alertKey = `wave_${cat}_${wKey}_${race.id || currentRaceIndex}_${now.toDateString()}`;
+
+        if (nowMinutes >= alertMinutes && nowMinutes <= alertMinutes + 10 && !firedAlerts.has(alertKey)) {
+          firedAlerts.add(alertKey);
+          saveFiredAlerts();
+          const label = notifConfig.target === 'stage' ? 'Staging Call-up' : 'Race Start';
+          const title = `🔔 ${cat} (${wKey}) ${label} in ${notifConfig.offset}m`;
+          const body = `${cat} ${wKey} ${label} is at ${targetTimeStr} (Start: ${entry.start}).`;
+          showToastNotification(title, body);
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try { new Notification(title, { body, icon: 'logo.png' }); } catch(e) {}
+          }
+        }
+      });
+
+      // Check rider subscriptions
+      Object.keys(notifSubs.riders).forEach(id => {
+        const r = notifSubs.riders[id];
+        const entry = getWaveScheduleEntry(race, r.cat, r.wave || '1');
+        if (!entry) return;
+        const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
+        const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
+        if (targetMinutes === null) return;
+        const alertMinutes = targetMinutes - notifConfig.offset;
+        const alertKey = `rider_${id}_${race.id || currentRaceIndex}_${now.toDateString()}`;
+
+        if (nowMinutes >= alertMinutes && nowMinutes <= alertMinutes + 10 && !firedAlerts.has(alertKey)) {
+          firedAlerts.add(alertKey);
+          saveFiredAlerts();
+          const label = notifConfig.target === 'stage' ? 'Staging' : 'Start';
+          const title = `🔔 ${r.name} ${label} in ${notifConfig.offset}m`;
+          const body = `${r.name} (${r.cat}) ${label} is at ${targetTimeStr}.`;
+          showToastNotification(title, body);
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try { new Notification(title, { body, icon: 'logo.png' }); } catch(e) {}
+          }
+        }
+      });
+    }
+
+    // Check alerts every 20 seconds
+    setInterval(checkScheduledAlerts, 20000);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeNotificationModal();
+        closeMobileMenu();
+      }
+    });
+
     function updateThemeUI(theme) {
       const icon = document.getElementById('themeIcon');
       const label = document.getElementById('themeLabel');
-      if (theme === 'dark') {
-        icon.textContent = '☀️';
-        label.textContent = 'Light';
-      } else {
-        icon.textContent = '🌙';
-        label.textContent = 'Dark';
-      }
+      const menuIcon = document.getElementById('menuThemeIcon');
+      const menuLabel = document.getElementById('menuThemeLabel');
+      const isDark = theme === 'dark';
+      if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+      if (label) label.textContent = isDark ? 'Light' : 'Dark';
+      if (menuIcon) menuIcon.textContent = isDark ? '☀️' : '🌙';
+      if (menuLabel) menuLabel.textContent = isDark ? 'Light Mode' : 'Dark Mode';
     }
 
     function onListDropdownChange() {
@@ -3764,13 +5131,24 @@
           isCardCollapsed = allCardsCollapsed;
         }
 
+        const catEntry = getWaveScheduleEntry(SEASON_RACES[currentRaceIndex], cat, '1');
+        const catStartTime = catEntry ? catEntry.start : null;
+        const catStageTime = catEntry ? catEntry.stage : null;
+        const isCatSub = isCatSubscribed(cat);
         const catTitle = document.createElement('div');
         catTitle.className = 'category-header collapsible-header';
         catTitle.onclick = function() { toggleCard(this); };
         catTitle.innerHTML = `
-          <div style="display:flex;align-items:center;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span>${escapeHtml(cat)}</span>
             <span class="category-badge">${totalInCat} RIDERS</span>
+            ${catStartTime ? `<span class="category-time-badge" title="Scheduled Category Start Time${catStageTime ? ` (Stage: ${escapeHtml(catStageTime)})` : ''}">Race Starts: ${escapeHtml(catStartTime)}</span>` : ''}
+            <button type="button" class="notif-sub-btn ${isCatSub ? 'active' : ''}" onclick="toggleCategoryNotification(event, '${escapeHtml(cat)}')" title="${isCatSub ? 'Notifications enabled for ' + escapeHtml(cat) : 'Enable notifications for ' + escapeHtml(cat)}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="${isCatSub ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </button>
           </div>
           <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(cat)}">▼</span>
         `;
@@ -3783,9 +5161,28 @@
         const sortedWaveKeys = Object.keys(waves).sort();
 
         sortedWaveKeys.forEach(wKey => {
+          const waveEntry = getWaveScheduleEntry(SEASON_RACES[currentRaceIndex], cat, wKey);
+          const waveTime = waveEntry ? waveEntry.start : null;
+          const stageTime = waveEntry ? waveEntry.stage : null;
+          const isWaveSub = isWaveSubscribed(cat, wKey);
           const waveHeader = document.createElement('div');
           waveHeader.className = 'wave-divider';
-          waveHeader.innerHTML = `<span>🚩</span> ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}`;
+          let timeHtml = '';
+          if (waveTime && stageTime) {
+            timeHtml = `<span class="wave-time-tag" title="Stage: ${escapeHtml(stageTime)} | Start: ${escapeHtml(waveTime)}">Wave Start: ${escapeHtml(waveTime)} <span style="opacity:0.8;font-size:10px;font-weight:normal;">(Stage: ${escapeHtml(stageTime)})</span></span>`;
+          } else if (waveTime) {
+            timeHtml = `<span class="wave-time-tag" title="Scheduled Wave Start Time">Wave Start: ${escapeHtml(waveTime)}</span>`;
+          }
+          waveHeader.innerHTML = `
+            <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
+            ${timeHtml}
+            <button type="button" class="notif-sub-btn wave-notif-btn ${isWaveSub ? 'active' : ''}" onclick="toggleWaveNotification(event, '${escapeHtml(cat)}', '${escapeHtml(wKey)}')" title="${isWaveSub ? 'Notifications enabled for ' + escapeHtml(cat) + ' ' + escapeHtml(wKey) : 'Enable notifications for ' + escapeHtml(cat) + ' ' + escapeHtml(wKey)}">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="${isWaveSub ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </button>
+          `;
           cardBody.appendChild(waveHeader);
 
           const tableWrapper = document.createElement('div');
@@ -3824,10 +5221,20 @@
 
           ridersInWave.forEach(r => {
             const isTarget = targetTeamKeywords.some(kw => r.team && r.team.toLowerCase().includes(kw));
+            const riderId = String(r.bib || r.no) + '_' + String(r.name || '').trim().replace(/\s+/g, '_');
+            const isRiderSub = isRiderSubscribed(riderId);
             const tr = document.createElement('tr');
             tr.innerHTML = `
               <td><span class="plate-number">#${escapeHtml(r.no || r.bib)}</span></td>
-              <td><span class="rider-name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span></td>
+              <td>
+                <span class="rider-name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span>
+                <button type="button" class="notif-sub-btn rider-notif-btn ${isRiderSub ? 'active' : ''}" onclick="toggleRiderNotification(event, '${escapeHtml(riderId)}', '${escapeHtml(r.name)}', '${escapeHtml(cat)}', '${escapeHtml(wKey)}')" title="${isRiderSub ? 'Alert enabled for ' + escapeHtml(r.name) : 'Enable alert for ' + escapeHtml(r.name)}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="${isRiderSub ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  </svg>
+                </button>
+              </td>
               <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}" title="${escapeHtml(r.team)}">${escapeHtml(r.team)}</span></td>
               <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
               <td style="text-align:center;color:var(--text-muted);font-weight:600;">${escapeHtml(r.pl || '-')}</td>
@@ -3922,11 +5329,25 @@
         });
 
         teamRiders.forEach(r => {
+          const rTime = getWaveStartTime(SEASON_RACES[currentRaceIndex], r.category, r.wave || r.wv);
+          const riderId = String(r.bib || r.no) + '_' + String(r.name || '').trim().replace(/\s+/g, '_');
+          const isRiderSub = isRiderSubscribed(riderId);
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td><span class="plate-number">#${escapeHtml(r.bib || r.no)}</span></td>
-            <td><span class="rider-name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span></td>
-            <td><strong style="color:var(--text-main);display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;" title="${escapeHtml(r.category || '')}">${escapeHtml(r.category || '')}</strong></td>
+            <td>
+              <span class="rider-name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span>
+              <button type="button" class="notif-sub-btn rider-notif-btn ${isRiderSub ? 'active' : ''}" onclick="toggleRiderNotification(event, '${escapeHtml(riderId)}', '${escapeHtml(r.name)}', '${escapeHtml(r.category || '')}', '${escapeHtml(r.wave || r.wv || '1')}')" title="${isRiderSub ? 'Alert enabled for ' + escapeHtml(r.name) : 'Enable alert for ' + escapeHtml(r.name)}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="${isRiderSub ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              </button>
+            </td>
+            <td>
+              <strong style="color:var(--text-main);display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;" title="${escapeHtml(r.category || '')}">${escapeHtml(r.category || '')}</strong>
+              ${rTime ? `<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;color:var(--accent-red);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:3px;vertical-align:middle;" title="Scheduled Wave Start: ${escapeHtml(rTime)}">${escapeHtml(rTime)}</span>` : ''}
+            </td>
             <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
             <td style="text-align:center;color:var(--text-muted);font-weight:600;">${escapeHtml(r.pl || '-')}</td>
             ${currentTab === 'results' ? `<td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>` : ''}
@@ -4349,6 +5770,7 @@
     }
 
     initTheme();
+    loadNotifData();
     renderRaceSwitcher();
     parseUrlAndNavigate();
     setupAutoRefresh();
