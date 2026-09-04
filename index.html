@@ -2049,14 +2049,14 @@
       <!-- Sub Navigation Row: Start Lists | Live Results | Event Details -->
       <div class="sub-nav-row">
         <nav class="nav-tabs">
-          <div class="nav-tab active" id="tabStartLists" onclick="switchTab('list')">
+          <div class="nav-tab active" id="tabEventDetails" onclick="switchTab('details')">
+            <span>📋</span> Event Details
+          </div>
+          <div class="nav-tab inactive" id="tabStartLists" onclick="switchTab('list')">
             <span>🏁</span> Start Lists
           </div>
           <div class="nav-tab inactive" id="tabLiveResults" onclick="switchTab('results')">
             <span>⏱️</span> Live Results
-          </div>
-          <div class="nav-tab inactive" id="tabEventDetails" onclick="switchTab('details')">
-            <span>📋</span> Event Details
           </div>
         </nav>
       </div>
@@ -2403,7 +2403,7 @@
     ];
 
     let currentRaceIndex = 0;
-    let currentTab = 'list';
+    let currentTab = 'details';
     let currentRiders = [];
     let currentListMode = 'WAVE';
     let autoRefreshTimer = null;
@@ -2710,7 +2710,7 @@
         }
       }
 
-      let targetTab = 'list';
+      let targetTab = 'details';
       if (tabQuery) {
         const normTab = tabQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
         if (TAB_SLUG_MAP[normTab]) {
