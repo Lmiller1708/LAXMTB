@@ -1,4 +1,4 @@
-const CACHE_NAME = 'laxmtb-v4';
+const CACHE_NAME = 'laxmtb-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -36,6 +36,23 @@ self.addEventListener('activate', (event) => {
         })
       );
     }).then(() => self.clients.claim())
+  );
+});
+
+// Focus or open window when user taps on an OS notification
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('./index.html');
+      }
+    })
   );
 });
 
