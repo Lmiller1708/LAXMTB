@@ -3569,12 +3569,12 @@
           table.innerHTML = `
             <thead>
               <tr>
-                <th style="width:40px;">PL</th>
                 <th style="width:70px;">Plate #</th>
                 <th>Rider Name</th>
                 <th>Team / School</th>
                 <th style="text-align:center;width:50px;">Div</th>
                 <th style="text-align:center;width:50px;">Wave</th>
+                <th style="text-align:center;width:60px;">Position</th>
                 ${currentTab === 'results' ? '<th style="text-align:center;width:50px;">Status</th>' : ''}
               </tr>
             </thead>
@@ -3592,12 +3592,12 @@
             const isTarget = targetTeamKeywords.some(kw => r.team && r.team.toLowerCase().includes(kw));
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td style="color:var(--text-muted);font-weight:600;">${escapeHtml(r.pl || '-')}</td>
               <td><span class="plate-number">#${escapeHtml(r.no || r.bib)}</span></td>
               <td><span class="rider-name">${escapeHtml(r.name)}</span></td>
               <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${escapeHtml(r.team)}</span></td>
               <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
               <td style="text-align:center;color:var(--text-muted);">${escapeHtml(r.wv || '1')}</td>
+              <td style="text-align:center;color:var(--text-muted);font-weight:600;">${escapeHtml(r.pl || '-')}</td>
               ${currentTab === 'results' ? `<td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>` : ''}
             `;
             tbody.appendChild(tr);
@@ -3664,7 +3664,8 @@
               <th>Rider Name</th>
               <th>Category</th>
               <th style="text-align:center;width:50px;">Div</th>
-              <th style="text-align:center;width:70px;">Wave</th>
+              <th style="text-align:center;width:50px;">Wave</th>
+              <th style="text-align:center;width:60px;">Position</th>
               ${currentTab === 'results' ? '<th style="text-align:center;width:50px;">Status</th>' : ''}
             </tr>
           </thead>
@@ -3687,7 +3688,8 @@
             <td><span class="rider-name">${escapeHtml(r.name)}</span></td>
             <td><strong style="color:var(--text-main);">${escapeHtml(r.category || '')}</strong></td>
             <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
-            <td style="text-align:center;color:var(--text-muted);">${escapeHtml(r.wave || 'Wave 1')}</td>
+            <td style="text-align:center;color:var(--text-muted);">${escapeHtml(r.wv || (r.wave ? r.wave.replace(/[^0-9]/g, '') : '1'))}</td>
+            <td style="text-align:center;color:var(--text-muted);font-weight:600;">${escapeHtml(r.pl || '-')}</td>
             ${currentTab === 'results' ? `<td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>` : ''}
           `;
           tbody.appendChild(tr);
