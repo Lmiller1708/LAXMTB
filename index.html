@@ -856,7 +856,8 @@
       border-collapse: collapse;
       font-size: 12px;
       text-align: left;
-      min-width: 460px;
+      table-layout: fixed;
+      min-width: 420px;
     }
 
     .results-table th {
@@ -866,16 +867,20 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      padding: 7px 10px;
+      padding: 7px 8px;
       border-bottom: 1px solid var(--border);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .results-table td {
-      padding: 7px 10px;
+      padding: 7px 8px;
       border-bottom: 1px solid var(--border);
       color: var(--text-main);
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .results-table tr:last-child td {
@@ -903,15 +908,30 @@
     .rider-name {
       font-weight: 600;
       color: var(--text-main);
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
     }
 
     .team-name {
       color: var(--text-muted);
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
     }
 
     .team-name-lax {
       color: var(--text-main);
       font-weight: 600;
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: middle;
     }
 
     .div-tag {
@@ -1836,6 +1856,7 @@
         min-width: 0 !important;
         font-size: 8.5pt !important;
         border-collapse: collapse !important;
+        table-layout: fixed !important;
       }
 
       .results-table th {
@@ -3567,14 +3588,22 @@
           const table = document.createElement('table');
           table.className = 'results-table';
           table.innerHTML = `
+            <colgroup>
+              <col style="width:72px;">
+              <col style="width:28%;">
+              <col>
+              <col style="width:50px;">
+              <col style="width:65px;">
+              ${currentTab === 'results' ? '<col style="width:55px;">' : ''}
+            </colgroup>
             <thead>
               <tr>
-                <th style="width:70px;">Plate #</th>
-                <th>Rider Name</th>
+                <th style="width:72px;">Plate #</th>
+                <th style="width:28%;">Rider Name</th>
                 <th>Team / School</th>
                 <th style="text-align:center;width:50px;">Div</th>
-                <th style="text-align:center;width:60px;">Position</th>
-                ${currentTab === 'results' ? '<th style="text-align:center;width:50px;">Status</th>' : ''}
+                <th style="text-align:center;width:65px;">Position</th>
+                ${currentTab === 'results' ? '<th style="text-align:center;width:55px;">Status</th>' : ''}
               </tr>
             </thead>
             <tbody></tbody>
@@ -3592,8 +3621,8 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
               <td><span class="plate-number">#${escapeHtml(r.no || r.bib)}</span></td>
-              <td><span class="rider-name">${escapeHtml(r.name)}</span></td>
-              <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${escapeHtml(r.team)}</span></td>
+              <td><span class="rider-name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span></td>
+              <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}" title="${escapeHtml(r.team)}">${escapeHtml(r.team)}</span></td>
               <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
               <td style="text-align:center;color:var(--text-muted);font-weight:600;">${escapeHtml(r.pl || '-')}</td>
               ${currentTab === 'results' ? `<td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>` : ''}
@@ -3656,14 +3685,22 @@
         const table = document.createElement('table');
         table.className = 'results-table';
         table.innerHTML = `
+          <colgroup>
+            <col style="width:72px;">
+            <col style="width:28%;">
+            <col>
+            <col style="width:50px;">
+            <col style="width:65px;">
+            ${currentTab === 'results' ? '<col style="width:55px;">' : ''}
+          </colgroup>
           <thead>
             <tr>
-              <th style="width:70px;">Plate #</th>
-              <th>Rider Name</th>
+              <th style="width:72px;">Plate #</th>
+              <th style="width:28%;">Rider Name</th>
               <th>Category</th>
               <th style="text-align:center;width:50px;">Div</th>
-              <th style="text-align:center;width:60px;">Position</th>
-              ${currentTab === 'results' ? '<th style="text-align:center;width:50px;">Status</th>' : ''}
+              <th style="text-align:center;width:65px;">Position</th>
+              ${currentTab === 'results' ? '<th style="text-align:center;width:55px;">Status</th>' : ''}
             </tr>
           </thead>
           <tbody></tbody>
@@ -3682,8 +3719,8 @@
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td><span class="plate-number">#${escapeHtml(r.bib || r.no)}</span></td>
-            <td><span class="rider-name">${escapeHtml(r.name)}</span></td>
-            <td><strong style="color:var(--text-main);">${escapeHtml(r.category || '')}</strong></td>
+            <td><span class="rider-name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span></td>
+            <td><strong style="color:var(--text-main);display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;" title="${escapeHtml(r.category || '')}">${escapeHtml(r.category || '')}</strong></td>
             <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
             <td style="text-align:center;color:var(--text-muted);font-weight:600;">${escapeHtml(r.pl || '-')}</td>
             ${currentTab === 'results' ? `<td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>` : ''}
