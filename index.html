@@ -6755,7 +6755,46 @@
     // GOOGLE SHEETS LIVE SYNC ENGINE (One Tab Per Race • KISS)
     // =========================================================
     let googleSheetId = localStorage.getItem('laxmtb_sheet_id') || '1vicChOhjglaieWpuJPHsN2LGAN8RA6kE0oDWt0OAPvM';
+    const GOOGLE_SHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwSIhOjvvehlm2kkc05tnIFz3LrYxTlsRVxZt-4pKnkSLyAyo8FBBxUnlpa5uEH9wek/exec';
     let lastSheetSyncTime = null;
+
+    async function syncToGoogleSheetWebhook(race) {
+      if (!GOOGLE_SHEET_WEBHOOK_URL || !race) return;
+      const userEmail = sessionStorage.getItem('laxmtb_coach_email') || localStorage.getItem('laxmtb_coach_email') || 'Coach';
+      const payload = {
+        raceName: race.name,
+        userEmail: userEmail,
+        timestamp: new Date().toISOString(),
+        venueInfo: {
+          venue: race.venue || '',
+          exactTrailhead: race.exactTrailhead || '',
+          address: race.address || '',
+          city: race.city || '',
+          conference: race.conference || '',
+          dateStr: race.dateStr || '',
+          warning: race.warning || '',
+          navigationUrl: race.navigationUrl || race.googleMapsUrl || '',
+          eventGuideUrl: race.eventGuideUrl || '',
+          eventId: race.eventId || ''
+        }
+      };
+
+      try {
+        await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+          method: 'POST',
+          mode: 'no-cors', // Google Apps Script redirects require no-cors for clean client execution
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        lastSheetSyncTime = new Date();
+        updateAdminSyncStatus();
+        console.log('[LAXMTB] Webhook sync sent to Google Sheet successfully');
+      } catch (err) {
+        console.warn('[LAXMTB] Error sending update to Google Sheet webhook:', err);
+      }
+    }
 
     function parseCSV(text) {
       const lines = [];
@@ -7663,6 +7702,9 @@
       // Persist to localStorage
       localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
 
+      // Trigger asynchronous write-back to Google Sheet webhook
+      syncToGoogleSheetWebhook(race);
+
       // Close the modal
       const modal = document.getElementById('adminModalOverlay');
       if (modal && modal.classList.contains('show')) {
@@ -7674,7 +7716,7 @@
       renderRaceSwitcher();
       refreshLiveViewForAuth();
 
-      showNotifToast(`✅ Saved changes for ${race.name}!`);
+      showNotifToast(`✅ Saved & synced ${race.name} to Sheet!`);
     }
 
     function renderAdminView() {
