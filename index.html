@@ -1354,6 +1354,11 @@
       color: #991b1b;
     }
 
+    /* Hide Inline Edit Buttons when user is not logged in as coach */
+    body:not(.coach-logged-in) .card-inline-edit-btn {
+      display: none !important;
+    }
+
     /* Admin Lock Portal Button in Footer */
     .admin-lock-btn {
       display: inline-flex;
@@ -6986,6 +6991,27 @@
     let currentAdminTab = 'venue';
     let pendingAdminTab = null;
 
+    function showNotifToast(msg) {
+      try {
+        const container = document.getElementById('notifToastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'notif-toast';
+        toast.innerHTML = `
+          <div class="notif-toast-content">
+            <div class="notif-toast-title">${escapeHtml(msg)}</div>
+          </div>
+          <button type="button" class="notif-toast-close" onclick="this.parentElement.remove()" aria-label="Dismiss">✕</button>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => {
+          if (toast && toast.parentElement) toast.remove();
+        }, 3500);
+      } catch (e) {
+        console.log('[Toast]', msg);
+      }
+    }
+
     function isCoachLoggedIn() {
       try {
         return sessionStorage.getItem('laxmtb_coach_auth') === 'true' || localStorage.getItem('laxmtb_coach_auth') === 'true';
@@ -6996,6 +7022,13 @@
 
     function updateAdminMenuUI() {
       const isAuth = isCoachLoggedIn();
+      if (isAuth) {
+        document.body.classList.add('coach-logged-in');
+      } else {
+        document.body.classList.remove('coach-logged-in');
+        document.querySelectorAll('.card-inline-edit-btn').forEach(el => el.remove());
+      }
+
       const badge = document.getElementById('menuAdminBadge');
       const icon = document.getElementById('menuAdminIcon');
       const subtext = document.getElementById('menuAdminSubtext');
@@ -7029,6 +7062,14 @@
 
     function refreshLiveViewForAuth() {
       try {
+        const isAuth = isCoachLoggedIn();
+        if (isAuth) {
+          document.body.classList.add('coach-logged-in');
+        } else {
+          document.body.classList.remove('coach-logged-in');
+          document.querySelectorAll('.card-inline-edit-btn').forEach(el => el.remove());
+        }
+
         const race = SEASON_RACES[currentRaceIndex];
         if (currentTab === 'details') {
           if (race) renderEventDetails(race);
@@ -7137,6 +7178,8 @@
     function lockAdminPortal() {
       sessionStorage.removeItem('laxmtb_coach_auth');
       localStorage.removeItem('laxmtb_coach_auth');
+      document.body.classList.remove('coach-logged-in');
+      document.querySelectorAll('.card-inline-edit-btn').forEach(el => el.remove());
       updateAdminMenuUI();
       const modal = document.getElementById('adminModalOverlay');
       if (modal) modal.classList.remove('show');
