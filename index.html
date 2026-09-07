@@ -1320,9 +1320,9 @@
     .card-inline-edit-btn {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 3px 8px;
-      font-size: 11px;
+      justify-content: center;
+      padding: 3px 6px;
+      font-size: 13px;
       font-weight: 700;
       border-radius: 5px;
       cursor: pointer;
@@ -1332,7 +1332,9 @@
       white-space: nowrap;
       flex-shrink: 0;
       transition: all 0.15s ease;
-      line-height: 1.2;
+      line-height: 1;
+      min-width: 26px;
+      min-height: 26px;
     }
     .card-inline-edit-btn:hover {
       background: rgba(239, 68, 68, 0.25);
@@ -4861,8 +4863,8 @@
           </div>
           <div class="event-hero-actions" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             ${isCoachAuth ? `
-              <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Race Details & Dates" style="font-size:12px;padding:6px 12px;">
-                <span>✏️</span> Edit Race
+              <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Race Details & Dates">
+                <span>✏️</span>
               </button>
             ` : ''}
             ${race.eventGuideUrl ? `
@@ -4882,7 +4884,7 @@
               ${race.city ? `<span class="category-badge">${race.city}</span>` : ''}
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
-              ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Venue & Directions"><span>✏️</span> Edit</button>` : ''}
+              ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Venue & Directions"><span>✏️</span></button>` : ''}
               <span class="card-toggle-icon" title="Toggle Location">▼</span>
             </div>
           </div>
@@ -4911,7 +4913,7 @@
                 <span class="signup-hub-title"><span>🤝</span> Team Volunteers & Race Hospitality</span>
               </div>
               <div style="display:flex;align-items:center;gap:8px;">
-                ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('signups');" title="Edit Volunteer & Food SignUp Links"><span>✏️</span> Edit</button>` : ''}
+                ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('signups');" title="Edit Volunteer & Food SignUp Links"><span>✏️</span></button>` : ''}
                 <span class="card-toggle-icon" title="Toggle Volunteers & Food">▼</span>
               </div>
             </div>
@@ -5004,7 +5006,7 @@
               <div class="event-map-header collapsible-header" onclick="toggleCard(this)">
                 <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
                 <div style="display:flex;align-items:center;gap:6px;">
-                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('maps');" title="Edit Course Map Links"><span>✏️</span> Edit</button>` : ''}
+                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('maps');" title="Edit Course Map Links"><span>✏️</span></button>` : ''}
                   <button type="button" class="btn-icon" id="mapAppFullscreenBtn" onclick="toggleMapAppFullscreen(event)" style="font-size:11px;padding:4px 10px;font-weight:700;">
                     <span id="mapFsIcon">⛶</span> <span id="mapFsLabel">Fullscreen Map</span>
                   </button>
@@ -5026,7 +5028,7 @@
               <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
                 <h3 style="margin:0;"><span>⏱️</span> LAXMTB TEAM SCHEDULE HIGHLIGHTS</h3>
                 <div style="display:flex;align-items:center;gap:8px;">
-                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('schedule');" title="Edit Team Schedule"><span>✏️</span> Edit</button>` : ''}
+                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('schedule');" title="Edit Team Schedule"><span>✏️</span></button>` : ''}
                   <span class="card-toggle-icon" title="Toggle Schedule">▼</span>
                 </div>
               </div>
@@ -5040,7 +5042,7 @@
               <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
                 <h3 style="margin:0;"><span>🏕️</span> Venue Guidelines & Spectator Info</h3>
                 <div style="display:flex;align-items:center;gap:8px;">
-                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('announcements');" title="Edit Guidelines & Announcements"><span>✏️</span> Edit</button>` : ''}
+                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('announcements');" title="Edit Guidelines & Announcements"><span>✏️</span></button>` : ''}
                   <span class="card-toggle-icon" title="Toggle Guidelines">▼</span>
                 </div>
               </div>
@@ -5074,8 +5076,8 @@
               <span>📍</span> View Full Schedule & Details
             </button>
             ${isCoachLoggedIn() ? `
-              <button class="card-inline-edit-btn" onclick="openAdminPortal('venue', true)" style="font-size:11px;padding:5px 12px;min-height:30px;">
-                <span>✏️</span> Edit Race Info
+              <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Race Details & Dates">
+                <span>✏️</span>
               </button>
             ` : ''}
           </div>
@@ -6248,7 +6250,7 @@
             </button>
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
-            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span> Edit</button>` : ''}
+            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span></button>` : ''}
             <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(cat)}">▼</span>
           </div>
         `;
@@ -6386,7 +6388,7 @@
             <span class="category-badge">${grouped[team].length} RIDERS</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
-            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span> Edit</button>` : ''}
+            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span></button>` : ''}
             <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(team)}">▼</span>
           </div>
         `;
@@ -6912,9 +6914,7 @@
         lastSheetSyncTime = new Date();
         localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
         renderRaceSwitcher();
-        if (currentTab === 'details') {
-          renderEventDetails(race);
-        }
+        refreshLiveViewForAuth();
 
         updateAdminSyncStatus();
         if (isManual) {
@@ -6987,7 +6987,11 @@
     let pendingAdminTab = null;
 
     function isCoachLoggedIn() {
-      return sessionStorage.getItem('laxmtb_coach_auth') === 'true';
+      try {
+        return sessionStorage.getItem('laxmtb_coach_auth') === 'true' || localStorage.getItem('laxmtb_coach_auth') === 'true';
+      } catch (e) {
+        return false;
+      }
     }
 
     function updateAdminMenuUI() {
@@ -7046,6 +7050,7 @@
         const adminKey = urlParams.get('admin');
         if (adminKey && adminKey.toLowerCase() === 'laxmtb2026') {
           sessionStorage.setItem('laxmtb_coach_auth', 'true');
+          localStorage.setItem('laxmtb_coach_auth', 'true');
           updateAdminMenuUI();
           refreshLiveViewForAuth();
           // Clean the query parameter from URL without reloading
@@ -7091,8 +7096,11 @@
     }
 
     function closeAdminPortal() {
+      saveAdminTabState(currentAdminTab);
+      localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
       const modal = document.getElementById('adminModalOverlay');
       if (modal) modal.classList.remove('show');
+      refreshLiveViewForAuth();
     }
 
     function handleAdminOverlayClick(e) {
@@ -7109,6 +7117,7 @@
 
       if (val.toLowerCase() === 'laxmtb2026') {
         sessionStorage.setItem('laxmtb_coach_auth', 'true');
+        localStorage.setItem('laxmtb_coach_auth', 'true');
         updateAdminMenuUI();
         if (err) err.style.display = 'none';
         const passcodeScreen = document.getElementById('adminPasscodeScreen');
@@ -7127,8 +7136,10 @@
 
     function lockAdminPortal() {
       sessionStorage.removeItem('laxmtb_coach_auth');
+      localStorage.removeItem('laxmtb_coach_auth');
       updateAdminMenuUI();
-      closeAdminPortal();
+      const modal = document.getElementById('adminModalOverlay');
+      if (modal) modal.classList.remove('show');
       showNotifToast('🔒 Coach Portal Locked');
       // Re-render live view immediately so edit buttons disappear without needing a refresh
       refreshLiveViewForAuth();
@@ -7372,11 +7383,7 @@
 
       // Re-render live views immediately
       renderRaceSwitcher();
-      if (currentTab === 'details') {
-        renderEventDetails(race);
-      } else if (currentTab === 'list' || currentTab === 'results') {
-        fetchLiveRaceresultData();
-      }
+      refreshLiveViewForAuth();
 
       showNotifToast(`✅ Saved & applied changes for ${race.name}!`);
       renderAdminView();
