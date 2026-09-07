@@ -1352,6 +1352,59 @@
       color: #991b1b;
     }
 
+    /* Hide Inline Edit Buttons when Admin Edit Mode toggle is off */
+    body.hide-admin-edits .card-inline-edit-btn {
+      display: none !important;
+    }
+
+    /* Menu Toggle Switch for Edit Mode */
+    .menu-switch-label {
+      position: relative;
+      display: inline-block;
+      width: 38px;
+      height: 20px;
+      flex-shrink: 0;
+      cursor: pointer;
+      margin: 0;
+    }
+    .menu-switch-label input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+    .menu-switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border);
+      transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 20px;
+    }
+    .menu-switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: #ffffff;
+      transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .menu-switch-label input:checked + .menu-switch-slider {
+      background-color: var(--accent-red);
+      border-color: var(--accent-red);
+    }
+    .menu-switch-label input:checked + .menu-switch-slider:before {
+      transform: translateX(18px);
+    }
+    :root[data-theme="light"] .menu-switch-slider {
+      background-color: rgba(0, 0, 0, 0.15);
+    }
+
     /* Collapsible Filter Panel */
     .collapsible-filters {
       display: none;
@@ -3275,12 +3328,22 @@
           </div>
           <span class="mobile-menu-badge" id="menuNotifBadge">Stage • 15m</span>
         </div>
+        <div class="mobile-menu-item" id="menuAdminEditToggleItem" style="display:none;" onclick="toggleAdminEditMode(event);">
+          <div class="mobile-menu-item-left">
+            <span>✏️</span>
+            <span class="mobile-menu-item-title">Edit Mode</span>
+          </div>
+          <label class="menu-switch-label" onclick="event.stopPropagation();" title="Toggle section edit buttons">
+            <input type="checkbox" id="menuAdminEditSwitch" onchange="setAdminEditMode(this.checked);" />
+            <span class="menu-switch-slider"></span>
+          </label>
+        </div>
         <div class="mobile-menu-item" onclick="openAdminPortal();">
           <div class="mobile-menu-item-left">
             <span>⚙️</span>
             <span class="mobile-menu-item-title">Coach Admin</span>
           </div>
-          <span class="mobile-menu-badge" style="background:rgba(234,179,8,0.15);border-color:rgba(234,179,8,0.3);color:var(--text-main);">Coaches</span>
+          <span class="mobile-menu-badge" id="menuAdminBadge" style="background:rgba(234,179,8,0.15);border-color:rgba(234,179,8,0.3);color:var(--text-main);">Coaches</span>
         </div>
       </div>
     </div>
@@ -5232,6 +5295,7 @@
       if (isOpen) {
         closeMobileMenu();
       } else {
+        updateAdminMenuUI();
         dropdown.classList.add('show');
         btn.classList.add('active');
         btn.setAttribute('aria-expanded', 'true');
@@ -6948,6 +7012,79 @@
       return sessionStorage.getItem('laxmtb_coach_auth') === 'true';
     }
 
+    function isAdminEditModeEnabled() {
+      if (!isCoachLoggedIn()) return false;
+      const stored = localStorage.getItem('laxmtb_admin_edit_mode');
+      return stored !== 'false'; // Default to true for coaches
+    }
+
+    function setAdminEditMode(enabled) {
+      localStorage.setItem('laxmtb_admin_edit_mode', enabled ? 'true' : 'false');
+      applyAdminEditModeUI(enabled);
+    }
+
+    function toggleAdminEditMode(e) {
+      if (e) e.stopPropagation();
+      const current = isAdminEditModeEnabled();
+      setAdminEditMode(!current);
+    }
+
+    function applyAdminEditModeUI(enabled) {
+      if (enabled) {
+        document.body.classList.remove('hide-admin-edits');
+      } else {
+        document.body.classList.add('hide-admin-edits');
+      }
+      const switchEl = document.getElementById('menuAdminEditSwitch');
+      if (switchEl) switchEl.checked = !!enabled;
+    }
+
+    function updateAdminMenuUI() {
+      const isAuth = isCoachLoggedIn();
+      const toggleItem = document.getElementById('menuAdminEditToggleItem');
+      const badge = document.getElementById('menuAdminBadge');
+      const switchEl = document.getElementById('menuAdminEditSwitch');
+
+      if (toggleItem) {
+        toggleItem.style.display = isAuth ? 'flex' : 'none';
+      }
+      if (badge) {
+        if (isAuth) {
+          badge.textContent = 'Unlocked';
+          badge.style.background = 'rgba(34, 197, 94, 0.15)';
+          badge.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+          badge.style.color = '#22c55e';
+        } else {
+          badge.textContent = 'Coaches';
+          badge.style.background = 'rgba(234, 179, 8, 0.15)';
+          badge.style.borderColor = 'rgba(234, 179, 8, 0.3)';
+          badge.style.color = 'var(--text-main)';
+        }
+      }
+      if (switchEl) {
+        switchEl.checked = isAdminEditModeEnabled();
+      }
+      applyAdminEditModeUI(isAdminEditModeEnabled());
+    }
+
+    function checkAdminInviteToken() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminKey = urlParams.get('admin');
+        if (adminKey && adminKey.toLowerCase() === 'laxmtb2026') {
+          sessionStorage.setItem('laxmtb_coach_auth', 'true');
+          setAdminEditMode(true);
+          updateAdminMenuUI();
+          // Clean the query parameter from URL without reloading
+          urlParams.delete('admin');
+          const newSearch = urlParams.toString();
+          const cleanUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
+          window.history.replaceState({}, document.title, cleanUrl);
+          showNotifToast('🔓 Coach Admin Access Granted!');
+        }
+      } catch (e) {}
+    }
+
     function openAdminPortal(targetTab = null) {
       closeMobileMenu();
       const modal = document.getElementById('adminModalOverlay');
@@ -6999,6 +7136,8 @@
 
       if (val.toLowerCase() === 'laxmtb2026') {
         sessionStorage.setItem('laxmtb_coach_auth', 'true');
+        setAdminEditMode(true);
+        updateAdminMenuUI();
         if (err) err.style.display = 'none';
         const passcodeScreen = document.getElementById('adminPasscodeScreen');
         const dashboardScreen = document.getElementById('adminDashboardScreen');
@@ -7019,6 +7158,7 @@
 
     function lockAdminPortal() {
       sessionStorage.removeItem('laxmtb_coach_auth');
+      updateAdminMenuUI();
       const passcodeScreen = document.getElementById('adminPasscodeScreen');
       const dashboardScreen = document.getElementById('adminDashboardScreen');
       if (passcodeScreen) passcodeScreen.style.display = 'block';
@@ -7862,8 +8002,10 @@
       }
     }
 
+    checkAdminInviteToken();
     initTheme();
     loadNotifData();
+    updateAdminMenuUI();
     renderRaceSwitcher();
     parseUrlAndNavigate();
     setupAutoRefresh();
