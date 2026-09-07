@@ -3497,7 +3497,7 @@
             <button type="button" class="modal-close-btn" onclick="closeAdminPortal()" aria-label="Close modal">✕</button>
           </div>
 
-          <!-- Top Toolbar: Race Selector, Open Sheet Link & Sync Now -->
+          <!-- Top Toolbar: Race Selector & Google Sheet Quick Actions -->
           <div class="admin-top-toolbar">
             <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px;">
               <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;">Active Race:</label>
@@ -3506,14 +3506,11 @@
               </select>
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()" title="Save all changes and apply immediately">
-                <span>💾</span> Save & Apply
+              <button type="button" class="admin-action-btn" onclick="syncWithGoogleSheets(true)" title="Pull latest race info & schedules from Google Sheets">
+                <span>🔄</span> Sync from Sheet
               </button>
-              <button type="button" class="admin-action-btn" onclick="syncWithGoogleSheets(true)" title="Force sync latest data from Google Sheets">
-                <span>🔄</span> Sync Sheet
-              </button>
-              <button type="button" class="admin-action-btn" onclick="openActiveGoogleSheetTab()" title="Open Google Sheet tab for this race">
-                <span>✏️</span> Sheet ↗
+              <button type="button" class="admin-action-btn" onclick="openActiveGoogleSheetTab()" title="Open this race in Google Sheets in a new tab">
+                <span>↗</span> Open Sheet
               </button>
             </div>
           </div>
@@ -3534,15 +3531,15 @@
             <!-- Dynamic tab content rendered by renderAdminView() -->
           </div>
 
-          <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;padding:10px 18px;">
-            <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
-              <span>Sheet ID:</span>
-              <code id="adminFooterSheetId" style="font-size:11px;background:var(--bg-surface);padding:2px 6px;border-radius:4px;border:1px solid var(--border);"></code>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <button type="button" class="action-mini-btn" style="background:transparent;border-color:var(--border);" onclick="lockAdminPortal()">Lock</button>
-              <button type="button" class="done-modal-btn admin-save-btn" onclick="saveAdminCurrentRace()">💾 Save & Apply Changes</button>
+          <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;">
+            <button type="button" class="action-mini-btn" style="background:transparent;border-color:var(--border);" onclick="lockAdminPortal()" title="Lock Coach Portal and return to public viewer mode">
+              <span>🔒</span> Lock Portal
+            </button>
+            <div style="display:flex;gap:10px;align-items:center;">
               <button type="button" class="done-modal-btn" onclick="closeAdminPortal()">Close</button>
+              <button type="button" class="done-modal-btn admin-save-btn" onclick="saveAdminCurrentRace()">
+                <span>💾</span> Save & Apply Changes
+              </button>
             </div>
           </div>
         </div>
@@ -7263,6 +7260,13 @@
           });
           race.guidelines = guidelines;
         }
+      } else if (tabKey === 'config') {
+        const input = document.getElementById('customSheetIdInput');
+        const val = (input?.value || '').trim();
+        if (val && val !== googleSheetId) {
+          googleSheetId = val;
+          localStorage.setItem('laxmtb_sheet_id', val);
+        }
       }
     }
 
@@ -7376,11 +7380,6 @@
               </div>
             </div>
 
-            <div style="margin-top:14px;display:flex;justify-content:flex-end;">
-              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-                <span>💾</span> Save & Apply Venue Info
-              </button>
-            </div>
           </div>
         `;
       } else if (tab === 'waves') {
@@ -7427,24 +7426,24 @@
             <option value="Varsity Boys">
             <option value="Varsity Girls">
           </datalist>
-          <div class="admin-preview-card" style="padding:14px 16px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+          <div class="admin-preview-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
               <div>
-                <h4 style="margin:0;font-size:14px;color:var(--text-main);">⏱️ Category Waves & Gun Start Times</h4>
-                <span style="font-size:11px;color:var(--text-muted);">Configure call-up and start times for each division wave</span>
+                <h4 style="margin:0;font-size:14px;color:var(--text-main);">⏱️ Category Wave & Staging Schedule</h4>
+                <span style="font-size:11px;color:var(--text-muted);">Assign staging call-up and race start times for each rider category</span>
               </div>
               <button type="button" class="admin-add-btn" onclick="addAdminWaveRow()">+ Add Wave Row</button>
             </div>
 
             <div style="overflow-x:auto;">
-              <table class="admin-data-table" style="min-width:540px;">
+              <table class="admin-data-table">
                 <thead>
                   <tr>
-                    <th style="min-width:160px;">Category</th>
+                    <th>Category</th>
                     <th style="width:70px;">Wave</th>
                     <th style="width:140px;">Staging Time</th>
-                    <th style="width:140px;">Gun Start Time</th>
-                    <th style="width:50px;text-align:center;">Del</th>
+                    <th style="width:140px;">Race Start</th>
+                    <th style="width:45px;"></th>
                   </tr>
                 </thead>
                 <tbody id="adminWaveTableBody">
@@ -7453,11 +7452,8 @@
               </table>
             </div>
 
-            <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div style="margin-top:14px;display:flex;align-items:center;gap:8px;">
               <button type="button" class="admin-add-btn" onclick="addAdminWaveRow()">+ Add Wave Row</button>
-              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-                <span>💾</span> Save & Apply Waves
-              </button>
             </div>
           </div>
         `;
@@ -7538,9 +7534,6 @@
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <button type="button" class="action-mini-btn" onclick="resetAdminScheduleToWeekend()" title="Reset to standard 3 weekend days (Fri, Sat, Sun) with auto-calculated dates">🔄 Reset Weekend (Fri-Sun)</button>
               <button type="button" class="admin-add-btn" onclick="addAdminScheduleDay()">+ Add Schedule Day</button>
-              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-                <span>💾</span> Save & Apply Schedule
-              </button>
             </div>
           </div>
 
@@ -7548,14 +7541,9 @@
             ${scheduleDaysHtml}
           </div>
 
-          <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button type="button" class="action-mini-btn" onclick="resetAdminScheduleToWeekend()" title="Reset to standard 3 weekend days (Fri, Sat, Sun) with auto-calculated dates">🔄 Reset Weekend (Fri-Sun)</button>
-              <button type="button" class="admin-add-btn" onclick="addAdminScheduleDay()">+ Add Schedule Day</button>
-            </div>
-            <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-              <span>💾</span> Save & Apply Schedule
-            </button>
+          <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="action-mini-btn" onclick="resetAdminScheduleToWeekend()" title="Reset to standard 3 weekend days (Fri, Sat, Sun) with auto-calculated dates">🔄 Reset Weekend (Fri-Sun)</button>
+            <button type="button" class="admin-add-btn" onclick="addAdminScheduleDay()">+ Add Schedule Day</button>
           </div>
         `;
       } else if (tab === 'signups') {
@@ -7581,12 +7569,6 @@
               <label class="admin-form-label">Coach Ride Leaders / League Shifts (SignUp.com URL or ID)</label>
               <input type="text" id="edit_signup_coach" class="admin-input-field" value="${escapeHtml(signups.league || signups.coach || '')}" placeholder="e.g. 773733678034 or https://signup.com/..." />
             </div>
-
-            <div style="margin-top:14px;display:flex;justify-content:flex-end;">
-              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-                <span>💾</span> Save & Apply Volunteer Links
-              </button>
-            </div>
           </div>
         `;
       } else if (tab === 'maps') {
@@ -7611,12 +7593,6 @@
                 </div>
               </div>
             ` : ''}
-
-            <div style="margin-top:14px;display:flex;justify-content:flex-end;">
-              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-                <span>💾</span> Save & Apply Map
-              </button>
-            </div>
           </div>
         `;
       } else if (tab === 'announcements') {
@@ -7645,11 +7621,8 @@
               ${listHtml}
             </div>
 
-            <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div style="margin-top:12px;display:flex;align-items:center;gap:8px;">
               <button type="button" class="admin-add-btn" onclick="addAdminGuideline()">+ Add Guideline</button>
-              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-                <span>💾</span> Save & Apply Guidelines
-              </button>
             </div>
           </div>
         `;
@@ -7658,9 +7631,9 @@
           <div class="admin-preview-card">
             <h4 style="margin:0 0 8px;font-size:14px;color:var(--text-main);">Google Sheets Data Source</h4>
             <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px;">This sheet ID is used for live synchronization across all devices.</p>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <input type="text" id="customSheetIdInput" class="admin-input-field" value="${googleSheetId}" style="flex:1;font-family:monospace;" />
-              <button type="button" class="action-mini-btn" onclick="saveCustomSheetId()">Save</button>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <input type="text" id="customSheetIdInput" class="admin-input-field" value="${googleSheetId}" style="flex:1;min-width:240px;font-family:monospace;" placeholder="Google Sheet Document ID" />
+              <button type="button" class="admin-action-btn" onclick="saveCustomSheetId()" style="font-weight:600;">Update & Sync</button>
             </div>
           </div>
 
