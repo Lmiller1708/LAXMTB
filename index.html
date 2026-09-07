@@ -3580,7 +3580,7 @@
             <div style="display:flex;gap:10px;align-items:center;">
               <button type="button" class="done-modal-btn" onclick="closeAdminPortal()">Close</button>
               <button type="button" class="done-modal-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-                <span>💾</span> Save & Apply Changes
+                <span>💾</span> Save Changes
               </button>
             </div>
           </div>
@@ -7424,12 +7424,15 @@
       // Persist to localStorage
       localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
 
+      // Close the modal
+      const modal = document.getElementById('adminModalOverlay');
+      if (modal) modal.classList.remove('show');
+
       // Re-render live views immediately
       renderRaceSwitcher();
       refreshLiveViewForAuth();
 
-      showNotifToast(`✅ Saved & applied changes for ${race.name}!`);
-      renderAdminView();
+      showNotifToast(`✅ Saved changes for ${race.name}!`);
     }
 
     function renderAdminView() {
