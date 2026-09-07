@@ -43,7 +43,7 @@ The LAXMTB app features a built-in **Coach Admin Portal** accessible directly fr
 
 1. Tap **Menu (☰)** in the top navigation bar.
 2. Tap **⚙️ Coach Admin**.
-3. Enter the coach passcode: **`laxmtb2026`**.
+3. Sign in with your authorized **Google Account** (email must be listed in the Google Sheet's `Admins` tab).
 4. Inside the portal:
    - **Live Sync Status**: View relative sync timestamps and live status indicators.
    - **🔄 Force Sync Now**: Instantly refresh the app with the latest Google Sheet data.
