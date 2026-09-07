@@ -3538,15 +3538,13 @@
             </div>
           </div>
 
-          <!-- Single Area Mode Indicator Banner (shown when opened directly from a card's edit button) -->
-          <div id="adminSingleAreaBanner" style="display:none;justify-content:space-between;align-items:center;padding:8px 16px;background:var(--bg-surface);border-bottom:1px solid var(--border);"></div>
-
           <!-- Admin Navigation Tabs -->
           <div class="admin-tab-bar">
             <button type="button" class="admin-tab-btn active" id="adminTabBtn_venue" onclick="switchAdminTab('venue')">📍 Venue Info</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_waves" onclick="switchAdminTab('waves')">⏱️ Waves & Staging</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_schedule" onclick="switchAdminTab('schedule')">📅 Team Schedule</button>
-            <button type="button" class="admin-tab-btn" id="adminTabBtn_signups" onclick="switchAdminTab('signups')">🔗 Links & Maps</button>
+            <button type="button" class="admin-tab-btn" id="adminTabBtn_signups" onclick="switchAdminTab('signups')">🤝 Volunteers & Food</button>
+            <button type="button" class="admin-tab-btn" id="adminTabBtn_maps" onclick="switchAdminTab('maps')">🗺️ Course Maps</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_announcements" onclick="switchAdminTab('announcements')">📢 Guidelines</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_config" onclick="switchAdminTab('config')">⚙️ Config / Export</button>
           </div>
@@ -4831,7 +4829,7 @@
           </div>
           <div class="event-hero-actions" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             ${isCoachAuth ? `
-              <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue', true);" title="Edit Race Details & Dates" style="font-size:12px;padding:6px 12px;">
+              <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Race Details & Dates" style="font-size:12px;padding:6px 12px;">
                 <span>✏️</span> Edit Race
               </button>
             ` : ''}
@@ -4852,7 +4850,7 @@
               ${race.city ? `<span class="category-badge">${race.city}</span>` : ''}
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
-              ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue', true);" title="Edit Venue & Directions"><span>✏️</span> Edit</button>` : ''}
+              ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Venue & Directions"><span>✏️</span> Edit</button>` : ''}
               <span class="card-toggle-icon" title="Toggle Location">▼</span>
             </div>
           </div>
@@ -4884,7 +4882,7 @@
                 <span class="signup-hub-title"><span>🤝</span> Team Volunteers & Race Hospitality</span>
               </div>
               <div style="display:flex;align-items:center;gap:8px;">
-                ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('signups', true);" title="Edit Volunteer & Food SignUp Links"><span>✏️</span> Edit</button>` : ''}
+                ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('signups');" title="Edit Volunteer & Food SignUp Links"><span>✏️</span> Edit</button>` : ''}
                 <span class="card-toggle-icon" title="Toggle Volunteers & Food">▼</span>
               </div>
             </div>
@@ -4977,7 +4975,7 @@
               <div class="event-map-header collapsible-header" onclick="toggleCard(this)">
                 <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
                 <div style="display:flex;align-items:center;gap:6px;">
-                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('signups', true);" title="Edit Course Map Links"><span>✏️</span> Edit</button>` : ''}
+                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('maps');" title="Edit Course Map Links"><span>✏️</span> Edit</button>` : ''}
                   <button type="button" class="btn-icon" id="mapAppFullscreenBtn" onclick="toggleMapAppFullscreen(event)" style="font-size:11px;padding:4px 10px;font-weight:700;">
                     <span id="mapFsIcon">⛶</span> <span id="mapFsLabel">Fullscreen Map</span>
                   </button>
@@ -4999,7 +4997,7 @@
               <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
                 <h3 style="margin:0;"><span>⏱️</span> LAXMTB TEAM SCHEDULE HIGHLIGHTS</h3>
                 <div style="display:flex;align-items:center;gap:8px;">
-                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('schedule', true);" title="Edit Team Schedule"><span>✏️</span> Edit</button>` : ''}
+                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('schedule');" title="Edit Team Schedule"><span>✏️</span> Edit</button>` : ''}
                   <span class="card-toggle-icon" title="Toggle Schedule">▼</span>
                 </div>
               </div>
@@ -5013,7 +5011,7 @@
               <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
                 <h3 style="margin:0;"><span>🏕️</span> Venue Guidelines & Spectator Info</h3>
                 <div style="display:flex;align-items:center;gap:8px;">
-                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('announcements', true);" title="Edit Guidelines & Announcements"><span>✏️</span> Edit</button>` : ''}
+                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('announcements');" title="Edit Guidelines & Announcements"><span>✏️</span> Edit</button>` : ''}
                   <span class="card-toggle-icon" title="Toggle Guidelines">▼</span>
                 </div>
               </div>
@@ -6223,7 +6221,7 @@
             </button>
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
-            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves', true);" title="Edit Wave Times & Staging"><span>✏️</span> Edit</button>` : ''}
+            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span> Edit</button>` : ''}
             <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(cat)}">▼</span>
           </div>
         `;
@@ -6361,7 +6359,7 @@
             <span class="category-badge">${grouped[team].length} RIDERS</span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
-            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves', true);" title="Edit Wave Times & Staging"><span>✏️</span> Edit</button>` : ''}
+            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span> Edit</button>` : ''}
             <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(team)}">▼</span>
           </div>
         `;
@@ -6959,13 +6957,12 @@
     // =========================================================
     let currentAdminTab = 'venue';
     let pendingAdminTab = null;
-    let isSingleAreaMode = false;
 
     function isCoachLoggedIn() {
       return sessionStorage.getItem('laxmtb_coach_auth') === 'true';
     }
 
-    function openAdminPortal(targetTab = null, singleArea = false) {
+    function openAdminPortal(targetTab = null) {
       closeMobileMenu();
       const modal = document.getElementById('adminModalOverlay');
       if (!modal) return;
@@ -6973,7 +6970,6 @@
       if (targetTab) {
         pendingAdminTab = targetTab;
       }
-      isSingleAreaMode = Boolean(singleArea && targetTab);
 
       const isAuth = isCoachLoggedIn();
       const passcodeScreen = document.getElementById('adminPasscodeScreen');
@@ -7037,7 +7033,6 @@
 
     function lockAdminPortal() {
       sessionStorage.removeItem('laxmtb_coach_auth');
-      isSingleAreaMode = false;
       const passcodeScreen = document.getElementById('adminPasscodeScreen');
       const dashboardScreen = document.getElementById('adminDashboardScreen');
       if (passcodeScreen) passcodeScreen.style.display = 'block';
@@ -7073,45 +7068,22 @@
         footerSheetId.textContent = googleSheetId || 'Not set';
       }
 
-      // Single Area View vs Full Tabs View
+      // Ensure all tabs in tab bar are always visible
       const tabBar = document.querySelector('.admin-tab-bar');
-      const singleAreaBanner = document.getElementById('adminSingleAreaBanner');
-      const tabNames = {
-        venue: '📍 Venue & General Info',
-        waves: '⏱️ Waves & Staging',
-        schedule: '📅 Team Weekend Schedule',
-        signups: '🔗 SignUp Links & Course Maps',
-        announcements: '📢 Guidelines & Announcements',
-        config: '⚙️ Config / Data Export'
-      };
-
-      if (isSingleAreaMode) {
-        if (tabBar) tabBar.style.display = 'none';
-        if (singleAreaBanner) {
-          singleAreaBanner.style.display = 'flex';
-          singleAreaBanner.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text-main);">
-              <span style="color:var(--text-muted);">Section Editor:</span>
-              <span style="color:var(--accent-red);background:rgba(239,68,68,0.1);padding:3px 10px;border-radius:5px;border:1px solid rgba(239,68,68,0.25);">${tabNames[tabToUse] || tabToUse}</span>
-            </div>
-            <button type="button" class="action-mini-btn" onclick="showAllAdminTabs()" style="font-size:11px;padding:4px 10px;font-weight:600;">Show All Tabs ▾</button>
-          `;
-        }
-      } else {
-        if (tabBar) tabBar.style.display = 'flex';
-        if (singleAreaBanner) singleAreaBanner.style.display = 'none';
+      if (tabBar) {
+        tabBar.style.display = 'flex';
       }
 
       updateAdminSyncStatus();
       switchAdminTab(tabToUse);
-    }
 
-    function showAllAdminTabs() {
-      isSingleAreaMode = false;
-      const tabBar = document.querySelector('.admin-tab-bar');
-      const singleAreaBanner = document.getElementById('adminSingleAreaBanner');
-      if (tabBar) tabBar.style.display = 'flex';
-      if (singleAreaBanner) singleAreaBanner.style.display = 'none';
+      // Smoothly scroll active tab into view in the tab bar
+      setTimeout(() => {
+        const activeBtn = document.getElementById(`adminTabBtn_${tabToUse}`);
+        if (activeBtn && tabBar) {
+          activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 50);
     }
 
     function onAdminRaceSelect(val) {
@@ -7278,10 +7250,15 @@
         if (foodEl) race.signups.food = foodEl.value.trim();
         const coachEl = document.getElementById('edit_signup_coach');
         if (coachEl) race.signups.league = coachEl.value.trim();
-        const embedEl = document.getElementById('edit_signup_embedMap');
+      } else if (tabKey === 'maps') {
+        const embedEl = document.getElementById('edit_map_embedUrl');
         if (embedEl) race.embedMapUrl = embedEl.value.trim();
-        const fullMapEl = document.getElementById('edit_signup_fullMap');
+        const fullMapEl = document.getElementById('edit_map_fullMapUrl');
         if (fullMapEl) race.fullMapUrl = fullMapEl.value.trim();
+        const gmapsEl = document.getElementById('edit_map_googleMapsUrl');
+        if (gmapsEl) race.googleMapsUrl = gmapsEl.value.trim();
+        const amapsEl = document.getElementById('edit_map_appleMapsUrl');
+        if (amapsEl) race.appleMapsUrl = amapsEl.value.trim();
       } else if (tabKey === 'announcements') {
         const container = document.getElementById('adminGuidelinesContainer');
         if (container) {
@@ -7599,8 +7576,8 @@
         container.innerHTML = `
           <div class="admin-preview-card">
             <div style="margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
-              <h4 style="margin:0;font-size:14px;color:var(--text-main);">🔗 SignUp.com & Registration Links</h4>
-              <span style="font-size:11px;color:var(--text-muted);">Enter SignUp.com invitation IDs or full registration URLs</span>
+              <h4 style="margin:0;font-size:14px;color:var(--text-main);">🤝 Team Volunteers & Hospitality SignUp Links</h4>
+              <span style="font-size:11px;color:var(--text-muted);">Configure SignUp.com URLs or invitation IDs for volunteer and team meal shifts</span>
             </div>
 
             <div class="admin-form-group">
@@ -7614,23 +7591,59 @@
             </div>
 
             <div class="admin-form-group">
-              <label class="admin-form-label">Coach Ride Leaders (SignUp.com URL or ID)</label>
+              <label class="admin-form-label">Coach Ride Leaders / League Shifts (SignUp.com URL or ID)</label>
               <input type="text" id="edit_signup_coach" class="admin-input-field" value="${escapeHtml(signups.league || signups.coach || '')}" placeholder="e.g. 773733678034 or https://signup.com/..." />
-            </div>
-
-            <div class="admin-form-group">
-              <label class="admin-form-label">Course Map Embed URL (Google MyMaps Embed)</label>
-              <input type="text" id="edit_signup_embedMap" class="admin-input-field" value="${escapeHtml(race.embedMapUrl || '')}" placeholder="https://www.google.com/maps/d/embed?..." />
-            </div>
-
-            <div class="admin-form-group">
-              <label class="admin-form-label">Full Course Map URL (Interactive Viewer)</label>
-              <input type="text" id="edit_signup_fullMap" class="admin-input-field" value="${escapeHtml(race.fullMapUrl || '')}" placeholder="https://www.google.com/maps/d/viewer?..." />
             </div>
 
             <div style="margin-top:14px;display:flex;justify-content:flex-end;">
               <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-                <span>💾</span> Save & Apply Links
+                <span>💾</span> Save & Apply Volunteer Links
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (tab === 'maps') {
+        container.innerHTML = `
+          <div class="admin-preview-card">
+            <div style="margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+              <h4 style="margin:0;font-size:14px;color:var(--text-main);">🗺️ Course & Venue Maps</h4>
+              <span style="font-size:11px;color:var(--text-muted);">Configure interactive course map embeds, full viewer links, and navigation addresses for ${escapeHtml(race.name)}</span>
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Course Map Embed URL (Google MyMaps Embed / iframe)</label>
+              <input type="url" id="edit_map_embedUrl" class="admin-input-field" value="${escapeHtml(race.embedMapUrl || '')}" placeholder="https://www.google.com/maps/d/embed?mid=...&ehbc=2E312F" />
+              <span style="font-size:11px;color:var(--text-muted);margin-top:2px;">Renders directly inside the interactive Course Map card on the details page.</span>
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Full Course Map Viewer URL (Interactive Full Page)</label>
+              <input type="url" id="edit_map_fullMapUrl" class="admin-input-field" value="${escapeHtml(race.fullMapUrl || '')}" placeholder="https://www.google.com/maps/d/viewer?mid=..." />
+            </div>
+
+            <div class="admin-grid-2">
+              <div class="admin-form-group">
+                <label class="admin-form-label">Google Maps Directions URL</label>
+                <input type="url" id="edit_map_googleMapsUrl" class="admin-input-field" value="${escapeHtml(race.googleMapsUrl || '')}" placeholder="https://www.google.com/maps/search/?api=1&query=..." />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Apple Maps Directions URL</label>
+                <input type="url" id="edit_map_appleMapsUrl" class="admin-input-field" value="${escapeHtml(race.appleMapsUrl || '')}" placeholder="https://maps.apple.com/?daddr=..." />
+              </div>
+            </div>
+
+            ${race.embedMapUrl ? `
+              <div style="margin-top:14px;">
+                <label class="admin-form-label">Live Course Map Embed Preview</label>
+                <div style="width:100%;height:220px;border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+                  <iframe src="${race.embedMapUrl}" width="100%" height="100%" style="border:none;" loading="lazy"></iframe>
+                </div>
+              </div>
+            ` : ''}
+
+            <div style="margin-top:14px;display:flex;justify-content:flex-end;">
+              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
+                <span>💾</span> Save & Apply Maps
               </button>
             </div>
           </div>
