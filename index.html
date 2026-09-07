@@ -3751,6 +3751,7 @@
         eventGuideUrl: 'https://wisconsinmtb.org/events/bluff-bash-festival/',
         embedMapUrl: 'https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F',
         logo: 'logos/bluff-bash.png',
+        conference: 'North Conference (Sunday Racing) • South Conference (Saturday Racing)',
         eventId: 418104,
         isPublished: true,
         // Dedicated SignUp.com Links for Bluff Bash Festival (3 Areas)
@@ -3842,6 +3843,7 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Carlson+Competition+Stadium+42225+Telemark+Village+Rd+Cable+WI+54821',
         eventGuideUrl: 'https://wisconsinmtb.org/events/cable-conquest-festival/',
         embedMapUrl: null,
+        conference: 'North Conference',
         logo: 'logos/cable-conquest.png',
         eventId: null,
         isPublished: false,
@@ -3875,6 +3877,7 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Camp+Tesomas+Boy+Scout+Reservation+5403+Spider+Lake+Rd+Rhinelander+WI+54501',
         eventGuideUrl: 'https://wisconsinmtb.org/events/hodag-hustle-festival/',
         embedMapUrl: null,
+        conference: 'North Conference',
         logo: 'logos/hodag-hustle.png',
         eventId: null,
         isPublished: false,
@@ -3907,6 +3910,7 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984',
         eventGuideUrl: 'https://wisconsinmtb.org/events/gnarly-nordic-festival/',
         embedMapUrl: null,
+        conference: 'North Conference',
         logo: 'logos/gnarly-nordic.png',
         eventId: null,
         isPublished: false,
@@ -3939,6 +3943,7 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Trek+Headquarters+Trails+97+Canal+Rd+Waterloo+WI+53594',
         eventGuideUrl: 'https://wisconsinmtb.org/events/red-barn-state-championship/',
         embedMapUrl: null,
+        conference: 'State Championship (All Wisconsin Conferences Combined)',
         logo: 'logos/red-barn.png',
         eventId: null,
         isPublished: false,
@@ -4850,6 +4855,7 @@
               <h2>${race.name}</h2>
               <div class="event-hero-meta-badges">
                 <span class="event-meta-pill">📅 <strong>${race.dateStr}</strong></span>
+                ${race.conference ? `<span class="event-meta-pill pill-conf">🏆 ${race.conference}</span>` : ''}
               </div>
             </div>
           </div>
@@ -5057,7 +5063,7 @@
         <div class="upcoming-race-card">
           <img src="${race.logo}" alt="${race.name}" class="upcoming-logo-hero" onerror="this.style.display='none'">
           <h2 style="font-size:20px;font-weight:800;color:var(--text-main);">${race.name}</h2>
-          <p style="margin-top:4px;font-size:13px;color:var(--accent-red);font-weight:700;">📅 ${race.dateStr}</p>
+          <p style="margin-top:4px;font-size:13px;color:var(--accent-red);font-weight:700;">📅 ${race.dateStr}${race.conference ? ` • 🏆 ${race.conference}` : ''}</p>
           <p style="margin-top:4px;font-size:12px;color:var(--text-muted);">📍 <strong>${race.exactTrailhead || race.venue}</strong> • ${race.address}</p>
           
           <div style="margin-top:14px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
@@ -7229,7 +7235,8 @@
         if (endDateEl) race.endDate = endDateEl.value;
         const dateStrEl = document.getElementById('edit_race_dateStr');
         if (dateStrEl) race.dateStr = dateStrEl.value.trim();
-        delete race.conference;
+        const confEl = document.getElementById('edit_race_conference');
+        if (confEl) race.conference = confEl.value.trim();
         const warningEl = document.getElementById('edit_race_warning');
         if (warningEl) race.warning = warningEl.value.trim();
         const navEl = document.getElementById('edit_race_navigationUrl');
@@ -7406,6 +7413,10 @@
               <div class="admin-form-group">
                 <label class="admin-form-label">City, State</label>
                 <input type="text" id="edit_race_city" class="admin-input-field" value="${escapeHtml(race.city || '')}" placeholder="e.g. Marshfield, WI" />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Conference</label>
+                <input type="text" id="edit_race_conference" class="admin-input-field" value="${escapeHtml(race.conference || '')}" placeholder="e.g. North Conference (Sunday Racing) • South Conference (Saturday Racing)" />
               </div>
               <div class="admin-form-group">
                 <label class="admin-form-label">Race Date Range</label>
