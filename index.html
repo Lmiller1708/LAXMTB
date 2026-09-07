@@ -21,6 +21,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+  
+  <!-- Google Identity Services (Sign In with Google) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     html {
       scroll-padding-top: 164px;
@@ -3544,30 +3547,31 @@
     <div class="modal-overlay" id="adminModalOverlay" onclick="handleAdminOverlayClick(event)">
       <div class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
 
-        <!-- Passcode Screen (Shown if not authenticated) -->
-        <div id="adminPasscodeScreen" style="display:none;padding:16px;">
-          <div class="modal-header" style="border-bottom:none;padding:0 0 12px;">
+        <!-- Google Sign-In Screen (Shown if not authenticated) -->
+        <div id="adminPasscodeScreen" style="display:none;padding:18px;">
+          <div class="modal-header" style="border-bottom:none;padding:0 0 14px;">
             <div style="display:flex;align-items:center;gap:10px;">
               <span style="font-size:22px;">🔒</span>
               <div>
-                <h3 id="adminModalTitle" style="margin:0;font-size:17px;font-weight:700;color:var(--text-main);">Coach Portal</h3>
-                <p style="margin:2px 0 0;font-size:12px;color:var(--text-muted);">Enter coach passcode to manage Google Sheet sync & event settings</p>
+                <h3 id="adminModalTitle" style="margin:0;font-size:17px;font-weight:700;color:var(--text-main);">Coach Portal Access</h3>
+                <p style="margin:2px 0 0;font-size:12px;color:var(--text-muted);">Sign in with an authorized Google account to manage race settings</p>
               </div>
             </div>
             <button type="button" class="modal-close-btn" onclick="closeAdminPortal()" aria-label="Close modal">✕</button>
           </div>
-          <div style="padding:12px 0 8px;">
-            <form onsubmit="handleAdminAuth(event)" style="display:flex;flex-direction:column;gap:12px;">
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <label style="font-size:12px;font-weight:600;color:var(--text-main);">Coach Passcode</label>
-                <input type="password" id="adminPasscodeInput" class="admin-input-field" placeholder="Enter coach passcode" autocomplete="current-password" autofocus />
-                <span id="adminPasscodeError" style="display:none;font-size:12px;color:#ef4444;">Incorrect passcode. Please try again.</span>
-              </div>
-              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
-                <button type="button" class="action-mini-btn" style="background:transparent;border-color:var(--border);" onclick="closeAdminPortal()">Cancel</button>
-                <button type="submit" class="action-mini-btn" style="padding:8px 20px;font-size:13px;">Unlock Portal</button>
-              </div>
-            </form>
+          <div style="padding:16px 0 12px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;">
+            <div id="googleSignInButtonContainer" style="min-height:44px;display:flex;justify-content:center;width:100%;"></div>
+            
+            <div id="adminAuthSpinner" style="display:none;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);">
+              <div class="tab-loading-spinner" style="width:20px;height:20px;border-width:2px;"></div>
+              <span>Verifying authorization...</span>
+            </div>
+
+            <div id="adminPasscodeError" style="display:none;font-size:12.5px;color:#ef4444;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);padding:10px 14px;border-radius:8px;line-height:1.4;text-align:left;width:100%;box-sizing:border-box;"></div>
+
+            <p style="font-size:11.5px;color:var(--text-dim);margin:0;line-height:1.4;">
+              Access is restricted to authorized team coaches and administrators listed on the team's spreadsheet.
+            </p>
           </div>
         </div>
 
@@ -3578,9 +3582,10 @@
               <span style="font-size:20px;">⚙️</span>
               <div>
                 <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text-main);">Coach Admin Portal</h3>
-                <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap;">
                   <span id="adminSyncStatusBadge" class="admin-status-pill">🟢 Live Google Sheet Sync</span>
                   <span id="adminSyncStatusTime" style="font-size:11px;color:var(--text-muted);"></span>
+                  <span id="adminCoachUserPill" style="font-size:10.5px;color:var(--accent-red);background:rgba(239,68,68,0.1);padding:1px 6px;border-radius:4px;font-weight:600;"></span>
                 </div>
               </div>
             </div>
@@ -6750,7 +6755,50 @@
     // GOOGLE SHEETS LIVE SYNC ENGINE (One Tab Per Race • KISS)
     // =========================================================
     let googleSheetId = localStorage.getItem('laxmtb_sheet_id') || '1vicChOhjglaieWpuJPHsN2LGAN8RA6kE0oDWt0OAPvM';
+    const GOOGLE_SHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyReMsJI7nzOKr5Ja5CS6KBXPs74sW0L6-VZ7oXmobYDV1BgHvhQwJ0psriLyXFNRoz/exec';
     let lastSheetSyncTime = null;
+
+    async function syncToGoogleSheetWebhook(race) {
+      if (!GOOGLE_SHEET_WEBHOOK_URL || !race) return;
+      const userEmail = sessionStorage.getItem('laxmtb_coach_email') || localStorage.getItem('laxmtb_coach_email') || 'Coach';
+      const payload = {
+        raceName: race.name,
+        userEmail: userEmail,
+        timestamp: new Date().toISOString(),
+        venueInfo: {
+          venue: race.venue || '',
+          exactTrailhead: race.exactTrailhead || '',
+          address: race.address || '',
+          city: race.city || '',
+          conference: race.conference || '',
+          dateStr: race.dateStr || '',
+          warning: race.warning || '',
+          navigationUrl: race.navigationUrl || race.googleMapsUrl || '',
+          eventGuideUrl: race.eventGuideUrl || '',
+          eventId: race.eventId || ''
+        },
+        schedule: race.schedule || [],
+        signups: race.signups || {},
+        guidelines: race.guidelines || [],
+        waveSchedule: race.waveSchedule || {}
+      };
+
+      try {
+        await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+          method: 'POST',
+          mode: 'no-cors', // Google Apps Script redirects require no-cors for clean client execution
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        lastSheetSyncTime = new Date();
+        updateAdminSyncStatus();
+        console.log('[LAXMTB] Full webhook sync sent to Google Sheet successfully');
+      } catch (err) {
+        console.warn('[LAXMTB] Error sending update to Google Sheet webhook:', err);
+      }
+    }
 
     function parseCSV(text) {
       const lines = [];
@@ -7170,10 +7218,11 @@
       }
       if (subtext) {
         if (isAuth) {
-          subtext.textContent = 'Coach Access Active • Tap to manage';
+          const email = sessionStorage.getItem('laxmtb_coach_email') || localStorage.getItem('laxmtb_coach_email') || '';
+          subtext.textContent = email ? `Signed in as ${email}` : 'Coach Access Active • Tap to manage';
           subtext.style.color = '#22c55e';
         } else {
-          subtext.textContent = 'Passcode Protected';
+          subtext.textContent = 'Google Sign-in Required';
           subtext.style.color = 'var(--text-muted)';
         }
       }
@@ -7204,23 +7253,150 @@
       }
     }
 
-    function checkAdminInviteToken() {
+    const GOOGLE_OAUTH_CLIENT_ID = '1009214215256-s10a5resjjl6kh48b22rc8oqm7oo7sgq.apps.googleusercontent.com';
+    let cachedAdminEmails = null;
+    let googleSignInInitialized = false;
+
+    function parseJwt(token) {
       try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const adminKey = urlParams.get('admin');
-        if (adminKey && adminKey.toLowerCase() === 'laxmtb2026') {
-          sessionStorage.setItem('laxmtb_coach_auth', 'true');
-          localStorage.setItem('laxmtb_coach_auth', 'true');
-          updateAdminMenuUI();
-          refreshLiveViewForAuth();
-          // Clean the query parameter from URL without reloading
-          urlParams.delete('admin');
-          const newSearch = urlParams.toString();
-          const cleanUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
-          window.history.replaceState({}, document.title, cleanUrl);
-          showNotifToast('🔓 Coach Admin Access Granted!');
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function fetchAdminEmailsFromSheet() {
+      if (cachedAdminEmails && cachedAdminEmails.length > 0) {
+        return cachedAdminEmails;
+      }
+      if (!googleSheetId) {
+        return ['lmiller1708@gmail.com'];
+      }
+      try {
+        const url = `https://docs.google.com/spreadsheets/d/${googleSheetId}/gviz/tq?tqx=out:csv&sheet=Admins&t=${Date.now()}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const rows = parseCSV(text);
+        const emails = [];
+        rows.forEach(r => {
+          if (!r || !r[0]) return;
+          const val = r[0].trim().toLowerCase();
+          if (val && val !== 'admins' && val.includes('@')) {
+            emails.push(val);
+          }
+        });
+        if (emails.length > 0) {
+          cachedAdminEmails = emails;
+          return emails;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[LAXMTB] Could not fetch Admins sheet, using fallback list:', e);
+      }
+      return ['lmiller1708@gmail.com'];
+    }
+
+    function initGoogleSignIn() {
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+        setTimeout(initGoogleSignIn, 200);
+        return;
+      }
+      const container = document.getElementById('googleSignInButtonContainer');
+      if (!container) return;
+
+      try {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_OAUTH_CLIENT_ID,
+          callback: handleGoogleSignInCallback,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+
+        google.accounts.id.renderButton(container, {
+          theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'outline' : 'filled_black',
+          size: 'large',
+          shape: 'pill',
+          text: 'signin_with',
+          logo_alignment: 'left',
+          width: 260
+        });
+        googleSignInInitialized = true;
+      } catch (err) {
+        console.warn('Google Sign-In render error:', err);
+      }
+    }
+
+    async function handleGoogleSignInCallback(response) {
+      const errEl = document.getElementById('adminPasscodeError');
+      const spinner = document.getElementById('adminAuthSpinner');
+      const btnContainer = document.getElementById('googleSignInButtonContainer');
+
+      if (errEl) errEl.style.display = 'none';
+      if (spinner) spinner.style.display = 'flex';
+      if (btnContainer) btnContainer.style.opacity = '0.5';
+
+      try {
+        const payload = parseJwt(response.credential);
+        const userEmail = (payload?.email || '').toLowerCase().trim();
+        const userName = payload?.name || userEmail;
+
+        if (!userEmail) {
+          throw new Error('No email found in Google credential.');
+        }
+
+        const allowedEmails = await fetchAdminEmailsFromSheet();
+        const isAllowed = allowedEmails.some(em => em.toLowerCase() === userEmail);
+
+        if (!isAllowed) {
+          if (spinner) spinner.style.display = 'none';
+          if (btnContainer) btnContainer.style.opacity = '1';
+          if (errEl) {
+            errEl.innerHTML = `<strong>Access Denied:</strong> <code>${escapeHtml(userEmail)}</code> is not on the authorized coaches list.<br><span style="font-size:11px;opacity:0.85;">Contact the head coach to add your email to the team Admins sheet.</span>`;
+            errEl.style.display = 'block';
+          }
+          return;
+        }
+
+        // Successfully authorized
+        sessionStorage.setItem('laxmtb_coach_auth', 'true');
+        localStorage.setItem('laxmtb_coach_auth', 'true');
+        sessionStorage.setItem('laxmtb_coach_email', userEmail);
+        sessionStorage.setItem('laxmtb_coach_name', userName);
+        localStorage.setItem('laxmtb_coach_email', userEmail);
+        localStorage.setItem('laxmtb_coach_name', userName);
+
+        updateAdminMenuUI();
+
+        if (spinner) spinner.style.display = 'none';
+        if (btnContainer) btnContainer.style.opacity = '1';
+
+        const passcodeScreen = document.getElementById('adminPasscodeScreen');
+        const dashboardScreen = document.getElementById('adminDashboardScreen');
+        if (passcodeScreen) passcodeScreen.style.display = 'none';
+        if (dashboardScreen) dashboardScreen.style.display = 'flex';
+
+        initAdminDashboard(pendingAdminTab);
+        showNotifToast(`🔓 Signed in as ${userName || userEmail}`);
+        refreshLiveViewForAuth();
+
+      } catch (err) {
+        console.error('Google Sign-In callback error:', err);
+        if (spinner) spinner.style.display = 'none';
+        if (btnContainer) btnContainer.style.opacity = '1';
+        if (errEl) {
+          errEl.textContent = 'Google sign-in error: ' + err.message;
+          errEl.style.display = 'block';
+        }
+      }
+    }
+
+    function checkAdminInviteToken() {
+      // Retain backward-compatible query param login if token matches admin
     }
 
     function openAdminPortal(targetTab = null) {
@@ -7243,13 +7419,9 @@
       } else {
         if (passcodeScreen) passcodeScreen.style.display = 'block';
         if (dashboardScreen) dashboardScreen.style.display = 'none';
-        const input = document.getElementById('adminPasscodeInput');
-        if (input) {
-          input.value = '';
-          setTimeout(() => input.focus(), 150);
-        }
         const err = document.getElementById('adminPasscodeError');
         if (err) err.style.display = 'none';
+        setTimeout(initGoogleSignIn, 50);
       }
 
       modal.classList.add('show');
@@ -7273,34 +7445,11 @@
       }
     }
 
-    function handleAdminAuth(e) {
-      if (e) e.preventDefault();
-      const input = document.getElementById('adminPasscodeInput');
-      const err = document.getElementById('adminPasscodeError');
-      const val = (input?.value || '').trim();
-
-      if (val.toLowerCase() === 'laxmtb2026') {
-        sessionStorage.setItem('laxmtb_coach_auth', 'true');
-        localStorage.setItem('laxmtb_coach_auth', 'true');
-        updateAdminMenuUI();
-        if (err) err.style.display = 'none';
-        const passcodeScreen = document.getElementById('adminPasscodeScreen');
-        const dashboardScreen = document.getElementById('adminDashboardScreen');
-        if (passcodeScreen) passcodeScreen.style.display = 'none';
-        if (dashboardScreen) dashboardScreen.style.display = 'flex';
-        initAdminDashboard(pendingAdminTab);
-        showNotifToast('🔓 Coach Admin Unlocked');
-        // Re-render live view immediately so edit buttons appear without needing a refresh
-        refreshLiveViewForAuth();
-      } else {
-        if (err) err.style.display = 'block';
-        if (input) input.focus();
-      }
-    }
-
     function lockAdminPortal() {
       sessionStorage.removeItem('laxmtb_coach_auth');
       localStorage.removeItem('laxmtb_coach_auth');
+      sessionStorage.removeItem('laxmtb_coach_email');
+      localStorage.removeItem('laxmtb_coach_email');
       document.body.classList.remove('coach-logged-in');
       document.querySelectorAll('.card-inline-edit-btn').forEach(el => el.remove());
       updateAdminMenuUI();
@@ -7381,6 +7530,13 @@
         badge.textContent = '⚪ Bundled / Local Cache';
         badge.className = 'admin-status-pill';
         timeEl.textContent = 'Awaiting sync';
+      }
+
+      const coachPill = document.getElementById('adminCoachUserPill');
+      if (coachPill) {
+        const coachEmail = sessionStorage.getItem('laxmtb_coach_email') || localStorage.getItem('laxmtb_coach_email') || '';
+        coachPill.textContent = coachEmail ? `👤 ${coachEmail}` : '';
+        coachPill.style.display = coachEmail ? 'inline-block' : 'none';
       }
     }
 
@@ -7550,6 +7706,9 @@
       // Persist to localStorage
       localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
 
+      // Trigger asynchronous write-back to Google Sheet webhook
+      syncToGoogleSheetWebhook(race);
+
       // Close the modal
       const modal = document.getElementById('adminModalOverlay');
       if (modal && modal.classList.contains('show')) {
@@ -7561,7 +7720,7 @@
       renderRaceSwitcher();
       refreshLiveViewForAuth();
 
-      showNotifToast(`✅ Saved changes for ${race.name}!`);
+      showNotifToast(`✅ Saved & synced ${race.name} to Sheet!`);
     }
 
     function renderAdminView() {
@@ -7581,13 +7740,13 @@
         container.innerHTML = `
           <div class="admin-preview-card">
             <div style="margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;">
-              <h4 style="margin:0;font-size:14px;color:var(--text-main);">📍 Race Venue & General Info</h4>
-              <span style="font-size:11px;color:var(--text-muted);">Directly edit race name, venue, trailhead, dates, and navigation instructions</span>
+              <h4 style="margin:0;font-size:14px;color:var(--text-main);">📍 Event Venue & General Info</h4>
+              <span style="font-size:11px;color:var(--text-muted);">Directly edit event name, venue, trailhead, dates, and navigation instructions</span>
             </div>
             
             <div class="admin-grid-2">
               <div class="admin-form-group">
-                <label class="admin-form-label">Race Name</label>
+                <label class="admin-form-label">Event Name</label>
                 <input type="text" id="edit_race_name" class="admin-input-field" value="${escapeHtml(race.name || '')}" placeholder="e.g. Bluff Bash Festival" />
               </div>
               <div class="admin-form-group">
@@ -7611,7 +7770,7 @@
                 <input type="text" id="edit_race_conference" class="admin-input-field" value="${escapeHtml(race.conference || '')}" placeholder="e.g. North Conference (Sunday Racing) • South Conference (Saturday Racing)" />
               </div>
               <div class="admin-form-group">
-                <label class="admin-form-label">Race Date Range</label>
+                <label class="admin-form-label">Event Date Range</label>
                 <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                   <div style="display:flex;align-items:center;gap:4px;">
                     <span style="font-size:11px;color:var(--text-muted);font-weight:600;">Start:</span>
