@@ -421,6 +421,22 @@
     }
 
     /* Modal Overlay & Card */
+    body.modal-open {
+      overflow: hidden !important;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    body.modal-open .modal-overlay {
+      touch-action: auto;
+      overscroll-behavior: contain;
+    }
+    body.modal-open .modal-card {
+      touch-action: auto;
+      overscroll-behavior: contain;
+    }
+
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -436,6 +452,7 @@
       justify-content: center;
       padding: 16px;
       box-sizing: border-box;
+      overscroll-behavior: contain;
     }
     .modal-overlay.show {
       display: flex;
@@ -5355,15 +5372,54 @@
       } catch (e) {}
     }
 
+    let modalScrollY = 0;
+    let activeModalCount = 0;
+
+    function lockBodyScroll() {
+      activeModalCount++;
+      if (activeModalCount === 1) {
+        modalScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${modalScrollY}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        document.body.classList.add('modal-open');
+      }
+    }
+
+    function unlockBodyScroll() {
+      activeModalCount = Math.max(0, activeModalCount - 1);
+      if (activeModalCount === 0) {
+        const top = document.body.style.top;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        document.body.classList.remove('modal-open');
+        const scrollY = top ? -parseInt(top, 10) : modalScrollY;
+        window.scrollTo(0, scrollY || 0);
+      }
+    }
+
     function openWhatsNewModal() {
       closeMobileMenu();
       const modal = document.getElementById('whatsNewModalOverlay');
-      if (modal) modal.classList.add('show');
+      if (modal) {
+        modal.classList.add('show');
+        lockBodyScroll();
+      }
     }
 
     function closeWhatsNewModal() {
       const modal = document.getElementById('whatsNewModalOverlay');
-      if (modal) modal.classList.remove('show');
+      if (modal && modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        unlockBodyScroll();
+      }
     }
 
     function handleWhatsNewOverlayClick(e) {
@@ -5380,12 +5436,16 @@
         syncNotifModalControls();
         renderActiveSubsList();
         updatePermissionUI();
+        lockBodyScroll();
       }
     }
 
     function closeNotificationModal() {
       const modal = document.getElementById('notifModalOverlay');
-      if (modal) modal.classList.remove('show');
+      if (modal && modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        unlockBodyScroll();
+      }
     }
 
     function handleModalOverlayClick(e) {
@@ -5895,9 +5955,16 @@
       if (e.key === 'Escape') {
         closeWhatsNewModal();
         closeNotificationModal();
+        closeAdminPortal();
         closeMobileMenu();
       }
     });
+
+    document.addEventListener('touchmove', (e) => {
+      if (document.body.classList.contains('modal-open') && e.target.classList.contains('modal-overlay')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
 
     function updateThemeUI(theme) {
       const icon = document.getElementById('themeIcon');
@@ -7134,13 +7201,17 @@
       }
 
       modal.classList.add('show');
+      lockBodyScroll();
     }
 
     function closeAdminPortal() {
       saveAdminTabState(currentAdminTab);
       localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
       const modal = document.getElementById('adminModalOverlay');
-      if (modal) modal.classList.remove('show');
+      if (modal && modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        unlockBodyScroll();
+      }
       refreshLiveViewForAuth();
     }
 
@@ -7182,7 +7253,10 @@
       document.querySelectorAll('.card-inline-edit-btn').forEach(el => el.remove());
       updateAdminMenuUI();
       const modal = document.getElementById('adminModalOverlay');
-      if (modal) modal.classList.remove('show');
+      if (modal && modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        unlockBodyScroll();
+      }
       showNotifToast('🔒 Coach Portal Locked');
       // Re-render live view immediately so edit buttons disappear without needing a refresh
       refreshLiveViewForAuth();
@@ -7426,7 +7500,10 @@
 
       // Close the modal
       const modal = document.getElementById('adminModalOverlay');
-      if (modal) modal.classList.remove('show');
+      if (modal && modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        unlockBodyScroll();
+      }
 
       // Re-render live views immediately
       renderRaceSwitcher();
