@@ -3518,7 +3518,7 @@
           <!-- Admin Navigation Tabs -->
           <div class="admin-tab-bar">
             <button type="button" class="admin-tab-btn active" id="adminTabBtn_venue" onclick="switchAdminTab('venue')">📍 Venue Info</button>
-            <button type="button" class="admin-tab-btn" id="adminTabBtn_waves" onclick="switchAdminTab('waves')">⏱️ Waves & Staging</button>
+            <button type="button" class="admin-tab-btn" id="adminTabBtn_waves" onclick="switchAdminTab('waves')">⏱️ Race Info</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_schedule" onclick="switchAdminTab('schedule')">📅 Team Schedule</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_signups" onclick="switchAdminTab('signups')">🤝 Volunteers & Food</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_maps" onclick="switchAdminTab('maps')">🗺️ Course Maps</button>
@@ -3715,7 +3715,6 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Powers+Bluff+North+Trailhead+Arpin+WI',
         eventGuideUrl: 'https://wisconsinmtb.org/events/bluff-bash-festival/',
         embedMapUrl: 'https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F',
-        conference: 'North Conference (Sunday Racing) • South Conference (Saturday Racing)',
         logo: 'logos/bluff-bash.png',
         eventId: 418104,
         isPublished: true,
@@ -3808,7 +3807,6 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Carlson+Competition+Stadium+42225+Telemark+Village+Rd+Cable+WI+54821',
         eventGuideUrl: 'https://wisconsinmtb.org/events/cable-conquest-festival/',
         embedMapUrl: null,
-        conference: 'North Conference',
         logo: 'logos/cable-conquest.png',
         eventId: null,
         isPublished: false,
@@ -3842,7 +3840,6 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Camp+Tesomas+Boy+Scout+Reservation+5403+Spider+Lake+Rd+Rhinelander+WI+54501',
         eventGuideUrl: 'https://wisconsinmtb.org/events/hodag-hustle-festival/',
         embedMapUrl: null,
-        conference: 'North Conference',
         logo: 'logos/hodag-hustle.png',
         eventId: null,
         isPublished: false,
@@ -3875,7 +3872,6 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984',
         eventGuideUrl: 'https://wisconsinmtb.org/events/gnarly-nordic-festival/',
         embedMapUrl: null,
-        conference: 'North Conference',
         logo: 'logos/gnarly-nordic.png',
         eventId: null,
         isPublished: false,
@@ -3908,7 +3904,6 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Trek+Headquarters+Trails+97+Canal+Rd+Waterloo+WI+53594',
         eventGuideUrl: 'https://wisconsinmtb.org/events/red-barn-state-championship/',
         embedMapUrl: null,
-        conference: 'State Championship (All Wisconsin Conferences Combined)',
         logo: 'logos/red-barn.png',
         eventId: null,
         isPublished: false,
@@ -4820,7 +4815,6 @@
               <h2>${race.name}</h2>
               <div class="event-hero-meta-badges">
                 <span class="event-meta-pill">📅 <strong>${race.dateStr}</strong></span>
-                <span class="event-meta-pill pill-conf">🏆 ${race.conference}</span>
               </div>
             </div>
           </div>
@@ -5028,7 +5022,7 @@
         <div class="upcoming-race-card">
           <img src="${race.logo}" alt="${race.name}" class="upcoming-logo-hero" onerror="this.style.display='none'">
           <h2 style="font-size:20px;font-weight:800;color:var(--text-main);">${race.name}</h2>
-          <p style="margin-top:4px;font-size:13px;color:var(--accent-red);font-weight:700;">📅 ${race.dateStr} • 🏆 ${race.conference}</p>
+          <p style="margin-top:4px;font-size:13px;color:var(--accent-red);font-weight:700;">📅 ${race.dateStr}</p>
           <p style="margin-top:4px;font-size:12px;color:var(--text-muted);">📍 <strong>${race.exactTrailhead || race.venue}</strong> • ${race.address}</p>
           
           <div style="margin-top:14px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
@@ -7153,15 +7147,7 @@
         if (endDateEl) race.endDate = endDateEl.value;
         const dateStrEl = document.getElementById('edit_race_dateStr');
         if (dateStrEl) race.dateStr = dateStrEl.value.trim();
-        const confEl = document.getElementById('edit_race_conference');
-        if (confEl) race.conference = confEl.value.trim();
-        const eventIdEl = document.getElementById('edit_race_eventId');
-        if (eventIdEl) {
-          const num = parseInt(eventIdEl.value, 10);
-          race.eventId = !isNaN(num) && num > 0 ? num : null;
-        }
-        const pubEl = document.getElementById('edit_race_isPublished');
-        if (pubEl) race.isPublished = pubEl.checked;
+        delete race.conference;
         const warningEl = document.getElementById('edit_race_warning');
         if (warningEl) race.warning = warningEl.value.trim();
         const navEl = document.getElementById('edit_race_navigationUrl');
@@ -7173,6 +7159,13 @@
         const guideEl = document.getElementById('edit_race_eventGuideUrl');
         if (guideEl) race.eventGuideUrl = guideEl.value.trim();
       } else if (tabKey === 'waves') {
+        const pubEl = document.getElementById('edit_race_isPublished');
+        if (pubEl) race.isPublished = pubEl.checked;
+        const eventIdEl = document.getElementById('edit_race_eventId');
+        if (eventIdEl) {
+          const num = parseInt(eventIdEl.value, 10);
+          race.eventId = !isNaN(num) && num > 0 ? num : null;
+        }
         const tbody = document.getElementById('adminWaveTableBody');
         if (tbody) {
           const rows = tbody.querySelectorAll('.admin-wave-row');
@@ -7306,15 +7299,9 @@
         const raceDates = (race.startDate && race.endDate) ? { start: race.startDate, end: race.endDate } : parseDateRange(race.dateStr);
         container.innerHTML = `
           <div class="admin-preview-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
-              <div>
-                <h4 style="margin:0;font-size:14px;color:var(--text-main);">📍 Race Venue & General Info</h4>
-                <span style="font-size:11px;color:var(--text-muted);">Directly edit race name, trailhead, dates, and navigation instructions</span>
-              </div>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:var(--bg-surface);padding:4px 10px;border-radius:6px;border:1px solid var(--border);" title="When enabled, Start Lists and Live Results connect to RaceResult. When disabled, displays Upcoming Race preview.">
-                <input type="checkbox" id="edit_race_isPublished" ${race.isPublished ? 'checked' : ''} />
-                <span style="font-weight:600;color:var(--text-main);">Live Timing & Results Active</span>
-              </label>
+            <div style="margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+              <h4 style="margin:0;font-size:14px;color:var(--text-main);">📍 Race Venue & General Info</h4>
+              <span style="font-size:11px;color:var(--text-muted);">Directly edit race name, venue, trailhead, dates, and navigation instructions</span>
             </div>
             
             <div class="admin-grid-2">
@@ -7351,14 +7338,6 @@
                   </div>
                   <input type="text" id="edit_race_dateStr" class="admin-input-field" value="${escapeHtml(race.dateStr || '')}" readonly style="flex:1;min-width:140px;font-weight:700;background:var(--bg-surface);color:var(--text-main);cursor:default;opacity:0.9;" title="Auto-generated Date Range (Read-Only)" />
                 </div>
-              </div>
-              <div class="admin-form-group">
-                <label class="admin-form-label">Conference</label>
-                <input type="text" id="edit_race_conference" class="admin-input-field" value="${escapeHtml(race.conference || '')}" placeholder="e.g. North Conference" />
-              </div>
-              <div class="admin-form-group">
-                <label class="admin-form-label">RaceResult Event ID</label>
-                <input type="number" id="edit_race_eventId" class="admin-input-field" value="${race.eventId || ''}" placeholder="e.g. 418104" />
               </div>
             </div>
 
@@ -7426,10 +7405,34 @@
             <option value="Varsity Boys">
             <option value="Varsity Girls">
           </datalist>
+
+          <!-- Race Timing & RaceResult Integration Card -->
+          <div class="admin-preview-card" style="margin-bottom:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
+              <div>
+                <h4 style="margin:0;font-size:14px;color:var(--text-main);">⏱️ Race Timing & Results Setup</h4>
+                <span style="font-size:11px;color:var(--text-muted);">Configure RaceResult Event ID and toggle live timing connectivity</span>
+              </div>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:var(--bg-surface);padding:4px 10px;border-radius:6px;border:1px solid var(--border);" title="When enabled, Start Lists and Live Results connect to RaceResult. When disabled, displays Upcoming Race preview.">
+                <input type="checkbox" id="edit_race_isPublished" ${race.isPublished ? 'checked' : ''} />
+                <span style="font-weight:600;color:var(--text-main);">Live Timing & Results Active</span>
+              </label>
+            </div>
+
+            <div class="admin-form-group" style="margin:0;">
+              <label class="admin-form-label">RaceResult Event ID</label>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <input type="number" id="edit_race_eventId" class="admin-input-field" value="${race.eventId || ''}" placeholder="e.g. 418104" style="max-width:200px;" />
+                <span style="font-size:11px;color:var(--text-muted);">Used by the app to stream live start lists and finish times from RaceResult.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category Wave & Staging Schedule Card -->
           <div class="admin-preview-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
               <div>
-                <h4 style="margin:0;font-size:14px;color:var(--text-main);">⏱️ Category Wave & Staging Schedule</h4>
+                <h4 style="margin:0;font-size:14px;color:var(--text-main);">🏁 Category Waves & Staging Times</h4>
                 <span style="font-size:11px;color:var(--text-muted);">Assign staging call-up and race start times for each rider category</span>
               </div>
               <button type="button" class="admin-add-btn" onclick="addAdminWaveRow()">+ Add Wave Row</button>
