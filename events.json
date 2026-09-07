@@ -29,20 +29,47 @@
         "date": "Sept 4",
         "subtitle": "Camping Opens",
         "events": [
-          { "time": "3:00 PM", "desc": "Camping Opens", "tag": "Venue" }
-        ]
+          {
+            "time": "3:00 PM",
+            "desc": "Camping Opens",
+            "tag": "Venue"
+          }
+        ],
+        "isoDate": "2026-09-04"
       },
       {
         "day": "Saturday",
         "date": "Sept 5",
         "subtitle": "Adventure Ride, Pre-Rides & Team Dinner",
         "events": [
-          { "time": "8:00 AM - 4:00 PM", "desc": "South Conference Racing Waves & Podiums", "tag": "Spectating" },
-          { "time": "10:00 AM - 4:00 PM", "desc": "North Conference Adventure Ride", "tag": "Team Ride" },
-          { "time": "5:00 PM - 6:00 PM", "desc": "Coaches Only Pre-Ride", "tag": "Pre-Ride" },
-          { "time": "5:30 PM", "desc": "LAXMTB Team Dinner", "tag": "Team Event", "isSpecial": true },
-          { "time": "6:00 PM - 7:00 PM", "desc": "Varsity / JV3 Only Pre-Ride", "tag": "Pre-Ride" }
-        ]
+          {
+            "time": "8:00 AM - 4:00 PM",
+            "desc": "South Conference Racing Waves & Podiums",
+            "tag": "Spectating"
+          },
+          {
+            "time": "10:00 AM - 4:00 PM",
+            "desc": "North Conference Adventure Ride",
+            "tag": "Team Ride"
+          },
+          {
+            "time": "5:00 PM - 6:00 PM",
+            "desc": "Coaches Only Pre-Ride",
+            "tag": "Pre-Ride"
+          },
+          {
+            "time": "5:30 PM",
+            "desc": "LAXMTB Team Dinner",
+            "tag": "Team Event",
+            "isSpecial": true
+          },
+          {
+            "time": "6:00 PM - 7:00 PM",
+            "desc": "Varsity / JV3 Only Pre-Ride",
+            "tag": "Pre-Ride"
+          }
+        ],
+        "isoDate": "2026-09-05"
       },
       {
         "day": "Sunday",
@@ -50,19 +77,43 @@
         "subtitle": "North Conference Race Day",
         "isRaceDay": true,
         "events": [
-          { "time": "7:00 AM - 8:00 AM", "desc": "LAXMTB Team Breakfast", "tag": "Team Event", "isSpecial": true },
-          { "time": "7:00 AM - 9:30 AM", "desc": "Pre-Rides Open (Registered Riders & Coaches)", "tag": "Pre-Ride" },
-          { "time": "10:00 AM", "desc": "Racing Starts (North Conference Waves)", "tag": "Racing", "isRace": true },
-          { "time": "4:30 PM", "desc": "North Conference Awards & Season Opener Celebration", "tag": "Awards" }
-        ]
+          {
+            "time": "7:00 AM - 8:00 AM",
+            "desc": "LAXMTB Team Breakfast",
+            "tag": "Team Event",
+            "isSpecial": true
+          },
+          {
+            "time": "7:00 AM - 9:30 AM",
+            "desc": "Pre-Rides Open (Registered Riders & Coaches)",
+            "tag": "Pre-Ride"
+          },
+          {
+            "time": "10:00 AM",
+            "desc": "Racing Starts (North Conference Waves)",
+            "tag": "Racing",
+            "isRace": true
+          },
+          {
+            "time": "4:30 PM",
+            "desc": "North Conference Awards & Season Opener Celebration",
+            "tag": "Awards"
+          }
+        ],
+        "isoDate": "2026-09-06"
       },
       {
         "day": "Monday",
         "date": "Sept 7 (Labor Day)",
         "subtitle": "Departure",
         "events": [
-          { "time": "Morning", "desc": "Camping Closes", "tag": "Venue" }
-        ]
+          {
+            "time": "Morning",
+            "desc": "Camping Closes",
+            "tag": "Venue"
+          }
+        ],
+        "isoDate": "2026-09-07"
       }
     ],
     "guidelines": [
@@ -73,24 +124,158 @@
       "<strong>Leashed Pets Only:</strong> Dogs prohibited in active course areas and staging grid zones."
     ],
     "waveSchedule": {
-      "Varsity Boys": { "1": { "start": "10:00 AM", "stage": "9:45 AM" } },
-      "JV III Boys": { "1": { "start": "10:05 AM", "stage": "9:50 AM" }, "2": { "start": "10:06 AM", "stage": "10:06 AM" } },
-      "Varsity Girls": { "1": { "start": "11:25 AM", "stage": "11:10 AM" } },
-      "JV III Girls": { "1": { "start": "11:30 AM", "stage": "11:15 AM" } },
-      "MS2 Boys": { "1": { "start": "1:05 PM", "stage": "12:50 PM" } },
-      "Freshman Boys": { "1": { "start": "1:10 PM", "stage": "12:55 PM" }, "2": { "start": "1:11 PM", "stage": "12:55 PM" }, "3": { "start": "1:12 PM", "stage": "12:55 PM" } },
-      "8th Grade Boys": { "1": { "start": "1:17 PM", "stage": "1:02 PM" }, "2": { "start": "1:18 PM", "stage": "1:02 PM" } },
-      "MS2 Girls": { "1": { "start": "2:00 PM", "stage": "1:45 PM" } },
-      "Freshman Girls": { "1": { "start": "2:05 PM", "stage": "1:50 PM" } },
-      "JV II Girls": { "1": { "start": "2:10 PM", "stage": "1:55 PM" }, "2": { "start": "2:11 PM", "stage": "1:55 PM" } },
-      "8th Grade Girls": { "1": { "start": "2:16 PM", "stage": "2:01 PM" } },
-      "JV II Boys": { "1": { "start": "2:55 PM", "stage": "2:40 PM" }, "2": { "start": "2:56 PM", "stage": "2:40 PM" }, "3": { "start": "2:57 PM", "stage": "2:40 PM" }, "4": { "start": "2:58 PM", "stage": "2:40 PM" } },
-      "7th Grade Boys": { "1": { "start": "3:03 PM", "stage": "2:48 PM" }, "2": { "start": "3:04 PM", "stage": "2:48 PM" } },
-      "6th Grade Boys": { "1": { "start": "3:40 PM", "stage": "3:25 PM" }, "2": { "start": "3:41 PM", "stage": "3:25 PM" } },
-      "7th Grade Girls": { "1": { "start": "3:46 PM", "stage": "3:31 PM" }, "2": { "start": "3:47 PM", "stage": "3:31 PM" } },
-      "6th Grade Girls": { "1": { "start": "3:52 PM", "stage": "3:36 PM" } },
-      "HS Open Boys": { "1": { "start": "3:53 PM", "stage": "3:36 PM" } },
-      "HS Open Girls": { "1": { "start": "3:53 PM", "stage": "3:36 PM" } }
+      "Varsity Boys": {
+        "1": {
+          "start": "10:00 AM",
+          "stage": "9:45 AM"
+        }
+      },
+      "JV III Boys": {
+        "1": {
+          "start": "10:05 AM",
+          "stage": "9:50 AM"
+        },
+        "2": {
+          "start": "10:06 AM",
+          "stage": "10:06 AM"
+        }
+      },
+      "Varsity Girls": {
+        "1": {
+          "start": "11:25 AM",
+          "stage": "11:10 AM"
+        }
+      },
+      "JV III Girls": {
+        "1": {
+          "start": "11:30 AM",
+          "stage": "11:15 AM"
+        }
+      },
+      "MS2 Boys": {
+        "1": {
+          "start": "1:05 PM",
+          "stage": "12:50 PM"
+        }
+      },
+      "Freshman Boys": {
+        "1": {
+          "start": "1:10 PM",
+          "stage": "12:55 PM"
+        },
+        "2": {
+          "start": "1:11 PM",
+          "stage": "12:55 PM"
+        },
+        "3": {
+          "start": "1:12 PM",
+          "stage": "12:55 PM"
+        }
+      },
+      "8th Grade Boys": {
+        "1": {
+          "start": "1:17 PM",
+          "stage": "1:02 PM"
+        },
+        "2": {
+          "start": "1:18 PM",
+          "stage": "1:02 PM"
+        }
+      },
+      "MS2 Girls": {
+        "1": {
+          "start": "2:00 PM",
+          "stage": "1:45 PM"
+        }
+      },
+      "Freshman Girls": {
+        "1": {
+          "start": "2:05 PM",
+          "stage": "1:50 PM"
+        }
+      },
+      "JV II Girls": {
+        "1": {
+          "start": "2:10 PM",
+          "stage": "1:55 PM"
+        },
+        "2": {
+          "start": "2:11 PM",
+          "stage": "1:55 PM"
+        }
+      },
+      "8th Grade Girls": {
+        "1": {
+          "start": "2:16 PM",
+          "stage": "2:01 PM"
+        }
+      },
+      "JV II Boys": {
+        "1": {
+          "start": "2:55 PM",
+          "stage": "2:40 PM"
+        },
+        "2": {
+          "start": "2:56 PM",
+          "stage": "2:40 PM"
+        },
+        "3": {
+          "start": "2:57 PM",
+          "stage": "2:40 PM"
+        },
+        "4": {
+          "start": "2:58 PM",
+          "stage": "2:40 PM"
+        }
+      },
+      "7th Grade Boys": {
+        "1": {
+          "start": "3:03 PM",
+          "stage": "2:48 PM"
+        },
+        "2": {
+          "start": "3:04 PM",
+          "stage": "2:48 PM"
+        }
+      },
+      "6th Grade Boys": {
+        "1": {
+          "start": "3:40 PM",
+          "stage": "3:25 PM"
+        },
+        "2": {
+          "start": "3:41 PM",
+          "stage": "3:25 PM"
+        }
+      },
+      "7th Grade Girls": {
+        "1": {
+          "start": "3:46 PM",
+          "stage": "3:31 PM"
+        },
+        "2": {
+          "start": "3:47 PM",
+          "stage": "3:31 PM"
+        }
+      },
+      "6th Grade Girls": {
+        "1": {
+          "start": "3:52 PM",
+          "stage": "3:36 PM"
+        }
+      },
+      "HS Open Boys": {
+        "1": {
+          "start": "3:53 PM",
+          "stage": "3:36 PM"
+        }
+      },
+      "HS Open Girls": {
+        "1": {
+          "start": "3:53 PM",
+          "stage": "3:36 PM"
+        }
+      }
     }
   },
   {
@@ -117,10 +302,69 @@
       "league": null
     },
     "schedule": [
-      { "time": "Friday 1:00 PM - 6:00 PM", "desc": "Pit Zone Setup, Pre-Ride & CAMBA Trail Tour" },
-      { "time": "Saturday 8:00 AM", "desc": "High School Racing Waves & Time Trials" },
-      { "time": "Saturday 4:30 PM", "desc": "High School Podiums & Community Dinner" },
-      { "time": "Sunday 8:30 AM", "desc": "Middle School Races & Team Podiums" }
+      {
+        "day": "Friday",
+        "date": "Sept 11",
+        "isoDate": "2026-09-11",
+        "subtitle": "Pre-Rides & Venue Setup",
+        "isRaceDay": false,
+        "events": [
+          {
+            "time": "1:00 PM - 6:00 PM",
+            "startTime": "1:00 PM",
+            "endTime": "6:00 PM",
+            "desc": "Pit Zone Setup, Pre-Ride & CAMBA Trail Tour",
+            "tag": "Pre-Ride",
+            "isSpecial": false,
+            "isRace": false
+          }
+        ]
+      },
+      {
+        "day": "Saturday",
+        "date": "Sept 12",
+        "isoDate": "2026-09-12",
+        "subtitle": "Racing & Team Events",
+        "isRaceDay": false,
+        "events": [
+          {
+            "time": "8:00 AM",
+            "startTime": "8:00 AM",
+            "endTime": "",
+            "desc": "High School Racing Waves & Time Trials",
+            "tag": "Racing",
+            "isSpecial": false,
+            "isRace": true
+          },
+          {
+            "time": "4:30 PM",
+            "startTime": "4:30 PM",
+            "endTime": "",
+            "desc": "High School Podiums & Community Dinner",
+            "tag": "Awards",
+            "isSpecial": true,
+            "isRace": false
+          }
+        ]
+      },
+      {
+        "day": "Sunday",
+        "date": "Sept 13",
+        "isoDate": "2026-09-13",
+        "subtitle": "Race Day",
+        "isRaceDay": true,
+        "events": [
+          {
+            "time": "8:30 AM",
+            "startTime": "8:30 AM",
+            "endTime": "",
+            "desc": "Middle School Races & Team Podiums",
+            "tag": "Awards",
+            "isSpecial": false,
+            "isRace": true
+          }
+        ]
+      }
     ],
     "guidelines": [
       "<strong>Trails:</strong> Trek Trails by OTM and CAMBA world-class singletrack network.",
@@ -151,9 +395,60 @@
       "league": null
     },
     "schedule": [
-      { "time": "Friday 1:00 PM - 6:00 PM", "desc": "Pre-Ride on Camp Scout Trails & Pit Setup" },
-      { "time": "Saturday 8:00 AM", "desc": "High School Races & Hodag Costume Festivities" },
-      { "time": "Sunday 8:30 AM", "desc": "Middle School Races & North Conference Podiums" }
+      {
+        "day": "Friday",
+        "date": "Oct 2",
+        "isoDate": "2026-10-02",
+        "subtitle": "Pre-Rides & Venue Setup",
+        "isRaceDay": false,
+        "events": [
+          {
+            "time": "1:00 PM - 6:00 PM",
+            "startTime": "1:00 PM",
+            "endTime": "6:00 PM",
+            "desc": "Pre-Ride on Camp Scout Trails & Pit Setup",
+            "tag": "Pre-Ride",
+            "isSpecial": false,
+            "isRace": false
+          }
+        ]
+      },
+      {
+        "day": "Saturday",
+        "date": "Oct 3",
+        "isoDate": "2026-10-03",
+        "subtitle": "Racing & Team Events",
+        "isRaceDay": false,
+        "events": [
+          {
+            "time": "8:00 AM",
+            "startTime": "8:00 AM",
+            "endTime": "",
+            "desc": "High School Races & Hodag Costume Festivities",
+            "tag": "Venue",
+            "isSpecial": false,
+            "isRace": true
+          }
+        ]
+      },
+      {
+        "day": "Sunday",
+        "date": "Oct 4",
+        "isoDate": "2026-10-04",
+        "subtitle": "Race Day",
+        "isRaceDay": true,
+        "events": [
+          {
+            "time": "8:30 AM",
+            "startTime": "8:30 AM",
+            "endTime": "",
+            "desc": "Middle School Races & North Conference Podiums",
+            "tag": "Awards",
+            "isSpecial": false,
+            "isRace": true
+          }
+        ]
+      }
     ],
     "guidelines": [
       "<strong>Venue:</strong> Scout reservation lakeside singletrack trails.",
@@ -184,9 +479,60 @@
       "league": null
     },
     "schedule": [
-      { "time": "Friday 1:00 PM - 6:00 PM", "desc": "Pre-Ride on Mountain Slopes & Bergs" },
-      { "time": "Saturday 8:00 AM", "desc": "High School Races & North Conference Finals" },
-      { "time": "Sunday 8:30 AM", "desc": "Middle School Races & Season Podiums" }
+      {
+        "day": "Friday",
+        "date": "Oct 9",
+        "isoDate": "2026-10-09",
+        "subtitle": "Pre-Rides & Venue Setup",
+        "isRaceDay": false,
+        "events": [
+          {
+            "time": "1:00 PM - 6:00 PM",
+            "startTime": "1:00 PM",
+            "endTime": "6:00 PM",
+            "desc": "Pre-Ride on Mountain Slopes & Bergs",
+            "tag": "Pre-Ride",
+            "isSpecial": false,
+            "isRace": false
+          }
+        ]
+      },
+      {
+        "day": "Saturday",
+        "date": "Oct 10",
+        "isoDate": "2026-10-10",
+        "subtitle": "Racing & Team Events",
+        "isRaceDay": false,
+        "events": [
+          {
+            "time": "8:00 AM",
+            "startTime": "8:00 AM",
+            "endTime": "",
+            "desc": "High School Races & North Conference Finals",
+            "tag": "Racing",
+            "isSpecial": false,
+            "isRace": true
+          }
+        ]
+      },
+      {
+        "day": "Sunday",
+        "date": "Oct 11",
+        "isoDate": "2026-10-11",
+        "subtitle": "Race Day",
+        "isRaceDay": true,
+        "events": [
+          {
+            "time": "8:30 AM",
+            "startTime": "8:30 AM",
+            "endTime": "",
+            "desc": "Middle School Races & Season Podiums",
+            "tag": "Awards",
+            "isSpecial": false,
+            "isRace": true
+          }
+        ]
+      }
     ],
     "guidelines": [
       "<strong>Course:</strong> Ski hill climbs, bermed descents, and forested singletrack.",
@@ -217,9 +563,60 @@
       "league": null
     },
     "schedule": [
-      { "time": "Friday 12:00 PM - 5:30 PM", "desc": "State Championship Pre-Ride & Night Ride Festivities" },
-      { "time": "Saturday 8:00 AM", "desc": "High School State Championship Finals & Night Pump Track" },
-      { "time": "Sunday 8:30 AM", "desc": "Middle School State Championship & Season Finale Awards" }
+      {
+        "day": "Friday",
+        "date": "Oct 23",
+        "isoDate": "2026-10-23",
+        "subtitle": "Pre-Rides & Venue Setup",
+        "isRaceDay": false,
+        "events": [
+          {
+            "time": "12:00 PM - 5:30 PM",
+            "startTime": "12:00 PM",
+            "endTime": "5:30 PM",
+            "desc": "State Championship Pre-Ride & Night Ride Festivities",
+            "tag": "Pre-Ride",
+            "isSpecial": false,
+            "isRace": false
+          }
+        ]
+      },
+      {
+        "day": "Saturday",
+        "date": "Oct 24",
+        "isoDate": "2026-10-24",
+        "subtitle": "Racing & Team Events",
+        "isRaceDay": false,
+        "events": [
+          {
+            "time": "8:00 AM",
+            "startTime": "8:00 AM",
+            "endTime": "",
+            "desc": "High School State Championship Finals & Night Pump Track",
+            "tag": "Racing",
+            "isSpecial": false,
+            "isRace": false
+          }
+        ]
+      },
+      {
+        "day": "Sunday",
+        "date": "Oct 25",
+        "isoDate": "2026-10-25",
+        "subtitle": "Race Day",
+        "isRaceDay": true,
+        "events": [
+          {
+            "time": "8:30 AM",
+            "startTime": "8:30 AM",
+            "endTime": "",
+            "desc": "Middle School State Championship & Season Finale Awards",
+            "tag": "Awards",
+            "isSpecial": false,
+            "isRace": false
+          }
+        ]
+      }
     ],
     "guidelines": [
       "<strong>Championship Venue:</strong> Private Trek World Headquarters Trails & Historic Red Barn.",
