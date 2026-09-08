@@ -2035,24 +2035,46 @@
       color: #dc2626;
     }
 
-    @media (max-width: 440px) {
-      .wave-divider {
-        padding: 4px 8px;
-        gap: 6px;
-      }
-      .wave-schedule-step.step-stage,
-      .wave-schedule-sep.sep-stage {
+    .step-lbl .lbl-short {
+      display: none;
+    }
+
+    @media (max-width: 520px) {
+      .step-lbl .lbl-full {
         display: none;
       }
-      .wave-schedule-strip {
-        padding: 0 6px;
+      .step-lbl .lbl-short {
+        display: inline;
+      }
+      .wave-divider {
+        padding: 4px 6px;
         gap: 4px;
+      }
+      .wave-schedule-strip {
+        padding: 0 5px;
+        gap: 3px;
         height: 22px;
+      }
+      .wave-schedule-step {
+        font-size: 10.5px;
+        gap: 2px;
+      }
+      .wave-schedule-step .step-lbl {
+        font-size: 10px;
+      }
+      .wave-schedule-step .step-time {
+        font-size: 10.5px;
+      }
+      .wave-schedule-sep {
+        font-size: 8.5px;
+        margin: 0;
+        opacity: 0.35;
       }
       .wave-laps-toggle-btn {
         height: 22px;
-        min-width: 22px;
+        min-width: 20px;
         padding: 0 4px;
+        font-size: 10px;
       }
     }
 
@@ -8166,6 +8188,14 @@
           waveHeader.className = 'wave-divider';
 
           const steps = [];
+          if (waveWarmupTime) {
+            steps.push(`
+              <span class="wave-schedule-step step-warmup" title="Warm-up starts ${notifConfig.warmupOffset || 45}m before staging">
+                <span class="step-lbl"><span class="lbl-full">Warm-up:</span><span class="lbl-short">Warm:</span></span>
+                <span class="step-time">${escapeHtml(waveWarmupTime)}</span>
+              </span>
+            `);
+          }
           if (stageTime) {
             steps.push(`
               <span class="wave-schedule-step step-stage" title="Staging grid call-up">
@@ -8182,7 +8212,7 @@
               </span>
             `);
           }
-          const timeHtml = steps.length > 0 ? `<div class="wave-schedule-strip">${steps.join('<span class="wave-schedule-sep sep-stage">›</span>')}</div>` : '';
+          const timeHtml = steps.length > 0 ? `<div class="wave-schedule-strip">${steps.join('<span class="wave-schedule-sep">›</span>')}</div>` : '';
 
           const ridersInWave = waves[wKey].sort((a, b) => {
             const pa = parseInt(a.pl) || parseInt(a.bib) || 0;
