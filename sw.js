@@ -1,4 +1,4 @@
-const CACHE_NAME = 'laxmtb-v37';
+const CACHE_NAME = 'laxmtb-v38';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
