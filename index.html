@@ -2027,15 +2027,15 @@
     .lap-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       background: var(--bg-card);
-      border: 1px solid var(--border);
+      border: none !important;
       border-radius: 4px;
-      padding: 3px 8px;
+      padding: 4px 8px;
       font-weight: 600;
       color: var(--text-main);
       font-variant-numeric: tabular-nums;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
     }
 
     .lap-badge .lap-num {
@@ -2043,31 +2043,83 @@
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
-    .lap-badge.lap-highlight {
-      border-color: var(--accent-red);
-      background: var(--accent-red-subtle);
-      color: var(--accent-red);
-    }
-
-    .lap-summary-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid rgba(34, 197, 94, 0.25);
-      border-radius: 4px;
-      padding: 3px 8px;
+    .lap-badge .lap-val {
       font-weight: 600;
-      color: #22c55e;
-      font-variant-numeric: tabular-nums;
+      font-size: 11.5px;
     }
 
-    :root[data-theme="light"] .lap-summary-badge {
-      background: #dcfce7;
-      color: #15803d;
-      border-color: #bbf7d0;
+    .lap-badge.lap-avg {
+      background: var(--bg-card);
+      border: none !important;
+    }
+
+    .lap-badge.lap-avg .lap-num {
+      color: #ffffff;
+    }
+
+    :root[data-theme="light"] .lap-badge.lap-avg .lap-num {
+      color: #111827;
+    }
+
+    .lap-badge.lap-avg .lap-val {
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    :root[data-theme="light"] .lap-badge.lap-avg .lap-val {
+      color: #111827;
+    }
+
+    .lap-badge.lap-penalty {
+      background: rgba(220, 38, 38, 0.15);
+      border: none !important;
+    }
+
+    .lap-badge.lap-penalty .lap-num {
+      color: #ffffff;
+    }
+
+    :root[data-theme="light"] .lap-badge.lap-penalty .lap-num {
+      color: #111827;
+    }
+
+    .lap-badge.lap-penalty .lap-val {
+      color: var(--accent-red);
+      font-weight: 800;
+    }
+
+    .lap-badge.lap-total {
+      background: rgba(220, 38, 38, 0.15);
+      border: none !important;
+    }
+
+    .lap-badge.lap-total .lap-num {
+      color: #ffffff;
+    }
+
+    :root[data-theme="light"] .lap-badge.lap-total .lap-num {
+      color: #111827;
+    }
+
+    .lap-badge.lap-total .lap-val {
+      color: var(--accent-red);
+      font-weight: 800;
+    }
+
+    .penalty-tag {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--accent-red);
+      background: rgba(220, 38, 38, 0.15);
+      padding: 1px 4px;
+      border-radius: 3px;
+      border: none !important;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      display: inline-block;
     }
 
     .div-tag {
@@ -7660,7 +7712,7 @@
                 rider.wv_rank = row[2] || '';
                 rider.return_val = row[7] || '+';
 
-                // Results Mode: Extract Laps (row[7..10]) and Finish/Total Time (row[12] or row[11])
+                // Results Mode: Extract Laps (row[7..10]), Penalty (row[11]), and Finish/Total Time (row[12])
                 const rawLaps = [row[7], row[8], row[9], row[10]]
                   .map(l => String(l || '').trim())
                   .filter(l => l && l !== '-' && l !== '*' && l !== '0' && l !== '00:00');
@@ -7670,7 +7722,10 @@
                 rider.lap3 = (row[9] && row[9] !== '*' && row[9] !== '0') ? String(row[9]).trim() : '-';
                 rider.lap4 = (row[10] && row[10] !== '*' && row[10] !== '0') ? String(row[10]).trim() : '-';
 
-                const finishTime = String(row[12] || row[11] || rawLaps[rawLaps.length - 1] || '').trim();
+                const rawPen = (row[11] && row[11] !== '*' && row[11] !== '0' && row[11] !== '00:00') ? String(row[11]).trim() : '';
+                rider.penalty = rawPen ? rawPen.replace(/^0(\d:)/, '$1') : '';
+
+                const finishTime = String(row[12] || rawLaps[rawLaps.length - 1] || '').trim();
                 rider.totalTime = finishTime;
 
                 // Calculate Average Lap Time
@@ -8069,6 +8124,7 @@
                 <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${escapeHtml(r.team)}</span></td>
                 <td style="text-align:center;white-space:nowrap;">
                   <span class="div-tag">D${escapeHtml(r.div || '1')}</span>
+                  ${r.penalty ? `<span class="penalty-tag" title="Includes +${escapeHtml(r.penalty)} penalty" style="margin-left:3px;">+${escapeHtml(r.penalty)}</span>` : ''}
                   ${hasLaps ? `<span class="rider-expand-icon" title="View Lap Times">▼</span>` : ''}
                 </td>
                 <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
@@ -8076,7 +8132,12 @@
                 <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
                 <td class="col-lap col-desktop-only ${lap4 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap4)}</td>
                 <td class="col-avg col-desktop-only" style="text-align:right;">${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : '<span class="lap-empty">-</span>'}</td>
-                <td class="col-time col-desktop-only" style="text-align:right;">${escapeHtml(displayTime)}</td>
+                <td class="col-time col-desktop-only" style="text-align:right;">
+                  <div style="display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
+                    <span>${escapeHtml(displayTime)}</span>
+                    ${r.penalty ? `<span class="penalty-tag" title="Includes +${escapeHtml(r.penalty)} penalty">+${escapeHtml(r.penalty)} pen</span>` : ''}
+                  </div>
+                </td>
               `;
               tbody.appendChild(tr);
 
@@ -8088,24 +8149,32 @@
                   r.laps.forEach((lapVal, idx) => {
                     lapsHtml += `
                       <span class="lap-badge">
-                        <span class="lap-num">Lap ${idx + 1}</span>
-                        <span>${escapeHtml(lapVal)}</span>
+                        <span class="lap-num">Lap ${idx + 1}:</span>
+                        <span class="lap-val">${escapeHtml(lapVal)}</span>
                       </span>
                     `;
                   });
                   if (r.avgLap) {
                     lapsHtml += `
-                      <span class="lap-summary-badge">
-                        <span style="font-size:10px;text-transform:uppercase;font-weight:700;">Avg Pace</span>
-                        <span>${escapeHtml(r.avgLap)} / lap</span>
+                      <span class="lap-badge lap-avg">
+                        <span class="lap-num">Avg Pace:</span>
+                        <span class="lap-val">${escapeHtml(r.avgLap)} / lap</span>
+                      </span>
+                    `;
+                  }
+                  if (r.penalty) {
+                    lapsHtml += `
+                      <span class="lap-badge lap-penalty">
+                        <span class="lap-num">Penalty:</span>
+                        <span class="lap-val">+${escapeHtml(r.penalty)}</span>
                       </span>
                     `;
                   }
                   if (r.totalTime) {
                     lapsHtml += `
-                      <span class="lap-badge lap-highlight">
-                        <span class="lap-num">Total</span>
-                        <span>${escapeHtml(r.totalTime)}</span>
+                      <span class="lap-badge lap-total">
+                        <span class="lap-num">Total:</span>
+                        <span class="lap-val">${escapeHtml(r.totalTime)}</span>
                       </span>
                     `;
                   }
@@ -8256,6 +8325,7 @@
               </td>
               <td style="text-align:center;white-space:nowrap;">
                 <span class="div-tag">D${escapeHtml(r.div || '1')}</span>
+                ${r.penalty ? `<span class="penalty-tag" title="Includes +${escapeHtml(r.penalty)} penalty" style="margin-left:3px;">+${escapeHtml(r.penalty)}</span>` : ''}
                 ${hasLaps ? `<span class="rider-expand-icon" title="View Lap Times">▼</span>` : ''}
               </td>
               <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
@@ -8263,7 +8333,12 @@
               <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
               <td class="col-lap col-desktop-only ${lap4 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap4)}</td>
               <td class="col-avg col-desktop-only" style="text-align:right;">${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : '<span class="lap-empty">-</span>'}</td>
-              <td class="col-time col-desktop-only" style="text-align:right;">${escapeHtml(displayTime)}</td>
+              <td class="col-time col-desktop-only" style="text-align:right;">
+                <div style="display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
+                  <span>${escapeHtml(displayTime)}</span>
+                  ${r.penalty ? `<span class="penalty-tag" title="Includes +${escapeHtml(r.penalty)} penalty">+${escapeHtml(r.penalty)} pen</span>` : ''}
+                </div>
+              </td>
             `;
             tbody.appendChild(tr);
 
@@ -8275,24 +8350,32 @@
                 r.laps.forEach((lapVal, idx) => {
                   lapsHtml += `
                     <span class="lap-badge">
-                      <span class="lap-num">Lap ${idx + 1}</span>
-                      <span>${escapeHtml(lapVal)}</span>
+                      <span class="lap-num">Lap ${idx + 1}:</span>
+                      <span class="lap-val">${escapeHtml(lapVal)}</span>
                     </span>
                   `;
                 });
                 if (r.avgLap) {
                   lapsHtml += `
-                    <span class="lap-summary-badge">
-                      <span style="font-size:10px;text-transform:uppercase;font-weight:700;">Avg Pace</span>
-                      <span>${escapeHtml(r.avgLap)} / lap</span>
+                    <span class="lap-badge lap-avg">
+                      <span class="lap-num">Avg Pace:</span>
+                      <span class="lap-val">${escapeHtml(r.avgLap)} / lap</span>
+                    </span>
+                  `;
+                }
+                if (r.penalty) {
+                  lapsHtml += `
+                    <span class="lap-badge lap-penalty">
+                      <span class="lap-num">Penalty:</span>
+                      <span class="lap-val">+${escapeHtml(r.penalty)}</span>
                     </span>
                   `;
                 }
                 if (r.totalTime) {
                   lapsHtml += `
-                    <span class="lap-badge lap-highlight">
-                      <span class="lap-num">Total</span>
-                      <span>${escapeHtml(r.totalTime)}</span>
+                    <span class="lap-badge lap-total">
+                      <span class="lap-num">Total:</span>
+                      <span class="lap-val">${escapeHtml(r.totalTime)}</span>
                     </span>
                   `;
                 }
