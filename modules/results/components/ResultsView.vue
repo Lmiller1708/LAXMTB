@@ -31,9 +31,7 @@ const emit = defineEmits<{
 const {
   notifConfig,
   isCategorySubscribed,
-  isWaveSubscribed,
-  toggleCategorySubscription,
-  toggleWaveSubscription
+  toggleCategorySubscription
 } = useNotificationSubscriptions()
 
 const selectedRiderKeys = ref<Set<string>>(new Set())
@@ -279,18 +277,6 @@ const groupedByTeam = computed(() => {
                     <span class="step-time">{{ w.waveTime }}</span>
                   </span>
                 </div>
-                <button
-                  type="button"
-                  class="notif-sub-btn wave-notif-btn"
-                  :class="{ active: isWaveSubscribed(catGroup.category, w.waveKey) }"
-                  :title="isWaveSubscribed(catGroup.category, w.waveKey) ? `Notifications enabled for ${catGroup.category} - ${w.waveKey}` : `Enable notifications for ${catGroup.category} - ${w.waveKey}`"
-                  @click.stop="toggleWaveSubscription(catGroup.category, w.waveKey)"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" :fill="isWaveSubscribed(catGroup.category, w.waveKey) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                  </svg>
-                </button>
                 <button
                   v-if="currentTab === 'results' && w.waveRiderKeys.length > 0"
                   type="button"
