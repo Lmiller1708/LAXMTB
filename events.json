@@ -276,7 +276,8 @@
           "stage": "3:36 PM"
         }
       }
-    }
+    },
+    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9"
   },
   {
     "id": "cable-conquest",
@@ -369,7 +370,8 @@
     "guidelines": [
       "<strong>Trails:</strong> Trek Trails by OTM and CAMBA world-class singletrack network.",
       "<strong>Camping:</strong> Village festival camping available on-site (advance booking recommended)."
-    ]
+    ],
+    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9"
   },
   {
     "id": "hodag-hustle",
@@ -453,7 +455,8 @@
     "guidelines": [
       "<strong>Venue:</strong> Scout reservation lakeside singletrack trails.",
       "<strong>Camping:</strong> Scout camp cabin/tent sites by advance registration."
-    ]
+    ],
+    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9"
   },
   {
     "id": "gnarly-nordic",
@@ -537,7 +540,8 @@
     "guidelines": [
       "<strong>Course:</strong> Ski hill climbs, bermed descents, and forested singletrack.",
       "<strong>Spectating:</strong> Outstanding spectator visibility from the main ski chalet bowl."
-    ]
+    ],
+    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9"
   },
   {
     "id": "red-barn",
@@ -621,6 +625,7 @@
     "guidelines": [
       "<strong>Championship Venue:</strong> Private Trek World Headquarters Trails & Historic Red Barn.",
       "<strong>Season Finale:</strong> State individual jerseys and team division trophies awarded Sunday afternoon."
-    ]
+    ],
+    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9"
   }
 ]
