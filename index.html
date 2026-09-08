@@ -3269,6 +3269,37 @@
     .admin-save-btn:hover {
       background: #15803d !important;
     }
+    .tab-loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 70px 20px;
+      gap: 14px;
+      min-height: 280px;
+      text-align: center;
+    }
+    .tab-loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(239, 68, 68, 0.2);
+      border-top-color: var(--accent-red);
+      border-radius: 50%;
+      animation: tabSpin 0.75s linear infinite;
+    }
+    @keyframes tabSpin {
+      to { transform: rotate(360deg); }
+    }
+    .tab-loading-text {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.2px;
+    }
+    .tab-loading-subtext {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
@@ -4241,6 +4272,19 @@
       }
     }
 
+    function showTabLoading(tabName, raceName) {
+      const container = document.getElementById('tablesContainer');
+      if (!container) return;
+      const label = tabName === 'list' ? 'Start Lists' : 'Live Race Results';
+      container.innerHTML = `
+        <div class="tab-loading-container">
+          <div class="tab-loading-spinner"></div>
+          <div class="tab-loading-text">Loading ${label}...</div>
+          <div class="tab-loading-subtext">${escapeHtml(raceName || '')}</div>
+        </div>
+      `;
+    }
+
     function selectRace(idx, updateUrl = true) {
       currentRaceIndex = idx;
       renderRaceSwitcher();
@@ -4263,6 +4307,10 @@
       if (!race.isPublished || !race.eventId) {
         renderUpcomingRace(race);
       } else {
+        currentRiders = [];
+        showTabLoading(currentTab, race.name);
+        const statusCount = document.getElementById('statusCount');
+        if (statusCount) statusCount.textContent = 'Loading data...';
         document.getElementById('controlsPanel').style.display = 'block';
         document.getElementById('statusBar').style.display = 'flex';
         fetchLiveRaceresultData();
@@ -4323,6 +4371,10 @@
       updateFilterSummaryChips();
 
       if (race.isPublished && race.eventId) {
+        currentRiders = [];
+        showTabLoading(tab, race.name);
+        const statusCount = document.getElementById('statusCount');
+        if (statusCount) statusCount.textContent = 'Loading data...';
         document.getElementById('controlsPanel').style.display = 'block';
         document.getElementById('statusBar').style.display = 'flex';
         fetchLiveRaceresultData();
