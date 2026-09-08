@@ -7014,12 +7014,29 @@
       }
       if (subtext) {
         if (isAuth) {
-          subtext.textContent = 'Edit buttons active • Tap to manage';
+          subtext.textContent = 'Coach Access Active • Tap to manage';
           subtext.style.color = '#22c55e';
         } else {
           subtext.textContent = 'Passcode Protected';
           subtext.style.color = 'var(--text-muted)';
         }
+      }
+    }
+
+    function refreshLiveViewForAuth() {
+      try {
+        const race = SEASON_RACES[currentRaceIndex];
+        if (currentTab === 'details') {
+          if (race) renderEventDetails(race);
+        } else if (currentTab === 'list' || currentTab === 'results') {
+          if (race && race.isPublished && race.eventId && currentRiders && currentRiders.length > 0) {
+            renderData();
+          } else if (race) {
+            renderUpcomingRace(race);
+          }
+        }
+      } catch (err) {
+        console.warn('refreshLiveViewForAuth error:', err);
       }
     }
 
@@ -7030,6 +7047,7 @@
         if (adminKey && adminKey.toLowerCase() === 'laxmtb2026') {
           sessionStorage.setItem('laxmtb_coach_auth', 'true');
           updateAdminMenuUI();
+          refreshLiveViewForAuth();
           // Clean the query parameter from URL without reloading
           urlParams.delete('admin');
           const newSearch = urlParams.toString();
@@ -7098,13 +7116,9 @@
         if (passcodeScreen) passcodeScreen.style.display = 'none';
         if (dashboardScreen) dashboardScreen.style.display = 'flex';
         initAdminDashboard(pendingAdminTab);
-        showNotifToast('🔓 Coach Admin Unlocked — Edit buttons active');
-        // Re-render live view immediately so edit icons appear
-        if (currentTab === 'details') {
-          renderEventDetails(SEASON_RACES[currentRaceIndex]);
-        } else {
-          renderCurrentView();
-        }
+        showNotifToast('🔓 Coach Admin Unlocked');
+        // Re-render live view immediately so edit buttons appear without needing a refresh
+        refreshLiveViewForAuth();
       } else {
         if (err) err.style.display = 'block';
         if (input) input.focus();
@@ -7115,13 +7129,9 @@
       sessionStorage.removeItem('laxmtb_coach_auth');
       updateAdminMenuUI();
       closeAdminPortal();
-      showNotifToast('🔒 Admin Portal Locked — Returning to viewer mode');
-      // Re-render live view immediately so edit icons disappear
-      if (currentTab === 'details') {
-        renderEventDetails(SEASON_RACES[currentRaceIndex]);
-      } else {
-        renderCurrentView();
-      }
+      showNotifToast('🔒 Coach Portal Locked');
+      // Re-render live view immediately so edit buttons disappear without needing a refresh
+      refreshLiveViewForAuth();
     }
 
     function initAdminDashboard(targetTab = null) {
