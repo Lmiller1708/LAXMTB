@@ -286,6 +286,37 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
+    .toolbar-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      min-height: 32px;
+      height: 32px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.12);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .toolbar-live-badge.upcoming,
+    .toolbar-live-badge.cached {
+      background: rgba(156, 163, 175, 0.12);
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+    .toolbar-live-badge.live {
+      background: rgba(16, 185, 129, 0.12);
+      color: #10b981;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
     /* Mobile / Site Menu Button & Dropdown */
     .mobile-menu-btn {
       display: inline-flex;
@@ -1146,17 +1177,22 @@
       .mobile-menu-btn {
         display: inline-flex;
       }
-      #themeLabel,
-      #liveStatusText {
+      #themeLabel {
         display: none !important;
+      }
+      #liveStatusText {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
       }
       .live-status-badge {
         display: inline-flex;
-        padding: 0 6px;
-        min-height: 28px;
-        height: 28px;
-        min-width: 26px;
-        border-radius: 14px;
+        align-items: center;
+        gap: 4px;
+        padding: 0 8px;
+        min-height: 26px;
+        height: 26px;
+        border-radius: 13px;
         justify-content: center;
         flex-shrink: 0;
         box-sizing: border-box;
@@ -4204,7 +4240,7 @@
           <div class="header-controls">
             <span class="live-status-badge" id="liveBadge">
               <span class="pulse-dot" id="liveDot"></span>
-              <span id="liveStatusText">Live API</span>
+              <span id="liveStatusText">Online</span>
             </span>
             <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle Theme">
               <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
@@ -4243,6 +4279,16 @@
             <span class="mobile-menu-item-title">Race Notifications</span>
           </div>
           <span class="mobile-menu-badge" id="menuNotifBadge">Stage • 15m</span>
+        </div>
+        <div class="mobile-menu-item" onclick="manualSyncFromSheets();">
+          <div class="mobile-menu-item-left">
+            <span>🔄</span>
+            <div>
+              <div class="mobile-menu-item-title">Sync from Sheets</div>
+              <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Check Google Sheets for updates</div>
+            </div>
+          </div>
+          <span class="mobile-menu-badge" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.3);color:var(--text-main);">Sync</span>
         </div>
         <div class="mobile-menu-item" onclick="openAdminPortal();">
           <div class="mobile-menu-item-left">
@@ -4567,7 +4613,7 @@
               <span>🏁</span> Start Lists
             </div>
             <div class="nav-tab inactive" id="tabLiveResults" onclick="switchTab('results')">
-              <span>⏱️</span> Live Results
+              <span>⏱️</span> Results
             </div>
             <div class="nav-tab inactive" id="tabPhotos" onclick="switchTab('photos')">
               <span>📸</span> Team Photos
@@ -4617,6 +4663,12 @@
         <button class="btn-icon" onclick="fetchLiveRaceresultData()" title="Refresh live data">
           <span>🔄</span>
         </button>
+
+        <!-- Live Timing Connection Badge -->
+        <div class="toolbar-live-badge live" id="toolbarLiveBadge">
+          <span class="pulse-dot" id="toolbarLiveDot"></span>
+          <span id="toolbarLiveText">Live Timing</span>
+        </div>
 
       </div>
 
@@ -5159,11 +5211,23 @@
     // Online/Offline Network Listeners
     window.addEventListener('online', () => {
       setOnlineBadge(true);
-      if (currentTab !== 'details') fetchLiveRaceresultData();
+      showNotifToast('🌐 Back online! Checking for updates...');
+      syncWithGoogleSheets();
+      updateAdminMenuUI();
+      refreshLiveViewForAuth();
+      if (currentTab === 'list' || currentTab === 'results') {
+        fetchLiveRaceresultData();
+      }
     });
 
     window.addEventListener('offline', () => {
       setOnlineBadge(false);
+      showNotifToast('📶 Offline mode: Using cached race data.');
+      updateAdminMenuUI();
+      refreshLiveViewForAuth();
+      if (currentTab === 'list' || currentTab === 'results') {
+        updateToolbarLiveStatus('cached');
+      }
     });
 
     function setOnlineBadge(isOnline) {
@@ -5174,11 +5238,32 @@
       if (isOnline) {
         badge.className = 'live-status-badge';
         dot.className = 'pulse-dot';
-        text.textContent = 'Live API';
+        text.textContent = 'Online';
       } else {
         badge.className = 'live-status-badge offline';
         dot.className = 'pulse-dot offline';
-        text.textContent = 'Offline Ready';
+        text.textContent = 'Offline';
+      }
+    }
+
+    function updateToolbarLiveStatus(state) {
+      const badge = document.getElementById('toolbarLiveBadge');
+      const dot = document.getElementById('toolbarLiveDot');
+      const text = document.getElementById('toolbarLiveText');
+      if (!badge || !dot || !text) return;
+
+      if (state === 'live') {
+        badge.className = 'toolbar-live-badge live';
+        dot.className = 'pulse-dot';
+        text.textContent = 'Live Timing';
+      } else if (state === 'upcoming') {
+        badge.className = 'toolbar-live-badge upcoming';
+        dot.className = 'pulse-dot offline';
+        text.textContent = 'Upcoming Race';
+      } else {
+        badge.className = 'toolbar-live-badge cached';
+        dot.className = 'pulse-dot offline';
+        text.textContent = 'Cached Results';
       }
     }
 
@@ -6038,10 +6123,6 @@
                 <span>Wisconsin League Page</span>
               </a>
             ` : ''}
-            <a href="${getRacePhotosUrl(race)}" target="_blank" rel="noopener noreferrer" class="btn-hero-league" title="View or Add Photos to the Shared Team Album">
-              <span>📸</span>
-              <span>Team Photos ↗</span>
-            </a>
             ${isCoachAuth ? `
               <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Race Details & Dates">
                 <span>✏️</span>
@@ -6198,16 +6279,8 @@
               </div>
               <div class="collapsible-body">
                 <div class="map-iframe-wrapper">
-                  <iframe src="${race.embedMapUrl}" width="100%" height="100%" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="Course & Venue Map for ${race.name}"></iframe>
+                  <iframe src="${formatCourseMapEmbedUrl(race.embedMapUrl)}" width="100%" height="100%" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="Course & Venue Map for ${race.name}"></iframe>
                 </div>
-                ${directMapUrl ? `
-                  <div class="map-direct-bar">
-                    <span>Map refused to connect or not loading in frame?</span>
-                    <a href="${directMapUrl}" target="_blank" rel="noopener noreferrer" class="map-direct-link">
-                      Open directly in Google Maps ↗
-                    </a>
-                  </div>
-                ` : ''}
               </div>
             </div>
           ` : ''}
@@ -6284,8 +6357,7 @@
           </div>
         </div>
       `;
-      document.getElementById('liveStatusText').textContent = 'Upcoming Race';
-      document.getElementById('liveDot').style.backgroundColor = '#707070';
+      updateToolbarLiveStatus('upcoming');
     }
 
     // =========================================================
@@ -7822,7 +7894,8 @@
 
         parseUniversalData(resultData, targetList, cacheKey);
 
-        setOnlineBadge(true);
+        setOnlineBadge(navigator.onLine);
+        updateToolbarLiveStatus('live');
         const updateStatus = (race.isEventOver || isRaceCompleted(race)) ? 'Final Results • ' : 'Updated ';
         document.getElementById('lastUpdatedText').textContent = updateStatus + new Date().toLocaleTimeString();
       } catch (err) {
@@ -7846,7 +7919,8 @@
 
     function loadFromLocalStorage(cacheKey) {
       if (currentTab !== 'results' && currentTab !== 'list') return;
-      setOnlineBadge(false);
+      setOnlineBadge(navigator.onLine);
+      updateToolbarLiveStatus('cached');
       try {
         const cachedStr = localStorage.getItem(cacheKey);
         if (cachedStr) {
@@ -8867,9 +8941,24 @@
 
     async function syncToGoogleSheetWebhook(race) {
       if (!GOOGLE_SHEET_WEBHOOK_URL || !race) return;
+      if (!navigator.onLine) {
+        showNotifToast('⚠️ You are offline. Changes saved locally and will sync when back online.');
+        return;
+      }
+      const TAB_NAME_MAP = {
+        'bluff-bash': 'Bluff Bash',
+        'cable-conquest': 'Cable Conquest',
+        'hodag-hustle': 'Hodag Hustle',
+        'gnarly-nordic': 'Gnarly Nordic',
+        'red-barn': 'Trek Trails',
+        'trek-trails': 'Trek Trails'
+      };
+      const tabName = TAB_NAME_MAP[race.id] || race.name.replace(/ Festival$/i, '').replace(/ Challenge$/i, '').replace(/ State Championship$/i, '').trim();
+
       const userEmail = sessionStorage.getItem('laxmtb_coach_email') || localStorage.getItem('laxmtb_coach_email') || 'Coach';
       const payload = {
         raceName: race.name,
+        tabName: tabName,
         userEmail: userEmail,
         timestamp: new Date().toISOString(),
         venueInfo: {
@@ -8902,9 +8991,11 @@
         });
         lastSheetSyncTime = new Date();
         updateAdminSyncStatus();
+        showNotifToast(`☁️ Saved to Google Sheets ("${tabName}")`);
         console.log('[LAXMTB] Full webhook sync sent to Google Sheet successfully');
       } catch (err) {
         console.warn('[LAXMTB] Error sending update to Google Sheet webhook:', err);
+        showNotifToast('⚠️ Could not sync to Google Sheets. Changes saved locally.');
       }
     }
 
@@ -8955,17 +9046,42 @@
       const rows = parseCSV(text);
 
       // Google Sheets gviz workaround: Date formatting in early rows causes gviz to infer Column B as Date,
-      // which drops string URLs lower down in Column B. Query range A10:G40 to guarantee link URLs are preserved.
-      try {
-        const linksUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}&range=A10:G40&t=${Date.now()}`;
-        const linksRes = await fetch(linksUrl);
-        if (linksRes.ok) {
-          const linksText = await linksRes.text();
-          const linksRows = parseCSV(linksText);
-          rows.push(...linksRows);
+      // which drops string URLs lower down in Column B. Query range around the signup links to merge URLs in-place.
+      let linkBannerIdx = -1;
+      for (let i = 0; i < rows.length; i++) {
+        const cell = (rows[i][0] || '').toLowerCase().trim();
+        if (cell.includes('---') && (cell.includes('link') || cell.includes('signup'))) {
+          linkBannerIdx = i;
+          break;
         }
-      } catch (err) {
-        console.warn('[LAXMTB] Secondary range fetch failed:', err);
+      }
+
+      if (linkBannerIdx !== -1) {
+        try {
+          const startRow = Math.max(1, linkBannerIdx + 1);
+          const endRow = startRow + 15;
+          const linksUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}&range=A${startRow}:B${endRow}&t=${Date.now()}`;
+          const linksRes = await fetch(linksUrl);
+          if (linksRes.ok) {
+            const linksText = await linksRes.text();
+            const linksRows = parseCSV(linksText);
+            for (const lr of linksRows) {
+              const name = (lr[0] || '').toLowerCase().trim();
+              const urlVal = (lr[1] || '').trim();
+              if (!urlVal || name.includes('---') || name === 'link name') continue;
+              for (let i = linkBannerIdx + 1; i < rows.length; i++) {
+                if (rows[i][0] && rows[i][0].includes('---')) break;
+                const targetCell = (rows[i][0] || '').toLowerCase().trim();
+                if (targetCell === name && !rows[i][1]) {
+                  rows[i][1] = urlVal;
+                  break;
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('[LAXMTB] Targeted link range fetch failed:', err);
+        }
       }
 
       return rows;
@@ -9023,8 +9139,14 @@
           }
         } else if (section === 'ANNOUNCEMENTS') {
           if (firstCell.includes('guideline') || firstCell.includes('text') || firstCell.includes('announcement')) continue; // Header row
+          const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'weekend'];
+          if (dayNames.includes(firstCell)) continue; // Guard against stray schedule day labels
+          if (/^https?:\/\//i.test(row[0] || '')) continue; // Guard against stray URLs
           if (row[0] && row[0].trim()) {
-            announcementRows.push(row[0].trim());
+            const cleanText = row[0].trim();
+            if (!announcementRows.includes(cleanText)) {
+              announcementRows.push(cleanText);
+            }
           }
         } else if (section === 'WAVES') {
           if (firstCell === 'category' || firstCell === 'division') continue; // Header row
@@ -9132,7 +9254,7 @@
         else if (name.includes('dinner') || name.includes('food') || name.includes('hospitality')) links.food = url;
         else if (name.includes('coach') || name.includes('ride') || name.includes('league')) links.league = url;
         else if (name.includes('photo') || name.includes('picture') || name.includes('album')) photosUrl = url;
-        else if (name.includes('map')) embedMapUrl = url;
+        else if (name.includes('map')) embedMapUrl = formatCourseMapEmbedUrl(url);
       });
 
       // 4. Parse Wave Schedule
@@ -9243,6 +9365,16 @@
       }
     }
 
+    async function manualSyncFromSheets() {
+      closeMobileMenu();
+      if (!navigator.onLine) {
+        showNotifToast('⚠️ You are currently offline. Connect to internet to sync from Google Sheets.');
+        return;
+      }
+      showNotifToast('🔄 Checking Google Sheets for latest updates...');
+      await syncWithGoogleSheets(true);
+    }
+
     // Load dynamic events and schedules from GitHub events.json
     async function loadEventsConfig() {
       // 1. Check local cache for instant load
@@ -9330,7 +9462,7 @@
     }
 
     function updateAdminMenuUI() {
-      const isAuth = isCoachLoggedIn();
+      const isAuth = isCoachLoggedIn() && navigator.onLine;
       if (isAuth) {
         document.body.classList.add('coach-logged-in');
       } else {
@@ -9343,7 +9475,12 @@
       const subtext = document.getElementById('menuAdminSubtext');
 
       if (badge) {
-        if (isAuth) {
+        if (!navigator.onLine) {
+          badge.textContent = 'Offline';
+          badge.style.background = 'rgba(245, 158, 11, 0.15)';
+          badge.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+          badge.style.color = '#f59e0b';
+        } else if (isAuth) {
           badge.textContent = '🔓 Unlocked';
           badge.style.background = 'rgba(34, 197, 94, 0.18)';
           badge.style.borderColor = 'rgba(34, 197, 94, 0.4)';
@@ -9356,10 +9493,13 @@
         }
       }
       if (icon) {
-        icon.textContent = isAuth ? '🔓' : '⚙️';
+        icon.textContent = (isAuth && navigator.onLine) ? '🔓' : '⚙️';
       }
       if (subtext) {
-        if (isAuth) {
+        if (!navigator.onLine) {
+          subtext.textContent = 'Editing unavailable while offline';
+          subtext.style.color = 'var(--text-muted)';
+        } else if (isAuth) {
           const email = sessionStorage.getItem('laxmtb_coach_email') || localStorage.getItem('laxmtb_coach_email') || '';
           subtext.textContent = email ? `Signed in as ${email}` : 'Coach Access Active • Tap to manage';
           subtext.style.color = '#22c55e';
@@ -9372,7 +9512,7 @@
 
     function refreshLiveViewForAuth() {
       try {
-        const isAuth = isCoachLoggedIn();
+        const isAuth = isCoachLoggedIn() && navigator.onLine;
         if (isAuth) {
           document.body.classList.add('coach-logged-in');
         } else {
@@ -9541,6 +9681,10 @@
 
     function openAdminPortal(targetTab = null) {
       closeMobileMenu();
+      if (!navigator.onLine) {
+        showNotifToast('⚠️ Coach Portal is only available when online. Please reconnect to edit race data.');
+        return;
+      }
       const modal = document.getElementById('adminModalOverlay');
       if (!modal) return;
 
@@ -10469,6 +10613,7 @@
     }
 
     initTheme();
+    setOnlineBadge(navigator.onLine);
     loadNotifData();
     updateAdminMenuUI();
     renderRaceSwitcher();
