@@ -151,10 +151,10 @@ const handleSaveRace = (updated: Race) => {
 }
 
 const handleSyncData = () => {
-  showNotifToast('🔄 Checking Google Sheets for latest updates...')
+  showNotifToast('🔄 Checking Cloud Firestore & Live Timing for updates...')
   refreshData()
   setTimeout(() => {
-    showNotifToast('✅ Data synced successfully!')
+    showNotifToast('✅ Data synced successfully with Cloud Firestore!')
   }, 1000)
 }
 

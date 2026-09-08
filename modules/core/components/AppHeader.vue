@@ -143,7 +143,7 @@ onMounted(() => {
           <span>🔄</span>
           <div>
             <div class="mobile-menu-item-title">Sync Data</div>
-            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Check for latest updates</div>
+            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Sync with Firestore & live timing</div>
           </div>
         </div>
         <span class="mobile-menu-badge" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.3);color:var(--text-main);">Sync</span>
