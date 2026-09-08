@@ -294,10 +294,10 @@
       top: 48px;
       right: 12px;
       min-width: 200px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
+      background-color: #1a1a1a;
+      border: 1px solid var(--border-strong);
       border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
       padding: 6px;
       z-index: 200;
       animation: menuFadeIn 0.15s ease;
@@ -354,9 +354,16 @@
       color: var(--accent-red);
     }
 
+    :root[data-theme="dark"] .mobile-menu-dropdown {
+      background-color: #1c1c1c;
+      border-color: #383838;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.75);
+    }
+
     :root[data-theme="light"] .mobile-menu-dropdown {
-      background: #ffffff;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      background-color: #ffffff;
+      border-color: #d1d5db;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
     }
 
     /* 2. Season Race Switcher Section (Scrolls naturally out of view) */
@@ -1165,7 +1172,7 @@
       font-size: 10.5px;
       font-weight: 700;
       color: var(--accent-red);
-      background: var(--bg-surface);
+      background: var(--bg-subtle);
       border: 1px solid var(--border);
       padding: 1px 7px;
       border-radius: 4px;
@@ -2411,13 +2418,13 @@
           </div>
 
           <div class="header-controls">
-            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle Theme">
-              <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
-            </button>
             <span class="live-status-badge" id="liveBadge">
               <span class="pulse-dot" id="liveDot"></span>
               <span id="liveStatusText">Live API</span>
             </span>
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle Theme">
+              <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
+            </button>
             <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu(event)" aria-label="Toggle Navigation Menu" aria-expanded="false">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -2829,6 +2836,8 @@
         ]
       }
     ];
+
+    const racesData = SEASON_RACES;
 
     let currentRaceIndex = 0;
     let currentTab = 'details';
@@ -4041,7 +4050,7 @@
           isCardCollapsed = allCardsCollapsed;
         }
 
-        const catStartTime = getCategoryStartTime(racesData[currentRaceIndex], cat);
+        const catStartTime = getCategoryStartTime(SEASON_RACES[currentRaceIndex], cat);
         const catTitle = document.createElement('div');
         catTitle.className = 'category-header collapsible-header';
         catTitle.onclick = function() { toggleCard(this); };
@@ -4062,7 +4071,7 @@
         const sortedWaveKeys = Object.keys(waves).sort();
 
         sortedWaveKeys.forEach(wKey => {
-          const waveTime = getWaveStartTime(racesData[currentRaceIndex], cat, wKey);
+          const waveTime = getWaveStartTime(SEASON_RACES[currentRaceIndex], cat, wKey);
           const waveHeader = document.createElement('div');
           waveHeader.className = 'wave-divider';
           waveHeader.innerHTML = `
@@ -4205,7 +4214,7 @@
         });
 
         teamRiders.forEach(r => {
-          const rTime = getWaveStartTime(racesData[currentRaceIndex], r.category, r.wave || r.wv);
+          const rTime = getWaveStartTime(SEASON_RACES[currentRaceIndex], r.category, r.wave || r.wv);
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td><span class="plate-number">#${escapeHtml(r.bib || r.no)}</span></td>
