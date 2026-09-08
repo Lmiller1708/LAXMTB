@@ -263,6 +263,102 @@
       100% { opacity: 1; transform: scale(1); }
     }
 
+    /* Mobile Menu Button & Dropdown */
+    .mobile-menu-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 30px;
+      padding: 0;
+      border-radius: 6px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-menu-btn:hover,
+    .mobile-menu-btn.active {
+      background: var(--bg-card);
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .mobile-menu-dropdown {
+      display: none;
+      position: absolute;
+      top: 48px;
+      right: 12px;
+      min-width: 200px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+      padding: 6px;
+      z-index: 200;
+      animation: menuFadeIn 0.15s ease;
+    }
+
+    .mobile-menu-dropdown.show {
+      display: block;
+    }
+
+    @keyframes menuFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .mobile-menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mobile-menu-item:hover,
+    .mobile-menu-item:active {
+      background: var(--bg-subtle);
+    }
+
+    .mobile-menu-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mobile-menu-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--accent-red);
+    }
+
+    :root[data-theme="light"] .mobile-menu-dropdown {
+      background: #ffffff;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+
     /* 2. Season Race Switcher Section (Scrolls naturally out of view) */
     .race-switcher-section {
       background: var(--bg-header);
@@ -476,56 +572,57 @@
         scroll-padding-top: 96px;
       }
 
-      /* Slight tweak: Keep title on one line on mobile so the bar NEVER grows tall */
+      /* Title fixed size on mobile as requested (no wrapping) */
       .brand-box {
         min-width: 0;
-        flex-shrink: 1;
-        gap: 6px;
+        flex-shrink: 0;
+        gap: 8px;
       }
       .brand-text {
         min-width: 0;
-        overflow: hidden;
       }
       .brand-text h1 {
-        font-size: clamp(14px, 3.8vw, 19px);
+        font-size: 20px; /* Fixed size on mobile */
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        letter-spacing: 0.6px;
+        line-height: 1;
       }
       .team-logo {
-        width: 34px;
-        height: 30px;
+        width: 32px;
+        height: 28px;
         flex-shrink: 0;
       }
       .header-top {
-        gap: 6px;
+        gap: 8px;
       }
       .header-controls {
+        display: flex;
+        align-items: center;
         flex-shrink: 0;
         margin-left: auto;
-        gap: 6px;
+        gap: 8px;
       }
       .header-top-container {
-        padding: 5px 12px 5px 10px;
+        padding: 5px 12px;
         padding-right: max(12px, env(safe-area-inset-right));
         padding-left: max(10px, env(safe-area-inset-left));
         min-height: 46px;
         box-sizing: border-box;
       }
+      /* Hide desktop theme toggle button on mobile since it lives inside the mobile menu */
+      .theme-toggle-btn {
+        display: none !important;
+      }
+      /* Show mobile menu button */
+      .mobile-menu-btn {
+        display: inline-flex;
+      }
       #themeLabel,
       #liveStatusText {
         display: none !important;
       }
-      .theme-toggle-btn {
-        padding: 3px 6px;
-        min-height: 28px;
-        height: 28px;
-        min-width: 28px;
-        justify-content: center;
-        flex-shrink: 0;
-        box-sizing: border-box;
-      }
       .live-status-badge {
+        display: inline-flex;
         padding: 0 6px;
         min-height: 28px;
         height: 28px;
@@ -2314,15 +2411,33 @@
           </div>
 
           <div class="header-controls">
-            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Toggle Theme">
               <span id="themeIcon">☀️</span> <span id="themeLabel">Light</span>
             </button>
             <span class="live-status-badge" id="liveBadge">
               <span class="pulse-dot" id="liveDot"></span>
               <span id="liveStatusText">Live API</span>
             </span>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileMenu(event)" aria-label="Toggle Navigation Menu" aria-expanded="false">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
+        </div>
+      </div>
+
+      <!-- Mobile Dropdown Menu -->
+      <div class="mobile-menu-dropdown" id="mobileMenuDropdown">
+        <div class="mobile-menu-item" onclick="toggleTheme();">
+          <div class="mobile-menu-item-left">
+            <span id="menuThemeIcon">☀️</span>
+            <span class="mobile-menu-item-title">Appearance</span>
+          </div>
+          <span class="mobile-menu-badge" id="menuThemeLabel">Light Mode</span>
         </div>
       </div>
     </div>
@@ -3555,16 +3670,51 @@
       updateThemeUI(next);
     }
 
+    function toggleMobileMenu(e) {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('mobileMenuDropdown');
+      const btn = document.getElementById('mobileMenuBtn');
+      if (!dropdown || !btn) return;
+      const isOpen = dropdown.classList.contains('show');
+      if (isOpen) {
+        closeMobileMenu();
+      } else {
+        dropdown.classList.add('show');
+        btn.classList.add('active');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    function closeMobileMenu() {
+      const dropdown = document.getElementById('mobileMenuDropdown');
+      const btn = document.getElementById('mobileMenuBtn');
+      if (dropdown) dropdown.classList.remove('show');
+      if (btn) {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('mobileMenuDropdown');
+      const btn = document.getElementById('mobileMenuBtn');
+      if (dropdown && dropdown.classList.contains('show')) {
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+          closeMobileMenu();
+        }
+      }
+    });
+
     function updateThemeUI(theme) {
       const icon = document.getElementById('themeIcon');
       const label = document.getElementById('themeLabel');
-      if (theme === 'dark') {
-        icon.textContent = '☀️';
-        label.textContent = 'Light';
-      } else {
-        icon.textContent = '🌙';
-        label.textContent = 'Dark';
-      }
+      const menuIcon = document.getElementById('menuThemeIcon');
+      const menuLabel = document.getElementById('menuThemeLabel');
+      const isDark = theme === 'dark';
+      if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+      if (label) label.textContent = isDark ? 'Light' : 'Dark';
+      if (menuIcon) menuIcon.textContent = isDark ? '☀️' : '🌙';
+      if (menuLabel) menuLabel.textContent = isDark ? 'Light Mode' : 'Dark Mode';
     }
 
     function onListDropdownChange() {
