@@ -106,7 +106,7 @@ export const useRaceResults = () => {
   })
 
   // Fetch from RACE RESULT API
-  const fetchResults = async (eventId: string, page: 'list' | 'results', explicitListId?: string) => {
+  const fetchResults = async (eventId: string, page: 'list' | 'results', explicitListId?: string, isCompleted?: boolean) => {
     if (!eventId) return
 
     loading.value = true
@@ -221,8 +221,10 @@ export const useRaceResults = () => {
       }
 
       riders.value = parsedRiders
-      isLive.value = true
-      lastUpdated.value = 'Updated ' + new Date().toLocaleTimeString()
+      isLive.value = !isCompleted
+      lastUpdated.value = isCompleted
+        ? 'Final Results • ' + new Date().toLocaleTimeString()
+        : 'Updated ' + new Date().toLocaleTimeString()
 
       if (import.meta.client && parsedRiders.length > 0) {
         try {
