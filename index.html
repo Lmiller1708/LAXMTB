@@ -24,11 +24,12 @@
   <style>
     :root {
       --header-brand-height: 52px;
+      --race-switcher-height: 58px;
       --subnav-height: 40px;
     }
 
     html {
-      scroll-padding-top: calc(var(--header-brand-height) + var(--subnav-height) + 10px);
+      scroll-padding-top: calc(var(--header-brand-height) + var(--race-switcher-height) + var(--subnav-height) + 12px);
     }
 
     /* Strict Pure Black & Neutral Gray Palette */
@@ -161,7 +162,7 @@
       padding: 6px 14px;
       display: flex;
       align-items: center;
-      min-height: var(--header-brand-height);
+      min-height: 46px;
     }
 
     .header-top {
@@ -399,6 +400,68 @@
 
     .current-race-badge {
       display: none;
+    }
+
+    /* Non-Mobile / Desktop View (>= 768px): Fix the Entire Header (Brand Bar + Race Carousel + Sub-Nav Tabs) */
+    @media (min-width: 768px) {
+      .site-header-fixed {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .race-switcher-section {
+        position: sticky;
+        top: var(--header-brand-height);
+        z-index: 98;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
+
+      .sub-nav-sticky-wrapper {
+        position: sticky;
+        top: calc(var(--header-brand-height) + var(--race-switcher-height));
+        z-index: 95;
+      }
+
+      .compact-toolbar {
+        position: sticky;
+        top: calc(var(--header-brand-height) + var(--race-switcher-height) + var(--subnav-height) + 8px);
+        z-index: 90;
+      }
+    }
+
+    /* Mobile View (< 768px): Brand bar fixed, Race carousel scrolls away, Sub-nav docks with zero overlap */
+    @media (max-width: 767px) {
+      :root {
+        --header-brand-height: 72px; /* Accommodates 2-line title on mobile */
+        --subnav-height: 40px;
+      }
+
+      html {
+        scroll-padding-top: calc(var(--header-brand-height) + var(--subnav-height) + 10px);
+      }
+
+      .site-header-fixed {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .race-switcher-section {
+        position: static; /* Scrolls naturally out of view on mobile to maximize table space */
+      }
+
+      .sub-nav-sticky-wrapper {
+        position: sticky;
+        top: var(--header-brand-height);
+        z-index: 95;
+      }
+
+      .compact-toolbar {
+        position: sticky;
+        top: calc(var(--header-brand-height) + var(--subnav-height) + 6px);
+        z-index: 90;
+      }
     }
 
     /* Event Location & Maps Links */
@@ -755,10 +818,6 @@
     }
 
     @media (max-width: 520px) {
-      :root {
-        --header-brand-height: 48px;
-        --subnav-height: 38px;
-      }
       .brand-text h1 {
         font-size: 21px;
       }
@@ -789,10 +848,6 @@
     }
 
     @media (max-width: 380px) {
-      :root {
-        --header-brand-height: 44px;
-        --subnav-height: 36px;
-      }
       .brand-text h1 {
         font-size: 18px;
       }
@@ -2301,6 +2356,47 @@
   </main>
 
   <script>
+    // 0. Dynamic Header & Sticky Offset Synchronization (Guarantees zero overlap on all devices)
+    function initHeaderOffsets() {
+      const brandHeader = document.querySelector('.site-header-fixed');
+      const raceSwitcher = document.querySelector('.race-switcher-section');
+      const subNav = document.querySelector('.sub-nav-sticky-wrapper');
+
+      function syncOffsets() {
+        if (brandHeader) {
+          const h = brandHeader.offsetHeight;
+          if (h > 0) {
+            document.documentElement.style.setProperty('--header-brand-height', `${h}px`);
+          }
+        }
+        if (raceSwitcher) {
+          const h = raceSwitcher.offsetHeight;
+          if (h > 0) {
+            document.documentElement.style.setProperty('--race-switcher-height', `${h}px`);
+          }
+        }
+        if (subNav) {
+          const h = subNav.offsetHeight;
+          if (h > 0) {
+            document.documentElement.style.setProperty('--subnav-height', `${h}px`);
+          }
+        }
+      }
+
+      syncOffsets();
+
+      window.addEventListener('resize', syncOffsets, { passive: true });
+      window.addEventListener('orientationchange', syncOffsets, { passive: true });
+
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => syncOffsets());
+        if (brandHeader) ro.observe(brandHeader);
+        if (raceSwitcher) ro.observe(raceSwitcher);
+        if (subNav) ro.observe(subNav);
+      }
+    }
+    initHeaderOffsets();
+
     // 1. ServiceWorker Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
