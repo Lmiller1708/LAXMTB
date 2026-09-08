@@ -761,6 +761,85 @@
       color: var(--accent-red);
     }
 
+    /* What's New Modal Styles */
+    .whatsnew-pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(220, 38, 38, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+    }
+    .whatsnew-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+    }
+    :root[data-theme="light"] .whatsnew-item {
+      background: #f9fafb;
+    }
+    .whatsnew-item-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      line-height: 1.2;
+    }
+    .whatsnew-item-body {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .whatsnew-item-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .whatsnew-item-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+    .phone-alert-guide-box {
+      border: 1px solid rgba(220, 38, 38, 0.35);
+      background: rgba(220, 38, 38, 0.05);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    :root[data-theme="light"] .phone-alert-guide-box {
+      background: rgba(220, 38, 38, 0.04);
+      border-color: rgba(220, 38, 38, 0.25);
+    }
+    .phone-alert-guide-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-red);
+    }
+    .phone-alert-guide-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 11.5px;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      line-height: 1.35;
+    }
+
     /* 2. Season Race Switcher Section (Scrolls naturally out of view) */
     .race-switcher-section {
       background: var(--bg-header);
@@ -2850,6 +2929,13 @@
 
       <!-- Dropdown Menu -->
       <div class="mobile-menu-dropdown" id="mobileMenuDropdown">
+        <div class="mobile-menu-item" onclick="openWhatsNewModal();">
+          <div class="mobile-menu-item-left">
+            <span>✨</span>
+            <span class="mobile-menu-item-title">What's New</span>
+          </div>
+          <span class="mobile-menu-badge" style="background:rgba(220,38,38,0.15);border-color:rgba(220,38,38,0.3);">New</span>
+        </div>
         <div class="mobile-menu-item" onclick="toggleTheme();">
           <div class="mobile-menu-item-left">
             <span id="menuThemeIcon">☀️</span>
@@ -2869,6 +2955,86 @@
 
     <!-- Notification Toast Container -->
     <div class="notif-toast-container" id="notifToastContainer"></div>
+
+    <!-- What's New Modal -->
+    <div class="modal-overlay" id="whatsNewModalOverlay" onclick="handleWhatsNewOverlayClick(event)">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="whatsNewModalTitle">
+        <div class="modal-header">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:18px;">✨</span>
+            <h3 id="whatsNewModalTitle" style="margin:0;font-size:16px;font-weight:700;color:var(--text-main);">What's New</h3>
+          </div>
+          <button type="button" class="modal-close-btn" onclick="closeWhatsNewModal()" aria-label="Close modal">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Notification Phone Guide Alert Box -->
+          <div class="phone-alert-guide-box">
+            <div class="phone-alert-guide-header">
+              <span>📱</span>
+              <span>Important: Getting Notifications On Your Phone</span>
+            </div>
+            <ul class="phone-alert-guide-list">
+              <li><strong>iPhone / iPad (iOS Safari):</strong> Apple requires web apps to be installed to the home screen for lock screen push alerts. Tap <strong>Share <span style="font-size:13px;">⎋</span></strong> at bottom of Safari &rarr; tap <strong>"Add to Home Screen"</strong> &rarr; open the app from your home screen and enable notifications.</li>
+              <li><strong>Android (Chrome):</strong> Tap the <strong>🔔 Notifications</strong> menu &rarr; tap <strong>Enable</strong> &rarr; press <strong>Allow</strong> when prompted by Chrome.</li>
+              <li><strong>In-App Banners & Audio Chimes:</strong> Even without phone lock screen push alerts, in-app visual banners and sound chimes remain <strong>100% active</strong> whenever the page is open!</li>
+            </ul>
+          </div>
+
+          <!-- Features Section -->
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="whatsnew-item">
+              <div class="whatsnew-item-icon">🔔</div>
+              <div class="whatsnew-item-body">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span class="whatsnew-item-title">Stage & Wave Notifications</span>
+                  <span class="whatsnew-pill-badge">New</span>
+                </div>
+                <div class="whatsnew-item-desc">Never miss a call-up! Subscribe with the 🔔 icon on any category, wave, or rider to receive automated staging grid or gun-time alerts (30, 15, 5, or custom minutes prior).</div>
+              </div>
+            </div>
+
+            <div class="whatsnew-item">
+              <div class="whatsnew-item-icon">⏱️</div>
+              <div class="whatsnew-item-body">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span class="whatsnew-item-title">2026 Wave & Staging Schedule</span>
+                  <span class="whatsnew-pill-badge">Updated</span>
+                </div>
+                <div class="whatsnew-item-desc">Synchronized with the official 2026 Bluff Bash schedule, including category call-up times, staging grid positions, and Sunday morning pre-ride slots (7:00 AM – 9:30 AM).</div>
+              </div>
+            </div>
+
+            <div class="whatsnew-item">
+              <div class="whatsnew-item-icon">📱</div>
+              <div class="whatsnew-item-body">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span class="whatsnew-item-title">Clean Mobile Header & Menu</span>
+                  <span class="whatsnew-pill-badge">Refined</span>
+                </div>
+                <div class="whatsnew-item-desc">A unified navigation drawer keeps controls accessible without cluttering your screen, while brand titles are crisp and perfectly scaled across phone displays.</div>
+              </div>
+            </div>
+
+            <div class="whatsnew-item">
+              <div class="whatsnew-item-icon">⚡</div>
+              <div class="whatsnew-item-body">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span class="whatsnew-item-title">Offline Venue Caching</span>
+                  <span class="whatsnew-pill-badge">PWA</span>
+                </div>
+                <div class="whatsnew-item-desc">Built for venues with spotty cellular reception. Results and schedules cache locally so you can check start lists right from the staging area.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="test-alert-btn" onclick="closeWhatsNewModal(); openNotificationModal();">⚙️ Notification Settings</button>
+          <button type="button" class="done-modal-btn" onclick="closeWhatsNewModal()">Got it</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Notification Preferences Modal -->
     <div class="modal-overlay" id="notifModalOverlay" onclick="handleModalOverlayClick(event)">
@@ -2924,6 +3090,9 @@
                 <span id="notifPermissionStatus" style="font-size:11px;color:var(--text-muted);">Status: Checking...</span>
               </div>
               <button type="button" class="action-mini-btn" id="requestPermBtn" onclick="requestBrowserNotificationPermission()">Enable</button>
+            </div>
+            <div style="margin-top:6px;font-size:11px;color:var(--text-muted);line-height:1.35;">
+              📱 <strong>iPhone users:</strong> Tap Safari Share ⎋ &rarr; <em>"Add to Home Screen"</em> to enable system notifications. In-app chimes and alerts always work!
             </div>
             <div style="margin-top:10px;">
               <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;width:100%;">
@@ -4282,6 +4451,23 @@
       } catch (e) {}
     }
 
+    function openWhatsNewModal() {
+      closeMobileMenu();
+      const modal = document.getElementById('whatsNewModalOverlay');
+      if (modal) modal.classList.add('show');
+    }
+
+    function closeWhatsNewModal() {
+      const modal = document.getElementById('whatsNewModalOverlay');
+      if (modal) modal.classList.remove('show');
+    }
+
+    function handleWhatsNewOverlayClick(e) {
+      if (e.target && e.target.id === 'whatsNewModalOverlay') {
+        closeWhatsNewModal();
+      }
+    }
+
     function openNotificationModal() {
       closeMobileMenu();
       const modal = document.getElementById('notifModalOverlay');
@@ -4466,6 +4652,7 @@
           updatePermissionUI();
           if (perm === 'granted') {
             showToastNotification('🔔 Push Notifications Enabled', 'You will receive staging and race start alerts on your device!');
+            dispatchSystemNotification('🔔 LAX MTB Race Central', 'Push notifications enabled! Staging & race start reminders will appear here.');
           } else if (perm === 'denied') {
             showToastNotification('🔒 Notifications Blocked', 'Push notifications were declined. In-app alerts and audio chimes will continue to work!');
           } else {
@@ -4484,6 +4671,32 @@
         console.warn('Error during requestPermission:', err);
         showToastNotification('⚠️ Permission Prompt Issue', 'Could not open prompt: ' + (err.message || err) + '. In-app alerts and audio are active!');
         updatePermissionUI();
+      }
+    }
+
+    function dispatchSystemNotification(title, body) {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      try {
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then(reg => {
+            if (reg && reg.showNotification) {
+              reg.showNotification(title, {
+                body: body,
+                icon: 'logo.png',
+                badge: 'favicon.png',
+                vibrate: [200, 100, 200]
+              });
+            } else {
+              new Notification(title, { body: body, icon: 'logo.png' });
+            }
+          }).catch(() => {
+            new Notification(title, { body: body, icon: 'logo.png' });
+          });
+          return;
+        }
+        new Notification(title, { body: body, icon: 'logo.png' });
+      } catch (e) {
+        console.warn('dispatchSystemNotification failed:', e);
       }
     }
 
@@ -4682,15 +4895,7 @@
       const body = `Sample notification! Staging in ${notifConfig.offset} minutes (Stage: 3:25 PM, Start: 3:40 PM).`;
 
       showToastNotification(title, body);
-
-      if ('Notification' in window && Notification.permission === 'granted') {
-        try {
-          new Notification(title, {
-            body: body,
-            icon: 'logo.png'
-          });
-        } catch(e) {}
-      }
+      dispatchSystemNotification(title, body);
     }
 
     function parseTimeStrToMinutes(timeStr) {
@@ -4730,9 +4935,7 @@
           const title = `🔔 ${cat} ${label} in ${notifConfig.offset}m`;
           const body = `${cat} ${label} is at ${targetTimeStr} (Start: ${entry.start}). Head to staging grids!`;
           showToastNotification(title, body);
-          if ('Notification' in window && Notification.permission === 'granted') {
-            try { new Notification(title, { body, icon: 'logo.png' }); } catch(e) {}
-          }
+          dispatchSystemNotification(title, body);
         }
       });
 
@@ -4754,9 +4957,7 @@
           const title = `🔔 ${cat} (${wKey}) ${label} in ${notifConfig.offset}m`;
           const body = `${cat} ${wKey} ${label} is at ${targetTimeStr} (Start: ${entry.start}).`;
           showToastNotification(title, body);
-          if ('Notification' in window && Notification.permission === 'granted') {
-            try { new Notification(title, { body, icon: 'logo.png' }); } catch(e) {}
-          }
+          dispatchSystemNotification(title, body);
         }
       });
 
@@ -4778,9 +4979,7 @@
           const title = `🔔 ${r.name} ${label} in ${notifConfig.offset}m`;
           const body = `${r.name} (${r.cat}) ${label} is at ${targetTimeStr}.`;
           showToastNotification(title, body);
-          if ('Notification' in window && Notification.permission === 'granted') {
-            try { new Notification(title, { body, icon: 'logo.png' }); } catch(e) {}
-          }
+          dispatchSystemNotification(title, body);
         }
       });
     }
@@ -4790,6 +4989,7 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        closeWhatsNewModal();
         closeNotificationModal();
         closeMobileMenu();
       }
