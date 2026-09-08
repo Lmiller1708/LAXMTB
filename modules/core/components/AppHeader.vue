@@ -25,7 +25,7 @@ const handleSignIn = async () => {
   closeMenu()
   const result = await signInWithGoogle()
   if (result.success) {
-    emit('toast', `🔓 Signed in as ${user.value?.displayName || user.value?.email}`)
+    emit('toast', `🔓 Welcome, ${user.value?.displayName || user.value?.email}! Coach Admin unlocked.`)
   } else if (result.error) {
     emit('toast', `⛔ ${result.error}`)
   }
@@ -37,12 +37,11 @@ const handleSignOut = async () => {
   emit('toast', '👋 Signed out of Coach Admin')
 }
 
-// Admin badge label — matches index.html behavior
+// Admin badge styling
 const adminBadgeLabel = computed(() => {
   if (!isOnline.value) return 'Offline'
   if (isCoachAuth.value) return '🔓 Unlocked'
-  if (isAuthorizedCoach.value) return '🔒 Locked'
-  return '🔒 Coaches'
+  return '🔒 Locked'
 })
 
 const adminBadgeStyle = computed(() => {
@@ -54,8 +53,7 @@ const adminBadgeStyle = computed(() => {
 const adminSubtext = computed(() => {
   if (!isOnline.value) return 'Editing unavailable while offline'
   if (isCoachAuth.value) return `Signed in as ${user.value?.email || ''}`
-  if (isAuthorizedCoach.value) return 'Tap to unlock editing'
-  return 'Google Sign-in Required'
+  return 'Tap to unlock editing'
 })
 
 // Close dropdown on outside click
@@ -151,44 +149,49 @@ onMounted(() => {
         <span class="mobile-menu-badge" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.3);color:var(--text-main);">Sync</span>
       </div>
 
-      <!-- Coach Admin (opens modal) -->
-      <div class="mobile-menu-item" @click="handleAdmin">
-        <div class="mobile-menu-item-left">
-          <span>{{ isCoachAuth ? '🔓' : '⚙️' }}</span>
-          <div>
-            <div class="mobile-menu-item-title">Coach Admin</div>
-            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">{{ adminSubtext }}</div>
-          </div>
-        </div>
-        <span class="mobile-menu-badge" :style="adminBadgeStyle">{{ adminBadgeLabel }}</span>
-      </div>
-
       <!-- Divider -->
       <div style="height:1px;background:var(--border);margin:4px 14px;" />
 
-      <!-- Sign In / Sign Out -->
-      <div v-if="!user" class="mobile-menu-item" @click="handleSignIn">
+      <!-- CASE 1: NOT SIGNED IN AS ADMIN -> ONLY ONE OPTION: "Coach Sign In" -->
+      <div v-if="!isAuthorizedCoach" class="mobile-menu-item" @click="handleSignIn">
         <div class="mobile-menu-item-left">
           <span>🔑</span>
           <div>
             <div class="mobile-menu-item-title">Coach Sign In</div>
-            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Google account required</div>
+            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Sign in with Google to manage race</div>
           </div>
         </div>
         <span class="mobile-menu-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:#22c55e;">
           {{ authLoading ? '...' : 'Sign In →' }}
         </span>
       </div>
-      <div v-else class="mobile-menu-item" @click="handleSignOut">
-        <div class="mobile-menu-item-left">
-          <span>🔑</span>
-          <div>
-            <div class="mobile-menu-item-title">Sign Out</div>
-            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">{{ user.email }}</div>
+
+      <!-- CASE 2: SIGNED IN AS ADMIN -> CAN SEE ADMIN OPTIONS -->
+      <template v-else>
+        <!-- Coach Admin Modal -->
+        <div class="mobile-menu-item" @click="handleAdmin">
+          <div class="mobile-menu-item-left">
+            <span>{{ isCoachAuth ? '🔓' : '⚙️' }}</span>
+            <div>
+              <div class="mobile-menu-item-title">Coach Admin</div>
+              <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">{{ adminSubtext }}</div>
+            </div>
           </div>
+          <span class="mobile-menu-badge" :style="adminBadgeStyle">{{ adminBadgeLabel }}</span>
         </div>
-        <span class="mobile-menu-badge" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#ef4444;">Sign Out</span>
-      </div>
+
+        <!-- Sign Out -->
+        <div class="mobile-menu-item" @click="handleSignOut">
+          <div class="mobile-menu-item-left">
+            <span>🚪</span>
+            <div>
+              <div class="mobile-menu-item-title">Sign Out</div>
+              <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">{{ user?.email }}</div>
+            </div>
+          </div>
+          <span class="mobile-menu-badge" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#ef4444;">Sign Out</span>
+        </div>
+      </template>
 
     </div>
   </div>

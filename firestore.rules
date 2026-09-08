@@ -14,11 +14,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Admins collection — a coach can only read their own document
-    // Only existing admins can add/remove other admins
+    // Admins collection:
+    // Any authorized admin can list/read/write the admins list (to manage coaches)
+    // A signed-in user checking their own status can read their own email doc
     match /admins/{email} {
-      allow read: if request.auth != null &&
-        request.auth.token.email.lower() == email;
+      allow read: if request.auth != null && (isAdmin() || request.auth.token.email.lower() == email);
       allow write: if isAdmin();
     }
   }

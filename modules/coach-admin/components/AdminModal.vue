@@ -20,6 +20,11 @@ const {
   isAdminUnlocked,
   authError,
   authLoading,
+  adminsList,
+  adminsLoading,
+  fetchAdmins,
+  addCoachAdmin,
+  removeCoachAdmin,
   signInWithGoogle,
   signOut,
   lockAdmin,
@@ -38,6 +43,36 @@ const form = ref<Race>({ ...currentRace.value })
 watch(currentRace, (newRace) => {
   form.value = JSON.parse(JSON.stringify(newRace))
 }, { deep: true })
+
+// State for adding new coach
+const newCoachEmail = ref('')
+const newCoachName = ref('')
+const isAddingCoach = ref(false)
+
+const handleAddCoach = async () => {
+  if (!newCoachEmail.value) return
+  isAddingCoach.value = true
+  const res = await addCoachAdmin(newCoachEmail.value, newCoachName.value)
+  isAddingCoach.value = false
+  if (res.success) {
+    emit('toast', `✅ Added ${newCoachEmail.value} as Coach Admin!`)
+    newCoachEmail.value = ''
+    newCoachName.value = ''
+  } else {
+    emit('toast', `⛔ ${res.error || 'Failed to add coach'}`)
+  }
+}
+
+const handleRemoveCoach = async (email: string) => {
+  if (confirm(`Are you sure you want to revoke coach admin access for ${email}?`)) {
+    const res = await removeCoachAdmin(email)
+    if (res.success) {
+      emit('toast', `🗑️ Revoked admin access for ${email}`)
+    } else {
+      emit('toast', `⛔ ${res.error || 'Failed to remove coach'}`)
+    }
+  }
+}
 
 // Which screen to show inside the modal
 const screen = computed(() => {
@@ -117,7 +152,6 @@ const removeGuideline = (idx: number) => {
               Verifying...
             </span>
             <span v-else style="display:flex;align-items:center;gap:10px;">
-              <!-- Google G logo -->
               <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                 <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -137,7 +171,7 @@ const removeGuideline = (idx: number) => {
           </div>
 
           <p style="font-size:11.5px;color:var(--text-dim);margin:0;line-height:1.4;">
-            Access is restricted to authorized team coaches listed in the team's admin sheet.
+            Access is restricted to authorized team coaches listed in the team's admin sheet or database.
           </p>
         </div>
       </div>
@@ -218,6 +252,7 @@ const removeGuideline = (idx: number) => {
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'photos' }" @click="activeTab = 'photos'">📸 Photos Album</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'maps' }" @click="activeTab = 'maps'">🗺️ Course Maps</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'announcements' }" @click="activeTab = 'announcements'">📢 Guidelines</button>
+          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'coaches' }" @click="activeTab = 'coaches'">👥 Manage Coaches</button>
         </div>
 
         <!-- Tab Contents -->
@@ -229,7 +264,7 @@ const removeGuideline = (idx: number) => {
               <label class="modal-label">Event Name</label>
               <input v-model="form.name" type="text" class="custom-minutes-input" style="width:100%;">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="grid-template-columns:1fr 1fr;display:grid;gap:10px;">
               <div>
                 <label class="modal-label">Date String</label>
                 <input v-model="form.dateStr" type="text" class="custom-minutes-input" style="width:100%;">
@@ -321,6 +356,84 @@ const removeGuideline = (idx: number) => {
             <div v-for="(g, idx) in form.guidelines" :key="idx" style="display:flex;gap:8px;align-items:center;">
               <input v-model="form.guidelines[idx]" type="text" class="custom-minutes-input" style="flex:1;">
               <button type="button" class="search-clear-btn" style="position:static;display:block;" @click="removeGuideline(idx)">✕</button>
+            </div>
+          </div>
+
+          <!-- Manage Coaches & Admins -->
+          <div v-else-if="activeTab === 'coaches'" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:14px;">
+              <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);">Add Coach Admin</h4>
+              <p style="margin:0 0 10px;font-size:11.5px;color:var(--text-muted);line-height:1.4;">
+                Grant admin editing access to another team coach. They will be able to sign in with their Google account to manage race details, waves, guidelines, photos, and volunteers.
+              </p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <input
+                  v-model="newCoachEmail"
+                  type="email"
+                  placeholder="coach.email@gmail.com"
+                  class="custom-minutes-input"
+                  style="flex:2;min-width:200px;"
+                >
+                <input
+                  v-model="newCoachName"
+                  type="text"
+                  placeholder="Coach Name (Optional)"
+                  class="custom-minutes-input"
+                  style="flex:1;min-width:140px;"
+                >
+                <button
+                  type="button"
+                  class="done-modal-btn admin-save-btn"
+                  style="padding:8px 16px;white-space:nowrap;"
+                  :disabled="isAddingCoach"
+                  @click="handleAddCoach"
+                >
+                  <span>{{ isAddingCoach ? 'Adding...' : '+ Add Coach' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <label class="modal-label" style="margin:0;">Active Coach Admins ({{ adminsList.length }})</label>
+                <button type="button" class="action-mini-btn" @click="fetchAdmins">🔄 Refresh</button>
+              </div>
+
+              <div v-if="adminsLoading" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">
+                Loading authorized coaches...
+              </div>
+              <div v-else style="display:flex;flex-direction:column;gap:6px;">
+                <div
+                  v-for="admin in adminsList"
+                  :key="admin.email"
+                  style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;"
+                >
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:18px;">🛡️</span>
+                    <div>
+                      <div style="font-weight:700;font-size:13px;color:var(--text-main);">
+                        {{ admin.name || admin.email.split('@')[0] }}
+                        <span
+                          v-if="admin.email.toLowerCase() === user?.email?.toLowerCase()"
+                          style="font-size:10px;color:#22c55e;background:rgba(34,197,94,0.15);padding:1px 6px;border-radius:4px;margin-left:6px;font-weight:600;"
+                        >You (Active)</span>
+                      </div>
+                      <div style="font-size:11px;color:var(--text-muted);">{{ admin.email }}</div>
+                    </div>
+                  </div>
+
+                  <button
+                    v-if="admin.email.toLowerCase() !== user?.email?.toLowerCase()"
+                    type="button"
+                    class="search-clear-btn"
+                    style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
+                    title="Revoke coach admin access"
+                    @click="handleRemoveCoach(admin.email)"
+                  >
+                    ✕ Revoke
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
