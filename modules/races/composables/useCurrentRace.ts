@@ -10,6 +10,17 @@ export const slugifyRaceId = (id: string): string =>
   id.replace(/-/g, '').toLowerCase()
 
 /**
+ * Resolve logo URL to always be absolute from root
+ * Works on root /, /race/:slug, and nested routes
+ */
+export const resolveLogoUrl = (logo?: string): string => {
+  if (!logo) return ''
+  if (logo.startsWith('http://') || logo.startsWith('https://') || logo.startsWith('data:')) return logo
+  const clean = logo.replace(/^\/+/, '')
+  return `/${clean}`
+}
+
+/**
  * Check if a race has already ended
  * Checks race.isEventOver or compares the race date with today
  */
