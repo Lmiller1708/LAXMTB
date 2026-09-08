@@ -4564,13 +4564,13 @@
     let currentListMode = 'WAVE';
     let autoRefreshTimer = null;
     let isFilterDrawerOpen = false;
-    let selectedRiderKey = null;
+    let selectedRiderKeys = new Set();
 
     function toggleRiderSelection(riderKey) {
-      if (selectedRiderKey === riderKey) {
-        selectedRiderKey = null;
+      if (selectedRiderKeys.has(riderKey)) {
+        selectedRiderKeys.delete(riderKey);
       } else {
-        selectedRiderKey = riderKey;
+        selectedRiderKeys.add(riderKey);
       }
       renderData();
     }
@@ -7540,7 +7540,7 @@
           ridersInWave.forEach(r => {
             const isTarget = targetTeamKeywords.some(kw => r.team && r.team.toLowerCase().includes(kw));
             const riderKey = 'r_' + String(r.bib || r.no) + '_' + String(r.name || '').trim().replace(/\s+/g, '_');
-            const isSelected = selectedRiderKey === riderKey;
+            const isSelected = selectedRiderKeys.has(riderKey);
             const hasLaps = Array.isArray(r.laps) && r.laps.length > 0;
 
             const tr = document.createElement('tr');
@@ -7708,7 +7708,7 @@
         teamRiders.forEach(r => {
           const rTime = getWaveStartTime(SEASON_RACES[currentRaceIndex], r.category, r.wave || r.wv);
           const riderKey = 'r_' + String(r.bib || r.no) + '_' + String(r.name || '').trim().replace(/\s+/g, '_');
-          const isSelected = selectedRiderKey === riderKey;
+          const isSelected = selectedRiderKeys.has(riderKey);
           const hasLaps = Array.isArray(r.laps) && r.laps.length > 0;
 
           const tr = document.createElement('tr');
