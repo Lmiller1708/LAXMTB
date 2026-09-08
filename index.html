@@ -1886,14 +1886,38 @@
     }
 
     .racer-avg-lap {
-      font-size: 10.5px;
+      font-size: 12.5px;
       font-weight: 600;
-      color: var(--accent-red);
+      color: var(--text-main);
       font-variant-numeric: tabular-nums;
-      background: var(--accent-red-subtle);
-      padding: 1px 5px;
-      border-radius: 3px;
       display: inline-block;
+      white-space: nowrap;
+    }
+
+    .category-warmup-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .wave-warmup-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 1px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
       white-space: nowrap;
     }
 
@@ -2025,7 +2049,10 @@
     }
     .col-avg {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 11.5px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
       letter-spacing: -0.2px;
       white-space: nowrap;
     }
@@ -4050,6 +4077,13 @@
             <label class="modal-label">Alert Target</label>
             <div class="modal-radio-group">
               <label class="modal-radio-card">
+                <input type="radio" name="notifTarget" id="targetWarmupRadio" value="warmup" onchange="updateNotifSetting('target', 'warmup')">
+                <div class="radio-card-content">
+                  <strong>Warm-up Time</strong>
+                  <small>Alert prior to rider & team warm-up</small>
+                </div>
+              </label>
+              <label class="modal-radio-card">
                 <input type="radio" name="notifTarget" id="targetStageRadio" value="stage" onchange="updateNotifSetting('target', 'stage')" checked>
                 <div class="radio-card-content">
                   <strong>Staging Time</strong>
@@ -4063,6 +4097,23 @@
                   <small>Alert prior to official wave gun start</small>
                 </div>
               </label>
+            </div>
+          </div>
+
+          <div class="modal-section">
+            <label class="modal-label">Warm-up Schedule (Before Staging)</label>
+            <div class="lead-time-buttons" id="warmupOffsetButtons">
+              <button type="button" class="lead-time-btn" data-warmup="60" onclick="setWarmupOffset(60)">60 mins</button>
+              <button type="button" class="lead-time-btn active" data-warmup="45" onclick="setWarmupOffset(45)">45 mins</button>
+              <button type="button" class="lead-time-btn" data-warmup="30" onclick="setWarmupOffset(30)">30 mins</button>
+              <button type="button" class="lead-time-btn" data-warmup="custom" onclick="setWarmupOffset('custom')">Custom</button>
+            </div>
+            <div class="custom-time-row" id="customWarmupRow" style="display:none;margin-top:8px;align-items:center;gap:8px;">
+              <input type="number" id="customWarmupInput" min="1" max="180" placeholder="Minutes" class="custom-minutes-input" oninput="onCustomWarmupChange(this.value)">
+              <span style="font-size:12px;color:var(--text-muted);">minutes before staging</span>
+            </div>
+            <div style="margin-top:5px;font-size:11px;color:var(--text-muted);line-height:1.35;">
+              Automatically schedules rider warm-up for every race & category relative to staging time.
             </div>
           </div>
 
@@ -4714,6 +4765,32 @@
       if (meridiem === 'PM' && hours < 12) hours += 12;
       if (meridiem === 'AM' && hours === 12) hours = 0;
       return hours * 60 + minutes;
+    }
+
+    function formatMinutesToTimeStr(totalMinutes) {
+      if (totalMinutes === null || totalMinutes === undefined || isNaN(totalMinutes)) return '';
+      let mins = Math.round(totalMinutes) % 1440;
+      if (mins < 0) mins += 1440;
+      let hours = Math.floor(mins / 60);
+      const m = mins % 60;
+      const meridiem = hours >= 12 ? 'PM' : 'AM';
+      if (hours > 12) hours -= 12;
+      if (hours === 0) hours = 12;
+      return `${hours}:${m < 10 ? '0' : ''}${m} ${meridiem}`;
+    }
+
+    function getWaveWarmupTime(race, category, waveStr, customWarmupOffset) {
+      const entry = getWaveScheduleEntry(race, category, waveStr);
+      if (!entry) return null;
+      const offset = (customWarmupOffset !== undefined && customWarmupOffset !== null) ? customWarmupOffset : (typeof notifConfig !== 'undefined' && notifConfig.warmupOffset ? notifConfig.warmupOffset : 45);
+      let stageMins = parseTimeStrToMinutes(entry.stage);
+      if (stageMins === null) {
+        const startMins = parseTimeStrToMinutes(entry.start);
+        if (startMins !== null) stageMins = startMins - 15;
+      }
+      if (stageMins === null) return null;
+      const warmupMins = stageMins - offset;
+      return formatMinutesToTimeStr(warmupMins);
     }
 
     function getCategoryStartTimeMinutes(race, category) {
@@ -6385,8 +6462,9 @@
     const NOTIF_FIRED_KEY = 'laxmtb_notif_fired';
 
     let notifConfig = {
-      target: 'stage', // 'stage' or 'start'
+      target: 'stage', // 'warmup', 'stage', or 'start'
       offset: 15,      // minutes (30, 15, 5, or custom number)
+      warmupOffset: 45,// minutes before staging time (60, 45, 30, custom)
       sound: true
     };
 
@@ -6402,6 +6480,7 @@
       try {
         const savedCfg = localStorage.getItem(NOTIF_CONFIG_KEY);
         if (savedCfg) notifConfig = Object.assign(notifConfig, JSON.parse(savedCfg));
+        if (!notifConfig.warmupOffset) notifConfig.warmupOffset = 45;
         const savedSubs = localStorage.getItem(NOTIF_SUBS_KEY);
         if (savedSubs) notifSubs = Object.assign(notifSubs, JSON.parse(savedSubs));
         const savedFired = localStorage.getItem(NOTIF_FIRED_KEY) || sessionStorage.getItem(NOTIF_FIRED_KEY);
@@ -6516,11 +6595,36 @@
     }
 
     function syncNotifModalControls() {
+      const warmupRadio = document.getElementById('targetWarmupRadio');
       const stageRadio = document.getElementById('targetStageRadio');
       const startRadio = document.getElementById('targetStartRadio');
       if (stageRadio && startRadio) {
-        if (notifConfig.target === 'stage') stageRadio.checked = true;
+        if (notifConfig.target === 'warmup' && warmupRadio) warmupRadio.checked = true;
+        else if (notifConfig.target === 'stage') stageRadio.checked = true;
         else startRadio.checked = true;
+      }
+
+      const warmupButtons = document.querySelectorAll('#warmupOffsetButtons .lead-time-btn');
+      const customWarmupRow = document.getElementById('customWarmupRow');
+      const customWarmupInput = document.getElementById('customWarmupInput');
+      const currentWarmup = notifConfig.warmupOffset || 45;
+      let matchedWarmup = false;
+      warmupButtons.forEach(btn => {
+        const w = btn.getAttribute('data-warmup');
+        if (w === String(currentWarmup)) {
+          btn.classList.add('active');
+          matchedWarmup = true;
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      if (!matchedWarmup) {
+        const customBtn = document.querySelector('#warmupOffsetButtons .lead-time-btn[data-warmup="custom"]');
+        if (customBtn) customBtn.classList.add('active');
+        if (customWarmupRow) customWarmupRow.style.display = 'flex';
+        if (customWarmupInput) customWarmupInput.value = currentWarmup;
+      } else {
+        if (customWarmupRow) customWarmupRow.style.display = 'none';
       }
 
       const buttons = document.querySelectorAll('#leadTimeButtons .lead-time-btn');
@@ -6554,6 +6658,38 @@
       notifConfig[key] = val;
       saveNotifData();
       updateMenuNotifBadge();
+      if (key === 'target') {
+        renderData();
+      }
+    }
+
+    function setWarmupOffset(val) {
+      const customRow = document.getElementById('customWarmupRow');
+      const customInput = document.getElementById('customWarmupInput');
+      if (val === 'custom') {
+        if (customRow) customRow.style.display = 'flex';
+        const num = parseInt(customInput && customInput.value, 10) || 45;
+        notifConfig.warmupOffset = num;
+        if (customInput) customInput.value = num;
+      } else {
+        if (customRow) customRow.style.display = 'none';
+        notifConfig.warmupOffset = parseInt(val, 10) || 45;
+      }
+      document.querySelectorAll('#warmupOffsetButtons .lead-time-btn').forEach(b => {
+        if (b.getAttribute('data-warmup') === String(val)) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+      saveNotifData();
+      renderData();
+    }
+
+    function onCustomWarmupChange(val) {
+      const num = parseInt(val, 10);
+      if (num && num > 0) {
+        notifConfig.warmupOffset = num;
+        saveNotifData();
+        renderData();
+      }
     }
 
     function setNotifLeadTime(val) {
@@ -6850,7 +6986,7 @@
       const badge = document.getElementById('menuNotifBadge');
       if (!badge) return;
       const totalSubs = notifSubs.categories.length + notifSubs.waves.length;
-      const targetStr = notifConfig.target === 'stage' ? 'Stage' : 'Start';
+      const targetStr = notifConfig.target === 'warmup' ? 'Warm-up' : (notifConfig.target === 'stage' ? 'Stage' : 'Start');
       if (totalSubs > 0) {
         badge.textContent = `${totalSubs} Alert${totalSubs > 1 ? 's' : ''} (${targetStr} • ${notifConfig.offset}m)`;
       } else {
@@ -6890,7 +7026,7 @@
       } catch (e) {}
     }
 
-    function showToastNotification(title, message) {
+    function showToastNotification(title, body) {
       playNotificationChime();
       const container = document.getElementById('notifToastContainer');
       if (!container) return;
@@ -6900,7 +7036,7 @@
       toast.innerHTML = `
         <div class="notif-toast-content">
           <div class="notif-toast-title">${escapeHtml(title)}</div>
-          <div class="notif-toast-msg">${escapeHtml(message)}</div>
+          <div class="notif-toast-body">${escapeHtml(body)}</div>
         </div>
         <button type="button" class="notif-toast-close" onclick="this.parentElement.remove()" aria-label="Dismiss">✕</button>
       `;
@@ -6911,9 +7047,11 @@
     }
 
     function triggerTestNotification() {
-      const targetLabel = notifConfig.target === 'stage' ? 'Staging Grid' : 'Race Start';
+      let targetLabel = 'Race Start';
+      if (notifConfig.target === 'warmup') targetLabel = 'Warm-up';
+      else if (notifConfig.target === 'stage') targetLabel = 'Staging Grid';
       const title = `🔔 Test Alert: Bluff Bash (${targetLabel})`;
-      const body = `Sample notification! Staging in ${notifConfig.offset} minutes (Stage: 3:25 PM, Start: 3:40 PM).`;
+      const body = `Sample notification! ${targetLabel} in ${notifConfig.offset} minutes (Warm-up: 2:40 PM, Stage: 3:25 PM, Start: 3:40 PM).`;
 
       showToastNotification(title, body);
       dispatchSystemNotification(title, body);
@@ -7093,11 +7231,22 @@
           if (!isCategoryRacingToday(race, cat, now)) return;
           const entry = getWaveScheduleEntry(race, cat, '1');
           if (!entry) return;
-          const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
+
+          let targetTimeStr = entry.start;
+          let label = 'Race Start';
+          const warmupStr = getWaveWarmupTime(race, cat, '1');
+          if (notifConfig.target === 'warmup') {
+            targetTimeStr = warmupStr || entry.start;
+            label = 'Warm-up';
+          } else if (notifConfig.target === 'stage' && entry.stage) {
+            targetTimeStr = entry.stage;
+            label = 'Staging Call-up';
+          }
+
           const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
           if (targetMinutes === null) return;
           const alertMinutes = targetMinutes - notifConfig.offset;
-          const alertKey = `cat_${cat}_${raceId}_${todayIso}`;
+          const alertKey = `cat_${cat}_${raceId}_${todayIso}_${notifConfig.target}`;
 
           // Guard 2: If notification time has already passed or event has started, do NOT fire.
           const minutesDiff = nowMinutes - alertMinutes;
@@ -7114,9 +7263,15 @@
           if (isDue && !firedAlerts.has(alertKey)) {
             firedAlerts.add(alertKey);
             saveFiredAlerts();
-            const label = notifConfig.target === 'stage' ? 'Staging Call-up' : 'Race Start';
             const title = `🔔 ${cat} ${label} in ${notifConfig.offset}m`;
-            const body = `${cat} ${label} is at ${targetTimeStr} (Start: ${entry.start}). Head to staging grids!`;
+            let body = '';
+            if (notifConfig.target === 'warmup') {
+              body = `${cat} Warm-up starts at ${targetTimeStr} (Stage: ${entry.stage || '-'}, Start: ${entry.start}). Begin warm-up routines!`;
+            } else if (notifConfig.target === 'stage') {
+              body = `${cat} Staging is at ${targetTimeStr} (Start: ${entry.start}${warmupStr ? `, Warm-up: ${warmupStr}` : ''}). Head to staging grids!`;
+            } else {
+              body = `${cat} Race Start is at ${targetTimeStr} (Stage: ${entry.stage || '-'}${warmupStr ? `, Warm-up: ${warmupStr}` : ''}).`;
+            }
             showToastNotification(title, body);
             dispatchSystemNotification(title, body);
           }
@@ -7128,11 +7283,22 @@
           if (!isCategoryRacingToday(race, cat, now)) return;
           const entry = getWaveScheduleEntry(race, cat, wKey);
           if (!entry) return;
-          const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
+
+          let targetTimeStr = entry.start;
+          let label = 'Race Start';
+          const warmupStr = getWaveWarmupTime(race, cat, wKey);
+          if (notifConfig.target === 'warmup') {
+            targetTimeStr = warmupStr || entry.start;
+            label = 'Warm-up';
+          } else if (notifConfig.target === 'stage' && entry.stage) {
+            targetTimeStr = entry.stage;
+            label = 'Staging Call-up';
+          }
+
           const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
           if (targetMinutes === null) return;
           const alertMinutes = targetMinutes - notifConfig.offset;
-          const alertKey = `wave_${cat}_${wKey}_${raceId}_${todayIso}`;
+          const alertKey = `wave_${cat}_${wKey}_${raceId}_${todayIso}_${notifConfig.target}`;
 
           // Guard 2: If notification time has already passed or event has started, do NOT fire.
           const minutesDiff = nowMinutes - alertMinutes;
@@ -7149,9 +7315,15 @@
           if (isDue && !firedAlerts.has(alertKey)) {
             firedAlerts.add(alertKey);
             saveFiredAlerts();
-            const label = notifConfig.target === 'stage' ? 'Staging Call-up' : 'Race Start';
             const title = `🔔 ${cat} (${wKey}) ${label} in ${notifConfig.offset}m`;
-            const body = `${cat} ${wKey} ${label} is at ${targetTimeStr} (Start: ${entry.start}).`;
+            let body = '';
+            if (notifConfig.target === 'warmup') {
+              body = `${cat} ${wKey} Warm-up starts at ${targetTimeStr} (Stage: ${entry.stage || '-'}, Start: ${entry.start}).`;
+            } else if (notifConfig.target === 'stage') {
+              body = `${cat} ${wKey} Staging is at ${targetTimeStr} (Start: ${entry.start}${warmupStr ? `, Warm-up: ${warmupStr}` : ''}). Head to staging grids!`;
+            } else {
+              body = `${cat} ${wKey} Race Start is at ${targetTimeStr} (Stage: ${entry.stage || '-'}${warmupStr ? `, Warm-up: ${warmupStr}` : ''}).`;
+            }
             showToastNotification(title, body);
             dispatchSystemNotification(title, body);
           }
@@ -7618,6 +7790,7 @@
         const catEntry = getWaveScheduleEntry(SEASON_RACES[currentRaceIndex], cat, '1');
         const catStartTime = catEntry ? catEntry.start : null;
         const catStageTime = catEntry ? catEntry.stage : null;
+        const catWarmupTime = getWaveWarmupTime(SEASON_RACES[currentRaceIndex], cat, '1');
         const isCatSub = isCatSubscribed(cat);
         const catTitle = document.createElement('div');
         catTitle.className = 'category-header collapsible-header';
@@ -7626,6 +7799,7 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;">
             <span>${escapeHtml(cat)}</span>
             <span class="category-badge">${totalInCat} RIDERS</span>
+            ${catWarmupTime ? `<span class="category-warmup-badge" title="Warm-up starts ${notifConfig.warmupOffset || 45}m before staging (${escapeHtml(catWarmupTime)})">Warm-up: ${escapeHtml(catWarmupTime)}</span>` : ''}
             ${catStartTime ? `<span class="category-time-badge" title="Scheduled Category Start Time${catStageTime ? ` (Stage: ${escapeHtml(catStageTime)})` : ''}">Race Starts: ${escapeHtml(catStartTime)}</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
@@ -7658,14 +7832,21 @@
           const waveEntry = getWaveScheduleEntry(SEASON_RACES[currentRaceIndex], cat, wKey);
           const waveTime = waveEntry ? waveEntry.start : null;
           const stageTime = waveEntry ? waveEntry.stage : null;
+          const waveWarmupTime = getWaveWarmupTime(SEASON_RACES[currentRaceIndex], cat, wKey);
           const isWaveSub = isWaveSubscribed(cat, wKey);
           const waveHeader = document.createElement('div');
           waveHeader.className = 'wave-divider';
           let timeHtml = '';
           if (waveTime && stageTime) {
-            timeHtml = `<span class="wave-time-tag" title="Stage: ${escapeHtml(stageTime)} | Start: ${escapeHtml(waveTime)}">Wave Start: ${escapeHtml(waveTime)} <span style="opacity:0.8;font-size:10px;font-weight:normal;">(Stage: ${escapeHtml(stageTime)})</span></span>`;
+            timeHtml = `
+              ${waveWarmupTime ? `<span class="wave-warmup-tag" title="Warm-up starts ${notifConfig.warmupOffset || 45}m before staging">Warm-up: ${escapeHtml(waveWarmupTime)}</span>` : ''}
+              <span class="wave-time-tag" title="Stage: ${escapeHtml(stageTime)} | Start: ${escapeHtml(waveTime)}">Wave Start: ${escapeHtml(waveTime)} <span style="opacity:0.8;font-size:10px;font-weight:normal;">(Stage: ${escapeHtml(stageTime)})</span></span>
+            `;
           } else if (waveTime) {
-            timeHtml = `<span class="wave-time-tag" title="Scheduled Wave Start Time">Wave Start: ${escapeHtml(waveTime)}</span>`;
+            timeHtml = `
+              ${waveWarmupTime ? `<span class="wave-warmup-tag" title="Warm-up">Warm-up: ${escapeHtml(waveWarmupTime)}</span>` : ''}
+              <span class="wave-time-tag" title="Scheduled Wave Start Time">Wave Start: ${escapeHtml(waveTime)}</span>
+            `;
           }
           waveHeader.innerHTML = `
             <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
@@ -7897,6 +8078,7 @@
 
         teamRiders.forEach(r => {
           const rTime = getWaveStartTime(SEASON_RACES[currentRaceIndex], r.category, r.wave || r.wv);
+          const rWarmup = getWaveWarmupTime(SEASON_RACES[currentRaceIndex], r.category, r.wave || r.wv);
           const riderKey = 'r_' + String(r.bib || r.no) + '_' + String(r.name || '').trim().replace(/\s+/g, '_');
           const isSelected = selectedRiderKeys.has(riderKey);
           const hasLaps = Array.isArray(r.laps) && r.laps.length > 0;
@@ -7925,7 +8107,7 @@
               </td>
               <td>
                 <strong style="color:var(--text-main);display:inline;word-break:break-word;">${escapeHtml(r.category || '')}</strong>
-                ${rTime ? `<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;color:var(--accent-red);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:3px;vertical-align:middle;" title="Scheduled Wave Start: ${escapeHtml(rTime)}">${escapeHtml(rTime)}</span>` : ''}
+                ${rTime ? `<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;color:var(--accent-red);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:3px;vertical-align:middle;" title="Wave Start: ${escapeHtml(rTime)}${rWarmup ? ` | Warm-up: ${escapeHtml(rWarmup)}` : ''}">${escapeHtml(rTime)}</span>` : ''}
               </td>
               <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
               <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
@@ -7988,7 +8170,7 @@
               <td><span class="rider-name">${escapeHtml(r.name)}</span></td>
               <td>
                 <strong style="color:var(--text-main);display:inline;word-break:break-word;">${escapeHtml(r.category || '')}</strong>
-                ${rTime ? `<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;color:var(--accent-red);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:3px;vertical-align:middle;" title="Scheduled Wave Start: ${escapeHtml(rTime)}">${escapeHtml(rTime)}</span>` : ''}
+                ${rTime ? `<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;color:var(--accent-red);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:3px;vertical-align:middle;" title="Wave Start: ${escapeHtml(rTime)}${rWarmup ? ` | Warm-up: ${escapeHtml(rWarmup)}` : ''}">${escapeHtml(rTime)}</span>` : ''}
               </td>
               <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
             `;
