@@ -2928,6 +2928,192 @@
       margin-top: 1px;
     }
 
+    /* In-App Live Photo Gallery Grid */
+    .photos-gallery-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .photos-gallery-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .photos-gallery-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+    }
+
+    .photos-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .photos-gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+    }
+
+    .photo-thumb-card {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .photo-thumb-card:hover {
+      transform: scale(1.02);
+      border-color: var(--accent-red);
+      box-shadow: var(--shadow-md);
+      z-index: 2;
+    }
+
+    .photo-thumb-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: opacity 0.2s ease;
+    }
+
+    .photo-thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 6px 8px;
+    }
+
+    .photo-thumb-card:hover .photo-thumb-overlay {
+      opacity: 1;
+    }
+
+    .photo-zoom-icon {
+      color: #ffffff;
+      font-size: 14px;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
+    }
+
+    /* Lightbox Modal */
+    .photo-lightbox-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .photo-lightbox-overlay.show {
+      display: flex;
+    }
+
+    .photo-lightbox-content {
+      position: relative;
+      max-width: 92vw;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-lightbox-img {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      object-fit: contain;
+    }
+
+    .photo-lightbox-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 10px;
+      gap: 12px;
+      color: #ffffff;
+    }
+
+    .lightbox-close-btn {
+      position: absolute;
+      top: -42px;
+      right: 0;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #ffffff;
+      font-size: 18px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .lightbox-close-btn:hover {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+    }
+
+    .lightbox-nav-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #ffffff;
+      font-size: 18px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .lightbox-nav-btn:hover {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+    }
+
+    .lightbox-nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      border-color: transparent;
+    }
+
     /* Dedicated Print Header Styling */
     .print-header {
       display: none;
@@ -5437,7 +5623,77 @@
       });
     }
 
-    function renderPhotosTab(race) {
+    // Live Photo Gallery State & Lightbox
+    let loadedPhotosList = [];
+    let currentLightboxIdx = -1;
+    let photosPageLimit = 24;
+
+    async function loadTeamPhotosData() {
+      if (loadedPhotosList.length > 0) return loadedPhotosList;
+      try {
+        const res = await fetch('./team_photos.json?t=' + Date.now());
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            loadedPhotosList = data;
+            return loadedPhotosList;
+          }
+        }
+      } catch (err) {
+        console.warn('[LAXMTB] Could not load team_photos.json:', err);
+      }
+      return [];
+    }
+
+    function openPhotoLightbox(idx) {
+      if (!loadedPhotosList || idx < 0 || idx >= loadedPhotosList.length) return;
+      currentLightboxIdx = idx;
+      const photo = loadedPhotosList[idx];
+      const overlay = document.getElementById('photoLightboxOverlay');
+      const img = document.getElementById('lightboxImg');
+      const counter = document.getElementById('lightboxCounter');
+      const prevBtn = document.getElementById('lightboxPrevBtn');
+      const nextBtn = document.getElementById('lightboxNextBtn');
+
+      if (img) {
+        // High resolution sizing parameter from Google CDN
+        img.src = `${photo.url}=w1920-h1280`;
+      }
+      if (counter) {
+        counter.textContent = `${idx + 1} / ${loadedPhotosList.length}`;
+      }
+      if (prevBtn) prevBtn.disabled = idx === 0;
+      if (nextBtn) nextBtn.disabled = idx === loadedPhotosList.length - 1;
+
+      if (overlay) {
+        overlay.classList.add('show');
+        lockBodyScroll();
+      }
+    }
+
+    function closePhotoLightbox() {
+      const overlay = document.getElementById('photoLightboxOverlay');
+      if (overlay) {
+        overlay.classList.remove('show');
+        unlockBodyScroll();
+      }
+      currentLightboxIdx = -1;
+    }
+
+    function navPhotoLightbox(direction) {
+      const newIdx = currentLightboxIdx + direction;
+      if (newIdx >= 0 && newIdx < loadedPhotosList.length) {
+        openPhotoLightbox(newIdx);
+      }
+    }
+
+    function loadMorePhotos() {
+      photosPageLimit += 24;
+      const race = SEASON_RACES[currentRaceIndex];
+      renderPhotosTab(race);
+    }
+
+    async function renderPhotosTab(race) {
       if (currentTab !== 'photos') return;
       document.getElementById('noticeContainer').innerHTML = '';
       document.getElementById('controlsPanel').style.display = 'none';
@@ -5446,6 +5702,49 @@
       const isCoachAuth = isCoachLoggedIn();
       const albumUrl = getRacePhotosUrl(race);
       const container = document.getElementById('tablesContainer');
+
+      const photos = await loadTeamPhotosData();
+      const visiblePhotos = photos.slice(0, photosPageLimit);
+      const hasMore = photos.length > photosPageLimit;
+
+      let galleryHtml = '';
+      if (photos.length > 0) {
+        galleryHtml = `
+          <!-- Live Gallery Section -->
+          <div class="photos-gallery-section">
+            <div class="photos-gallery-header">
+              <div>
+                <h3 class="photos-gallery-title"><span>🖼️</span> Team Album Photo Gallery</h3>
+                <span style="font-size:12px;color:var(--text-muted);">Showing ${visiblePhotos.length} of ${photos.length} shared team photos • Tap any photo to view full-size</span>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <a href="${albumUrl}" target="_blank" rel="noopener noreferrer" class="btn-photos-secondary" style="font-size:12px;padding:6px 12px;" title="Open album in Google Photos">
+                  <span>📷</span> Open Full Album (${photos.length})
+                </a>
+              </div>
+            </div>
+
+            <div class="photos-gallery-grid">
+              ${visiblePhotos.map((p, idx) => `
+                <div class="photo-thumb-card" onclick="openPhotoLightbox(${idx})" title="View photo full-size">
+                  <img src="${p.url}=w400-h400-c" alt="LAX MTB Team Photo" class="photo-thumb-img" loading="lazy" />
+                  <div class="photo-thumb-overlay">
+                    <span class="photo-zoom-icon">🔍</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            ${hasMore ? `
+              <div style="margin-top:16px;text-align:center;">
+                <button type="button" class="btn-photos-primary" onclick="loadMorePhotos()" style="font-size:13px;padding:10px 24px;">
+                  <span>⬇️</span> Load More Photos (${photos.length - visiblePhotos.length} remaining)
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
 
       container.innerHTML = `
         <div class="photos-tab-wrapper">
@@ -5475,7 +5774,10 @@
             </div>
           </div>
 
-          <!-- 2. Interactive Features Grid -->
+          <!-- 2. Interactive In-App Gallery Grid (If available) -->
+          ${galleryHtml}
+
+          <!-- 3. Interactive Features Grid -->
           <div class="photos-features-grid">
             <div class="photo-feature-card">
               <div class="photo-feature-icon">📤</div>
@@ -5507,7 +5809,7 @@
             </div>
           </div>
 
-          <!-- 3. How to Contribute Guide -->
+          <!-- 4. How to Contribute Guide -->
           <div class="photos-guide-card">
             <h4><span>💡</span> How to Share Your Photos with the Team</h4>
             <ul class="photos-guide-steps">
@@ -5538,10 +5840,23 @@
             </ul>
           </div>
         </div>
+
+        <!-- Lightbox Modal Container -->
+        <div id="photoLightboxOverlay" class="photo-lightbox-overlay" onclick="closePhotoLightbox()">
+          <div class="photo-lightbox-content" onclick="event.stopPropagation()">
+            <button type="button" class="lightbox-close-btn" onclick="closePhotoLightbox()" title="Close viewer">✕</button>
+            <img id="lightboxImg" class="photo-lightbox-img" src="" alt="LAX MTB Full Photo" />
+            <div class="photo-lightbox-controls">
+              <button type="button" class="lightbox-nav-btn" id="lightboxPrevBtn" onclick="navPhotoLightbox(-1)" title="Previous photo">‹</button>
+              <span id="lightboxCounter" style="font-weight:700;font-size:13px;">1 / 1</span>
+              <button type="button" class="lightbox-nav-btn" id="lightboxNextBtn" onclick="navPhotoLightbox(1)" title="Next photo">›</button>
+            </div>
+          </div>
+        </div>
       `;
 
       const statusCount = document.getElementById('statusCount');
-      if (statusCount) statusCount.textContent = 'Shared Team Album';
+      if (statusCount) statusCount.textContent = `${photos.length} Team Photos`;
     }
 
     // 3. SignUp.com Volunteer & Hospitality Data & Mobile Detection
