@@ -408,10 +408,17 @@
       color: var(--accent-red);
       background: rgba(220, 38, 38, 0.15);
       border-color: var(--accent-red);
-    }
     .wave-notif-btn {
-      margin-left: auto;
-      padding: 2px 6px;
+      height: 24px;
+      width: 26px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      box-sizing: border-box;
+      vertical-align: middle;
     }
     .rider-notif-btn {
       padding: 2px 4px;
@@ -1897,66 +1904,61 @@
     .wave-schedule-strip {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--accent-red);
-      background: rgba(220, 38, 38, 0.1);
-      border: 1px solid rgba(220, 38, 38, 0.3);
-      padding: 2px 7px;
+      gap: 6px;
+      height: 24px;
+      padding: 0 8px;
       border-radius: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      box-sizing: border-box;
+      white-space: nowrap;
       letter-spacing: normal;
       text-transform: none;
-      white-space: nowrap;
+      vertical-align: middle;
     }
 
     .wave-schedule-step {
       display: inline-flex;
       align-items: center;
       gap: 3px;
+      font-size: 11px;
+      line-height: 1;
     }
 
     .wave-schedule-step .step-lbl {
-      font-size: 9.5px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      color: var(--text-muted);
-    }
-
-    .wave-schedule-step.step-start .step-lbl {
-      color: var(--accent-red);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1;
     }
 
     .wave-schedule-step .step-time {
-      font-variant-numeric: tabular-nums;
-      color: var(--text-main);
+      font-size: 11px;
       font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent-red);
+      line-height: 1;
     }
 
-    .wave-schedule-step.step-start .step-time {
-      color: var(--accent-red);
-    }
-
-    .wave-schedule-arrow {
-      color: var(--accent-red);
-      opacity: 0.55;
+    .wave-schedule-sep {
+      color: var(--text-muted);
+      opacity: 0.45;
       font-size: 10px;
-      font-weight: 900;
+      line-height: 1;
+      user-select: none;
     }
 
     :root[data-theme="light"] .wave-schedule-strip {
-      background: #fee2e2;
-      border-color: #fca5a5;
-      color: #b91c1c;
+      background: #ffffff;
+      border-color: #e5e7eb;
+    }
+
+    :root[data-theme="light"] .wave-schedule-step .step-lbl {
+      color: #374151;
     }
 
     :root[data-theme="light"] .wave-schedule-step .step-time {
-      color: #1f2937;
-    }
-
-    :root[data-theme="light"] .wave-schedule-step.step-start .step-time {
-      color: #b91c1c;
+      color: #dc2626;
     }
 
     .rider-expand-icon {
@@ -7877,7 +7879,7 @@
           if (waveWarmupTime) {
             steps.push(`
               <span class="wave-schedule-step" title="Warm-up starts ${notifConfig.warmupOffset || 45}m before staging">
-                <span class="step-lbl">Warm-up</span>
+                <span class="step-lbl">Warm-up:</span>
                 <span class="step-time">${escapeHtml(waveWarmupTime)}</span>
               </span>
             `);
@@ -7885,26 +7887,26 @@
           if (stageTime) {
             steps.push(`
               <span class="wave-schedule-step" title="Staging grid call-up">
-                <span class="step-lbl">Stage</span>
+                <span class="step-lbl">Stage:</span>
                 <span class="step-time">${escapeHtml(stageTime)}</span>
               </span>
             `);
           }
           if (waveTime) {
             steps.push(`
-              <span class="wave-schedule-step step-start" title="Official wave gun start">
-                <span class="step-lbl">Start</span>
+              <span class="wave-schedule-step" title="Official wave gun start">
+                <span class="step-lbl">Start:</span>
                 <span class="step-time">${escapeHtml(waveTime)}</span>
               </span>
             `);
           }
-          const timeHtml = steps.length > 0 ? `<div class="wave-schedule-strip">${steps.join('<span class="wave-schedule-arrow">›</span>')}</div>` : '';
+          const timeHtml = steps.length > 0 ? `<div class="wave-schedule-strip">${steps.join('<span class="wave-schedule-sep">›</span>')}</div>` : '';
 
           waveHeader.innerHTML = `
             <div style="display:flex;align-items:center;gap:8px;">
               <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;">
               ${timeHtml}
               <button type="button" class="notif-sub-btn wave-notif-btn ${isWaveSub ? 'active' : ''}" title="${isWaveSub ? 'Notifications enabled for ' + escapeHtml(cat) + ' ' + escapeHtml(wKey) : 'Enable notifications for ' + escapeHtml(cat) + ' ' + escapeHtml(wKey)}">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="${isWaveSub ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
