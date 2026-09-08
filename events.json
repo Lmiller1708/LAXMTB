@@ -371,7 +371,161 @@
       "<strong>Trails:</strong> Trek Trails by OTM and CAMBA world-class singletrack network.",
       "<strong>Camping:</strong> Village festival camping available on-site (advance booking recommended)."
     ],
-    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9"
+    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9",
+    "waveSchedule": {
+      "Varsity Boys": {
+        "1": {
+          "start": "8:00 AM",
+          "stage": "7:45 AM"
+        }
+      },
+      "JV III Boys": {
+        "1": {
+          "start": "8:05 AM",
+          "stage": "7:50 AM"
+        },
+        "2": {
+          "start": "8:06 AM",
+          "stage": "8:06 AM"
+        }
+      },
+      "Varsity Girls": {
+        "1": {
+          "start": "9:25 AM",
+          "stage": "9:10 AM"
+        }
+      },
+      "JV III Girls": {
+        "1": {
+          "start": "9:30 AM",
+          "stage": "9:15 AM"
+        }
+      },
+      "MS2 Boys": {
+        "1": {
+          "start": "10:55 AM",
+          "stage": "10:40 AM"
+        }
+      },
+      "Freshman Boys": {
+        "1": {
+          "start": "11:00 AM",
+          "stage": "10:45 AM"
+        },
+        "2": {
+          "start": "11:01 AM",
+          "stage": "10:45 AM"
+        },
+        "3": {
+          "start": "11:02 AM",
+          "stage": "10:45 AM"
+        }
+      },
+      "8th Grade Boys": {
+        "1": {
+          "start": "11:07 AM",
+          "stage": "10:52 AM"
+        },
+        "2": {
+          "start": "11:08 AM",
+          "stage": "10:52 AM"
+        }
+      },
+      "MS2 Girls": {
+        "1": {
+          "start": "11:40 AM",
+          "stage": "11:25 AM"
+        }
+      },
+      "Freshman Girls": {
+        "1": {
+          "start": "11:45 AM",
+          "stage": "11:30 AM"
+        }
+      },
+      "JV II Girls": {
+        "1": {
+          "start": "11:50 AM",
+          "stage": "11:35 AM"
+        },
+        "2": {
+          "start": "11:51 AM",
+          "stage": "11:51 AM"
+        }
+      },
+      "8th Grade Girls": {
+        "1": {
+          "start": "11:56 AM",
+          "stage": "11:41 AM"
+        }
+      },
+      "JV II Boys": {
+        "1": {
+          "start": "12:45 PM",
+          "stage": "12:30 PM"
+        },
+        "2": {
+          "start": "12:46 PM",
+          "stage": "12:30 PM"
+        },
+        "3": {
+          "start": "12:47 PM",
+          "stage": "12:30 PM"
+        },
+        "4": {
+          "start": "12:48 PM",
+          "stage": "12:30 PM"
+        }
+      },
+      "7th Grade Boys": {
+        "1": {
+          "start": "12:53 PM",
+          "stage": "12:38 PM"
+        },
+        "2": {
+          "start": "12:54 PM",
+          "stage": "12:38 PM"
+        }
+      },
+      "6th Grade Boys": {
+        "1": {
+          "start": "1:40 PM",
+          "stage": "1:25 PM"
+        },
+        "2": {
+          "start": "1:41 PM",
+          "stage": "1:25 PM"
+        }
+      },
+      "7th Grade Girls": {
+        "1": {
+          "start": "1:46 PM",
+          "stage": "1:31 PM"
+        },
+        "2": {
+          "start": "1:47 PM",
+          "stage": "1:31 PM"
+        }
+      },
+      "6th Grade Girls": {
+        "1": {
+          "start": "1:52 PM",
+          "stage": "1:37 PM"
+        }
+      },
+      "HS Open Boys": {
+        "1": {
+          "start": "1:53 PM",
+          "stage": "1:38 PM"
+        }
+      },
+      "HS Open Girls": {
+        "1": {
+          "start": "1:53 PM",
+          "stage": "1:38 PM"
+        }
+      }
+    }
   },
   {
     "id": "hodag-hustle",
@@ -456,7 +610,161 @@
       "<strong>Venue:</strong> Scout reservation lakeside singletrack trails.",
       "<strong>Camping:</strong> Scout camp cabin/tent sites by advance registration."
     ],
-    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9"
+    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9",
+    "waveSchedule": {
+      "Varsity Boys": {
+        "1": {
+          "start": "8:00 AM",
+          "stage": "7:45 AM"
+        }
+      },
+      "JV III Boys": {
+        "1": {
+          "start": "8:05 AM",
+          "stage": "7:50 AM"
+        },
+        "2": {
+          "start": "8:06 AM",
+          "stage": "8:06 AM"
+        }
+      },
+      "Varsity Girls": {
+        "1": {
+          "start": "9:25 AM",
+          "stage": "9:10 AM"
+        }
+      },
+      "JV III Girls": {
+        "1": {
+          "start": "9:30 AM",
+          "stage": "9:15 AM"
+        }
+      },
+      "MS2 Boys": {
+        "1": {
+          "start": "10:55 AM",
+          "stage": "10:40 AM"
+        }
+      },
+      "Freshman Boys": {
+        "1": {
+          "start": "11:00 AM",
+          "stage": "10:45 AM"
+        },
+        "2": {
+          "start": "11:01 AM",
+          "stage": "10:45 AM"
+        },
+        "3": {
+          "start": "11:02 AM",
+          "stage": "10:45 AM"
+        }
+      },
+      "8th Grade Boys": {
+        "1": {
+          "start": "11:07 AM",
+          "stage": "10:52 AM"
+        },
+        "2": {
+          "start": "11:08 AM",
+          "stage": "10:52 AM"
+        }
+      },
+      "MS2 Girls": {
+        "1": {
+          "start": "11:40 AM",
+          "stage": "11:25 AM"
+        }
+      },
+      "Freshman Girls": {
+        "1": {
+          "start": "11:45 AM",
+          "stage": "11:30 AM"
+        }
+      },
+      "JV II Girls": {
+        "1": {
+          "start": "11:50 AM",
+          "stage": "11:35 AM"
+        },
+        "2": {
+          "start": "11:51 AM",
+          "stage": "11:51 AM"
+        }
+      },
+      "8th Grade Girls": {
+        "1": {
+          "start": "11:56 AM",
+          "stage": "11:41 AM"
+        }
+      },
+      "JV II Boys": {
+        "1": {
+          "start": "12:45 PM",
+          "stage": "12:30 PM"
+        },
+        "2": {
+          "start": "12:46 PM",
+          "stage": "12:30 PM"
+        },
+        "3": {
+          "start": "12:47 PM",
+          "stage": "12:30 PM"
+        },
+        "4": {
+          "start": "12:48 PM",
+          "stage": "12:30 PM"
+        }
+      },
+      "7th Grade Boys": {
+        "1": {
+          "start": "12:53 PM",
+          "stage": "12:38 PM"
+        },
+        "2": {
+          "start": "12:54 PM",
+          "stage": "12:38 PM"
+        }
+      },
+      "6th Grade Boys": {
+        "1": {
+          "start": "1:40 PM",
+          "stage": "1:25 PM"
+        },
+        "2": {
+          "start": "1:41 PM",
+          "stage": "1:25 PM"
+        }
+      },
+      "7th Grade Girls": {
+        "1": {
+          "start": "1:46 PM",
+          "stage": "1:31 PM"
+        },
+        "2": {
+          "start": "1:47 PM",
+          "stage": "1:31 PM"
+        }
+      },
+      "6th Grade Girls": {
+        "1": {
+          "start": "1:52 PM",
+          "stage": "1:37 PM"
+        }
+      },
+      "HS Open Boys": {
+        "1": {
+          "start": "1:53 PM",
+          "stage": "1:38 PM"
+        }
+      },
+      "HS Open Girls": {
+        "1": {
+          "start": "1:53 PM",
+          "stage": "1:38 PM"
+        }
+      }
+    }
   },
   {
     "id": "gnarly-nordic",
@@ -541,7 +849,161 @@
       "<strong>Course:</strong> Ski hill climbs, bermed descents, and forested singletrack.",
       "<strong>Spectating:</strong> Outstanding spectator visibility from the main ski chalet bowl."
     ],
-    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9"
+    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9",
+    "waveSchedule": {
+      "Varsity Boys": {
+        "1": {
+          "start": "8:00 AM",
+          "stage": "7:45 AM"
+        }
+      },
+      "JV III Boys": {
+        "1": {
+          "start": "8:05 AM",
+          "stage": "7:50 AM"
+        },
+        "2": {
+          "start": "8:06 AM",
+          "stage": "8:06 AM"
+        }
+      },
+      "Varsity Girls": {
+        "1": {
+          "start": "9:25 AM",
+          "stage": "9:10 AM"
+        }
+      },
+      "JV III Girls": {
+        "1": {
+          "start": "9:30 AM",
+          "stage": "9:15 AM"
+        }
+      },
+      "MS2 Boys": {
+        "1": {
+          "start": "10:55 AM",
+          "stage": "10:40 AM"
+        }
+      },
+      "Freshman Boys": {
+        "1": {
+          "start": "11:00 AM",
+          "stage": "10:45 AM"
+        },
+        "2": {
+          "start": "11:01 AM",
+          "stage": "10:45 AM"
+        },
+        "3": {
+          "start": "11:02 AM",
+          "stage": "10:45 AM"
+        }
+      },
+      "8th Grade Boys": {
+        "1": {
+          "start": "11:07 AM",
+          "stage": "10:52 AM"
+        },
+        "2": {
+          "start": "11:08 AM",
+          "stage": "10:52 AM"
+        }
+      },
+      "MS2 Girls": {
+        "1": {
+          "start": "11:40 AM",
+          "stage": "11:25 AM"
+        }
+      },
+      "Freshman Girls": {
+        "1": {
+          "start": "11:45 AM",
+          "stage": "11:30 AM"
+        }
+      },
+      "JV II Girls": {
+        "1": {
+          "start": "11:50 AM",
+          "stage": "11:35 AM"
+        },
+        "2": {
+          "start": "11:51 AM",
+          "stage": "11:51 AM"
+        }
+      },
+      "8th Grade Girls": {
+        "1": {
+          "start": "11:56 AM",
+          "stage": "11:41 AM"
+        }
+      },
+      "JV II Boys": {
+        "1": {
+          "start": "12:45 PM",
+          "stage": "12:30 PM"
+        },
+        "2": {
+          "start": "12:46 PM",
+          "stage": "12:30 PM"
+        },
+        "3": {
+          "start": "12:47 PM",
+          "stage": "12:30 PM"
+        },
+        "4": {
+          "start": "12:48 PM",
+          "stage": "12:30 PM"
+        }
+      },
+      "7th Grade Boys": {
+        "1": {
+          "start": "12:53 PM",
+          "stage": "12:38 PM"
+        },
+        "2": {
+          "start": "12:54 PM",
+          "stage": "12:38 PM"
+        }
+      },
+      "6th Grade Boys": {
+        "1": {
+          "start": "1:40 PM",
+          "stage": "1:25 PM"
+        },
+        "2": {
+          "start": "1:41 PM",
+          "stage": "1:25 PM"
+        }
+      },
+      "7th Grade Girls": {
+        "1": {
+          "start": "1:46 PM",
+          "stage": "1:31 PM"
+        },
+        "2": {
+          "start": "1:47 PM",
+          "stage": "1:31 PM"
+        }
+      },
+      "6th Grade Girls": {
+        "1": {
+          "start": "1:52 PM",
+          "stage": "1:37 PM"
+        }
+      },
+      "HS Open Boys": {
+        "1": {
+          "start": "1:53 PM",
+          "stage": "1:38 PM"
+        }
+      },
+      "HS Open Girls": {
+        "1": {
+          "start": "1:53 PM",
+          "stage": "1:38 PM"
+        }
+      }
+    }
   },
   {
     "id": "red-barn",
