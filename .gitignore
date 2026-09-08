@@ -19,3 +19,10 @@ scratch_*
 .env.*
 *.key
 *.pem
+
+# Nuxt & Node
+node_modules/
+.nuxt/
+.output/
+dist
+dist/

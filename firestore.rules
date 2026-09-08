@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if the authenticated user is in the admins collection
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    }
+
+    // Race data — anyone can read (public app), only admins can write
+    match /races/{raceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Admins collection:
+    // Any authorized admin can list/read/write the admins list (to manage coaches)
+    // A signed-in user checking their own status can read their own email doc
+    match /admins/{email} {
+      allow read: if request.auth != null && (isAdmin() || request.auth.token.email.lower() == email);
+      allow write: if isAdmin();
+    }
+  }
+}
