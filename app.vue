@@ -1,72 +1,206 @@
 <script setup lang="ts">
 import type { TabType } from '~/modules/core/components/NavigationTabs.vue'
+import type { Race } from '~/modules/races/types/race'
 
 const currentTab = ref<TabType>('details')
-const isMenuOpen = ref(false)
-const { currentRace } = useCurrentRace()
+const isWhatsNewOpen = ref(false)
+const isNotifOpen = ref(false)
+const isAdminOpen = ref(false)
+const adminInitialTab = ref('venue')
+
+const { currentRace, updateRace } = useCurrentRace()
+
+const {
+  riders,
+  filteredRiders,
+  categories,
+  loading,
+  lastUpdated,
+  isLive,
+  searchQuery,
+  listMode,
+  sortOrder,
+  selectedCategory,
+  selectedTeamScope,
+  allCardsCollapsed,
+  toggleAllCards,
+  fetchResults
+} = useRaceResults()
 
 const setTab = (tab: TabType) => {
   currentTab.value = tab
+  if (tab === 'list' || tab === 'results') {
+    if (currentRace.value?.isPublished && currentRace.value?.eventId) {
+      fetchResults(String(currentRace.value.eventId), tab)
+    }
+  }
+}
+
+watch(currentRace, (newRace) => {
+  if (currentTab.value === 'list' || currentTab.value === 'results') {
+    if (newRace?.isPublished && newRace?.eventId) {
+      fetchResults(String(newRace.eventId), currentTab.value)
+    }
+  }
+})
+
+onMounted(() => {
+  if (import.meta.client) {
+    const params = new URLSearchParams(window.location.search)
+    const tabParam = params.get('tab') || window.location.hash.replace(/^#/, '')
+    if (tabParam) {
+      const slug = tabParam.toLowerCase().replace(/[^a-z0-9]/g, '')
+      if (slug.includes('list') || slug.includes('start')) {
+        setTab('list')
+      } else if (slug.includes('result')) {
+        setTab('results')
+      } else if (slug.includes('photo')) {
+        setTab('photos')
+      } else if (slug.includes('detail')) {
+        setTab('details')
+      }
+    }
+  }
+})
+
+const openAdminWithTab = (tab: string) => {
+  adminInitialTab.value = tab
+  isAdminOpen.value = true
+}
+
+const handleSaveRace = (updated: Race) => {
+  updateRace(updated)
+}
+
+const refreshData = () => {
+  if (currentTab.value === 'list' || currentTab.value === 'results') {
+    if (currentRace.value?.isPublished && currentRace.value?.eventId) {
+      fetchResults(String(currentRace.value.eventId), currentTab.value)
+    }
+  }
+}
+
+const handlePrint = () => {
+  if (import.meta.client) {
+    window.print()
+  }
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#0d0d0d] text-gray-100 font-sans">
-    <!-- 1. Header with Online/Offline Indicator -->
-    <AppHeader @toggle-menu="isMenuOpen = !isMenuOpen" />
+  <div>
+    <!-- Site Header -->
+    <header class="site-header">
+      <!-- 1. Fixed Brand Header & Controls -->
+      <AppHeader
+        @open-whats-new="isWhatsNewOpen = true"
+        @open-notifications="isNotifOpen = true"
+        @open-admin="openAdminWithTab('venue')"
+        @sync-data="refreshData"
+      />
 
-    <!-- 2. Season Race Switcher Bar -->
-    <RaceSwitcherBar />
+      <!-- 2. Season Race Switcher Bar -->
+      <RaceSwitcherBar />
 
-    <!-- 3. Navigation Tabs -->
-    <NavigationTabs :current-tab="currentTab" @change-tab="setTab" />
+      <!-- 3. Navigation Tabs -->
+      <NavigationTabs :current-tab="currentTab" @change-tab="setTab" />
+    </header>
 
-    <!-- 4. Main Active View -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6">
+    <!-- Modals -->
+    <WhatsNewModal
+      :is-open="isWhatsNewOpen"
+      @close="isWhatsNewOpen = false"
+      @open-notifications="isNotifOpen = true"
+    />
+
+    <NotificationModal
+      :is-open="isNotifOpen"
+      @close="isNotifOpen = false"
+    />
+
+    <AdminModal
+      :is-open="isAdminOpen"
+      :initial-tab="adminInitialTab"
+      @close="isAdminOpen = false"
+      @save="handleSaveRace"
+    />
+
+    <!-- Main Content Container -->
+    <main class="main-container">
+      <!-- Dedicated High-Quality Printable Header (Paper / PDF export only) -->
+      <div class="print-header" id="printHeader">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2pt solid #dc2626;padding-bottom:6pt;margin-bottom:12pt;">
+          <div>
+            <div style="font-size:18pt;font-weight:900;color:#111827;letter-spacing:-0.5px;">LAX MTB // RACE CENTRAL</div>
+            <div id="printSubTitle" style="font-size:11pt;color:#dc2626;font-weight:700;margin-top:2pt;">{{ currentRace?.name }} • Start Lists</div>
+          </div>
+          <div style="text-align:right;">
+            <div id="printScopeText" style="font-size:9pt;color:#374151;font-weight:700;">Scope: LAXMTB Team</div>
+            <div id="printDateText" style="font-size:8pt;color:#6b7280;margin-top:2pt;">Generated on Race Day</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="noticeContainer" />
+
+      <!-- Controls Panel & Status Bar (Start Lists & Results) -->
+      <template v-if="currentTab === 'list' || currentTab === 'results'">
+        <ResultsToolbar
+          v-if="currentRace?.isPublished && currentRace?.eventId"
+          v-model:search-query="searchQuery"
+          v-model:list-mode="listMode"
+          v-model:sort-order="sortOrder"
+          v-model:selected-category="selectedCategory"
+          v-model:selected-team-scope="selectedTeamScope"
+          :categories="categories"
+          :is-live="isLive"
+          :total-count="filteredRiders.length"
+          @refresh="refreshData"
+        />
+
+        <ResultsStatusBar
+          v-if="currentRace?.isPublished && currentRace?.eventId"
+          :filtered-count="filteredRiders.length"
+          :total-count="riders.length"
+          :last-updated="lastUpdated"
+          :all-cards-collapsed="allCardsCollapsed"
+          @toggle-all="toggleAllCards"
+          @print="handlePrint"
+        />
+      </template>
+
       <!-- Tab 1: Event Details -->
       <div v-if="currentTab === 'details'">
-        <EventHeroCard :race="currentRace" />
-        <EventVenueCard :race="currentRace" />
-        <ScheduleTimeline :schedule="currentRace.schedule" />
-        <EventSignupsCard :signups="currentRace.signups" />
-        <EventGuidelinesCard :guidelines="currentRace.guidelines" />
+        <EventHeroCard :race="currentRace" :is-coach-auth="true" @edit="openAdminWithTab('venue')" />
+        <EventVenueCard :race="currentRace" :is-coach-auth="true" @edit="openAdminWithTab('venue')" />
+        <EventSignupsCard :signups="currentRace.signups" :race-name="currentRace.name" :is-coach-auth="true" @edit="openAdminWithTab('signups')" />
+        <EventMapCard :race="currentRace" :is-coach-auth="true" @edit="openAdminWithTab('maps')" />
+        <ScheduleTimeline :schedule="currentRace.schedule" :is-coach-auth="true" @edit="openAdminWithTab('schedule')" />
+        <EventGuidelinesCard :guidelines="currentRace.guidelines" :is-coach-auth="true" @edit="openAdminWithTab('announcements')" />
       </div>
 
       <!-- Tab 2 & 3: Start Lists & Results -->
-      <div v-else-if="currentTab === 'list' || currentTab === 'results'">
-        <div class="flex items-center justify-between gap-3 p-3 bg-[#171717] border border-[#262626] rounded-lg mb-4">
-          <div class="text-xs font-semibold text-gray-300">
-            <span>{{ currentTab === 'list' ? 'Start Lists' : 'Live Results' }} for {{ currentRace.name }}</span>
-          </div>
-          <TimingStatusBadge :state="currentRace.isPublished && currentRace.eventId ? 'live' : 'upcoming'" />
-        </div>
-      </div>
+      <ResultsView
+        v-else-if="currentTab === 'list' || currentTab === 'results'"
+        :race="currentRace"
+        :riders="filteredRiders"
+        :current-tab="currentTab"
+        :list-mode="listMode"
+        :sort-order="sortOrder"
+        :search-query="searchQuery"
+        :all-cards-collapsed="allCardsCollapsed"
+        :is-coach-auth="true"
+        @switch-tab="setTab('details')"
+        @edit-waves="openAdminWithTab('waves')"
+      />
 
-      <!-- Tab 4: Photos -->
-      <div v-else-if="currentTab === 'photos'">
-        <div class="bg-[#171717] border border-[#262626] rounded-xl p-6 text-center">
-          <span class="text-4xl">📸</span>
-          <h2 class="text-lg font-bold text-white mt-2">Shared Team Photos</h2>
-          <p class="text-xs text-gray-400 mt-1 max-w-md mx-auto">
-            View the high-resolution photo album or upload your own action shots from race weekend.
-          </p>
-          <div class="mt-4">
-            <a
-              :href="currentRace.photosUrl || 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9'"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition"
-            >
-              <span>📸 Open Shared Google Photos Album ↗</span>
-            </a>
-          </div>
-        </div>
-      </div>
+      <!-- Tab 4: Team Photos -->
+      <PhotosGallery
+        v-else-if="currentTab === 'photos'"
+        :race="currentRace"
+        :is-coach-auth="true"
+        @edit="openAdminWithTab('photos')"
+      />
     </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-[#262626] py-4 text-center text-xs text-gray-500">
-      LAX MTB // RACE CENTRAL • Offline PWA Powered by Nuxt 3 & Firestore
-    </footer>
   </div>
 </template>

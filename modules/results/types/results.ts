@@ -1,19 +1,28 @@
 export interface Rider {
-  name: string;
-  bib: string;
-  no: string;
-  team: string;
-  category: string;
-  wave?: string;
-  stageTime?: string;
-  startTime?: string;
-  rank?: string;
-  time?: string;
-  gap?: string;
-  status?: string;
-  laps?: string;
-  speed?: string;
+  no: string
+  bib: string
+  pl?: string
+  name: string
+  team: string
+  category: string
+  gender?: string
+  wave?: string
+  div?: string
+  wv?: string
+  wv_rank?: string
+  return_val?: string
+  laps?: string[]
+  lap1?: string
+  lap2?: string
+  lap3?: string
+  lap4?: string
+  penalty?: string
+  totalTime?: string
+  avgLap?: string
+  stageTime?: string
+  startTime?: string
 }
 
-export type ResultsSortOrder = 'GRADE' | 'TIME';
-export type ResultsGroupMode = 'CATEGORY' | 'TEAM';
+export type ResultsSortOrder = 'GRADE' | 'TIME'
+export type ResultsGroupMode = 'WAVE' | 'TEAM'
+export type TeamScope = 'DEFAULT_TEAMS' | 'ALL'
