@@ -6198,16 +6198,8 @@
               </div>
               <div class="collapsible-body">
                 <div class="map-iframe-wrapper">
-                  <iframe src="${race.embedMapUrl}" width="100%" height="100%" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="Course & Venue Map for ${race.name}"></iframe>
+                  <iframe src="${formatCourseMapEmbedUrl(race.embedMapUrl)}" width="100%" height="100%" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="Course & Venue Map for ${race.name}"></iframe>
                 </div>
-                ${directMapUrl ? `
-                  <div class="map-direct-bar">
-                    <span>Map refused to connect or not loading in frame?</span>
-                    <a href="${directMapUrl}" target="_blank" rel="noopener noreferrer" class="map-direct-link">
-                      Open directly in Google Maps ↗
-                    </a>
-                  </div>
-                ` : ''}
               </div>
             </div>
           ` : ''}
@@ -9132,7 +9124,7 @@
         else if (name.includes('dinner') || name.includes('food') || name.includes('hospitality')) links.food = url;
         else if (name.includes('coach') || name.includes('ride') || name.includes('league')) links.league = url;
         else if (name.includes('photo') || name.includes('picture') || name.includes('album')) photosUrl = url;
-        else if (name.includes('map')) embedMapUrl = url;
+        else if (name.includes('map')) embedMapUrl = formatCourseMapEmbedUrl(url);
       });
 
       // 4. Parse Wave Schedule
