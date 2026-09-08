@@ -3031,6 +3031,9 @@
       justify-content: center;
       padding: 16px;
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      touch-action: none;
+      overscroll-behavior: contain;
     }
 
     .photo-lightbox-overlay.show {
@@ -5643,6 +5646,42 @@
       return [];
     }
 
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
+    function handleLightboxTouchStart(e) {
+      if (!e.touches || e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchEndX = touchStartX;
+      touchEndY = touchStartY;
+    }
+
+    function handleLightboxTouchMove(e) {
+      if (!e.touches || e.touches.length !== 1) return;
+      touchEndX = e.touches[0].clientX;
+      touchEndY = e.touches[0].clientY;
+    }
+
+    function handleLightboxTouchEnd() {
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+      const absX = Math.abs(diffX);
+      const absY = Math.abs(diffY);
+
+      if (absX > 45 && absX > absY * 1.5) {
+        if (diffX < 0) {
+          navPhotoLightbox(1); // Swipe left -> next photo
+        } else {
+          navPhotoLightbox(-1); // Swipe right -> prev photo
+        }
+      } else if (diffY > 80 && absY > absX * 1.5) {
+        closePhotoLightbox(); // Swipe down -> close lightbox
+      }
+    }
+
     function openPhotoLightbox(idx) {
       if (!loadedPhotosList || idx < 0 || idx >= loadedPhotosList.length) return;
       currentLightboxIdx = idx;
@@ -5664,8 +5703,11 @@
       if (nextBtn) nextBtn.disabled = idx === loadedPhotosList.length - 1;
 
       if (overlay) {
-        overlay.classList.add('show');
-        lockBodyScroll();
+        const wasOpen = overlay.classList.contains('show');
+        if (!wasOpen) {
+          overlay.classList.add('show');
+          lockBodyScroll();
+        }
       }
     }
 
@@ -5673,9 +5715,9 @@
       const overlay = document.getElementById('photoLightboxOverlay');
       if (overlay) {
         overlay.classList.remove('show');
-        unlockBodyScroll();
       }
       currentLightboxIdx = -1;
+      unlockBodyScroll();
     }
 
     function navPhotoLightbox(direction) {
@@ -5840,7 +5882,7 @@
         </div>
 
         <!-- Lightbox Modal Container -->
-        <div id="photoLightboxOverlay" class="photo-lightbox-overlay" onclick="closePhotoLightbox()">
+        <div id="photoLightboxOverlay" class="photo-lightbox-overlay" onclick="closePhotoLightbox()" ontouchstart="handleLightboxTouchStart(event)" ontouchmove="handleLightboxTouchMove(event)" ontouchend="handleLightboxTouchEnd()">
           <div class="photo-lightbox-content" onclick="event.stopPropagation()">
             <button type="button" class="lightbox-close-btn" onclick="closePhotoLightbox()" title="Close viewer">✕</button>
             <img id="lightboxImg" class="photo-lightbox-img" src="" alt="LAX MTB Full Photo" />
@@ -6117,9 +6159,14 @@
     let modalScrollY = 0;
     let activeModalCount = 0;
 
+    function hasAnyOpenModal() {
+      const openOverlays = document.querySelectorAll('.modal-overlay.show, .photo-lightbox-overlay.show');
+      return openOverlays.length > 0;
+    }
+
     function lockBodyScroll() {
       activeModalCount++;
-      if (activeModalCount === 1) {
+      if (!document.body.classList.contains('modal-open')) {
         modalScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
         document.body.style.position = 'fixed';
         document.body.style.top = `-${modalScrollY}px`;
@@ -6131,9 +6178,10 @@
       }
     }
 
-    function unlockBodyScroll() {
+    function unlockBodyScroll(force = false) {
       activeModalCount = Math.max(0, activeModalCount - 1);
-      if (activeModalCount === 0) {
+      if (force || activeModalCount === 0 || !hasAnyOpenModal()) {
+        activeModalCount = 0;
         const top = document.body.style.top;
         document.body.style.position = '';
         document.body.style.top = '';
