@@ -3057,6 +3057,83 @@
     :root[data-theme="light"] .admin-data-table tr:hover td {
       background: #f9fafb;
     }
+    .admin-form-group {
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .admin-form-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+    .admin-textarea-field {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s ease;
+      box-sizing: border-box;
+      min-height: 64px;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.4;
+    }
+    :root[data-theme="light"] .admin-textarea-field {
+      background: #ffffff;
+      border-color: #d1d5db;
+    }
+    .admin-textarea-field:focus {
+      border-color: #2563eb;
+    }
+    .admin-row-delete-btn {
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 4px;
+      padding: 3px 8px;
+      color: #ef4444;
+      font-size: 12px;
+      transition: all 0.15s ease;
+    }
+    .admin-row-delete-btn:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: #ef4444;
+    }
+    .admin-add-btn {
+      border: 1px dashed var(--border-strong);
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      background: transparent;
+      color: #2563eb;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      transition: all 0.15s ease;
+    }
+    .admin-add-btn:hover {
+      border-color: #2563eb;
+      background: rgba(37, 99, 235, 0.05);
+    }
+    .admin-save-btn {
+      background: #16a34a !important;
+      color: #ffffff !important;
+      border: 1px solid #15803d !important;
+      font-weight: 700 !important;
+    }
+    .admin-save-btn:hover {
+      background: #15803d !important;
+    }
   </style>
 </head>
 <body>
@@ -3343,18 +3420,21 @@
 
           <!-- Top Toolbar: Race Selector, Open Sheet Link & Sync Now -->
           <div class="admin-top-toolbar">
-            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:220px;">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px;">
               <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;">Active Race:</label>
               <select id="adminRaceSelect" class="admin-select-field" onchange="onAdminRaceSelect(this.value)" style="flex:1;">
                 <!-- Populated dynamically -->
               </select>
             </div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <button type="button" class="admin-action-btn" onclick="openActiveGoogleSheetTab()" title="Open Google Sheet tab for this race">
-                <span>✏️</span> Open in Google Sheets ↗
+              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()" title="Save all changes and apply immediately">
+                <span>💾</span> Save & Apply
               </button>
-              <button type="button" class="admin-action-btn primary" onclick="syncWithGoogleSheets(true)">
-                <span>🔄</span> Force Sync Now
+              <button type="button" class="admin-action-btn" onclick="syncWithGoogleSheets(true)" title="Force sync latest data from Google Sheets">
+                <span>🔄</span> Sync Sheet
+              </button>
+              <button type="button" class="admin-action-btn" onclick="openActiveGoogleSheetTab()" title="Open Google Sheet tab for this race">
+                <span>✏️</span> Sheet ↗
               </button>
             </div>
           </div>
@@ -3379,9 +3459,10 @@
               <span>Sheet ID:</span>
               <code id="adminFooterSheetId" style="font-size:11px;background:var(--bg-surface);padding:2px 6px;border-radius:4px;border:1px solid var(--border);"></code>
             </div>
-            <div style="display:flex;gap:8px;">
+            <div style="display:flex;gap:8px;align-items:center;">
               <button type="button" class="action-mini-btn" style="background:transparent;border-color:var(--border);" onclick="lockAdminPortal()">Lock</button>
-              <button type="button" class="done-modal-btn" onclick="closeAdminPortal()">Done</button>
+              <button type="button" class="done-modal-btn admin-save-btn" onclick="saveAdminCurrentRace()">💾 Save & Apply Changes</button>
+              <button type="button" class="done-modal-btn" onclick="closeAdminPortal()">Close</button>
             </div>
           </div>
         </div>
@@ -6453,6 +6534,7 @@
     function onAdminRaceSelect(val) {
       const idx = parseInt(val, 10);
       if (!isNaN(idx) && SEASON_RACES[idx]) {
+        saveAdminTabState(currentAdminTab);
         selectRace(idx);
         renderAdminView();
       }
@@ -6483,13 +6565,160 @@
       }
     }
 
+    function escapeHtml(str) {
+      if (str === undefined || str === null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
     function switchAdminTab(tabKey) {
+      saveAdminTabState(currentAdminTab);
       currentAdminTab = tabKey;
       document.querySelectorAll('.admin-tab-btn').forEach(btn => {
         btn.classList.remove('active');
       });
       const activeBtn = document.getElementById(`adminTabBtn_${tabKey}`);
       if (activeBtn) activeBtn.classList.add('active');
+      renderAdminView();
+    }
+
+    function saveAdminTabState(tabKey) {
+      const race = SEASON_RACES[currentRaceIndex];
+      if (!race) return;
+
+      if (tabKey === 'venue') {
+        const nameEl = document.getElementById('edit_race_name');
+        if (nameEl) race.name = nameEl.value.trim();
+        const venueEl = document.getElementById('edit_race_venue');
+        if (venueEl) race.venue = venueEl.value.trim();
+        const trailheadEl = document.getElementById('edit_race_exactTrailhead');
+        if (trailheadEl) race.exactTrailhead = trailheadEl.value.trim();
+        const addressEl = document.getElementById('edit_race_address');
+        if (addressEl) race.address = addressEl.value.trim();
+        const cityEl = document.getElementById('edit_race_city');
+        if (cityEl) race.city = cityEl.value.trim();
+        const dateStrEl = document.getElementById('edit_race_dateStr');
+        if (dateStrEl) race.dateStr = dateStrEl.value.trim();
+        const confEl = document.getElementById('edit_race_conference');
+        if (confEl) race.conference = confEl.value.trim();
+        const eventIdEl = document.getElementById('edit_race_eventId');
+        if (eventIdEl) {
+          const num = parseInt(eventIdEl.value, 10);
+          race.eventId = !isNaN(num) && num > 0 ? num : null;
+        }
+        const pubEl = document.getElementById('edit_race_isPublished');
+        if (pubEl) race.isPublished = pubEl.checked;
+        const warningEl = document.getElementById('edit_race_warning');
+        if (warningEl) race.warning = warningEl.value.trim();
+        const gmapsEl = document.getElementById('edit_race_googleMapsUrl');
+        if (gmapsEl) race.googleMapsUrl = gmapsEl.value.trim();
+        const amapsEl = document.getElementById('edit_race_appleMapsUrl');
+        if (amapsEl) race.appleMapsUrl = amapsEl.value.trim();
+        const guideEl = document.getElementById('edit_race_eventGuideUrl');
+        if (guideEl) race.eventGuideUrl = guideEl.value.trim();
+        const embedMapEl = document.getElementById('edit_race_embedMapUrl');
+        if (embedMapEl) race.embedMapUrl = embedMapEl.value.trim();
+      } else if (tabKey === 'waves') {
+        const tbody = document.getElementById('adminWaveTableBody');
+        if (tbody) {
+          const rows = tbody.querySelectorAll('.admin-wave-row');
+          const waveSchedule = {};
+          rows.forEach(tr => {
+            const cat = tr.querySelector('.wave-cat')?.value.trim();
+            const wave = tr.querySelector('.wave-num')?.value.trim() || '1';
+            const stage = tr.querySelector('.wave-stage')?.value.trim() || '';
+            const start = tr.querySelector('.wave-start')?.value.trim() || '';
+            if (cat && (stage || start)) {
+              if (!waveSchedule[cat]) waveSchedule[cat] = {};
+              waveSchedule[cat][wave] = { stage, start };
+            }
+          });
+          race.waveSchedule = waveSchedule;
+        }
+      } else if (tabKey === 'schedule') {
+        const container = document.getElementById('adminScheduleDaysContainer');
+        if (container) {
+          const dayCards = container.querySelectorAll('.admin-day-card');
+          const dayGroups = [];
+          dayCards.forEach(card => {
+            const dayName = card.querySelector('.schedule-day-name')?.value.trim() || 'Weekend';
+            const dateStr = card.querySelector('.schedule-day-date')?.value.trim() || '';
+            const subtitle = card.querySelector('.schedule-day-subtitle')?.value.trim() || '';
+            const eventRows = card.querySelectorAll('.admin-schedule-row');
+            const events = [];
+            eventRows.forEach(er => {
+              const time = er.querySelector('.event-time')?.value.trim() || '';
+              const desc = er.querySelector('.event-desc')?.value.trim() || '';
+              const tag = er.querySelector('.event-tag')?.value || 'Venue';
+              const isSpecial = er.querySelector('.event-special')?.checked || false;
+              if (time || desc) {
+                events.push({
+                  time: time,
+                  desc: desc,
+                  tag: tag,
+                  isSpecial: isSpecial,
+                  isRace: desc.toLowerCase().includes('racing starts') || desc.toLowerCase().includes('race waves')
+                });
+              }
+            });
+            dayGroups.push({
+              day: dayName,
+              date: dateStr,
+              subtitle: subtitle,
+              isRaceDay: dayName.toLowerCase().includes('sun'),
+              events: events
+            });
+          });
+          if (dayGroups.length > 0) {
+            race.schedule = dayGroups;
+          }
+        }
+      } else if (tabKey === 'signups') {
+        if (!race.signups) race.signups = {};
+        const volEl = document.getElementById('edit_signup_volunteer');
+        if (volEl) race.signups.volunteer = volEl.value.trim();
+        const foodEl = document.getElementById('edit_signup_food');
+        if (foodEl) race.signups.food = foodEl.value.trim();
+        const coachEl = document.getElementById('edit_signup_coach');
+        if (coachEl) race.signups.league = coachEl.value.trim();
+        const embedEl = document.getElementById('edit_signup_embedMap');
+        if (embedEl) race.embedMapUrl = embedEl.value.trim();
+        const fullMapEl = document.getElementById('edit_signup_fullMap');
+        if (fullMapEl) race.fullMapUrl = fullMapEl.value.trim();
+      } else if (tabKey === 'announcements') {
+        const container = document.getElementById('adminGuidelinesContainer');
+        if (container) {
+          const items = container.querySelectorAll('.admin-guideline-item');
+          const guidelines = [];
+          items.forEach(it => {
+            const val = it.value.trim();
+            if (val) guidelines.push(val);
+          });
+          race.guidelines = guidelines;
+        }
+      }
+    }
+
+    function saveAdminCurrentRace() {
+      saveAdminTabState(currentAdminTab);
+      const race = SEASON_RACES[currentRaceIndex];
+      if (!race) return;
+
+      // Persist to localStorage
+      localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
+
+      // Re-render live views immediately
+      renderRaceSwitcher();
+      if (currentTab === 'details') {
+        renderEventDetails(race);
+      } else if (currentTab === 'list' || currentTab === 'results') {
+        fetchLiveRaceresultData();
+      }
+
+      showNotifToast(`✅ Saved & applied changes for ${race.name}!`);
       renderAdminView();
     }
 
@@ -6508,185 +6737,285 @@
       if (tab === 'venue') {
         container.innerHTML = `
           <div class="admin-preview-card">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
               <div>
-                <h4 style="margin:0;font-size:15px;color:var(--text-main);">${race.name}</h4>
-                <span style="font-size:12px;color:var(--text-muted);">${race.conference || 'Wisconsin League'}</span>
+                <h4 style="margin:0;font-size:14px;color:var(--text-main);">📍 Race Venue & General Info</h4>
+                <span style="font-size:11px;color:var(--text-muted);">Directly edit race name, trailhead, dates, and navigation instructions</span>
               </div>
-              <span class="admin-status-pill" style="font-size:10px;">${race.isPublished ? 'Published' : 'Upcoming'}</span>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:var(--bg-surface);padding:4px 10px;border-radius:6px;border:1px solid var(--border);">
+                <input type="checkbox" id="edit_race_isPublished" ${race.isPublished ? 'checked' : ''} />
+                <span style="font-weight:600;color:var(--text-main);">Published on Switcher</span>
+              </label>
             </div>
             
             <div class="admin-grid-2">
-              <div>
-                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Venue Name</strong>
-                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);">${race.venue || '—'}</p>
-
-                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Exact Trailhead</strong>
-                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);">${race.exactTrailhead || '—'}</p>
-
-                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Address / City</strong>
-                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);">${race.address || '—'}</p>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Race Name</label>
+                <input type="text" id="edit_race_name" class="admin-input-field" value="${escapeHtml(race.name || '')}" placeholder="e.g. Bluff Bash Festival" />
               </div>
-              <div>
-                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Date Range</strong>
-                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);">${race.dateStr || '—'}</p>
-
-                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Race Result Event ID</strong>
-                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);font-family:monospace;">${race.eventId || 'None (Unpublished)'}</p>
-
-                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Map Coordinates / URLs</strong>
-                <div style="margin:4px 0 10px;display:flex;gap:8px;flex-wrap:wrap;">
-                  ${race.googleMapsUrl ? `<a href="${race.googleMapsUrl}" target="_blank" class="action-mini-btn" style="text-decoration:none;">Google Maps ↗</a>` : ''}
-                  ${race.appleMapsUrl ? `<a href="${race.appleMapsUrl}" target="_blank" class="action-mini-btn" style="text-decoration:none;">Apple Maps ↗</a>` : ''}
-                  ${race.eventGuideUrl ? `<a href="${race.eventGuideUrl}" target="_blank" class="action-mini-btn" style="text-decoration:none;">Event Guide ↗</a>` : ''}
-                </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Venue Name</label>
+                <input type="text" id="edit_race_venue" class="admin-input-field" value="${escapeHtml(race.venue || '')}" placeholder="e.g. Powers Bluff County Park" />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Exact Trailhead</label>
+                <input type="text" id="edit_race_exactTrailhead" class="admin-input-field" value="${escapeHtml(race.exactTrailhead || '')}" placeholder="e.g. Powers Bluff North Trailhead" />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Physical Address</label>
+                <input type="text" id="edit_race_address" class="admin-input-field" value="${escapeHtml(race.address || '')}" placeholder="e.g. Powers Bluff North Trailhead, Arpin, WI" />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">City, State</label>
+                <input type="text" id="edit_race_city" class="admin-input-field" value="${escapeHtml(race.city || '')}" placeholder="e.g. Marshfield, WI" />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Date Range</label>
+                <input type="text" id="edit_race_dateStr" class="admin-input-field" value="${escapeHtml(race.dateStr || '')}" placeholder="e.g. 04 - 07 Sept 2026" />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Conference</label>
+                <input type="text" id="edit_race_conference" class="admin-input-field" value="${escapeHtml(race.conference || '')}" placeholder="e.g. North Conference" />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">RaceResult Event ID</label>
+                <input type="number" id="edit_race_eventId" class="admin-input-field" value="${race.eventId || ''}" placeholder="e.g. 418104" />
               </div>
             </div>
 
-            ${race.warning ? `
-              <div style="margin-top:10px;padding:10px 12px;background:rgba(234,179,8,0.1);border-left:3px solid #eab308;border-radius:4px;font-size:12px;color:var(--text-main);line-height:1.4;">
-                ${race.warning}
+            <div class="admin-form-group" style="margin-top:4px;">
+              <label class="admin-form-label">Navigation Warning / Venue Alert</label>
+              <textarea id="edit_race_warning" class="admin-textarea-field" placeholder="Driving directions warning, parking pass notes, etc.">${escapeHtml(race.warning || '')}</textarea>
+            </div>
+
+            <div class="admin-grid-2" style="margin-top:4px;">
+              <div class="admin-form-group">
+                <label class="admin-form-label">Google Maps URL</label>
+                <input type="url" id="edit_race_googleMapsUrl" class="admin-input-field" value="${escapeHtml(race.googleMapsUrl || '')}" placeholder="https://maps.google.com/..." />
               </div>
-            ` : ''}
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);text-align:right;">
-            💡 Edit these fields in the <strong>--- VENUE & GENERAL INFO ---</strong> section of your Google Sheet tab.
+              <div class="admin-form-group">
+                <label class="admin-form-label">Apple Maps URL</label>
+                <input type="url" id="edit_race_appleMapsUrl" class="admin-input-field" value="${escapeHtml(race.appleMapsUrl || '')}" placeholder="https://maps.apple.com/..." />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Event Guide URL</label>
+                <input type="url" id="edit_race_eventGuideUrl" class="admin-input-field" value="${escapeHtml(race.eventGuideUrl || '')}" placeholder="https://wisconsinmtb.org/events/..." />
+              </div>
+              <div class="admin-form-group">
+                <label class="admin-form-label">Course Map Embed URL</label>
+                <input type="url" id="edit_race_embedMapUrl" class="admin-input-field" value="${escapeHtml(race.embedMapUrl || '')}" placeholder="https://www.google.com/maps/d/embed?..." />
+              </div>
+            </div>
+
+            <div style="margin-top:14px;display:flex;justify-content:flex-end;">
+              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
+                <span>💾</span> Save & Apply Venue Info
+              </button>
+            </div>
           </div>
         `;
       } else if (tab === 'waves') {
         const waves = race.waveSchedule || {};
         const catKeys = Object.keys(waves);
 
-        if (catKeys.length === 0) {
-          container.innerHTML = `
-            <div class="admin-preview-card" style="text-align:center;padding:24px;">
-              <p style="margin:0 0 8px;font-size:13px;color:var(--text-muted);">No custom wave schedules synced for this race.</p>
-              <p style="margin:0;font-size:12px;color:var(--text-muted);">Add categories and times under <strong>--- WAVE & STAGING SCHEDULE ---</strong> in the Google Sheet.</p>
-            </div>
-          `;
-          return;
+        let tableRowsHtml = '';
+        if (catKeys.length > 0) {
+          catKeys.forEach(cat => {
+            const waveObj = waves[cat];
+            Object.keys(waveObj).forEach(wNum => {
+              const entry = waveObj[wNum] || {};
+              tableRowsHtml += `
+                <tr class="admin-wave-row">
+                  <td><input type="text" class="admin-input-field wave-cat" value="${escapeHtml(cat)}" placeholder="Category Name" style="width:100%;" /></td>
+                  <td><input type="number" class="admin-input-field wave-num" value="${wNum}" min="1" max="9" style="width:55px;" /></td>
+                  <td><input type="text" class="admin-input-field wave-stage" value="${escapeHtml(entry.stage || '')}" placeholder="e.g. 9:45 AM" style="width:100%;" /></td>
+                  <td><input type="text" class="admin-input-field wave-start" value="${escapeHtml(entry.start || '')}" placeholder="e.g. 10:00 AM" style="width:100%;" /></td>
+                  <td style="text-align:center;"><button type="button" class="admin-row-delete-btn" onclick="this.closest('tr').remove()" title="Delete row">🗑️</button></td>
+                </tr>
+              `;
+            });
+          });
         }
 
-        let tableRows = '';
-        catKeys.forEach(cat => {
-          const waveObj = waves[cat];
-          Object.keys(waveObj).forEach(wNum => {
-            const entry = waveObj[wNum];
-            tableRows += `
-              <tr>
-                <td><strong>${cat}</strong></td>
-                <td>Wave ${wNum}</td>
-                <td><span style="font-weight:600;color:#2563eb;">${entry.stage || '—'}</span></td>
-                <td><span style="font-weight:700;color:var(--text-main);">${entry.start || '—'}</span></td>
-              </tr>
-            `;
-          });
-        });
-
         container.innerHTML = `
-          <div class="admin-preview-card" style="padding:0;overflow:hidden;">
-            <table class="admin-data-table">
-              <thead>
-                <tr>
-                  <th>Category</th>
-                  <th>Wave</th>
-                  <th>Staging Call-up</th>
-                  <th>Gun Start</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRows}
-              </tbody>
-            </table>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:8px;">
-            💡 Edit times in the <strong>--- WAVE & STAGING SCHEDULE ---</strong> section of your Google Sheet tab.
+          <div class="admin-preview-card" style="padding:14px 16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+              <div>
+                <h4 style="margin:0;font-size:14px;color:var(--text-main);">⏱️ Category Waves & Gun Start Times</h4>
+                <span style="font-size:11px;color:var(--text-muted);">Configure call-up and start times for each division wave</span>
+              </div>
+              <button type="button" class="admin-add-btn" onclick="addAdminWaveRow()">+ Add Wave Row</button>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="admin-data-table" style="min-width:540px;">
+                <thead>
+                  <tr>
+                    <th style="min-width:160px;">Category</th>
+                    <th style="width:70px;">Wave</th>
+                    <th style="width:120px;">Staging Time</th>
+                    <th style="width:120px;">Gun Start Time</th>
+                    <th style="width:50px;text-align:center;">Del</th>
+                  </tr>
+                </thead>
+                <tbody id="adminWaveTableBody">
+                  ${tableRowsHtml}
+                </tbody>
+              </table>
+            </div>
+
+            <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+              <button type="button" class="admin-add-btn" onclick="addAdminWaveRow()">+ Add Wave Row</button>
+              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
+                <span>💾</span> Save & Apply Waves
+              </button>
+            </div>
           </div>
         `;
       } else if (tab === 'schedule') {
         const schedule = race.schedule || [];
-        if (schedule.length === 0) {
-          container.innerHTML = `<p style="color:var(--text-muted);">No schedule events configured.</p>`;
-          return;
+
+        let scheduleDaysHtml = '';
+        if (schedule.length > 0) {
+          schedule.forEach((dayGroup, dIdx) => {
+            const events = dayGroup.events || [];
+            let eventsHtml = '';
+            events.forEach(ev => {
+              eventsHtml += `
+                <div class="admin-schedule-row" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+                  <input type="text" class="admin-input-field event-time" value="${escapeHtml(ev.time || '')}" placeholder="Time (e.g. 5:00 PM - 6:00 PM)" style="width:160px;" />
+                  <input type="text" class="admin-input-field event-desc" value="${escapeHtml(ev.desc || '')}" placeholder="Activity Description" style="flex:1;min-width:180px;" />
+                  <select class="admin-select-field event-tag" style="width:120px;">
+                    ${['Venue', 'Pre-Ride', 'Spectating', 'Team Ride', 'Team Event', 'Racing', 'Awards', 'Other'].map(t => `
+                      <option value="${t}" ${ev.tag === t ? 'selected' : ''}>${t}</option>
+                    `).join('')}
+                  </select>
+                  <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;white-space:nowrap;">
+                    <input type="checkbox" class="event-special" ${ev.isSpecial ? 'checked' : ''} />
+                    <span>Meal</span>
+                  </label>
+                  <button type="button" class="admin-row-delete-btn" onclick="this.closest('.admin-schedule-row').remove()" title="Delete activity">🗑️</button>
+                </div>
+              `;
+            });
+
+            scheduleDaysHtml += `
+              <div class="admin-preview-card admin-day-card" style="margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
+                  <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px;">
+                    <input type="text" class="admin-input-field schedule-day-name" value="${escapeHtml(dayGroup.day || '')}" placeholder="Day (e.g. Saturday)" style="width:130px;font-weight:700;" />
+                    <input type="text" class="admin-input-field schedule-day-date" value="${escapeHtml(dayGroup.date || '')}" placeholder="Date (e.g. Sept 5)" style="width:110px;" />
+                    <input type="text" class="admin-input-field schedule-day-subtitle" value="${escapeHtml(dayGroup.subtitle || '')}" placeholder="Subtitle (e.g. Pre-Rides & Team Dinner)" style="flex:1;min-width:140px;" />
+                  </div>
+                  <button type="button" class="admin-row-delete-btn" onclick="this.closest('.admin-day-card').remove()" title="Remove entire day">🗑️ Remove Day</button>
+                </div>
+                <div id="adminScheduleEvents_${dIdx}" class="admin-events-list">
+                  ${eventsHtml}
+                </div>
+                <button type="button" class="admin-add-btn" onclick="addAdminScheduleEvent(${dIdx})">+ Add Activity</button>
+              </div>
+            `;
+          });
         }
 
-        let scheduleHtml = '';
-        schedule.forEach(dayGroup => {
-          if (dayGroup.events) {
-            scheduleHtml += `
-              <div class="admin-preview-card" style="margin-bottom:10px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:6px;">
-                  <strong style="font-size:14px;color:var(--text-main);">${dayGroup.day} <span style="font-size:12px;color:var(--text-muted);font-weight:normal;">(${dayGroup.date || ''})</span></strong>
-                  <span style="font-size:11px;color:var(--text-muted);">${dayGroup.subtitle || ''}</span>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                  ${dayGroup.events.map(ev => `
-                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;">
-                      <div style="display:flex;align-items:center;gap:8px;">
-                        <span style="font-weight:700;min-width:110px;color:var(--text-main);">${ev.time}</span>
-                        <span style="color:var(--text-main);">${ev.desc}</span>
-                        ${ev.isSpecial ? '<span style="font-size:10px;background:rgba(220,38,38,0.15);color:var(--accent-red);padding:1px 6px;border-radius:4px;font-weight:600;">Team Meal</span>' : ''}
-                      </div>
-                      ${ev.tag ? `<span class="schedule-tag" style="font-size:10px;padding:1px 6px;border-radius:4px;">${ev.tag}</span>` : ''}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            `;
-          } else {
-            scheduleHtml += `
-              <div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
-                <strong>${dayGroup.time}</strong> — ${dayGroup.desc}
-              </div>
-            `;
-          }
-        });
-
         container.innerHTML = `
-          ${scheduleHtml}
-          <div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:8px;">
-            💡 Edit events in the <strong>--- SCHEDULE ---</strong> section of your Google Sheet tab.
+          <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div>
+              <h4 style="margin:0;font-size:14px;color:var(--text-main);">📅 Team Weekend Schedule</h4>
+              <span style="font-size:11px;color:var(--text-muted);">Manage day groups, activities, tags, and team meal highlights</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="admin-add-btn" onclick="addAdminScheduleDay()">+ Add Schedule Day</button>
+              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
+                <span>💾</span> Save & Apply Schedule
+              </button>
+            </div>
+          </div>
+
+          <div id="adminScheduleDaysContainer">
+            ${scheduleDaysHtml}
+          </div>
+
+          <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <button type="button" class="admin-add-btn" onclick="addAdminScheduleDay()">+ Add Schedule Day</button>
+            <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
+              <span>💾</span> Save & Apply Schedule
+            </button>
           </div>
         `;
       } else if (tab === 'signups') {
         const signups = race.signups || {};
         container.innerHTML = `
           <div class="admin-preview-card">
-            <h4 style="margin:0 0 12px;font-size:14px;color:var(--text-main);">SignUp.com & Registration Links</h4>
-            <div style="display:flex;flex-direction:column;gap:10px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border);">
-                <span>🤝 Volunteer Sheet</span>
-                <span style="font-family:monospace;font-size:12px;color:var(--text-muted);">${signups.volunteer || 'Not set'}</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border);">
-                <span>🥗 Team Dinner / Food</span>
-                <span style="font-family:monospace;font-size:12px;color:var(--text-muted);">${signups.food || signups.hospitality || 'Not set'}</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border);">
-                <span>🚴 Coach Ride Leaders</span>
-                <span style="font-family:monospace;font-size:12px;color:var(--text-muted);">${signups.league || signups.coach || 'Not set'}</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;">
-                <span>🗺️ Course Map Embed</span>
-                <span style="font-size:11px;color:var(--text-muted);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${race.embedMapUrl || 'None'}</span>
-              </div>
+            <div style="margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+              <h4 style="margin:0;font-size:14px;color:var(--text-main);">🔗 SignUp.com & Registration Links</h4>
+              <span style="font-size:11px;color:var(--text-muted);">Enter SignUp.com invitation IDs or full registration URLs</span>
             </div>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);text-align:right;">
-            💡 Edit links in the <strong>--- SIGNUP LINKS ---</strong> section of your Google Sheet tab.
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Volunteer Sheet (SignUp.com URL or Invitation ID)</label>
+              <input type="text" id="edit_signup_volunteer" class="admin-input-field" value="${escapeHtml(signups.volunteer || '')}" placeholder="e.g. 81287266078 or https://signup.com/..." />
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Team Dinner / Food Hospitality (SignUp.com URL or ID)</label>
+              <input type="text" id="edit_signup_food" class="admin-input-field" value="${escapeHtml(signups.food || signups.hospitality || '')}" placeholder="e.g. 502983656067 or https://signup.com/..." />
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Coach Ride Leaders (SignUp.com URL or ID)</label>
+              <input type="text" id="edit_signup_coach" class="admin-input-field" value="${escapeHtml(signups.league || signups.coach || '')}" placeholder="e.g. 773733678034 or https://signup.com/..." />
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Course Map Embed URL (Google MyMaps Embed)</label>
+              <input type="text" id="edit_signup_embedMap" class="admin-input-field" value="${escapeHtml(race.embedMapUrl || '')}" placeholder="https://www.google.com/maps/d/embed?..." />
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Full Course Map URL (Interactive Viewer)</label>
+              <input type="text" id="edit_signup_fullMap" class="admin-input-field" value="${escapeHtml(race.fullMapUrl || '')}" placeholder="https://www.google.com/maps/d/viewer?..." />
+            </div>
+
+            <div style="margin-top:14px;display:flex;justify-content:flex-end;">
+              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
+                <span>💾</span> Save & Apply Links
+              </button>
+            </div>
           </div>
         `;
       } else if (tab === 'announcements') {
         const guidelines = race.guidelines || [];
+        let listHtml = '';
+        guidelines.forEach(g => {
+          listHtml += `
+            <div class="admin-guideline-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <textarea class="admin-textarea-field admin-guideline-item" style="flex:1;min-height:48px;" placeholder="Guideline text...">${escapeHtml(g)}</textarea>
+              <button type="button" class="admin-row-delete-btn" onclick="this.closest('.admin-guideline-row').remove()" title="Delete">🗑️</button>
+            </div>
+          `;
+        });
+
         container.innerHTML = `
           <div class="admin-preview-card">
-            <h4 style="margin:0 0 12px;font-size:14px;color:var(--text-main);">Venue Rules & Weekend Announcements</h4>
-            <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.6;color:var(--text-main);">
-              ${guidelines.map(g => `<li style="margin-bottom:6px;">${g}</li>`).join('')}
-            </ul>
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);text-align:right;">
-            💡 Edit text in the <strong>--- ANNOUNCEMENTS & VENUE GUIDELINES ---</strong> section of your Google Sheet tab.
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+              <div>
+                <h4 style="margin:0;font-size:14px;color:var(--text-main);">📢 Venue Rules & Weekend Announcements</h4>
+                <span style="font-size:11px;color:var(--text-muted);">Add, edit, or remove guidelines and weekend rules</span>
+              </div>
+              <button type="button" class="admin-add-btn" onclick="addAdminGuideline()">+ Add Guideline</button>
+            </div>
+
+            <div id="adminGuidelinesContainer">
+              ${listHtml}
+            </div>
+
+            <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+              <button type="button" class="admin-add-btn" onclick="addAdminGuideline()">+ Add Guideline</button>
+              <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
+                <span>💾</span> Save & Apply Guidelines
+              </button>
+            </div>
           </div>
         `;
       } else if (tab === 'config') {
@@ -6702,7 +7031,7 @@
 
           <div class="admin-preview-card">
             <h4 style="margin:0 0 8px;font-size:14px;color:var(--text-main);">Export & Repository Backup</h4>
-            <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px;">Export current full season configuration (with synced updates) as JSON to commit to GitHub.</p>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px;">Export current full season configuration (with synced and in-app edits) as JSON to commit to GitHub.</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
               <button type="button" class="admin-action-btn primary" onclick="copyEventsJson()">
                 📋 Copy events.json to Clipboard
@@ -6715,7 +7044,101 @@
               </a>
             </div>
           </div>
+
+          <div class="admin-preview-card" style="border-color:rgba(239,68,68,0.3);">
+            <h4 style="margin:0 0 8px;font-size:14px;color:#ef4444;">Reset Local Cache</h4>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px;">Revert all in-app edits back to the repository's bundled events.json.</p>
+            <button type="button" class="admin-action-btn" style="color:#ef4444;border-color:rgba(239,68,68,0.5);" onclick="resetEventsToDefaults()">
+              ⚠️ Reset to Bundled Defaults
+            </button>
+          </div>
         `;
+      }
+    }
+
+    function addAdminWaveRow(cat = '', wave = 1, stage = '', start = '') {
+      const tbody = document.getElementById('adminWaveTableBody');
+      if (!tbody) return;
+      const tr = document.createElement('tr');
+      tr.className = 'admin-wave-row';
+      tr.innerHTML = `
+        <td><input type="text" class="admin-input-field wave-cat" value="${escapeHtml(cat)}" placeholder="Category Name" style="width:100%;" /></td>
+        <td><input type="number" class="admin-input-field wave-num" value="${wave}" min="1" max="9" style="width:55px;" /></td>
+        <td><input type="text" class="admin-input-field wave-stage" value="${escapeHtml(stage)}" placeholder="e.g. 9:45 AM" style="width:100%;" /></td>
+        <td><input type="text" class="admin-input-field wave-start" value="${escapeHtml(start)}" placeholder="e.g. 10:00 AM" style="width:100%;" /></td>
+        <td style="text-align:center;"><button type="button" class="admin-row-delete-btn" onclick="this.closest('tr').remove()" title="Delete row">🗑️</button></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function addAdminScheduleEvent(dayIdx) {
+      const container = document.getElementById(`adminScheduleEvents_${dayIdx}`);
+      if (!container) return;
+      const div = document.createElement('div');
+      div.className = 'admin-schedule-row';
+      div.style = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;';
+      div.innerHTML = `
+        <input type="text" class="admin-input-field event-time" placeholder="Time (e.g. 5:00 PM - 6:00 PM)" style="width:160px;" />
+        <input type="text" class="admin-input-field event-desc" placeholder="Activity Description" style="flex:1;min-width:180px;" />
+        <select class="admin-select-field event-tag" style="width:120px;">
+          <option value="Venue">Venue</option>
+          <option value="Pre-Ride">Pre-Ride</option>
+          <option value="Spectating">Spectating</option>
+          <option value="Team Ride">Team Ride</option>
+          <option value="Team Event">Team Event</option>
+          <option value="Racing">Racing</option>
+          <option value="Awards">Awards</option>
+          <option value="Other">Other</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;white-space:nowrap;">
+          <input type="checkbox" class="event-special" />
+          <span>Meal</span>
+        </label>
+        <button type="button" class="admin-row-delete-btn" onclick="this.closest('.admin-schedule-row').remove()" title="Delete activity">🗑️</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function addAdminScheduleDay() {
+      const container = document.getElementById('adminScheduleDaysContainer');
+      if (!container) return;
+      const dayIdx = container.querySelectorAll('.admin-day-card').length;
+      const div = document.createElement('div');
+      div.className = 'admin-preview-card admin-day-card';
+      div.style = 'margin-bottom:14px;';
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px;">
+            <input type="text" class="admin-input-field schedule-day-name" placeholder="Day (e.g. Saturday)" style="width:130px;font-weight:700;" />
+            <input type="text" class="admin-input-field schedule-day-date" placeholder="Date (e.g. Sept 5)" style="width:110px;" />
+            <input type="text" class="admin-input-field schedule-day-subtitle" placeholder="Subtitle (optional)" style="flex:1;min-width:140px;" />
+          </div>
+          <button type="button" class="admin-row-delete-btn" onclick="this.closest('.admin-day-card').remove()" title="Remove entire day">🗑️ Remove Day</button>
+        </div>
+        <div id="adminScheduleEvents_${dayIdx}" class="admin-events-list">
+        </div>
+        <button type="button" class="admin-add-btn" onclick="addAdminScheduleEvent(${dayIdx})">+ Add Activity</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function addAdminGuideline(text = '') {
+      const container = document.getElementById('adminGuidelinesContainer');
+      if (!container) return;
+      const div = document.createElement('div');
+      div.className = 'admin-guideline-row';
+      div.style = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;';
+      div.innerHTML = `
+        <textarea class="admin-textarea-field admin-guideline-item" style="flex:1;min-height:48px;" placeholder="Enter guideline or announcement text...">${escapeHtml(text)}</textarea>
+        <button type="button" class="admin-row-delete-btn" onclick="this.closest('.admin-guideline-row').remove()" title="Delete">🗑️</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function resetEventsToDefaults() {
+      if (confirm('Reset all race data back to original bundled defaults? This will clear any local in-app edits.')) {
+        localStorage.removeItem('laxmtb_events_config');
+        location.reload();
       }
     }
 
@@ -6735,6 +7158,7 @@
     }
 
     function copyEventsJson() {
+      saveAdminTabState(currentAdminTab);
       try {
         const jsonStr = JSON.stringify(SEASON_RACES, null, 2);
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -6762,6 +7186,7 @@
     }
 
     function downloadEventsJson() {
+      saveAdminTabState(currentAdminTab);
       try {
         const jsonStr = JSON.stringify(SEASON_RACES, null, 2);
         const blob = new Blob([jsonStr], { type: 'application/json' });
