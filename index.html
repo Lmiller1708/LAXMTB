@@ -2561,14 +2561,17 @@
     }
 
     .event-map-header {
-      padding: 10px 14px;
+      padding: 12px 16px;
       background: var(--bg-subtle);
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    .event-map-container:not(.card-collapsed):not(:has(.collapsible-body.collapsed)) .event-map-header {
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
     }
 
     .event-map-title {
@@ -2576,10 +2579,15 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--accent-red);
+      color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+    }
+
+    .event-map-container.card-collapsed .map-header-actions,
+    .event-map-container:has(.collapsible-body.collapsed) .map-header-actions {
+      display: none !important;
     }
 
     .map-iframe-wrapper {
@@ -2661,8 +2669,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
     }
 
     .signup-hub-title {
@@ -2903,9 +2909,6 @@
     }
 
     @media (max-width: 600px) {
-      .signup-hub-section {
-        margin: 0 10px 12px 10px;
-      }
       .signup-iframe-wrapper {
         height: 520px;
       }
@@ -2916,22 +2919,44 @@
     }
 
     .detail-section {
-      background: var(--bg-subtle);
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
     }
 
+    .detail-section-header {
+      padding: 12px 16px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+
+    .detail-section-header:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .detail-section-title,
     .detail-section h3 {
       font-size: 13px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--accent-red);
-      margin-bottom: 10px;
+      color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .detail-section-body {
+      padding: 16px;
     }
 
     /* Day-Grouped Schedule Highlights */
@@ -6013,6 +6038,10 @@
                 <span>Wisconsin League Page</span>
               </a>
             ` : ''}
+            <a href="${getRacePhotosUrl(race)}" target="_blank" rel="noopener noreferrer" class="btn-hero-league" title="View or Add Photos to the Shared Team Album">
+              <span>📸</span>
+              <span>Team Photos ↗</span>
+            </a>
             ${isCoachAuth ? `
               <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Race Details & Dates">
                 <span>✏️</span>
@@ -6149,17 +6178,21 @@
           ${race.embedMapUrl ? `
             <div class="event-map-container" id="eventMapContainer">
               <div class="event-map-header collapsible-header" onclick="toggleCard(this)">
-                <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
-                <div style="display:flex;align-items:center;gap:6px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
                   ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('maps');" title="Edit Course Map Links"><span>✏️</span></button>` : ''}
-                  ${directMapUrl ? `
-                    <a href="${directMapUrl}" target="_blank" rel="noopener noreferrer" class="btn-icon" style="text-decoration:none;font-size:11px;padding:4px 10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;" onclick="event.stopPropagation()" title="Open course map in Google Maps">
-                      <span>🗺️</span> <span>Open Map ↗</span>
-                    </a>
-                  ` : ''}
-                  <button type="button" class="btn-icon" id="mapAppFullscreenBtn" onclick="toggleMapAppFullscreen(event)" style="font-size:11px;padding:4px 10px;font-weight:700;">
-                    <span id="mapFsIcon">⛶</span> <span id="mapFsLabel">Fullscreen Map</span>
-                  </button>
+                  <div class="map-header-actions" style="display:flex;align-items:center;gap:6px;">
+                    ${directMapUrl ? `
+                      <a href="${directMapUrl}" target="_blank" rel="noopener noreferrer" class="btn-icon" style="text-decoration:none;font-size:11px;padding:4px 10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;" onclick="event.stopPropagation()" title="Open course map in Google Maps">
+                        <span>🗺️</span> <span>Open Map ↗</span>
+                      </a>
+                    ` : ''}
+                    <button type="button" class="btn-icon" id="mapAppFullscreenBtn" onclick="toggleMapAppFullscreen(event)" style="font-size:11px;padding:4px 10px;font-weight:700;">
+                      <span id="mapFsIcon">⛶</span> <span id="mapFsLabel">Fullscreen Map</span>
+                    </button>
+                  </div>
                   <span class="card-toggle-icon" id="mapToggleChevron" title="Toggle Map">▼</span>
                 </div>
               </div>
@@ -6183,28 +6216,32 @@
             
             <!-- Schedule Section -->
             <div class="detail-section" id="scheduleDetailSection">
-              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
-                <h3 style="margin:0;"><span>⏱️</span> LAXMTB TEAM SCHEDULE HIGHLIGHTS</h3>
+              <div class="detail-section-header collapsible-header" onclick="toggleCard(this)">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="detail-section-title"><span>⏱️</span> LAXMTB Team Schedule Highlights</span>
+                </div>
                 <div style="display:flex;align-items:center;gap:8px;">
                   ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('schedule');" title="Edit Team Schedule"><span>✏️</span></button>` : ''}
                   <span class="card-toggle-icon" title="Toggle Schedule">▼</span>
                 </div>
               </div>
-              <div class="collapsible-body">
+              <div class="collapsible-body detail-section-body">
                 ${renderScheduleGrouped(race.schedule)}
               </div>
             </div>
 
             <!-- Guidelines & Venue Info Section -->
             <div class="detail-section" id="guidelinesDetailSection">
-              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
-                <h3 style="margin:0;"><span>🏕️</span> Venue Guidelines & Spectator Info</h3>
+              <div class="detail-section-header collapsible-header" onclick="toggleCard(this)">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="detail-section-title"><span>🏕️</span> Venue Guidelines & Spectator Info</span>
+                </div>
                 <div style="display:flex;align-items:center;gap:8px;">
                   ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('announcements');" title="Edit Guidelines & Announcements"><span>✏️</span></button>` : ''}
                   <span class="card-toggle-icon" title="Toggle Guidelines">▼</span>
                 </div>
               </div>
-              <div class="collapsible-body">
+              <div class="collapsible-body detail-section-body">
                 <div style="display:flex;flex-direction:column;gap:6px;">
                   ${race.guidelines.map(g => `<p class="guideline-item">• ${g}</p>`).join('')}
                 </div>
@@ -6255,10 +6292,22 @@
     // TEAM PHOTOS & SHARED GOOGLE PHOTOS ALBUM
     // =========================================================
     const DEFAULT_TEAM_PHOTOS_URL = 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9';
+    const DEFAULT_RACE_PHOTOS_MAP = {
+      'bluff-bash': 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9',
+      'cable-conquest': 'https://photos.app.goo.gl/9GiHDEfZ3DTP13i19',
+      'hodag-hustle': 'https://photos.app.goo.gl/NBgQ8MtjhqLgXref9',
+      'gnarly-nordic': 'https://photos.app.goo.gl/FM8oW7tioTPXoz5p9',
+      'red-barn': 'https://photos.app.goo.gl/eqEaqUA1C1QiuTiZA',
+      'trek-trails': 'https://photos.app.goo.gl/eqEaqUA1C1QiuTiZA'
+    };
 
     function getRacePhotosUrl(race) {
-      if (race && race.photosUrl) return race.photosUrl;
-      return DEFAULT_TEAM_PHOTOS_URL;
+      const fallback = (race && DEFAULT_RACE_PHOTOS_MAP[race.id]) ? DEFAULT_RACE_PHOTOS_MAP[race.id] : DEFAULT_TEAM_PHOTOS_URL;
+      let url = (race && race.photosUrl) ? race.photosUrl.trim() : fallback;
+      if (url && !/^https?:\/\//i.test(url)) {
+        url = 'https://' + url;
+      }
+      return url;
     }
 
     function copyPhotoLinkToClipboard(url) {
@@ -6275,7 +6324,10 @@
     let currentLightboxIdx = -1;
     let photosPageLimit = 24;
 
-    async function loadTeamPhotosData() {
+    async function loadTeamPhotosData(race) {
+      if (!race || race.id !== 'bluff-bash') {
+        return [];
+      }
       if (loadedPhotosList.length > 0) return loadedPhotosList;
       try {
         const res = await fetch('./team_photos.json?t=' + Date.now());
@@ -6389,7 +6441,7 @@
       const albumUrl = getRacePhotosUrl(race);
       const container = document.getElementById('tablesContainer');
 
-      const photos = await loadTeamPhotosData();
+      const photos = await loadTeamPhotosData(race);
       const visiblePhotos = photos.slice(0, photosPageLimit);
       const hasMore = photos.length > photosPageLimit;
 
@@ -6417,8 +6469,15 @@
         `;
       } else {
         galleryGridHtml = `
-          <div style="text-align:center;padding:36px 16px;color:var(--text-muted);">
-            <p style="font-size:14px;margin-bottom:12px;">No local previews cached yet. Tap <strong>Open Album</strong> above to view, download, or add photos in Google Photos!</p>
+          <div style="text-align:center;padding:42px 20px;background:var(--bg-subtle);border-radius:12px;margin-top:16px;border:1px solid var(--border);">
+            <div style="font-size:44px;margin-bottom:12px;">📸</div>
+            <h4 style="font-size:17px;font-weight:700;margin-bottom:8px;color:var(--text-main);">${escapeHtml(race.name)} Shared Album</h4>
+            <p style="font-size:13px;color:var(--text-muted);max-width:460px;margin:0 auto 20px;line-height:1.5;">
+              The shared Google Photos album for this event is ready! Tap below to open the album, browse shared photos, or upload your own pictures and videos.
+            </p>
+            <a href="${albumUrl}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-size:14px;text-decoration:none;border-radius:8px;font-weight:700;">
+              <span>📷</span> Open Google Photos Album ↗
+            </a>
           </div>
         `;
       }
@@ -6429,14 +6488,14 @@
           <div class="photos-gallery-section" style="margin-top:0;">
             <div class="photos-gallery-header" style="flex-wrap:wrap;gap:14px;align-items:center;">
               <div style="flex:1;min-width:240px;">
-                <h3 class="photos-gallery-title" style="font-size:18px;margin-bottom:4px;"><span>📸</span> LAX MTB Team Race Photos</h3>
+                <h3 class="photos-gallery-title" style="font-size:18px;margin-bottom:4px;"><span>📸</span> ${escapeHtml(race.name)} Photos</h3>
                 <span style="font-size:12.5px;color:var(--text-muted);display:block;line-height:1.4;">
-                  ${photos.length > 0 ? `Showing ${visiblePhotos.length} of ${photos.length} shared team photos • Tap any photo to view full-size` : 'View, download, and contribute race photos to our shared team album.'}
+                  ${photos.length > 0 ? `Showing ${visiblePhotos.length} of ${photos.length} shared team photos • Tap any photo to view full-size` : `Shared team photo album for ${escapeHtml(race.name)}.`}
                 </span>
               </div>
               <div class="photos-actions-row" style="margin-left:auto;">
                 <a href="${albumUrl}" target="_blank" rel="noopener noreferrer" class="btn-photos-primary" style="font-size:13px;padding:9px 18px;" title="Open in Google Photos">
-                  <span>📷</span> Open Google Photos ${photos.length > 0 ? `(${photos.length})` : ''}
+                  <span>📷</span> Open Google Photos ${photos.length > 0 ? `(${photos.length})` : '↗'}
                 </a>
                 <button type="button" class="btn-photos-secondary" onclick="copyPhotoLinkToClipboard('${albumUrl}')" style="font-size:13px;padding:9px 14px;" title="Copy shareable album link">
                   <span>🔗</span> Copy Link
@@ -6449,7 +6508,7 @@
               </div>
             </div>
 
-            <!-- In-App Photos Grid -->
+            <!-- In-App Photos Grid or Album Card -->
             ${galleryGridHtml}
           </div>
 
@@ -8622,6 +8681,7 @@
       const toggleIcon = headerEl.querySelector('.card-toggle-icon');
       if (body) {
         const isCollapsed = body.classList.toggle('collapsed');
+        card.classList.toggle('card-collapsed', isCollapsed);
         if (toggleIcon) {
           toggleIcon.classList.toggle('collapsed', isCollapsed);
         }
@@ -8637,12 +8697,21 @@
       cardStateOverrides = {}; // Clear individual overrides so global expand/collapse applies to all
       const bodies = document.querySelectorAll('#tablesContainer .collapsible-body');
       const icons = document.querySelectorAll('#tablesContainer .card-toggle-icon');
+      const cards = document.querySelectorAll('#tablesContainer .table-card, #tablesContainer .signup-hub-section, #tablesContainer .event-map-container, #tablesContainer .detail-section, #tablesContainer .event-location-card');
       
       bodies.forEach(b => {
         if (allCardsCollapsed) {
           b.classList.add('collapsed');
         } else {
           b.classList.remove('collapsed');
+        }
+      });
+
+      cards.forEach(c => {
+        if (allCardsCollapsed) {
+          c.classList.add('card-collapsed');
+        } else {
+          c.classList.remove('card-collapsed');
         }
       });
 
@@ -8883,7 +8952,23 @@
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Google Sheet HTTP ${res.status}`);
       const text = await res.text();
-      return parseCSV(text);
+      const rows = parseCSV(text);
+
+      // Google Sheets gviz workaround: Date formatting in early rows causes gviz to infer Column B as Date,
+      // which drops string URLs lower down in Column B. Query range A10:G40 to guarantee link URLs are preserved.
+      try {
+        const linksUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}&range=A10:G40&t=${Date.now()}`;
+        const linksRes = await fetch(linksUrl);
+        if (linksRes.ok) {
+          const linksText = await linksRes.text();
+          const linksRows = parseCSV(linksText);
+          rows.push(...linksRows);
+        }
+      } catch (err) {
+        console.warn('[LAXMTB] Secondary range fetch failed:', err);
+      }
+
+      return rows;
     }
 
     function parseRaceTabCSV(rows) {
@@ -9038,8 +9123,11 @@
       let photosUrl = '';
       linkRows.forEach(r => {
         const name = (r[0] || '').toLowerCase();
-        const url = (r[1] || '').trim();
+        let url = (r[1] || '').trim();
         if (!url) return;
+        if (!/^https?:\/\//i.test(url)) {
+          url = 'https://' + url;
+        }
         if (name.includes('volunteer')) links.volunteer = url;
         else if (name.includes('dinner') || name.includes('food') || name.includes('hospitality')) links.food = url;
         else if (name.includes('coach') || name.includes('ride') || name.includes('league')) links.league = url;
@@ -9092,7 +9180,15 @@
       const race = SEASON_RACES[currentRaceIndex];
       if (!race) return;
 
-      const tabName = race.name.replace(/ Festival$/i, '').trim();
+      const TAB_NAME_MAP = {
+        'bluff-bash': 'Bluff Bash',
+        'cable-conquest': 'Cable Conquest',
+        'hodag-hustle': 'Hodag Hustle',
+        'gnarly-nordic': 'Gnarly Nordic',
+        'red-barn': 'Trek Trails',
+        'trek-trails': 'Trek Trails'
+      };
+      const tabName = TAB_NAME_MAP[race.id] || race.name.replace(/ Festival$/i, '').replace(/ Challenge$/i, '').replace(/ State Championship$/i, '').trim();
 
       try {
         const rows = await fetchRaceTabCSV(googleSheetId, tabName);
