@@ -5,6 +5,7 @@ const props = defineProps<{
   currentTab: 'list' | 'results'
   categories: string[]
   isLive: boolean
+  isCompleted?: boolean
   totalCount: number
 }>()
 
@@ -123,10 +124,14 @@ const activeFilterChips = computed(() => {
         <span>🔄</span>
       </button>
 
-      <!-- Live Timing Connection Badge -->
-      <div class="toolbar-live-badge" :class="isLive ? 'live' : 'upcoming'" id="toolbarLiveBadge">
-        <span class="pulse-dot" id="toolbarLiveDot" />
-        <span id="toolbarLiveText">{{ isLive ? 'Live Timing' : 'Upcoming' }}</span>
+      <!-- Live Timing / Final Results Connection Badge -->
+      <div
+        class="toolbar-live-badge"
+        :class="isCompleted ? 'cached' : (isLive ? 'live' : 'upcoming')"
+        id="toolbarLiveBadge"
+      >
+        <span v-if="!isCompleted && isLive" class="pulse-dot" id="toolbarLiveDot" />
+        <span id="toolbarLiveText">{{ isCompleted ? 'Final Results' : (isLive ? 'Live Timing' : 'Upcoming') }}</span>
       </div>
     </div>
 

@@ -2,22 +2,25 @@
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
   devtools: { enabled: false },
-  ssr: false, // Client-side hydration for maximum offline PWA responsiveness
+  ssr: false, // Client-side SPA for maximum offline PWA responsiveness
 
   experimental: {
     appManifest: false
   },
 
-  runtimeConfig: {
-    public: {
-      firebase: {
-        apiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY || '',
-        authDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-        projectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID || '',
-        storageBucket: process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-        messagingSenderId: process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-        appId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID || ''
-      }
+  // nuxt-vuefire — Firebase Auth + Firestore
+  vuefire: {
+    auth: {
+      enabled: true,
+      sessionCookie: false
+    },
+    config: {
+      apiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID
     }
   },
 
@@ -62,7 +65,8 @@ export default defineNuxtConfig({
   modules: [
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
-    '@vite-pwa/nuxt'
+    '@vite-pwa/nuxt',
+    'nuxt-vuefire'
   ],
 
   // Auto-import components from domain feature folders
