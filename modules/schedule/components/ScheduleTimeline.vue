@@ -72,7 +72,7 @@ const checkIsRaceDay = (grp: ScheduleDay) => {
 </script>
 
 <template>
-  <div class="detail-section" id="scheduleDetailSection">
+  <div class="detail-section" :class="{ 'card-collapsed': !isOpen }" id="scheduleDetailSection">
     <div class="detail-section-header collapsible-header" @click="isOpen = !isOpen">
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="detail-section-title"><span>⏱️</span> LAXMTB Team Schedule Highlights</span>

@@ -47,7 +47,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-overlay" id="notifModalOverlay" @click.self="handleClose">
+  <div v-if="isOpen" class="modal-overlay show" id="notifModalOverlay" @click.self="handleClose">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="notifModalTitle">
       <div class="modal-header">
         <div style="display:flex;align-items:center;gap:8px;">
