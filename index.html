@@ -1772,6 +1772,64 @@
       border-color: #e5e7eb;
     }
 
+    .wave-laps-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: normal;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      vertical-align: middle;
+      user-select: none;
+    }
+    .wave-laps-toggle-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+    :root[data-theme="light"] .wave-laps-toggle-btn {
+      background: #ffffff;
+      border-color: #d1d5db;
+      color: #374151;
+    }
+    :root[data-theme="light"] .wave-laps-toggle-btn:hover {
+      background: #f3f4f6;
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .map-direct-bar {
+      padding: 8px 14px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+    .map-direct-link {
+      color: var(--accent-red);
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .map-direct-link:hover {
+      text-decoration: underline;
+    }
+
     /* Responsive Table Container with Sleek, Subtle Scrollbar */
     .table-responsive-wrapper {
       width: 100%;
@@ -4484,11 +4542,6 @@
           <span>⚙️</span> <span id="filterBtnLabel">Filter</span>
         </button>
 
-        <!-- Toggle All Laps Button (Results Tab) -->
-        <button class="btn-icon" id="toggleAllLapsBtn" onclick="toggleAllLapsGlobal()" style="display:none;padding:5px 8px;" title="Expand / collapse all laps across all racers">
-          <span id="toggleAllLapsIcon" style="font-size:10px;">▾</span> <span id="toggleAllLapsLabel" style="font-size:11.5px;font-weight:700;">Laps</span>
-        </button>
-
         <!-- Refresh Button -->
         <button class="btn-icon" onclick="fetchLiveRaceresultData()" title="Refresh live data">
           <span>🔄</span>
@@ -4601,6 +4654,7 @@
         googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Powers+Bluff+North+Trailhead+Arpin+WI',
         eventGuideUrl: 'https://wisconsinmtb.org/events/bluff-bash-festival/',
         embedMapUrl: 'https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F',
+        fullMapUrl: 'https://www.google.com/maps/d/viewer?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI',
         logo: 'logos/bluff-bash.png',
         conference: 'North Conference (Sunday Racing) • South Conference (Saturday Racing)',
         eventId: 418104,
@@ -5891,6 +5945,7 @@
       document.getElementById('statusBar').style.display = 'none';
 
       const isCoachAuth = isCoachLoggedIn();
+      const directMapUrl = race.fullMapUrl || (race.embedMapUrl ? race.embedMapUrl.replace(/\/embed(\?|$)/, '/viewer$1') : '');
       const container = document.getElementById('tablesContainer');
       container.innerHTML = `
         <!-- 1. Event Hero Banner (Logo & Title on its own + League Page) -->
@@ -6051,6 +6106,11 @@
                 <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
                 <div style="display:flex;align-items:center;gap:6px;">
                   ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('maps');" title="Edit Course Map Links"><span>✏️</span></button>` : ''}
+                  ${directMapUrl ? `
+                    <a href="${directMapUrl}" target="_blank" rel="noopener noreferrer" class="btn-icon" style="text-decoration:none;font-size:11px;padding:4px 10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;" onclick="event.stopPropagation()" title="Open course map in Google Maps">
+                      <span>🗺️</span> <span>Open Map ↗</span>
+                    </a>
+                  ` : ''}
                   <button type="button" class="btn-icon" id="mapAppFullscreenBtn" onclick="toggleMapAppFullscreen(event)" style="font-size:11px;padding:4px 10px;font-weight:700;">
                     <span id="mapFsIcon">⛶</span> <span id="mapFsLabel">Fullscreen Map</span>
                   </button>
@@ -6059,8 +6119,16 @@
               </div>
               <div class="collapsible-body">
                 <div class="map-iframe-wrapper">
-                  <iframe src="${race.embedMapUrl}" width="100%" height="100%" loading="lazy" allowfullscreen title="Course & Venue Map for ${race.name}"></iframe>
+                  <iframe src="${race.embedMapUrl}" width="100%" height="100%" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="Course & Venue Map for ${race.name}"></iframe>
                 </div>
+                ${directMapUrl ? `
+                  <div class="map-direct-bar">
+                    <span>Map refused to connect or not loading in frame?</span>
+                    <a href="${directMapUrl}" target="_blank" rel="noopener noreferrer" class="map-direct-link">
+                      Open directly in Google Maps ↗
+                    </a>
+                  </div>
+                ` : ''}
               </div>
             </div>
           ` : ''}
@@ -7968,20 +8036,7 @@
 
       document.getElementById('statusCount').innerHTML = `Showing <span class="stat-bold">${filtered.length}</span> of <span class="stat-bold">${currentRiders.length}</span> riders`;
 
-      const toggleAllBtn = document.getElementById('toggleAllLapsBtn');
-      if (toggleAllBtn) {
-        if (currentTab === 'results') {
-          toggleAllBtn.style.display = 'inline-flex';
-          const hasExpanded = selectedRiderKeys.size > 0;
-          const icon = document.getElementById('toggleAllLapsIcon');
-          const label = document.getElementById('toggleAllLapsLabel');
-          if (icon) icon.textContent = hasExpanded ? '▴' : '▾';
-          if (label) label.textContent = hasExpanded ? 'Collapse' : 'Laps';
-          toggleAllBtn.title = hasExpanded ? 'Collapse all expanded racer lap splits' : 'Expand all racer lap splits';
-        } else {
-          toggleAllBtn.style.display = 'none';
-        }
-      }
+
 
       const container = document.getElementById('tablesContainer');
 
@@ -8114,16 +8169,6 @@
           }
           const timeHtml = steps.length > 0 ? `<div class="wave-schedule-strip">${steps.join('<span class="wave-schedule-sep">›</span>')}</div>` : '';
 
-          waveHeader.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;">
-              ${timeHtml}
-            </div>
-          `;
-          cardBody.appendChild(waveHeader);
-
           const ridersInWave = waves[wKey].sort((a, b) => {
             const pa = parseInt(a.pl) || parseInt(a.bib) || 0;
             const pb = parseInt(b.pl) || parseInt(b.bib) || 0;
@@ -8136,9 +8181,25 @@
               waveRiderKeys.push('r_' + String(r.bib || r.no) + '_' + String(r.name || '').trim().replace(/\s+/g, '_'));
             }
           });
-          const hasWaveLaps = waveRiderKeys.length > 0;
+          const hasWaveLaps = currentTab === 'results' && waveRiderKeys.length > 0;
           const isAllWaveExpanded = hasWaveLaps && waveRiderKeys.every(k => selectedRiderKeys.has(k));
           const waveKeysJson = escapeHtml(JSON.stringify(waveRiderKeys));
+
+          waveHeader.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;">
+              ${timeHtml}
+              ${hasWaveLaps ? `
+                <button type="button" class="wave-laps-toggle-btn" onclick="event.stopPropagation(); toggleRiderKeySet(${waveKeysJson});" title="Click to ${isAllWaveExpanded ? 'collapse' : 'expand'} all lap splits in this wave">
+                  <span style="font-size:9.5px;">${isAllWaveExpanded ? '▲' : '▼'}</span>
+                  <span>${isAllWaveExpanded ? 'Collapse' : 'Laps'}</span>
+                </button>
+              ` : ''}
+            </div>
+          `;
+          cardBody.appendChild(waveHeader);
 
           const tableWrapper = document.createElement('div');
           tableWrapper.className = 'table-responsive-wrapper';
@@ -8313,21 +8374,6 @@
           isCardCollapsed = allCardsCollapsed;
         }
 
-        const teamHeader = document.createElement('div');
-        teamHeader.className = 'category-header collapsible-header';
-        teamHeader.onclick = function() { toggleCard(this); };
-        teamHeader.innerHTML = `
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span>${escapeHtml(team)}</span>
-            <span class="category-badge">${grouped[team].length} RIDERS</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span></button>` : ''}
-            <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(team)}">▼</span>
-          </div>
-        `;
-        teamCard.appendChild(teamHeader);
-
         const teamRiders = grouped[team].sort((a, b) => {
           const catComp = compareCategories(a.category, b.category, currentCategorySortOrder, SEASON_RACES[currentRaceIndex]);
           if (catComp !== 0) return catComp;
@@ -8343,9 +8389,30 @@
             teamRiderKeys.push('r_' + String(r.bib || r.no) + '_' + String(r.name || '').trim().replace(/\s+/g, '_'));
           }
         });
-        const hasTeamLaps = teamRiderKeys.length > 0;
+        const hasTeamLaps = currentTab === 'results' && teamRiderKeys.length > 0;
         const isAllTeamExpanded = hasTeamLaps && teamRiderKeys.every(k => selectedRiderKeys.has(k));
         const teamKeysJson = escapeHtml(JSON.stringify(teamRiderKeys));
+
+        const teamHeader = document.createElement('div');
+        teamHeader.className = 'category-header collapsible-header';
+        teamHeader.onclick = function() { toggleCard(this); };
+        teamHeader.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>${escapeHtml(team)}</span>
+            <span class="category-badge">${grouped[team].length} RIDERS</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${hasTeamLaps ? `
+              <button type="button" class="wave-laps-toggle-btn" onclick="event.stopPropagation(); toggleRiderKeySet(${teamKeysJson});" title="Click to ${isAllTeamExpanded ? 'collapse' : 'expand'} all lap splits for ${escapeHtml(team)}">
+                <span style="font-size:9.5px;">${isAllTeamExpanded ? '▲' : '▼'}</span>
+                <span>${isAllTeamExpanded ? 'Collapse' : 'Laps'}</span>
+              </button>
+            ` : ''}
+            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span></button>` : ''}
+            <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(team)}">▼</span>
+          </div>
+        `;
+        teamCard.appendChild(teamHeader);
 
         const cardBody = document.createElement('div');
         cardBody.className = isCardCollapsed ? 'collapsible-body collapsed' : 'collapsible-body';
