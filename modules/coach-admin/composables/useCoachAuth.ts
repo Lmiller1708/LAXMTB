@@ -67,18 +67,46 @@ export const useCoachAuth = () => {
     }
   }, { immediate: true })
 
+  // Primary bootstrap administrator(s)
+  const DEFAULT_ADMINS = ['lmiller1708@gmail.com']
+
   /**
-   * Verify the signed-in email exists in Firestore admins collection
+   * Verify the signed-in email exists in Firestore admins collection or bootstrap list
    */
   const verifyAdminEmail = async (email: string): Promise<boolean> => {
     if (!email) return false
+    const clean = email.toLowerCase().trim()
+
+    // 1. Primary bootstrap admin check (Head Coach / Founder)
+    if (DEFAULT_ADMINS.includes(clean)) {
+      isAuthorizedCoach.value = true
+      // Auto-seed to Firestore if it doesn't exist yet
+      if (db) {
+        try {
+          const adminRef = doc(db, 'admins', clean)
+          getDoc(adminRef).then(snap => {
+            if (!snap.exists()) {
+              setDoc(adminRef, {
+                email: clean,
+                name: user.value?.displayName || 'Head Coach',
+                role: 'owner',
+                addedAt: new Date().toISOString()
+              }).catch(() => {})
+            }
+          }).catch(() => {})
+        } catch (e) {}
+      }
+      return true
+    }
+
+    // 2. Check Firestore admins collection for invited coaches
     try {
-      const adminRef = doc(db, 'admins', email.toLowerCase().trim())
+      const adminRef = doc(db, 'admins', clean)
       const adminSnap = await getDoc(adminRef)
       isAuthorizedCoach.value = adminSnap.exists()
       return adminSnap.exists()
     } catch (e) {
-      console.warn('[useCoachAuth] Could not verify admin email:', e)
+      console.warn('[useCoachAuth] Could not verify admin email from Firestore:', e)
       isAuthorizedCoach.value = false
       return false
     }
