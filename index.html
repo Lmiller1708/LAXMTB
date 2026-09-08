@@ -1741,14 +1741,16 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      padding: 5px 12px;
+      padding: 4px 8px;
       border-left: 3px solid var(--wave-border);
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
+      flex-wrap: wrap;
+      row-gap: 4px;
     }
 
     .wave-time-tag {
@@ -1776,10 +1778,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      height: 24px;
-      min-width: 24px;
-      padding: 0 6px;
-      font-size: 11px;
+      height: 22px;
+      width: 22px;
+      min-width: 22px;
+      padding: 0;
+      font-size: 10px;
       font-weight: 800;
       color: var(--text-muted);
       background: var(--bg-card);
@@ -1978,36 +1981,38 @@
     .wave-schedule-strip {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      height: 24px;
-      padding: 0 8px;
+      gap: 4px;
+      height: 22px;
+      padding: 0 6px;
       border-radius: 4px;
       background: var(--bg-card);
       border: 1px solid var(--border);
       box-sizing: border-box;
       white-space: nowrap;
-      letter-spacing: normal;
+      letter-spacing: -0.1px;
       text-transform: none;
       vertical-align: middle;
+      max-width: 100%;
     }
 
     .wave-schedule-step {
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      font-size: 11px;
+      gap: 2px;
+      font-size: 10.5px;
       line-height: 1;
     }
 
     .wave-schedule-step .step-lbl {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
       color: var(--text-main);
       line-height: 1;
+      opacity: 0.9;
     }
 
     .wave-schedule-step .step-time {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       color: var(--accent-red);
@@ -2016,10 +2021,11 @@
 
     .wave-schedule-sep {
       color: var(--text-muted);
-      opacity: 0.45;
-      font-size: 10px;
+      opacity: 0.35;
+      font-size: 8.5px;
       line-height: 1;
       user-select: none;
+      margin: 0;
     }
 
     :root[data-theme="light"] .wave-schedule-strip {
@@ -2039,7 +2045,7 @@
       display: none;
     }
 
-    @media (max-width: 520px) {
+    @media (max-width: 480px) {
       .step-lbl .lbl-full {
         display: none;
       }
@@ -2047,34 +2053,29 @@
         display: inline;
       }
       .wave-divider {
-        padding: 4px 6px;
+        padding: 3px 6px;
         gap: 4px;
       }
       .wave-schedule-strip {
-        padding: 0 5px;
+        padding: 0 4px;
         gap: 3px;
         height: 22px;
       }
       .wave-schedule-step {
-        font-size: 10.5px;
-        gap: 2px;
+        font-size: 10px;
+        gap: 1.5px;
       }
       .wave-schedule-step .step-lbl {
-        font-size: 10px;
+        font-size: 9.5px;
       }
       .wave-schedule-step .step-time {
-        font-size: 10.5px;
-      }
-      .wave-schedule-sep {
-        font-size: 8.5px;
-        margin: 0;
-        opacity: 0.35;
+        font-size: 10px;
       }
       .wave-laps-toggle-btn {
         height: 22px;
+        width: 20px;
         min-width: 20px;
-        padding: 0 4px;
-        font-size: 10px;
+        font-size: 9.5px;
       }
     }
 
@@ -8233,10 +8234,10 @@
           waveHeader.className = 'wave-divider';
 
           waveHeader.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
               <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-left:auto;flex-shrink:0;">
+            <div class="wave-schedule-wrap" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0;">
               ${timeHtml}
               ${hasWaveLaps ? `
                 <button type="button" class="wave-laps-toggle-btn" onclick="event.stopPropagation(); toggleRiderKeySet(${waveKeysJson});" title="Click to ${isAllWaveExpanded ? 'collapse' : 'expand'} all lap splits in this wave">
