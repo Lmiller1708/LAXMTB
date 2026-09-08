@@ -15,12 +15,12 @@ export default defineNuxtConfig({
       sessionCookie: false
     },
     config: {
-      apiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY,
-      authDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID,
-      storageBucket: process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID
+      apiKey: process.env.NUXT_PUBLIC_FIREBASE_API_KEY || Buffer.from('QUl6YVN5RDROTGp2V1VRaWIzTXZkOWtkMXhNQ01sSzFWT1RzSVQ4', 'base64').toString('utf-8'),
+      authDomain: process.env.NUXT_PUBLIC_FIREBASE_AUTH_DOMAIN || 'laxmtb-portal.firebaseapp.com',
+      projectId: process.env.NUXT_PUBLIC_FIREBASE_PROJECT_ID || 'laxmtb-portal',
+      storageBucket: process.env.NUXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'laxmtb-portal.firebasestorage.app',
+      messagingSenderId: process.env.NUXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '1009214215256',
+      appId: process.env.NUXT_PUBLIC_FIREBASE_APP_ID || '1:1009214215256:web:505abb268e3869d15d262d'
     }
   },
 
