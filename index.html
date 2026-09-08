@@ -2194,6 +2194,10 @@
       letter-spacing: -0.2px;
       white-space: nowrap;
     }
+    .col-time .time-penalty {
+      color: var(--accent-red) !important;
+      font-weight: 800;
+    }
 
     .no-results {
       padding: 30px 16px;
@@ -8152,7 +8156,7 @@
                 <td class="col-avg col-desktop-only" style="text-align:right;">${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : '<span class="lap-empty">-</span>'}</td>
                 <td class="col-pen col-desktop-only" style="text-align:right;">${r.penalty ? `<span class="col-pen-val">+${escapeHtml(r.penalty)}</span>` : '<span class="lap-empty">-</span>'}</td>
                 <td class="col-time" style="text-align:right;white-space:nowrap;">
-                  <span>${escapeHtml(displayTime)}</span>
+                  <span class="${r.penalty ? 'time-penalty' : ''}" ${r.penalty ? `title="Includes +${escapeHtml(r.penalty)} penalty"` : ''}>${escapeHtml(displayTime)}</span>
                   ${hasLaps ? `<span class="rider-expand-icon" title="View Lap Times">▼</span>` : ''}
                 </td>
               `;
@@ -8354,7 +8358,7 @@
               <td class="col-avg col-desktop-only" style="text-align:right;">${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : '<span class="lap-empty">-</span>'}</td>
               <td class="col-pen col-desktop-only" style="text-align:right;">${r.penalty ? `<span class="col-pen-val">+${escapeHtml(r.penalty)}</span>` : '<span class="lap-empty">-</span>'}</td>
               <td class="col-time" style="text-align:right;white-space:nowrap;">
-                <span>${escapeHtml(displayTime)}</span>
+                <span class="${r.penalty ? 'time-penalty' : ''}" ${r.penalty ? `title="Includes +${escapeHtml(r.penalty)} penalty"` : ''}>${escapeHtml(displayTime)}</span>
                 ${hasLaps ? `<span class="rider-expand-icon" title="View Lap Times">▼</span>` : ''}
               </td>
             `;
