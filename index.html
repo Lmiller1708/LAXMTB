@@ -477,23 +477,40 @@
       }
 
       /* Slight tweak: Keep title on one line on mobile so the bar NEVER grows tall */
+      .brand-box {
+        min-width: 0;
+        flex-shrink: 1;
+        gap: 6px;
+      }
+      .brand-text {
+        min-width: 0;
+        overflow: hidden;
+      }
       .brand-text h1 {
-        font-size: clamp(17px, 4.4vw, 21px);
+        font-size: clamp(14px, 3.8vw, 19px);
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .team-logo {
-        width: 36px;
-        height: 32px;
-      }
-      .brand-box {
-        gap: 6px;
+        width: 34px;
+        height: 30px;
+        flex-shrink: 0;
       }
       .header-top {
         gap: 6px;
       }
+      .header-controls {
+        flex-shrink: 0;
+        margin-left: auto;
+        gap: 6px;
+      }
       .header-top-container {
-        padding: 5px 12px;
+        padding: 5px 12px 5px 10px;
+        padding-right: max(12px, env(safe-area-inset-right));
+        padding-left: max(10px, env(safe-area-inset-left));
         min-height: 46px;
+        box-sizing: border-box;
       }
       #themeLabel,
       #liveStatusText {
@@ -502,14 +519,21 @@
       .theme-toggle-btn {
         padding: 3px 6px;
         min-height: 28px;
+        height: 28px;
         min-width: 28px;
         justify-content: center;
+        flex-shrink: 0;
+        box-sizing: border-box;
       }
       .live-status-badge {
-        padding: 0 7px;
+        padding: 0 6px;
         min-height: 28px;
+        height: 28px;
         min-width: 26px;
+        border-radius: 14px;
         justify-content: center;
+        flex-shrink: 0;
+        box-sizing: border-box;
       }
     }
 
@@ -1000,6 +1024,26 @@
       border-radius: 10px;
     }
 
+    .category-time-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--accent-red);
+      background: rgba(220, 38, 38, 0.12);
+      border: 1px solid rgba(220, 38, 38, 0.35);
+      padding: 1px 7px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      letter-spacing: 0.3px;
+    }
+
+    :root[data-theme="light"] .category-time-badge {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fca5a5;
+    }
+
     .wave-divider {
       background: var(--wave-bg);
       color: var(--wave-text);
@@ -1013,7 +1057,29 @@
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .wave-time-tag {
+      display: inline-flex;
+      align-items: center;
       gap: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--accent-red);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      padding: 1px 7px;
+      border-radius: 4px;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    :root[data-theme="light"] .wave-time-tag {
+      background: #ffffff;
+      color: #b91c1c;
+      border-color: #e5e7eb;
     }
 
     /* Responsive Table Container with Sleek, Subtle Scrollbar */
@@ -2488,7 +2554,27 @@
           '<strong>Staging & Call-ups:</strong> Riders must report to staging grids 15 minutes prior to their wave start.',
           '<strong>Pit Zone & Camping:</strong> Team tents in designated LAXMTB Team space. Quiet hours 10 PM - 6 AM.',
           '<strong>Leashed Pets Only:</strong> Dogs prohibited in active course areas and staging grid zones.'
-        ]
+        ],
+        waveSchedule: {
+          'Varsity Boys': { '1': '10:00 AM' },
+          'JV III Boys': { '1': '10:05 AM' },
+          'JV II Boys': { '1': '10:40 AM', '2': '10:43 AM' },
+          'Freshman Boys': { '1': '11:15 AM', '2': '11:18 AM' },
+          'HS Open Boys': { '1': '11:20 AM' },
+          'Varsity Girls': { '1': '12:30 PM' },
+          'JV III Girls': { '1': '12:35 PM' },
+          'JV II Girls': { '1': '12:40 PM' },
+          'Freshman Girls': { '1': '12:45 PM' },
+          'HS Open Girls': { '1': '12:48 PM' },
+          '8th Grade Boys': { '1': '1:45 PM', '2': '1:48 PM' },
+          '7th Grade Boys': { '1': '2:15 PM', '2': '2:18 PM' },
+          '6th Grade Boys': { '1': '2:45 PM', '2': '2:48 PM' },
+          'MS2 Boys': { '1': '2:50 PM' },
+          '8th Grade Girls': { '1': '3:15 PM' },
+          '7th Grade Girls': { '1': '3:20 PM' },
+          '6th Grade Girls': { '1': '3:25 PM' },
+          'MS2 Girls': { '1': '3:30 PM' }
+        }
       },
       {
         id: 'cable-conquest',
@@ -2650,6 +2736,47 @@
       'JV III Boys', 'JV III Girls',
       'Varsity Boys', 'Varsity Girls'
     ];
+
+    const defaultWaveSchedule = {
+      'Varsity Boys': { '1': '10:00 AM', default: '10:00 AM' },
+      'JV III Boys': { '1': '10:05 AM', default: '10:05 AM' },
+      'JV II Boys': { '1': '10:40 AM', '2': '10:43 AM', default: '10:40 AM' },
+      'Freshman Boys': { '1': '11:15 AM', '2': '11:18 AM', default: '11:15 AM' },
+      'HS Open Boys': { '1': '11:20 AM', default: '11:20 AM' },
+      'Varsity Girls': { '1': '12:30 PM', default: '12:30 PM' },
+      'JV III Girls': { '1': '12:35 PM', default: '12:35 PM' },
+      'JV II Girls': { '1': '12:40 PM', default: '12:40 PM' },
+      'Freshman Girls': { '1': '12:45 PM', default: '12:45 PM' },
+      'HS Open Girls': { '1': '12:48 PM', default: '12:48 PM' },
+      '8th Grade Boys': { '1': '1:45 PM', '2': '1:48 PM', default: '1:45 PM' },
+      '7th Grade Boys': { '1': '2:15 PM', '2': '2:18 PM', default: '2:15 PM' },
+      '6th Grade Boys': { '1': '2:45 PM', '2': '2:48 PM', default: '2:45 PM' },
+      'MS2 Boys': { '1': '2:50 PM', default: '2:50 PM' },
+      '8th Grade Girls': { '1': '3:15 PM', default: '3:15 PM' },
+      '7th Grade Girls': { '1': '3:20 PM', default: '3:20 PM' },
+      '6th Grade Girls': { '1': '3:25 PM', default: '3:25 PM' },
+      'MS2 Girls': { '1': '3:30 PM', default: '3:30 PM' }
+    };
+
+    function getCategoryStartTime(race, category) {
+      if (!category) return null;
+      const sched = (race && race.waveSchedule) || defaultWaveSchedule;
+      const cKey = Object.keys(sched).find(k => k.toLowerCase() === category.toLowerCase()) || category;
+      const catObj = sched[cKey];
+      if (!catObj) return null;
+      return catObj['1'] || catObj['Wave: 1'] || catObj.default || null;
+    }
+
+    function getWaveStartTime(race, category, waveStr) {
+      if (!category) return null;
+      const sched = (race && race.waveSchedule) || defaultWaveSchedule;
+      const cKey = Object.keys(sched).find(k => k.toLowerCase() === category.toLowerCase()) || category;
+      const catObj = sched[cKey];
+      if (!catObj) return null;
+      const match = String(waveStr || '').match(/\d+/);
+      const waveNum = match ? match[0] : '1';
+      return catObj[waveNum] || catObj['Wave: ' + waveNum] || catObj.default || null;
+    }
 
     // Online/Offline Network Listeners
     window.addEventListener('online', () => {
@@ -3764,13 +3891,15 @@
           isCardCollapsed = allCardsCollapsed;
         }
 
+        const catStartTime = getCategoryStartTime(racesData[currentRaceIndex], cat);
         const catTitle = document.createElement('div');
         catTitle.className = 'category-header collapsible-header';
         catTitle.onclick = function() { toggleCard(this); };
         catTitle.innerHTML = `
-          <div style="display:flex;align-items:center;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span>${escapeHtml(cat)}</span>
             <span class="category-badge">${totalInCat} RIDERS</span>
+            ${catStartTime ? `<span class="category-time-badge" title="Scheduled Category Start Time">⏱️ ${escapeHtml(catStartTime)}</span>` : ''}
           </div>
           <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(cat)}">▼</span>
         `;
@@ -3783,9 +3912,13 @@
         const sortedWaveKeys = Object.keys(waves).sort();
 
         sortedWaveKeys.forEach(wKey => {
+          const waveTime = getWaveStartTime(racesData[currentRaceIndex], cat, wKey);
           const waveHeader = document.createElement('div');
           waveHeader.className = 'wave-divider';
-          waveHeader.innerHTML = `<span>🚩</span> ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}`;
+          waveHeader.innerHTML = `
+            <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
+            ${waveTime ? `<span class="wave-time-tag" title="Scheduled Wave Start Time">⏱️ Wave Start: ${escapeHtml(waveTime)}</span>` : ''}
+          `;
           cardBody.appendChild(waveHeader);
 
           const tableWrapper = document.createElement('div');
@@ -3922,11 +4055,15 @@
         });
 
         teamRiders.forEach(r => {
+          const rTime = getWaveStartTime(racesData[currentRaceIndex], r.category, r.wave || r.wv);
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td><span class="plate-number">#${escapeHtml(r.bib || r.no)}</span></td>
             <td><span class="rider-name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span></td>
-            <td><strong style="color:var(--text-main);display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;" title="${escapeHtml(r.category || '')}">${escapeHtml(r.category || '')}</strong></td>
+            <td>
+              <strong style="color:var(--text-main);display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;" title="${escapeHtml(r.category || '')}">${escapeHtml(r.category || '')}</strong>
+              ${rTime ? `<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;color:var(--accent-red);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:3px;vertical-align:middle;" title="Scheduled Wave Start: ${escapeHtml(rTime)}">⏱️ ${escapeHtml(rTime)}</span>` : ''}
+            </td>
             <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
             <td style="text-align:center;color:var(--text-muted);font-weight:600;">${escapeHtml(r.pl || '-')}</td>
             ${currentTab === 'results' ? `<td style="text-align:center;font-weight:700;color:var(--accent-red);">${escapeHtml(r.return_val || '+')}</td>` : ''}
