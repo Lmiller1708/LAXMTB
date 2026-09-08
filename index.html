@@ -6292,9 +6292,18 @@
     // TEAM PHOTOS & SHARED GOOGLE PHOTOS ALBUM
     // =========================================================
     const DEFAULT_TEAM_PHOTOS_URL = 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9';
+    const DEFAULT_RACE_PHOTOS_MAP = {
+      'bluff-bash': 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9',
+      'cable-conquest': 'https://photos.app.goo.gl/9GiHDEfZ3DTP13i19',
+      'hodag-hustle': 'https://photos.app.goo.gl/NBgQ8MtjhqLgXref9',
+      'gnarly-nordic': 'https://photos.app.goo.gl/FM8oW7tioTPXoz5p9',
+      'red-barn': 'https://photos.app.goo.gl/eqEaqUA1C1QiuTiZA',
+      'trek-trails': 'https://photos.app.goo.gl/eqEaqUA1C1QiuTiZA'
+    };
 
     function getRacePhotosUrl(race) {
-      let url = (race && race.photosUrl) ? race.photosUrl.trim() : DEFAULT_TEAM_PHOTOS_URL;
+      const fallback = (race && DEFAULT_RACE_PHOTOS_MAP[race.id]) ? DEFAULT_RACE_PHOTOS_MAP[race.id] : DEFAULT_TEAM_PHOTOS_URL;
+      let url = (race && race.photosUrl) ? race.photosUrl.trim() : fallback;
       if (url && !/^https?:\/\//i.test(url)) {
         url = 'https://' + url;
       }
@@ -6315,7 +6324,10 @@
     let currentLightboxIdx = -1;
     let photosPageLimit = 24;
 
-    async function loadTeamPhotosData() {
+    async function loadTeamPhotosData(race) {
+      if (!race || race.id !== 'bluff-bash') {
+        return [];
+      }
       if (loadedPhotosList.length > 0) return loadedPhotosList;
       try {
         const res = await fetch('./team_photos.json?t=' + Date.now());
@@ -6429,7 +6441,7 @@
       const albumUrl = getRacePhotosUrl(race);
       const container = document.getElementById('tablesContainer');
 
-      const photos = await loadTeamPhotosData();
+      const photos = await loadTeamPhotosData(race);
       const visiblePhotos = photos.slice(0, photosPageLimit);
       const hasMore = photos.length > photosPageLimit;
 
@@ -6457,8 +6469,15 @@
         `;
       } else {
         galleryGridHtml = `
-          <div style="text-align:center;padding:36px 16px;color:var(--text-muted);">
-            <p style="font-size:14px;margin-bottom:12px;">No local previews cached yet. Tap <strong>Open Album</strong> above to view, download, or add photos in Google Photos!</p>
+          <div style="text-align:center;padding:42px 20px;background:var(--bg-subtle);border-radius:12px;margin-top:16px;border:1px solid var(--border);">
+            <div style="font-size:44px;margin-bottom:12px;">📸</div>
+            <h4 style="font-size:17px;font-weight:700;margin-bottom:8px;color:var(--text-main);">${escapeHtml(race.name)} Shared Album</h4>
+            <p style="font-size:13px;color:var(--text-muted);max-width:460px;margin:0 auto 20px;line-height:1.5;">
+              The shared Google Photos album for this event is ready! Tap below to open the album, browse shared photos, or upload your own pictures and videos.
+            </p>
+            <a href="${albumUrl}" target="_blank" rel="noopener noreferrer" class="btn-primary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-size:14px;text-decoration:none;border-radius:8px;font-weight:700;">
+              <span>📷</span> Open Google Photos Album ↗
+            </a>
           </div>
         `;
       }
@@ -6469,14 +6488,14 @@
           <div class="photos-gallery-section" style="margin-top:0;">
             <div class="photos-gallery-header" style="flex-wrap:wrap;gap:14px;align-items:center;">
               <div style="flex:1;min-width:240px;">
-                <h3 class="photos-gallery-title" style="font-size:18px;margin-bottom:4px;"><span>📸</span> LAX MTB Team Race Photos</h3>
+                <h3 class="photos-gallery-title" style="font-size:18px;margin-bottom:4px;"><span>📸</span> ${escapeHtml(race.name)} Photos</h3>
                 <span style="font-size:12.5px;color:var(--text-muted);display:block;line-height:1.4;">
-                  ${photos.length > 0 ? `Showing ${visiblePhotos.length} of ${photos.length} shared team photos • Tap any photo to view full-size` : 'View, download, and contribute race photos to our shared team album.'}
+                  ${photos.length > 0 ? `Showing ${visiblePhotos.length} of ${photos.length} shared team photos • Tap any photo to view full-size` : `Shared team photo album for ${escapeHtml(race.name)}.`}
                 </span>
               </div>
               <div class="photos-actions-row" style="margin-left:auto;">
                 <a href="${albumUrl}" target="_blank" rel="noopener noreferrer" class="btn-photos-primary" style="font-size:13px;padding:9px 18px;" title="Open in Google Photos">
-                  <span>📷</span> Open Google Photos ${photos.length > 0 ? `(${photos.length})` : ''}
+                  <span>📷</span> Open Google Photos ${photos.length > 0 ? `(${photos.length})` : '↗'}
                 </a>
                 <button type="button" class="btn-photos-secondary" onclick="copyPhotoLinkToClipboard('${albumUrl}')" style="font-size:13px;padding:9px 14px;" title="Copy shareable album link">
                   <span>🔗</span> Copy Link
@@ -6489,7 +6508,7 @@
               </div>
             </div>
 
-            <!-- In-App Photos Grid -->
+            <!-- In-App Photos Grid or Album Card -->
             ${galleryGridHtml}
           </div>
 
@@ -8933,7 +8952,23 @@
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Google Sheet HTTP ${res.status}`);
       const text = await res.text();
-      return parseCSV(text);
+      const rows = parseCSV(text);
+
+      // Google Sheets gviz workaround: Date formatting in early rows causes gviz to infer Column B as Date,
+      // which drops string URLs lower down in Column B. Query range A10:G40 to guarantee link URLs are preserved.
+      try {
+        const linksUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}&range=A10:G40&t=${Date.now()}`;
+        const linksRes = await fetch(linksUrl);
+        if (linksRes.ok) {
+          const linksText = await linksRes.text();
+          const linksRows = parseCSV(linksText);
+          rows.push(...linksRows);
+        }
+      } catch (err) {
+        console.warn('[LAXMTB] Secondary range fetch failed:', err);
+      }
+
+      return rows;
     }
 
     function parseRaceTabCSV(rows) {
@@ -9145,7 +9180,15 @@
       const race = SEASON_RACES[currentRaceIndex];
       if (!race) return;
 
-      const tabName = race.name.replace(/ Festival$/i, '').trim();
+      const TAB_NAME_MAP = {
+        'bluff-bash': 'Bluff Bash',
+        'cable-conquest': 'Cable Conquest',
+        'hodag-hustle': 'Hodag Hustle',
+        'gnarly-nordic': 'Gnarly Nordic',
+        'red-barn': 'Trek Trails',
+        'trek-trails': 'Trek Trails'
+      };
+      const tabName = TAB_NAME_MAP[race.id] || race.name.replace(/ Festival$/i, '').replace(/ Challenge$/i, '').replace(/ State Championship$/i, '').trim();
 
       try {
         const rows = await fetchRaceTabCSV(googleSheetId, tabName);
