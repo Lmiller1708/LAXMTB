@@ -6776,7 +6776,11 @@
           navigationUrl: race.navigationUrl || race.googleMapsUrl || '',
           eventGuideUrl: race.eventGuideUrl || '',
           eventId: race.eventId || ''
-        }
+        },
+        schedule: race.schedule || [],
+        signups: race.signups || {},
+        guidelines: race.guidelines || [],
+        waveSchedule: race.waveSchedule || {}
       };
 
       try {
@@ -6790,7 +6794,7 @@
         });
         lastSheetSyncTime = new Date();
         updateAdminSyncStatus();
-        console.log('[LAXMTB] Webhook sync sent to Google Sheet successfully');
+        console.log('[LAXMTB] Full webhook sync sent to Google Sheet successfully');
       } catch (err) {
         console.warn('[LAXMTB] Error sending update to Google Sheet webhook:', err);
       }
