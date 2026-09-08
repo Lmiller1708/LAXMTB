@@ -2134,7 +2134,7 @@
 
     @media (min-width: 768px) {
       .results-table {
-        min-width: 740px;
+        min-width: 780px;
       }
       .col-desktop-only {
         display: table-cell !important;
@@ -2143,6 +2143,15 @@
         display: none !important;
       }
       .rider-laps-detail-row {
+        display: none !important;
+      }
+    }
+
+    .mobile-only {
+      display: inline-block !important;
+    }
+    @media (min-width: 768px) {
+      .mobile-only {
         display: none !important;
       }
     }
@@ -2166,6 +2175,17 @@
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.2px;
       white-space: nowrap;
+    }
+    .col-pen {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+    .col-pen-val {
+      color: var(--accent-red);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
     }
     .col-time {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -8078,6 +8098,7 @@
                   <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 3</th>
                   <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 4</th>
                   <th class="col-avg col-desktop-only" style="width:75px;text-align:right;">Avg Pace</th>
+                  <th class="col-pen col-desktop-only" style="width:58px;text-align:right;">Pen</th>
                   <th class="col-time col-desktop-only" style="width:80px;text-align:right;">Time</th>
                 ` : ''}
               </tr>
@@ -8120,7 +8141,7 @@
                 <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${escapeHtml(r.team)}</span></td>
                 <td style="text-align:center;white-space:nowrap;">
                   <span class="div-tag">D${escapeHtml(r.div || '1')}</span>
-                  ${r.penalty ? `<span class="penalty-tag" title="Includes +${escapeHtml(r.penalty)} penalty" style="margin-left:3px;">+${escapeHtml(r.penalty)}</span>` : ''}
+                  ${r.penalty ? `<span class="penalty-tag mobile-only" title="Includes +${escapeHtml(r.penalty)} penalty" style="margin-left:3px;">+${escapeHtml(r.penalty)}</span>` : ''}
                   ${hasLaps ? `<span class="rider-expand-icon" title="View Lap Times">▼</span>` : ''}
                 </td>
                 <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
@@ -8128,12 +8149,8 @@
                 <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
                 <td class="col-lap col-desktop-only ${lap4 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap4)}</td>
                 <td class="col-avg col-desktop-only" style="text-align:right;">${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : '<span class="lap-empty">-</span>'}</td>
-                <td class="col-time col-desktop-only" style="text-align:right;">
-                  <div style="display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
-                    <span>${escapeHtml(displayTime)}</span>
-                    ${r.penalty ? `<span class="penalty-tag" title="Includes +${escapeHtml(r.penalty)} penalty">+${escapeHtml(r.penalty)} pen</span>` : ''}
-                  </div>
-                </td>
+                <td class="col-pen col-desktop-only" style="text-align:right;">${r.penalty ? `<span class="col-pen-val">+${escapeHtml(r.penalty)}</span>` : '<span class="lap-empty">-</span>'}</td>
+                <td class="col-time col-desktop-only" style="text-align:right;">${escapeHtml(displayTime)}</td>
               `;
               tbody.appendChild(tr);
 
@@ -8272,6 +8289,7 @@
                 <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 3</th>
                 <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 4</th>
                 <th class="col-avg col-desktop-only" style="width:75px;text-align:right;">Avg Pace</th>
+                <th class="col-pen col-desktop-only" style="width:58px;text-align:right;">Pen</th>
                 <th class="col-time col-desktop-only" style="width:80px;text-align:right;">Time</th>
               ` : ''}
             </tr>
@@ -8321,7 +8339,7 @@
               </td>
               <td style="text-align:center;white-space:nowrap;">
                 <span class="div-tag">D${escapeHtml(r.div || '1')}</span>
-                ${r.penalty ? `<span class="penalty-tag" title="Includes +${escapeHtml(r.penalty)} penalty" style="margin-left:3px;">+${escapeHtml(r.penalty)}</span>` : ''}
+                ${r.penalty ? `<span class="penalty-tag mobile-only" title="Includes +${escapeHtml(r.penalty)} penalty" style="margin-left:3px;">+${escapeHtml(r.penalty)}</span>` : ''}
                 ${hasLaps ? `<span class="rider-expand-icon" title="View Lap Times">▼</span>` : ''}
               </td>
               <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
@@ -8329,12 +8347,8 @@
               <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
               <td class="col-lap col-desktop-only ${lap4 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap4)}</td>
               <td class="col-avg col-desktop-only" style="text-align:right;">${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : '<span class="lap-empty">-</span>'}</td>
-              <td class="col-time col-desktop-only" style="text-align:right;">
-                <div style="display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.2;">
-                  <span>${escapeHtml(displayTime)}</span>
-                  ${r.penalty ? `<span class="penalty-tag" title="Includes +${escapeHtml(r.penalty)} penalty">+${escapeHtml(r.penalty)} pen</span>` : ''}
-                </div>
-              </td>
+              <td class="col-pen col-desktop-only" style="text-align:right;">${r.penalty ? `<span class="col-pen-val">+${escapeHtml(r.penalty)}</span>` : '<span class="lap-empty">-</span>'}</td>
+              <td class="col-time col-desktop-only" style="text-align:right;">${escapeHtml(displayTime)}</td>
             `;
             tbody.appendChild(tr);
 
