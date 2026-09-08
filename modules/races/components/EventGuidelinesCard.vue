@@ -1,29 +1,44 @@
 <script setup lang="ts">
 defineProps<{
   guidelines?: string[]
+  isCoachAuth?: boolean
 }>()
+
+const emit = defineEmits<{
+  (e: 'edit'): void
+}>()
+
+const isOpen = ref(true)
 </script>
 
 <template>
-  <div class="bg-[#171717] border border-[#262626] rounded-xl p-5 mb-6">
-    <div class="flex items-center gap-2 border-b border-[#262626] pb-3 mb-4">
-      <span class="text-xl">🏕️</span>
-      <h2 class="text-base font-bold text-white uppercase tracking-wide">Venue Guidelines & Spectator Info</h2>
+  <div class="detail-section" id="guidelinesDetailSection">
+    <div class="detail-section-header collapsible-header" @click="isOpen = !isOpen">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="detail-section-title"><span>🏕️</span> Venue Guidelines & Spectator Info</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button
+          v-if="isCoachAuth"
+          type="button"
+          class="card-inline-edit-btn"
+          title="Edit Guidelines & Announcements"
+          @click.stop="emit('edit')"
+        >
+          <span>✏️</span>
+        </button>
+        <span class="card-toggle-icon" :class="{ collapsed: !isOpen }" title="Toggle Guidelines">▼</span>
+      </div>
     </div>
-
-    <div v-if="!guidelines || guidelines.length === 0" class="text-xs text-gray-500 text-center py-4">
-      No specific venue guidelines posted.
+    <div v-show="isOpen" class="collapsible-body detail-section-body">
+      <div v-if="!guidelines || guidelines.length === 0" class="no-results" style="padding:16px;">
+        No specific guidelines posted yet for this venue.
+      </div>
+      <div v-else style="display:flex;flex-direction:column;gap:6px;">
+        <p v-for="(g, idx) in guidelines" :key="idx" class="guideline-item">
+          • {{ g }}
+        </p>
+      </div>
     </div>
-
-    <ul v-else class="space-y-2.5">
-      <li
-        v-for="(guideline, idx) in guidelines"
-        :key="idx"
-        class="text-xs text-gray-300 leading-relaxed flex items-start gap-2"
-      >
-        <span class="text-red-500 font-bold">•</span>
-        <span v-html="guideline" />
-      </li>
-    </ul>
   </div>
 </template>

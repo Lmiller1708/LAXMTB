@@ -4,9 +4,17 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: false, // Client-side hydration for maximum offline PWA responsiveness
 
+  experimental: {
+    appManifest: false
+  },
+
   app: {
     baseURL: process.env.NODE_ENV === 'production' ? '/LAXMTB/' : '/',
     head: {
+      htmlAttrs: {
+        'data-theme': 'dark',
+        lang: 'en'
+      },
       title: 'LAX MTB // RACE CENTRAL',
       meta: [
         { charset: 'utf-8' },
@@ -24,6 +32,19 @@ export default defineNuxtConfig({
       ]
     }
   },
+
+  tailwindcss: {
+    viewer: false,
+    config: {
+      corePlugins: {
+        preflight: false
+      }
+    }
+  },
+
+  css: [
+    '~/assets/css/main.css'
+  ],
 
   modules: [
     '@nuxtjs/tailwindcss',

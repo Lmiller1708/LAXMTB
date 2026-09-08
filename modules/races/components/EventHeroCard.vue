@@ -3,31 +3,47 @@ import type { Race } from '../types/race'
 
 defineProps<{
   race: Race
+  isCoachAuth?: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'edit'): void
 }>()
 </script>
 
 <template>
-  <div class="bg-gradient-to-br from-[#1c1c1c] to-[#121212] border border-[#2a2a2a] rounded-xl p-5 sm:p-6 mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <img
-          :src="race.logo"
-          :alt="race.name"
-          class="w-14 h-14 sm:w-16 sm:h-16 object-contain shrink-0"
-          onerror="this.style.display='none'"
-        >
-        <div>
-          <h1 class="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
-            {{ race.name }}
-          </h1>
-          <div class="flex flex-wrap items-center gap-2 mt-1">
-            <span class="text-xs font-bold text-red-500">📅 {{ race.dateStr }}</span>
-            <span v-if="race.conference" class="text-xs font-semibold text-gray-400">
-              • 🏆 {{ race.conference }}
-            </span>
-          </div>
+  <div class="event-hero-card">
+    <div style="display:flex;align-items:center;gap:18px;flex:1;min-width:260px;">
+      <img :src="race.logo" :alt="race.name" class="event-hero-logo" onerror="this.style.display='none'">
+      <div class="event-hero-meta">
+        <h2>{{ race.name }}</h2>
+        <div class="event-hero-meta-badges">
+          <span class="event-meta-pill">📅 <strong>{{ race.dateStr }}</strong></span>
+          <span v-if="race.conference" class="event-meta-pill pill-conf">🏆 {{ race.conference }}</span>
         </div>
       </div>
+    </div>
+    <div class="event-hero-actions" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <a
+        v-if="race.eventGuideUrl"
+        :href="race.eventGuideUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn-hero-league"
+        title="Visit the official Wisconsin League Event Page on NICA"
+      >
+        <img src="/logos/nica-logo.png" alt="NICA" class="nica-badge-icon" onerror="this.style.display='none'">
+        <span>Wisconsin League Page</span>
+      </a>
+      <button
+        v-if="isCoachAuth"
+        type="button"
+        class="card-inline-edit-btn"
+        title="Edit Race Details & Dates"
+        @click.stop="emit('edit')"
+      >
+        <span>✏️</span>
+      </button>
     </div>
   </div>
 </template>
