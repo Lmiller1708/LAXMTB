@@ -1993,6 +1993,50 @@
       color: var(--text-muted);
     }
 
+    .col-desktop-only {
+      display: none !important;
+    }
+    .col-mobile-only {
+      display: table-cell !important;
+    }
+
+    @media (min-width: 768px) {
+      .results-table {
+        min-width: 680px;
+      }
+      .col-desktop-only {
+        display: table-cell !important;
+      }
+      .col-mobile-only {
+        display: none !important;
+      }
+      .rider-expand-icon {
+        display: none !important;
+      }
+      .rider-laps-detail-row {
+        display: none !important;
+      }
+    }
+
+    .col-lap {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+    .col-lap.lap-empty {
+      color: var(--text-muted);
+      opacity: 0.45;
+      text-align: center !important;
+    }
+    .col-time {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12.5px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+
     .no-results {
       padding: 30px 16px;
       text-align: center;
@@ -4691,6 +4735,41 @@
       return ia - ib;
     }
 
+    function isRaceCompleted(race) {
+      if (!race) return false;
+      if (race.isEventOver === true) return true;
+
+      const raceDays = getRaceDaysForRace(race);
+      if (!raceDays || raceDays.length === 0) return false;
+
+      const sortedDays = [...raceDays].sort();
+      const lastRaceDay = sortedDays[sortedDays.length - 1];
+      if (!lastRaceDay) return false;
+
+      const sched = race.waveSchedule || defaultWaveSchedule;
+      let maxWaveMins = 0;
+      for (const catObj of Object.values(sched)) {
+        for (const wave of Object.values(catObj)) {
+          if (wave && wave.start) {
+            const m = parseTimeStrToMinutes(wave.start);
+            if (m && m > maxWaveMins) maxWaveMins = m;
+          }
+        }
+      }
+      if (maxWaveMins === 0) maxWaveMins = 16 * 60; // 4:00 PM default
+
+      // Stop auto-refresh 3 hours after the last scheduled wave
+      const cutoffMins = maxWaveMins + (3 * 60);
+      const cutoffHours = Math.floor(cutoffMins / 60);
+      const cutoffRemMins = cutoffMins % 60;
+
+      const cutoffDate = new Date(`${lastRaceDay}T${String(cutoffHours).padStart(2, '0')}:${String(cutoffRemMins).padStart(2, '0')}:00`);
+      if (!isNaN(cutoffDate.getTime()) && Date.now() > cutoffDate.getTime()) {
+        return true;
+      }
+      return false;
+    }
+
     // Online/Offline Network Listeners
     window.addEventListener('online', () => {
       setOnlineBadge(true);
@@ -4947,6 +5026,16 @@
 
       if (updateUrl) updateUrlState();
 
+      // Auto-Refresh: ONLY active on 'results' tab; immediately stop and hide on all other tabs
+      const autoRefreshRow = document.getElementById('autoRefreshRow');
+      if (tab !== 'results') {
+        if (autoRefreshRow) autoRefreshRow.style.display = 'none';
+        if (autoRefreshTimer) {
+          clearInterval(autoRefreshTimer);
+          autoRefreshTimer = null;
+        }
+      }
+
       if (tab === 'details') {
         document.getElementById('controlsPanel').style.display = 'none';
         document.getElementById('statusBar').style.display = 'none';
@@ -4968,17 +5057,9 @@
       const toggleLabel = document.getElementById('toggleAllCardsLabel');
       if (toggleLabel) toggleLabel.textContent = 'Expand All';
 
-      // Auto-Refresh: ONLY active on 'results' tab; completely disabled on 'list' and 'details'
-      const autoRefreshRow = document.getElementById('autoRefreshRow');
       if (tab === 'results') {
         if (autoRefreshRow) autoRefreshRow.style.display = 'flex';
         setupAutoRefresh();
-      } else {
-        if (autoRefreshRow) autoRefreshRow.style.display = 'none';
-        if (autoRefreshTimer) {
-          clearInterval(autoRefreshTimer);
-          autoRefreshTimer = null;
-        }
       }
 
       const listDropdown = document.getElementById('listSelect');
@@ -7126,7 +7207,7 @@
     }
 
     async function fetchLiveRaceresultData() {
-      if (currentTab === 'details') return;
+      if (currentTab !== 'results' && currentTab !== 'list') return;
       const race = SEASON_RACES[currentRaceIndex];
       if (!race.isPublished || !race.eventId) return;
 
@@ -7145,6 +7226,24 @@
         const config = await configResp.json();
         const key = config.key;
 
+        // Check if RACE RESULT API indicates EventOver
+        if (config && config.EventOver === true) {
+          race.isEventOver = true;
+          if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer);
+            autoRefreshTimer = null;
+          }
+          const autoRefreshRow = document.getElementById('autoRefreshRow');
+          if (autoRefreshRow) {
+            autoRefreshRow.innerHTML = `
+              <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+                <span>Auto-Refresh:</span>
+                <span style="background:rgba(255,255,255,0.08);color:var(--text-muted);padding:2px 8px;border-radius:4px;">Off (Race Completed)</span>
+              </div>
+            `;
+          }
+        }
+
         const lists = config?.TabConfig?.Lists || [];
         const targetList = lists.find(l => l.ID === selectedListId) || lists[0];
         const listName = targetList ? targetList.Name : '';
@@ -7162,13 +7261,18 @@
         if (!listResp.ok) throw new Error(`List HTTP ${listResp.status}`);
         const resultData = await listResp.json();
 
+        if (currentTab !== 'results' && currentTab !== 'list') return;
+
         parseUniversalData(resultData, targetList, cacheKey);
 
         setOnlineBadge(true);
-        document.getElementById('lastUpdatedText').textContent = 'Updated ' + new Date().toLocaleTimeString();
+        const updateStatus = (race.isEventOver || isRaceCompleted(race)) ? 'Final Results • ' : 'Updated ';
+        document.getElementById('lastUpdatedText').textContent = updateStatus + new Date().toLocaleTimeString();
       } catch (err) {
         console.warn('[LAXMTB] Live fetch error, restoring cached data:', err);
-        loadFromLocalStorage(cacheKey);
+        if (currentTab === 'results' || currentTab === 'list') {
+          loadFromLocalStorage(cacheKey);
+        }
       }
     }
 
@@ -7184,7 +7288,7 @@
     }
 
     function loadFromLocalStorage(cacheKey) {
-      if (currentTab === 'details') return;
+      if (currentTab !== 'results' && currentTab !== 'list') return;
       setOnlineBadge(false);
       try {
         const cachedStr = localStorage.getItem(cacheKey);
@@ -7209,7 +7313,7 @@
     }
 
     function parseUniversalData(resultData, listInfo, cacheKey) {
-      if (currentTab === 'details') return;
+      if (currentTab !== 'results' && currentTab !== 'list') return;
       const rawData = resultData?.data;
       const listId = listInfo?.ID || document.getElementById('listSelect').value;
 
@@ -7254,6 +7358,10 @@
                 rider.wv_rank = '1';
                 rider.return_val = '+';
                 rider.laps = [];
+                rider.lap1 = '-';
+                rider.lap2 = '-';
+                rider.lap3 = '-';
+                rider.lap4 = '-';
                 rider.totalTime = '';
                 rider.avgLap = '';
               } else if (currentTab === 'results') {
@@ -7272,6 +7380,10 @@
                   .map(l => String(l || '').trim())
                   .filter(l => l && l !== '-' && l !== '*' && l !== '0' && l !== '00:00');
                 rider.laps = rawLaps;
+                rider.lap1 = (row[7] && row[7] !== '*' && row[7] !== '0') ? String(row[7]).trim() : '-';
+                rider.lap2 = (row[8] && row[8] !== '*' && row[8] !== '0') ? String(row[8]).trim() : '-';
+                rider.lap3 = (row[9] && row[9] !== '*' && row[9] !== '0') ? String(row[9]).trim() : '-';
+                rider.lap4 = (row[10] && row[10] !== '*' && row[10] !== '0') ? String(row[10]).trim() : '-';
 
                 const finishTime = String(row[12] || row[11] || rawLaps[rawLaps.length - 1] || '').trim();
                 rider.totalTime = finishTime;
@@ -7317,6 +7429,10 @@
                 rider.wv_rank = row[2] || '';
                 rider.return_val = row[7] || '+';
                 rider.laps = [];
+                rider.lap1 = '-';
+                rider.lap2 = '-';
+                rider.lap3 = '-';
+                rider.lap4 = '-';
                 rider.totalTime = '';
                 rider.avgLap = '';
               }
@@ -7350,7 +7466,7 @@
     }
 
     function renderNoResultsNotice(msg) {
-      if (currentTab === 'details') return;
+      if (currentTab !== 'results' && currentTab !== 'list') return;
       document.getElementById('noticeContainer').innerHTML = `
         <div class="notice-box">
           <span style="font-size:14px;">ℹ️</span>
@@ -7412,7 +7528,7 @@
     }
 
     function renderData() {
-      if (currentTab === 'details') return;
+      if (currentTab !== 'results' && currentTab !== 'list') return;
       if (currentRiders.length === 0) return;
 
       const query = document.getElementById('searchInput').value.toLowerCase().trim();
@@ -7564,11 +7680,19 @@
           table.innerHTML = `
             <thead>
               <tr>
-                <th style="width:48px;text-align:center;">Pos</th>
-                <th style="width:58px;">Plate #</th>
+                <th style="width:40px;text-align:center;">Pos</th>
+                <th style="width:55px;text-align:center;">Plate #</th>
                 <th>Rider Name</th>
                 <th>Team / School</th>
-                ${currentTab === 'results' ? '<th style="text-align:right;white-space:nowrap;">Time / Avg Lap</th>' : '<th style="text-align:center;width:48px;">Div</th>'}
+                ${currentTab === 'results' ? `
+                  <th class="col-div col-desktop-only" style="width:40px;text-align:center;">Div</th>
+                  <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 1</th>
+                  <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 2</th>
+                  <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 3</th>
+                  <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 4</th>
+                  <th class="col-time col-desktop-only" style="width:80px;text-align:right;">Time</th>
+                  <th class="col-mobile-time col-mobile-only" style="text-align:right;white-space:nowrap;">Time / Avg Lap</th>
+                ` : '<th style="text-align:center;width:48px;">Div</th>'}
               </tr>
             </thead>
             <tbody></tbody>
@@ -7597,15 +7721,26 @@
             if (currentTab === 'results') {
               const displayTime = r.totalTime || r.return_val || '-';
               const avgLapStr = r.avgLap ? `Avg: ${escapeHtml(r.avgLap)}` : '';
+              const lap1 = r.lap1 || (r.laps && r.laps[0]) || '-';
+              const lap2 = r.lap2 || (r.laps && r.laps[1]) || '-';
+              const lap3 = r.lap3 || (r.laps && r.laps[2]) || '-';
+              const lap4 = r.lap4 || (r.laps && r.laps[3]) || '-';
+
               tr.innerHTML = `
                 <td style="text-align:center;font-weight:700;color:var(--text-muted);">${escapeHtml(r.pl || '-')}</td>
-                <td><span class="plate-number">#${escapeHtml(r.no || r.bib)}</span></td>
+                <td style="text-align:center;"><span class="plate-number">#${escapeHtml(r.no || r.bib)}</span></td>
                 <td>
                   <span class="rider-name">${escapeHtml(r.name)}</span>
                   ${hasLaps ? `<span class="rider-expand-icon">▼</span>` : ''}
                 </td>
                 <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${escapeHtml(r.team)}</span></td>
-                <td style="text-align:right;">
+                <td class="col-div col-desktop-only" style="text-align:center;color:var(--text-muted);">${escapeHtml(r.div || '1')}</td>
+                <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
+                <td class="col-lap col-desktop-only ${lap2 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap2)}</td>
+                <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
+                <td class="col-lap col-desktop-only ${lap4 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap4)}</td>
+                <td class="col-time col-desktop-only" style="text-align:right;">${escapeHtml(displayTime)}</td>
+                <td class="col-mobile-time col-mobile-only" style="text-align:right;">
                   <div class="racer-time-cell">
                     <span class="racer-total-time">${escapeHtml(displayTime)}</span>
                     ${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : ''}
@@ -7648,7 +7783,7 @@
                 }
 
                 detailTr.innerHTML = `
-                  <td colspan="5">
+                  <td colspan="12">
                     <div class="laps-detail-wrapper">
                       <span class="laps-detail-title">⏱️ Lap Splits:</span>
                       ${lapsHtml}
@@ -7730,11 +7865,19 @@
         table.innerHTML = `
           <thead>
             <tr>
-              <th style="width:48px;text-align:center;">Pos</th>
-              <th style="width:58px;">Plate #</th>
+              <th style="width:40px;text-align:center;">Pos</th>
+              <th style="width:55px;text-align:center;">Plate #</th>
               <th>Rider Name</th>
               <th>Category</th>
-              ${currentTab === 'results' ? '<th style="text-align:right;white-space:nowrap;">Time / Avg Lap</th>' : '<th style="text-align:center;width:48px;">Div</th>'}
+              ${currentTab === 'results' ? `
+                <th class="col-div col-desktop-only" style="width:40px;text-align:center;">Div</th>
+                <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 1</th>
+                <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 2</th>
+                <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 3</th>
+                <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 4</th>
+                <th class="col-time col-desktop-only" style="width:80px;text-align:right;">Time</th>
+                <th class="col-mobile-time col-mobile-only" style="text-align:right;white-space:nowrap;">Time / Avg Lap</th>
+              ` : '<th style="text-align:center;width:48px;">Div</th>'}
             </tr>
           </thead>
           <tbody></tbody>
@@ -7766,9 +7909,14 @@
           if (currentTab === 'results') {
             const displayTime = r.totalTime || r.return_val || '-';
             const avgLapStr = r.avgLap ? `Avg: ${escapeHtml(r.avgLap)}` : '';
+            const lap1 = r.lap1 || (r.laps && r.laps[0]) || '-';
+            const lap2 = r.lap2 || (r.laps && r.laps[1]) || '-';
+            const lap3 = r.lap3 || (r.laps && r.laps[2]) || '-';
+            const lap4 = r.lap4 || (r.laps && r.laps[3]) || '-';
+
             tr.innerHTML = `
               <td style="text-align:center;font-weight:700;color:var(--text-muted);">${escapeHtml(r.pl || '-')}</td>
-              <td><span class="plate-number">#${escapeHtml(r.bib || r.no)}</span></td>
+              <td style="text-align:center;"><span class="plate-number">#${escapeHtml(r.bib || r.no)}</span></td>
               <td>
                 <span class="rider-name">${escapeHtml(r.name)}</span>
                 ${hasLaps ? `<span class="rider-expand-icon">▼</span>` : ''}
@@ -7777,7 +7925,13 @@
                 <strong style="color:var(--text-main);display:inline;word-break:break-word;">${escapeHtml(r.category || '')}</strong>
                 ${rTime ? `<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;color:var(--accent-red);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:3px;vertical-align:middle;" title="Scheduled Wave Start: ${escapeHtml(rTime)}">${escapeHtml(rTime)}</span>` : ''}
               </td>
-              <td style="text-align:right;">
+              <td class="col-div col-desktop-only" style="text-align:center;color:var(--text-muted);">${escapeHtml(r.div || '1')}</td>
+              <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
+              <td class="col-lap col-desktop-only ${lap2 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap2)}</td>
+              <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
+              <td class="col-lap col-desktop-only ${lap4 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap4)}</td>
+              <td class="col-time col-desktop-only" style="text-align:right;">${escapeHtml(displayTime)}</td>
+              <td class="col-mobile-time col-mobile-only" style="text-align:right;">
                 <div class="racer-time-cell">
                   <span class="racer-total-time">${escapeHtml(displayTime)}</span>
                   ${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : ''}
@@ -7820,7 +7974,7 @@
               }
 
               detailTr.innerHTML = `
-                <td colspan="5">
+                <td colspan="12">
                   <div class="laps-detail-wrapper">
                     <span class="laps-detail-title">⏱️ Lap Splits:</span>
                     ${lapsHtml}
@@ -7926,8 +8080,36 @@
         clearInterval(autoRefreshTimer);
         autoRefreshTimer = null;
       }
-      // Never auto-refresh on Start Lists ('list') or Event Details ('details')
+      // Never auto-refresh on Start Lists ('list'), Event Details ('details'), or Team Photos ('photos')
       if (currentTab !== 'results') return;
+
+      const race = SEASON_RACES[currentRaceIndex];
+      const autoRefreshRow = document.getElementById('autoRefreshRow');
+      if (isRaceCompleted(race)) {
+        if (autoRefreshRow) {
+          autoRefreshRow.innerHTML = `
+            <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+              <span>Auto-Refresh:</span>
+              <span style="background:rgba(255,255,255,0.08);color:var(--text-muted);padding:2px 8px;border-radius:4px;">Off (Race Completed)</span>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      if (autoRefreshRow && !document.getElementById('autoRefreshInterval')) {
+        autoRefreshRow.innerHTML = `
+          <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+            <span>Auto-Refresh:</span>
+            <select id="autoRefreshInterval" class="select-dropdown" style="width:auto;min-height:28px;padding:2px 6px;" onchange="setupAutoRefresh()">
+              <option value="0">Off</option>
+              <option value="15">15s</option>
+              <option value="30" selected>30s</option>
+              <option value="60">60s</option>
+            </select>
+          </div>
+        `;
+      }
 
       const intervalSec = parseInt(document.getElementById('autoRefreshInterval')?.value || '30', 10);
       if (intervalSec > 0) {
