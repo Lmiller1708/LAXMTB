@@ -19,6 +19,7 @@ const {
   isLive,
   searchQuery,
   listMode,
+  selectedListId,
   sortOrder,
   selectedCategory,
   selectedTeamScope,
@@ -30,8 +31,13 @@ const {
 const setTab = (tab: TabType) => {
   currentTab.value = tab
   if (tab === 'list' || tab === 'results') {
+    if (tab === 'list') {
+      selectedListId.value = listMode.value === 'TEAM' ? '747B52' : 'A76F6B'
+    } else {
+      selectedListId.value = listMode.value === 'TEAM' ? 'E07F7C' : '4C8C1F'
+    }
     if (currentRace.value?.isPublished && currentRace.value?.eventId) {
-      fetchResults(String(currentRace.value.eventId), tab)
+      fetchResults(String(currentRace.value.eventId), tab, selectedListId.value)
     }
   }
 }
@@ -39,7 +45,7 @@ const setTab = (tab: TabType) => {
 watch(currentRace, (newRace) => {
   if (currentTab.value === 'list' || currentTab.value === 'results') {
     if (newRace?.isPublished && newRace?.eventId) {
-      fetchResults(String(newRace.eventId), currentTab.value)
+      fetchResults(String(newRace.eventId), currentTab.value, selectedListId.value)
     }
   }
 })
@@ -75,7 +81,7 @@ const handleSaveRace = (updated: Race) => {
 const refreshData = () => {
   if (currentTab.value === 'list' || currentTab.value === 'results') {
     if (currentRace.value?.isPublished && currentRace.value?.eventId) {
-      fetchResults(String(currentRace.value.eventId), currentTab.value)
+      fetchResults(String(currentRace.value.eventId), currentTab.value, selectedListId.value)
     }
   }
 }
@@ -149,9 +155,11 @@ const handlePrint = () => {
           v-if="currentRace?.isPublished && currentRace?.eventId"
           v-model:search-query="searchQuery"
           v-model:list-mode="listMode"
+          v-model:selected-list-id="selectedListId"
           v-model:sort-order="sortOrder"
           v-model:selected-category="selectedCategory"
           v-model:selected-team-scope="selectedTeamScope"
+          :current-tab="currentTab"
           :categories="categories"
           :is-live="isLive"
           :total-count="filteredRiders.length"
