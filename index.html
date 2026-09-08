@@ -6038,6 +6038,10 @@
                 <span>Wisconsin League Page</span>
               </a>
             ` : ''}
+            <a href="${getRacePhotosUrl(race)}" target="_blank" rel="noopener noreferrer" class="btn-hero-league" title="View or Add Photos to the Shared Team Album">
+              <span>📸</span>
+              <span>Team Photos ↗</span>
+            </a>
             ${isCoachAuth ? `
               <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue');" title="Edit Race Details & Dates">
                 <span>✏️</span>
@@ -6290,8 +6294,11 @@
     const DEFAULT_TEAM_PHOTOS_URL = 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9';
 
     function getRacePhotosUrl(race) {
-      if (race && race.photosUrl) return race.photosUrl;
-      return DEFAULT_TEAM_PHOTOS_URL;
+      let url = (race && race.photosUrl) ? race.photosUrl.trim() : DEFAULT_TEAM_PHOTOS_URL;
+      if (url && !/^https?:\/\//i.test(url)) {
+        url = 'https://' + url;
+      }
+      return url;
     }
 
     function copyPhotoLinkToClipboard(url) {
@@ -9081,8 +9088,11 @@
       let photosUrl = '';
       linkRows.forEach(r => {
         const name = (r[0] || '').toLowerCase();
-        const url = (r[1] || '').trim();
+        let url = (r[1] || '').trim();
         if (!url) return;
+        if (!/^https?:\/\//i.test(url)) {
+          url = 'https://' + url;
+        }
         if (name.includes('volunteer')) links.volunteer = url;
         else if (name.includes('dinner') || name.includes('food') || name.includes('hospitality')) links.food = url;
         else if (name.includes('coach') || name.includes('ride') || name.includes('league')) links.league = url;
