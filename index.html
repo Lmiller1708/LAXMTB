@@ -188,12 +188,11 @@
 
     .brand-text h1 {
       font-family: 'Teko', sans-serif;
-      font-size: clamp(19px, 4.6vw, 26px);
-      line-height: 1;
-      letter-spacing: 0.6px;
+      font-size: 26px;
+      line-height: 0.95;
+      letter-spacing: 0.8px;
       color: var(--text-main);
       text-transform: uppercase;
-      white-space: nowrap;
     }
 
     .brand-text h1 span {
@@ -756,30 +755,18 @@
     }
 
     @media (max-width: 520px) {
-      .header-top {
-        gap: 6px;
-      }
-      .brand-box {
-        gap: 6px;
+      :root {
+        --header-brand-height: 48px;
+        --subnav-height: 38px;
       }
       .brand-text h1 {
-        font-size: clamp(17px, 4.4vw, 21px);
-        white-space: nowrap;
+        font-size: 21px;
       }
       .team-logo {
-        width: 36px;
-        height: 32px;
+        width: 38px;
+        height: 34px;
       }
-      #themeLabel {
-        display: none;
-      }
-      .theme-toggle-btn {
-        padding: 3px 6px;
-        min-height: 28px;
-        min-width: 28px;
-        justify-content: center;
-      }
-      .live-status-badge {
+      .theme-toggle-btn, .live-status-badge {
         padding: 3px 6px;
         min-height: 28px;
         font-size: 10px;
@@ -802,12 +789,16 @@
     }
 
     @media (max-width: 380px) {
+      :root {
+        --header-brand-height: 44px;
+        --subnav-height: 36px;
+      }
       .brand-text h1 {
-        font-size: 16px;
+        font-size: 18px;
       }
       .team-logo {
-        width: 30px;
-        height: 26px;
+        width: 32px;
+        height: 28px;
       }
       .nav-tabs {
         gap: 8px;
@@ -2310,39 +2301,6 @@
   </main>
 
   <script>
-    // 0. Dynamic Header & Sticky Offset Synchronization (Guarantees zero overlap on all devices)
-    function initHeaderOffsets() {
-      const brandHeader = document.querySelector('.site-header-fixed');
-      const subNav = document.querySelector('.sub-nav-sticky-wrapper');
-
-      function syncOffsets() {
-        if (brandHeader) {
-          const h = brandHeader.offsetHeight;
-          if (h > 0) {
-            document.documentElement.style.setProperty('--header-brand-height', `${h}px`);
-          }
-        }
-        if (subNav) {
-          const h = subNav.offsetHeight;
-          if (h > 0) {
-            document.documentElement.style.setProperty('--subnav-height', `${h}px`);
-          }
-        }
-      }
-
-      syncOffsets();
-
-      window.addEventListener('resize', syncOffsets, { passive: true });
-      window.addEventListener('orientationchange', syncOffsets, { passive: true });
-
-      if (typeof ResizeObserver !== 'undefined') {
-        const ro = new ResizeObserver(() => syncOffsets());
-        if (brandHeader) ro.observe(brandHeader);
-        if (subNav) ro.observe(subNav);
-      }
-    }
-    initHeaderOffsets();
-
     // 1. ServiceWorker Registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
