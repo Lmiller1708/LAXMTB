@@ -2567,6 +2567,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    .event-map-container:not(.card-collapsed):not(:has(.collapsible-body.collapsed)) .event-map-header {
       flex-wrap: wrap;
       gap: 10px;
     }
@@ -2666,8 +2669,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
     }
 
     .signup-hub-title {
@@ -2908,9 +2909,6 @@
     }
 
     @media (max-width: 600px) {
-      .signup-hub-section {
-        margin: 0 10px 12px 10px;
-      }
       .signup-iframe-wrapper {
         height: 520px;
       }
