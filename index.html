@@ -189,7 +189,7 @@
 
     .brand-text h1 {
       font-family: 'Teko', sans-serif;
-      font-size: 25px;
+      font-size: 26px;
       line-height: 0.95;
       letter-spacing: 0.8px;
       color: var(--text-main);
@@ -197,11 +197,17 @@
       white-space: nowrap;
       display: flex;
       align-items: baseline;
-      gap: 4px;
+      gap: 5px;
     }
 
-    .brand-text h1 span {
-      font-size: 20px;
+    .brand-text h1 .brand-slash {
+      font-size: 1em; /* Exact same font size as LAX MTB */
+      color: var(--accent-red);
+      letter-spacing: 0.8px;
+    }
+
+    .brand-text h1 .brand-sub {
+      font-size: 18px; /* Proportionately sized */
       color: var(--accent-red);
       font-weight: 500;
       letter-spacing: 0.5px;
@@ -978,15 +984,20 @@
         min-width: 0;
       }
       .brand-text h1 {
-        font-size: 19px; /* Fixed size on mobile */
+        font-size: 20px; /* Fixed size on mobile */
         white-space: nowrap;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
         line-height: 1;
         display: flex;
         align-items: baseline;
         gap: 3px;
       }
-      .brand-text h1 span {
+      .brand-text h1 .brand-slash {
+        font-size: 1em; /* Exact same size as LAX MTB */
+        color: var(--accent-red);
+        display: inline !important;
+      }
+      .brand-text h1 .brand-sub {
         font-size: 14.5px;
         letter-spacing: 0.4px;
         display: inline !important; /* Kept on small screens */
@@ -1392,13 +1403,7 @@
     }
 
     @media (max-width: 520px) {
-      .brand-text h1 {
-        font-size: 18px;
-        display: flex;
-        align-items: baseline;
-        gap: 3px;
-      }
-      .brand-text h1 span {
+      .brand-text h1 .brand-sub {
         font-size: 13.5px;
         display: inline !important;
       }
@@ -1424,14 +1429,8 @@
     }
 
     @media (max-width: 380px) {
-      .brand-text h1 {
-        font-size: 16.5px;
-        display: flex;
-        align-items: baseline;
-        gap: 2px;
-      }
-      .brand-text h1 span {
-        font-size: 12px;
+      .brand-text h1 .brand-sub {
+        font-size: 13px;
         letter-spacing: 0.2px;
         display: inline !important;
       }
@@ -2825,7 +2824,7 @@
           <div class="brand-box">
             <img src="logo.png" alt="La Crosse Area MTB Team" class="team-logo" onerror="this.style.display='none'">
             <div class="brand-text">
-              <h1>LAX MTB <span>// RACE CENTRAL</span></h1>
+              <h1>LAX MTB <span class="brand-slash">//</span> <span class="brand-sub">RACE CENTRAL</span></h1>
             </div>
           </div>
 
