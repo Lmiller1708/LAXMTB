@@ -1,3 +1,5 @@
+import { collection, doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { useFirestore } from 'vuefire'
 import type { Race } from '../types/race'
 import fallbackEvents from '~/events.json'
 
@@ -42,10 +44,69 @@ export const isRaceCompleted = (race?: Race | null): boolean => {
 }
 
 export const useCurrentRace = () => {
+  const db = useFirestore()
   const races = useState<Race[]>('all_races', () => (fallbackEvents as Race[]))
   const currentRaceIndex = useState<number>('current_race_index', () => 0)
+  const isSyncingFirestore = useState<boolean>('races_firestore_syncing', () => false)
 
   const currentRace = computed(() => races.value[currentRaceIndex.value] || races.value[0])
+
+  // Seed default races from events.json into Firestore
+  const seedRacesToFirestore = async () => {
+    if (!db) return
+    try {
+      for (const r of fallbackEvents as Race[]) {
+        const docRef = doc(db, 'races', r.id)
+        await setDoc(docRef, r, { merge: true })
+      }
+      console.info('[Firestore] Seeded default races to Firestore')
+    } catch (e) {
+      console.warn('[Firestore] Could not seed races to Firestore:', e)
+    }
+  }
+
+  // Subscribe to real-time updates from Firestore
+  if (import.meta.client && db) {
+    onMounted(() => {
+      if (isSyncingFirestore.value) return
+      isSyncingFirestore.value = true
+
+      try {
+        const racesRef = collection(db, 'races')
+        onSnapshot(
+          racesRef,
+          (snapshot) => {
+            if (snapshot.empty) {
+              console.info('[Firestore] No races found in Firestore, seeding from events.json...')
+              seedRacesToFirestore()
+              return
+            }
+
+            const list: Race[] = []
+            snapshot.forEach((d) => {
+              list.push(d.data() as Race)
+            })
+
+            // Sort by order matching fallbackEvents or date
+            const idOrder = (fallbackEvents as Race[]).map(r => r.id)
+            list.sort((a, b) => {
+              const ia = idOrder.indexOf(a.id)
+              const ib = idOrder.indexOf(b.id)
+              if (ia !== -1 && ib !== -1) return ia - ib
+              return (a.id || '').localeCompare(b.id || '')
+            })
+
+            races.value = list
+          },
+          (err) => {
+            console.warn('[Firestore] Real-time races subscription error (using fallback events):', err)
+          }
+        )
+      } catch (e) {
+        console.warn('[Firestore] Could not attach listener to races:', e)
+      }
+    })
+  }
 
   const selectRace = (index: number) => {
     if (index >= 0 && index < races.value.length) {
@@ -81,10 +142,24 @@ export const useCurrentRace = () => {
     races.value = newRaces
   }
 
-  const updateRace = (updated: Race) => {
+  /**
+   * Save race edits to local state AND Firestore
+   */
+  const updateRace = async (updated: Race) => {
     const idx = races.value.findIndex(r => r.id === updated.id)
     if (idx >= 0) {
       races.value[idx] = updated
+    }
+
+    // Persist directly to Firestore
+    if (db) {
+      try {
+        const docRef = doc(db, 'races', updated.id)
+        await setDoc(docRef, updated, { merge: true })
+        console.info('[Firestore] Saved race to Firestore:', updated.id)
+      } catch (e) {
+        console.warn('[Firestore] Could not save race to Firestore:', e)
+      }
     }
   }
 
@@ -96,6 +171,7 @@ export const useCurrentRace = () => {
     selectRace,
     selectRaceBySlug,
     setRaces,
-    updateRace
+    updateRace,
+    seedRacesToFirestore
   }
 }
