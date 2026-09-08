@@ -36,11 +36,14 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover' },
         { name: 'theme-color', content: '#0d0d0d' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+        { name: 'apple-mobile-web-app-title', content: 'LAX MTB' },
         { name: 'referrer', content: 'no-referrer-when-downgrade' }
       ],
       link: [
+        { rel: 'manifest', href: '/manifest.json' },
         { rel: 'icon', type: 'image/png', href: '/favicon.png' },
         { rel: 'shortcut icon', href: '/favicon.ico' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
@@ -109,8 +112,10 @@ export default defineNuxtConfig({
       theme_color: '#0d0d0d',
       orientation: 'portrait',
       icons: [
-        { src: 'favicon.png', sizes: '64x64', type: 'image/png' },
-        { src: 'apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+        { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+        { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+        { src: '/favicon.png', sizes: '64x64', type: 'image/png' }
       ]
     },
     workbox: {
