@@ -25,7 +25,7 @@ export default defineNuxtConfig({
   },
 
   app: {
-    baseURL: process.env.NODE_ENV === 'production' ? '/LAXMTB/' : '/',
+    baseURL: '/',
     head: {
       htmlAttrs: {
         'data-theme': 'dark',
