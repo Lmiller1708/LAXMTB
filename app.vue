@@ -12,7 +12,7 @@ const isNotifOpen = ref(false)
 const isAdminOpen = ref(false)
 const adminInitialTab = ref('venue')
 
-const { currentRace, currentRaceSlug, selectRaceBySlug, updateRace } = useCurrentRace()
+const { currentRace, currentRaceSlug, races, selectRaceBySlug, updateRace } = useCurrentRace()
 const { isCoachAuth } = useCoachAuth()
 
 const {
@@ -137,8 +137,11 @@ watch(currentRace, (newRace) => {
   refreshData()
 })
 
+const { startAlertScheduler } = useNotificationSubscriptions()
+
 onMounted(() => {
   syncFromRoute()
+  startAlertScheduler(() => races.value as Race[])
 })
 
 const openAdminWithTab = (tab: string) => {

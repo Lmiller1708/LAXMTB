@@ -2,6 +2,7 @@
 const { isOnline } = useNetworkStatus()
 const { theme, toggleTheme } = useTheme()
 const { user, isCoachAuth, isAuthorizedCoach, signInWithGoogle, signOut, authLoading } = useCoachAuth()
+const { menuBadgeText } = useNotificationSubscriptions()
 
 const isMenuOpen = ref(false)
 
@@ -134,7 +135,7 @@ onMounted(() => {
           <span>🔔</span>
           <span class="mobile-menu-item-title">Race Notifications</span>
         </div>
-        <span class="mobile-menu-badge">Stage • 15m</span>
+        <span class="mobile-menu-badge">{{ menuBadgeText }}</span>
       </div>
 
       <!-- Sync Data -->

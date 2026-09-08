@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useNotificationSubscriptions } from '../composables/useNotificationSubscriptions'
+
 defineProps<{
   isOpen: boolean
 }>()
@@ -7,43 +9,66 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const alertTarget = ref<'warmup' | 'stage' | 'start'>('stage')
-const warmupOffset = ref<number | 'custom'>(45)
-const customWarmup = ref(45)
-const leadTime = ref<number | 'custom'>(15)
-const customLeadTime = ref(15)
-const soundEnabled = ref(true)
-const permissionStatus = ref('default')
+const {
+  notifConfig,
+  subscribedCategories,
+  subscribedWaves,
+  permissionStatus,
+  saveConfig,
+  removeSubByIndex,
+  clearAllSubscriptions,
+  requestBrowserPermission,
+  triggerTestNotification
+} = useNotificationSubscriptions()
+
+const customWarmupInput = ref(notifConfig.value.warmupOffset || 45)
+const customLeadTimeInput = ref(notifConfig.value.offset || 15)
 
 const handleClose = () => {
+  saveConfig()
   emit('close')
 }
 
-const requestPermission = async () => {
-  if (import.meta.client && 'Notification' in window) {
-    const perm = await Notification.requestPermission()
-    permissionStatus.value = perm
+const setAlertTarget = (target: 'warmup' | 'stage' | 'start') => {
+  notifConfig.value.target = target
+  saveConfig()
+}
+
+const setWarmupOffset = (val: number | 'custom') => {
+  if (val === 'custom') {
+    notifConfig.value.warmupOffset = customWarmupInput.value || 45
+  } else {
+    notifConfig.value.warmupOffset = val
+  }
+  saveConfig()
+}
+
+const onCustomWarmupChange = () => {
+  if (customWarmupInput.value > 0) {
+    notifConfig.value.warmupOffset = customWarmupInput.value
+    saveConfig()
   }
 }
 
-const testNotification = () => {
-  if (import.meta.client) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('LAX MTB // Race Alert', {
-        body: 'This is a test race notification. Call-ups and wave alerts will appear like this!',
-        icon: '/favicon.png'
-      })
-    } else {
-      alert('🔔 Test Alert: Staging in 15 minutes! (In-app notification active)')
-    }
+const setLeadTime = (val: number | 'custom') => {
+  if (val === 'custom') {
+    notifConfig.value.offset = customLeadTimeInput.value || 15
+  } else {
+    notifConfig.value.offset = val
+  }
+  saveConfig()
+}
+
+const onCustomLeadTimeChange = () => {
+  if (customLeadTimeInput.value > 0) {
+    notifConfig.value.offset = customLeadTimeInput.value
+    saveConfig()
   }
 }
 
-onMounted(() => {
-  if (import.meta.client && 'Notification' in window) {
-    permissionStatus.value = Notification.permission
-  }
-})
+const onSoundChange = () => {
+  saveConfig()
+}
 </script>
 
 <template>
@@ -61,22 +86,22 @@ onMounted(() => {
         <div class="modal-section">
           <label class="modal-label">Alert Target</label>
           <div class="modal-radio-group">
-            <label class="modal-radio-card">
-              <input v-model="alertTarget" type="radio" value="warmup">
+            <label class="modal-radio-card" @click="setAlertTarget('warmup')">
+              <input :checked="notifConfig.target === 'warmup'" type="radio" value="warmup" @change="setAlertTarget('warmup')">
               <div class="radio-card-content">
                 <strong>Warm-up Time</strong>
                 <small>Alert prior to rider & team warm-up</small>
               </div>
             </label>
-            <label class="modal-radio-card">
-              <input v-model="alertTarget" type="radio" value="stage">
+            <label class="modal-radio-card" @click="setAlertTarget('stage')">
+              <input :checked="notifConfig.target === 'stage'" type="radio" value="stage" @change="setAlertTarget('stage')">
               <div class="radio-card-content">
                 <strong>Staging Time</strong>
                 <small>Alert prior to staging grid call-up</small>
               </div>
             </label>
-            <label class="modal-radio-card">
-              <input v-model="alertTarget" type="radio" value="start">
+            <label class="modal-radio-card" @click="setAlertTarget('start')">
+              <input :checked="notifConfig.target === 'start'" type="radio" value="start" @change="setAlertTarget('start')">
               <div class="radio-card-content">
                 <strong>Wave Start Time</strong>
                 <small>Alert prior to official wave gun start</small>
@@ -91,30 +116,30 @@ onMounted(() => {
             <button
               type="button"
               class="lead-time-btn"
-              :class="{ active: warmupOffset === 60 }"
-              @click="warmupOffset = 60"
+              :class="{ active: notifConfig.warmupOffset === 60 }"
+              @click="setWarmupOffset(60)"
             >60 mins</button>
             <button
               type="button"
               class="lead-time-btn"
-              :class="{ active: warmupOffset === 45 }"
-              @click="warmupOffset = 45"
+              :class="{ active: notifConfig.warmupOffset === 45 }"
+              @click="setWarmupOffset(45)"
             >45 mins</button>
             <button
               type="button"
               class="lead-time-btn"
-              :class="{ active: warmupOffset === 30 }"
-              @click="warmupOffset = 30"
+              :class="{ active: notifConfig.warmupOffset === 30 }"
+              @click="setWarmupOffset(30)"
             >30 mins</button>
             <button
               type="button"
               class="lead-time-btn"
-              :class="{ active: warmupOffset === 'custom' }"
-              @click="warmupOffset = 'custom'"
+              :class="{ active: ![60, 45, 30].includes(notifConfig.warmupOffset) }"
+              @click="setWarmupOffset('custom')"
             >Custom</button>
           </div>
-          <div v-show="warmupOffset === 'custom'" class="custom-time-row" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
-            <input v-model.number="customWarmup" type="number" min="1" max="180" placeholder="Minutes" class="custom-minutes-input">
+          <div v-show="![60, 45, 30].includes(notifConfig.warmupOffset)" class="custom-time-row" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+            <input v-model.number="customWarmupInput" type="number" min="1" max="180" placeholder="Minutes" class="custom-minutes-input" @input="onCustomWarmupChange">
             <span style="font-size:12px;color:var(--text-muted);">minutes before staging</span>
           </div>
           <div style="margin-top:5px;font-size:11px;color:var(--text-muted);line-height:1.35;">
@@ -128,30 +153,30 @@ onMounted(() => {
             <button
               type="button"
               class="lead-time-btn"
-              :class="{ active: leadTime === 30 }"
-              @click="leadTime = 30"
+              :class="{ active: notifConfig.offset === 30 }"
+              @click="setLeadTime(30)"
             >30 mins</button>
             <button
               type="button"
               class="lead-time-btn"
-              :class="{ active: leadTime === 15 }"
-              @click="leadTime = 15"
+              :class="{ active: notifConfig.offset === 15 }"
+              @click="setLeadTime(15)"
             >15 mins</button>
             <button
               type="button"
               class="lead-time-btn"
-              :class="{ active: leadTime === 5 }"
-              @click="leadTime = 5"
+              :class="{ active: notifConfig.offset === 5 }"
+              @click="setLeadTime(5)"
             >5 mins</button>
             <button
               type="button"
               class="lead-time-btn"
-              :class="{ active: leadTime === 'custom' }"
-              @click="leadTime = 'custom'"
+              :class="{ active: ![30, 15, 5].includes(notifConfig.offset) }"
+              @click="setLeadTime('custom')"
             >Custom</button>
           </div>
-          <div v-show="leadTime === 'custom'" class="custom-time-row" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
-            <input v-model.number="customLeadTime" type="number" min="1" max="180" placeholder="Minutes" class="custom-minutes-input">
+          <div v-show="![30, 15, 5].includes(notifConfig.offset)" class="custom-time-row" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+            <input v-model.number="customLeadTimeInput" type="number" min="1" max="180" placeholder="Minutes" class="custom-minutes-input" @input="onCustomLeadTimeChange">
             <span style="font-size:12px;color:var(--text-muted);">minutes beforehand</span>
           </div>
         </div>
@@ -163,7 +188,9 @@ onMounted(() => {
               <span style="font-size:13px;font-weight:600;color:var(--text-main);">Push Notifications</span>
               <span style="font-size:11px;color:var(--text-muted);">Status: {{ permissionStatus }}</span>
             </div>
-            <button type="button" class="action-mini-btn" @click="requestPermission">Enable</button>
+            <button type="button" class="action-mini-btn" @click="requestBrowserPermission">
+              {{ permissionStatus === 'granted' ? 'Allowed' : 'Enable' }}
+            </button>
           </div>
           <div style="margin-top:6px;font-size:11px;color:var(--text-muted);line-height:1.35;">
             📱 <strong>iPhone users:</strong> Tap Safari Share ⎋ &rarr; <em>"Add to Home Screen"</em> to enable system notifications. In-app chimes and alerts always work!
@@ -171,7 +198,7 @@ onMounted(() => {
           <div style="margin-top:10px;">
             <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;width:100%;">
               <span style="font-size:13px;font-weight:600;color:var(--text-main);">Sound Chime</span>
-              <input v-model="soundEnabled" type="checkbox">
+              <input v-model="notifConfig.sound" type="checkbox" @change="onSoundChange">
             </label>
           </div>
         </div>
@@ -179,13 +206,34 @@ onMounted(() => {
         <div class="modal-section">
           <label class="modal-label">Active Subscriptions</label>
           <div class="active-subs-box">
-            <span style="color:var(--text-muted);font-size:12px;">No active alerts. Tap 🔔 on any category or wave to subscribe.</span>
+            <template v-if="subscribedCategories.length === 0 && subscribedWaves.length === 0">
+              <span style="color:var(--text-muted);font-size:12px;">No active alerts. Tap 🔔 on any category or wave to subscribe.</span>
+            </template>
+            <template v-else>
+              <div v-for="(cat, idx) in subscribedCategories" :key="`cat-${idx}`" class="active-sub-item">
+                <span><strong>Category:</strong> {{ cat }}</span>
+                <button type="button" class="remove-sub-btn" style="background:none;border:none;color:var(--accent-red);cursor:pointer;font-size:14px;padding:0 4px;" title="Remove alert" @click="removeSubByIndex(idx, false)">✕</button>
+              </div>
+              <div v-for="(wKey, idx) in subscribedWaves" :key="`wave-${idx}`" class="active-sub-item">
+                <span><strong>Wave:</strong> {{ wKey.replace('::', ' - ') }}</span>
+                <button type="button" class="remove-sub-btn" style="background:none;border:none;color:var(--accent-red);cursor:pointer;font-size:14px;padding:0 4px;" title="Remove alert" @click="removeSubByIndex(idx, true)">✕</button>
+              </div>
+            </template>
           </div>
+          <button
+            v-if="subscribedCategories.length > 0 || subscribedWaves.length > 0"
+            type="button"
+            class="clear-subs-btn"
+            style="margin-top:8px;background:none;border:none;color:var(--accent-red);font-size:11.5px;font-weight:600;cursor:pointer;padding:0;"
+            @click="clearAllSubscriptions"
+          >
+            Clear All Subscriptions
+          </button>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="test-alert-btn" @click="testNotification">🔔 Test Notification</button>
+        <button type="button" class="test-alert-btn" @click="triggerTestNotification">🔔 Test Notification</button>
         <button type="button" class="done-modal-btn" @click="handleClose">Done</button>
       </div>
     </div>

@@ -53,6 +53,10 @@ const hasMore = computed(() => photos.value.length > photosPageLimit.value)
 
 const loadPhotos = async () => {
   if (!import.meta.client) return
+  if (props.race?.id !== 'bluff-bash') {
+    photos.value = []
+    return
+  }
   try {
     const res = await fetch('/team_photos.json?t=' + Date.now())
     if (res.ok) {
