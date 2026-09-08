@@ -1336,6 +1336,42 @@
       color: #fff;
     }
 
+    /* Card Inline Edit Button (shown when coach is logged in) */
+    .card-inline-edit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 5px;
+      cursor: pointer;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+      line-height: 1.2;
+    }
+    .card-inline-edit-btn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+    }
+    :root[data-theme="light"] .card-inline-edit-btn {
+      background: rgba(220, 38, 38, 0.08);
+      color: #dc2626;
+      border-color: rgba(220, 38, 38, 0.3);
+    }
+    :root[data-theme="light"] .card-inline-edit-btn:hover {
+      background: rgba(220, 38, 38, 0.16);
+      border-color: #dc2626;
+      color: #991b1b;
+    }
+
     /* Collapsible Filter Panel */
     .collapsible-filters {
       display: none;
@@ -3502,6 +3538,9 @@
             </div>
           </div>
 
+          <!-- Single Area Mode Indicator Banner (shown when opened directly from a card's edit button) -->
+          <div id="adminSingleAreaBanner" style="display:none;justify-content:space-between;align-items:center;padding:8px 16px;background:var(--bg-surface);border-bottom:1px solid var(--border);"></div>
+
           <!-- Admin Navigation Tabs -->
           <div class="admin-tab-bar">
             <button type="button" class="admin-tab-btn active" id="adminTabBtn_venue" onclick="switchAdminTab('venue')">📍 Venue Info</button>
@@ -4462,12 +4501,166 @@
       return '';
     }
 
+    function getWeekendDates(startIso) {
+      if (!startIso) return { Friday: '', Saturday: '', Sunday: '' };
+      const parts = startIso.split('-');
+      if (parts.length !== 3) return { Friday: '', Saturday: '', Sunday: '' };
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      const dayOfWeek = d.getDay();
+      let diffToFri = 0;
+      if (dayOfWeek === 5) diffToFri = 0;
+      else if (dayOfWeek === 6) diffToFri = -1;
+      else if (dayOfWeek === 0) diffToFri = -2;
+      else if (dayOfWeek === 4) diffToFri = 1;
+      else diffToFri = 5 - dayOfWeek;
+
+      const friDate = new Date(d);
+      friDate.setDate(d.getDate() + diffToFri);
+
+      const satDate = new Date(friDate);
+      satDate.setDate(friDate.getDate() + 1);
+
+      const sunDate = new Date(friDate);
+      sunDate.setDate(friDate.getDate() + 2);
+
+      const toIso = (dt) => {
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, '0');
+        const day = String(dt.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+
+      return {
+        Friday: toIso(friDate),
+        Saturday: toIso(satDate),
+        Sunday: toIso(sunDate)
+      };
+    }
+
+    function ensureStandardWeekendDays(race) {
+      if (!race) return [];
+      const raceDates = (race.startDate && race.endDate) ? { start: race.startDate, end: race.endDate } : parseDateRange(race.dateStr);
+      const weekendIso = getWeekendDates(raceDates.start);
+
+      let schedule = race.schedule;
+      if (!Array.isArray(schedule)) schedule = [];
+
+      let dayGroups = [];
+      if (schedule.length > 0 && schedule[0].day && Array.isArray(schedule[0].events)) {
+        dayGroups = schedule;
+      } else if (schedule.length > 0) {
+        const daysMap = {};
+        schedule.forEach(item => {
+          let dayName = 'Weekend';
+          let timeText = item.time || '';
+          const match = timeText.match(/^(Friday|Saturday|Sunday|Monday|Thursday)/i);
+          if (match) {
+            dayName = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+            timeText = timeText.replace(/^(Friday|Saturday|Sunday|Monday|Thursday)\s*/i, '');
+          }
+          if (!daysMap[dayName]) {
+            daysMap[dayName] = {
+              day: dayName,
+              date: weekendIso[dayName] ? formatDateToMonthDay(weekendIso[dayName]) : '',
+              isoDate: weekendIso[dayName] || '',
+              subtitle: dayName === 'Friday' ? 'Camping Opens & Pre-Rides' : (dayName === 'Saturday' ? 'Adventure Ride & Pre-Rides' : 'Race Day'),
+              isRaceDay: dayName.toLowerCase().includes('sun'),
+              events: []
+            };
+            dayGroups.push(daysMap[dayName]);
+          }
+          const tParts = splitTimeRange(timeText);
+          const desc = item.desc || '';
+          let tag = 'Venue';
+          if (/pre-ride/i.test(desc)) tag = 'Pre-Ride';
+          else if (/racing|waves|finals|trials/i.test(desc)) tag = 'Racing';
+          else if (/awards|podium/i.test(desc)) tag = 'Awards';
+          else if (/dinner|breakfast|food|meal/i.test(desc)) tag = 'Team Event';
+          else if (/spectat/i.test(desc)) tag = 'Spectating';
+          else if (/tour|ride/i.test(desc)) tag = 'Team Ride';
+
+          daysMap[dayName].events.push({
+            time: timeText,
+            startTime: tParts.start || '',
+            endTime: tParts.end || '',
+            desc: desc,
+            tag: tag,
+            isSpecial: /dinner|breakfast|meal/i.test(desc) || item.isSpecial || false,
+            isRace: /racing|race|waves/i.test(desc) || item.isRace || false
+          });
+        });
+      }
+
+      const standardDays = ['Friday', 'Saturday', 'Sunday'];
+      standardDays.forEach(stdDay => {
+        let existing = dayGroups.find(dg => dg.day && dg.day.toLowerCase() === stdDay.toLowerCase());
+        if (!existing) {
+          existing = {
+            day: stdDay,
+            date: weekendIso[stdDay] ? formatDateToMonthDay(weekendIso[stdDay]) : '',
+            isoDate: weekendIso[stdDay] || '',
+            subtitle: stdDay === 'Friday' ? 'Camping Opens & Pre-Rides' : (stdDay === 'Saturday' ? 'Adventure Ride & Pre-Rides' : 'Race Day'),
+            isRaceDay: stdDay === 'Sunday',
+            events: []
+          };
+          if (stdDay === 'Friday') {
+            dayGroups.unshift(existing);
+          } else if (stdDay === 'Saturday') {
+            const friIdx = dayGroups.findIndex(dg => dg.day && dg.day.toLowerCase() === 'friday');
+            if (friIdx >= 0) dayGroups.splice(friIdx + 1, 0, existing);
+            else dayGroups.unshift(existing);
+          } else if (stdDay === 'Sunday') {
+            const satIdx = dayGroups.findIndex(dg => dg.day && dg.day.toLowerCase() === 'saturday');
+            if (satIdx >= 0) dayGroups.splice(satIdx + 1, 0, existing);
+            else dayGroups.push(existing);
+          }
+        } else {
+          if (!existing.isoDate && existing.date) {
+            existing.isoDate = parseMonthDayToIso(existing.date);
+          }
+          if (!existing.isoDate && weekendIso[stdDay]) {
+            existing.isoDate = weekendIso[stdDay];
+          }
+          if (!existing.date && existing.isoDate) {
+            existing.date = formatDateToMonthDay(existing.isoDate);
+          }
+        }
+      });
+
+      dayGroups.forEach(dg => {
+        if (!dg.isoDate && dg.date) {
+          dg.isoDate = parseMonthDayToIso(dg.date);
+        }
+        if (!dg.date && dg.isoDate) {
+          dg.date = formatDateToMonthDay(dg.isoDate);
+        }
+      });
+
+      race.schedule = dayGroups;
+      return race.schedule;
+    }
+
     function onAdminRaceDatesPickerChange() {
       const startEl = document.getElementById('edit_race_startDate');
       const endEl = document.getElementById('edit_race_endDate');
       const dateStrEl = document.getElementById('edit_race_dateStr');
+      const race = SEASON_RACES[currentRaceIndex];
       if (startEl && endEl && dateStrEl && startEl.value) {
         dateStrEl.value = formatDatesToDateRange(startEl.value, endEl.value);
+        if (race) {
+          race.startDate = startEl.value;
+          race.endDate = endEl.value;
+          race.dateStr = dateStrEl.value;
+          const weekendIso = getWeekendDates(startEl.value);
+          if (race.schedule && Array.isArray(race.schedule)) {
+            race.schedule.forEach(dg => {
+              if (dg.day && weekendIso[dg.day]) {
+                dg.isoDate = weekendIso[dg.day];
+                dg.date = formatDateToMonthDay(weekendIso[dg.day]);
+              }
+            });
+          }
+        }
       }
     }
 
@@ -4489,6 +4682,51 @@
           daySelectEl.value = dayName;
         }
       }
+    }
+
+    function resetAdminScheduleToWeekend() {
+      const race = SEASON_RACES[currentRaceIndex];
+      if (!race) return;
+      if (!confirm(`Reset ${race.name} schedule to standard 3 days (Friday, Saturday, Sunday) with calculated dates?`)) return;
+      const raceDates = (race.startDate && race.endDate) ? { start: race.startDate, end: race.endDate } : parseDateRange(race.dateStr);
+      const weekendIso = getWeekendDates(raceDates.start);
+
+      race.schedule = [
+        {
+          day: 'Friday',
+          date: weekendIso.Friday ? formatDateToMonthDay(weekendIso.Friday) : '',
+          isoDate: weekendIso.Friday || '',
+          subtitle: 'Camping Opens & Pre-Rides',
+          events: [
+            { time: '3:00 PM', startTime: '3:00 PM', endTime: '', desc: 'Camping Opens & Pit Zone Setup', tag: 'Venue' }
+          ]
+        },
+        {
+          day: 'Saturday',
+          date: weekendIso.Saturday ? formatDateToMonthDay(weekendIso.Saturday) : '',
+          isoDate: weekendIso.Saturday || '',
+          subtitle: 'Adventure Ride & Pre-Rides',
+          events: [
+            { time: '10:00 AM - 3:00 PM', startTime: '10:00 AM', endTime: '3:00 PM', desc: 'Adventure Ride & Pre-Rides', tag: 'Team Ride' },
+            { time: '5:30 PM', startTime: '5:30 PM', endTime: '', desc: 'LAXMTB Team Dinner', tag: 'Team Event', isSpecial: true }
+          ]
+        },
+        {
+          day: 'Sunday',
+          date: weekendIso.Sunday ? formatDateToMonthDay(weekendIso.Sunday) : '',
+          isoDate: weekendIso.Sunday || '',
+          subtitle: 'Race Day',
+          isRaceDay: true,
+          events: [
+            { time: '7:00 AM - 8:00 AM', startTime: '7:00 AM', endTime: '8:00 AM', desc: 'LAXMTB Team Breakfast', tag: 'Team Event', isSpecial: true },
+            { time: '7:00 AM - 9:30 AM', startTime: '7:00 AM', endTime: '9:30 AM', desc: 'Pre-Rides Open', tag: 'Pre-Ride' },
+            { time: '10:00 AM', startTime: '10:00 AM', endTime: '', desc: 'Racing Starts (Waves)', tag: 'Racing', isRace: true },
+            { time: '4:30 PM', startTime: '4:30 PM', endTime: '', desc: 'Awards Ceremony & Podiums', tag: 'Awards' }
+          ]
+        }
+      ];
+      renderAdminView();
+      showNotifToast(`🔄 Reset to standard 3 weekend days for ${race.name}`);
     }
 
     function renderScheduleGrouped(schedule) {
@@ -4576,6 +4814,7 @@
       document.getElementById('controlsPanel').style.display = 'none';
       document.getElementById('statusBar').style.display = 'none';
 
+      const isCoachAuth = isCoachLoggedIn();
       const container = document.getElementById('tablesContainer');
       container.innerHTML = `
         <!-- 1. Event Hero Banner (Logo & Title on its own + League Page) -->
@@ -4590,14 +4829,19 @@
               </div>
             </div>
           </div>
-          ${race.eventGuideUrl ? `
-            <div class="event-hero-actions">
+          <div class="event-hero-actions" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${isCoachAuth ? `
+              <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue', true);" title="Edit Race Details & Dates" style="font-size:12px;padding:6px 12px;">
+                <span>✏️</span> Edit Race
+              </button>
+            ` : ''}
+            ${race.eventGuideUrl ? `
               <a href="${race.eventGuideUrl}" target="_blank" rel="noopener noreferrer" class="btn-hero-league" title="Visit the official Wisconsin League Event Page on NICA">
                 <img src="logos/nica-logo.png" alt="NICA" class="nica-badge-icon" onerror="this.style.display='none'">
                 <span>Wisconsin League Page</span>
               </a>
-            </div>
-          ` : ''}
+            ` : ''}
+          </div>
         </div>
 
         <!-- 2. Dedicated Venue & Location Card -->
@@ -4607,7 +4851,10 @@
               <span class="location-card-title"><span>📍</span> Venue Location & Directions</span>
               ${race.city ? `<span class="category-badge">${race.city}</span>` : ''}
             </div>
-            <span class="card-toggle-icon" title="Toggle Location">▼</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('venue', true);" title="Edit Venue & Directions"><span>✏️</span> Edit</button>` : ''}
+              <span class="card-toggle-icon" title="Toggle Location">▼</span>
+            </div>
           </div>
           <div class="collapsible-body location-card-body">
             <div class="location-venue-name">
@@ -4636,7 +4883,10 @@
               <div style="display:flex;align-items:center;gap:8px;">
                 <span class="signup-hub-title"><span>🤝</span> Team Volunteers & Race Hospitality</span>
               </div>
-              <span class="card-toggle-icon" title="Toggle Volunteers & Food">▼</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('signups', true);" title="Edit Volunteer & Food SignUp Links"><span>✏️</span> Edit</button>` : ''}
+                <span class="card-toggle-icon" title="Toggle Volunteers & Food">▼</span>
+              </div>
             </div>
 
             <div class="collapsible-body">
@@ -4727,6 +4977,7 @@
               <div class="event-map-header collapsible-header" onclick="toggleCard(this)">
                 <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
                 <div style="display:flex;align-items:center;gap:6px;">
+                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('signups', true);" title="Edit Course Map Links"><span>✏️</span> Edit</button>` : ''}
                   <button type="button" class="btn-icon" id="mapAppFullscreenBtn" onclick="toggleMapAppFullscreen(event)" style="font-size:11px;padding:4px 10px;font-weight:700;">
                     <span id="mapFsIcon">⛶</span> <span id="mapFsLabel">Fullscreen Map</span>
                   </button>
@@ -4744,20 +4995,32 @@
           <div class="event-details-grid">
             
             <!-- Schedule Section -->
-            <div class="detail-section">
-              <div style="display:flex;align-items:center;margin-bottom:12px;">
+            <div class="detail-section" id="scheduleDetailSection">
+              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
                 <h3 style="margin:0;"><span>⏱️</span> LAXMTB TEAM SCHEDULE HIGHLIGHTS</h3>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('schedule', true);" title="Edit Team Schedule"><span>✏️</span> Edit</button>` : ''}
+                  <span class="card-toggle-icon" title="Toggle Schedule">▼</span>
+                </div>
               </div>
-              ${renderScheduleGrouped(race.schedule)}
+              <div class="collapsible-body">
+                ${renderScheduleGrouped(race.schedule)}
+              </div>
             </div>
 
             <!-- Guidelines & Venue Info Section -->
-            <div class="detail-section">
-              <div style="display:flex;align-items:center;margin-bottom:12px;">
+            <div class="detail-section" id="guidelinesDetailSection">
+              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
                 <h3 style="margin:0;"><span>🏕️</span> Venue Guidelines & Spectator Info</h3>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('announcements', true);" title="Edit Guidelines & Announcements"><span>✏️</span> Edit</button>` : ''}
+                  <span class="card-toggle-icon" title="Toggle Guidelines">▼</span>
+                </div>
               </div>
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                ${race.guidelines.map(g => `<p class="guideline-item">• ${g}</p>`).join('')}
+              <div class="collapsible-body">
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  ${race.guidelines.map(g => `<p class="guideline-item">• ${g}</p>`).join('')}
+                </div>
               </div>
             </div>
 
@@ -4786,6 +5049,11 @@
             <button class="btn-icon" onclick="switchTab('details')" style="font-size:11px;padding:5px 10px;min-height:30px;">
               <span>📍</span> View Full Schedule & Details
             </button>
+            ${isCoachLoggedIn() ? `
+              <button class="card-inline-edit-btn" onclick="openAdminPortal('venue', true)" style="font-size:11px;padding:5px 12px;min-height:30px;">
+                <span>✏️</span> Edit Race Info
+              </button>
+            ` : ''}
           </div>
           
           <div style="margin-top:18px;padding:12px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;max-width:460px;margin-left:auto;margin-right:auto;text-align:left;">
@@ -5954,7 +6222,10 @@
               </svg>
             </button>
           </div>
-          <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(cat)}">▼</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves', true);" title="Edit Wave Times & Staging"><span>✏️</span> Edit</button>` : ''}
+            <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(cat)}">▼</span>
+          </div>
         `;
         catCard.appendChild(catTitle);
 
@@ -6089,7 +6360,10 @@
             <span>${escapeHtml(team)}</span>
             <span class="category-badge">${grouped[team].length} RIDERS</span>
           </div>
-          <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(team)}">▼</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves', true);" title="Edit Wave Times & Staging"><span>✏️</span> Edit</button>` : ''}
+            <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(team)}">▼</span>
+          </div>
         `;
         teamCard.appendChild(teamHeader);
 
@@ -6684,20 +6958,31 @@
     // COACH ADMIN PORTAL CONTROLLER
     // =========================================================
     let currentAdminTab = 'venue';
+    let pendingAdminTab = null;
+    let isSingleAreaMode = false;
 
-    function openAdminPortal() {
+    function isCoachLoggedIn() {
+      return sessionStorage.getItem('laxmtb_coach_auth') === 'true';
+    }
+
+    function openAdminPortal(targetTab = null, singleArea = false) {
       closeMobileMenu();
       const modal = document.getElementById('adminModalOverlay');
       if (!modal) return;
 
-      const isAuth = sessionStorage.getItem('laxmtb_coach_auth') === 'true';
+      if (targetTab) {
+        pendingAdminTab = targetTab;
+      }
+      isSingleAreaMode = Boolean(singleArea && targetTab);
+
+      const isAuth = isCoachLoggedIn();
       const passcodeScreen = document.getElementById('adminPasscodeScreen');
       const dashboardScreen = document.getElementById('adminDashboardScreen');
 
       if (isAuth) {
         if (passcodeScreen) passcodeScreen.style.display = 'none';
         if (dashboardScreen) dashboardScreen.style.display = 'flex';
-        initAdminDashboard();
+        initAdminDashboard(targetTab);
       } else {
         if (passcodeScreen) passcodeScreen.style.display = 'block';
         if (dashboardScreen) dashboardScreen.style.display = 'none';
@@ -6737,7 +7022,13 @@
         const dashboardScreen = document.getElementById('adminDashboardScreen');
         if (passcodeScreen) passcodeScreen.style.display = 'none';
         if (dashboardScreen) dashboardScreen.style.display = 'flex';
-        initAdminDashboard();
+        initAdminDashboard(pendingAdminTab);
+        // Re-render live view immediately so edit icons appear
+        if (currentTab === 'details') {
+          renderEventDetails(SEASON_RACES[currentRaceIndex]);
+        } else {
+          renderCurrentView();
+        }
       } else {
         if (err) err.style.display = 'block';
         if (input) input.focus();
@@ -6746,6 +7037,7 @@
 
     function lockAdminPortal() {
       sessionStorage.removeItem('laxmtb_coach_auth');
+      isSingleAreaMode = false;
       const passcodeScreen = document.getElementById('adminPasscodeScreen');
       const dashboardScreen = document.getElementById('adminDashboardScreen');
       if (passcodeScreen) passcodeScreen.style.display = 'block';
@@ -6755,9 +7047,18 @@
         input.value = '';
         input.focus();
       }
+      // Re-render live view immediately so edit icons disappear
+      if (currentTab === 'details') {
+        renderEventDetails(SEASON_RACES[currentRaceIndex]);
+      } else {
+        renderCurrentView();
+      }
     }
 
-    function initAdminDashboard() {
+    function initAdminDashboard(targetTab = null) {
+      const tabToUse = targetTab || pendingAdminTab || currentAdminTab || 'venue';
+      pendingAdminTab = null;
+
       const raceSelect = document.getElementById('adminRaceSelect');
       if (raceSelect) {
         raceSelect.innerHTML = SEASON_RACES.map((r, i) => `
@@ -6772,8 +7073,45 @@
         footerSheetId.textContent = googleSheetId || 'Not set';
       }
 
+      // Single Area View vs Full Tabs View
+      const tabBar = document.querySelector('.admin-tab-bar');
+      const singleAreaBanner = document.getElementById('adminSingleAreaBanner');
+      const tabNames = {
+        venue: '📍 Venue & General Info',
+        waves: '⏱️ Waves & Staging',
+        schedule: '📅 Team Weekend Schedule',
+        signups: '🔗 SignUp Links & Course Maps',
+        announcements: '📢 Guidelines & Announcements',
+        config: '⚙️ Config / Data Export'
+      };
+
+      if (isSingleAreaMode) {
+        if (tabBar) tabBar.style.display = 'none';
+        if (singleAreaBanner) {
+          singleAreaBanner.style.display = 'flex';
+          singleAreaBanner.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text-main);">
+              <span style="color:var(--text-muted);">Section Editor:</span>
+              <span style="color:var(--accent-red);background:rgba(239,68,68,0.1);padding:3px 10px;border-radius:5px;border:1px solid rgba(239,68,68,0.25);">${tabNames[tabToUse] || tabToUse}</span>
+            </div>
+            <button type="button" class="action-mini-btn" onclick="showAllAdminTabs()" style="font-size:11px;padding:4px 10px;font-weight:600;">Show All Tabs ▾</button>
+          `;
+        }
+      } else {
+        if (tabBar) tabBar.style.display = 'flex';
+        if (singleAreaBanner) singleAreaBanner.style.display = 'none';
+      }
+
       updateAdminSyncStatus();
-      renderAdminView();
+      switchAdminTab(tabToUse);
+    }
+
+    function showAllAdminTabs() {
+      isSingleAreaMode = false;
+      const tabBar = document.querySelector('.admin-tab-bar');
+      const singleAreaBanner = document.getElementById('adminSingleAreaBanner');
+      if (tabBar) tabBar.style.display = 'flex';
+      if (singleAreaBanner) singleAreaBanner.style.display = 'none';
     }
 
     function onAdminRaceSelect(val) {
@@ -7160,6 +7498,7 @@
           </div>
         `;
       } else if (tab === 'schedule') {
+        ensureStandardWeekendDays(race);
         const schedule = race.schedule || [];
 
         let scheduleDaysHtml = '';
@@ -7210,8 +7549,8 @@
                       ${!dayOptions.map(d => d.toLowerCase()).includes(curDay.toLowerCase()) && curDay ? `<option value="${escapeHtml(curDay)}" selected>${escapeHtml(curDay)}</option>` : ''}
                     </select>
                     <div style="display:flex;align-items:center;gap:4px;">
-                      <input type="date" class="admin-input-field schedule-day-datepicker" value="${parseMonthDayToIso(dayGroup.date)}" onchange="onAdminDayDatepickerChange(this)" style="padding:5px 8px;font-size:12px;width:120px;" title="Pick Date" />
-                      <input type="text" class="admin-input-field schedule-day-date" value="${escapeHtml(dayGroup.date || '')}" placeholder="e.g. Sept 5" style="width:85px;font-weight:600;" title="Formatted Date" />
+                      <input type="date" class="admin-input-field schedule-day-datepicker" value="${dayGroup.isoDate || parseMonthDayToIso(dayGroup.date)}" onchange="onAdminDayDatepickerChange(this)" style="padding:5px 8px;font-size:12px;width:120px;" title="Pick Date" />
+                      <input type="text" class="admin-input-field schedule-day-date" value="${escapeHtml(dayGroup.date || '')}" readonly style="width:85px;font-weight:600;background:var(--bg-surface);color:var(--text-main);cursor:default;" title="Auto-formatted Date (Read-Only)" />
                     </div>
                     <input type="text" class="admin-input-field schedule-day-subtitle" value="${escapeHtml(dayGroup.subtitle || '')}" placeholder="Subtitle (e.g. Pre-Rides & Team Dinner)" style="flex:1;min-width:140px;" />
                   </div>
@@ -7232,7 +7571,8 @@
               <h4 style="margin:0;font-size:14px;color:var(--text-main);">📅 Team Weekend Schedule</h4>
               <span style="font-size:11px;color:var(--text-muted);">Manage day groups, activities, tags, and team meal highlights</span>
             </div>
-            <div style="display:flex;gap:8px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="action-mini-btn" onclick="resetAdminScheduleToWeekend()" title="Reset to standard 3 weekend days (Fri, Sat, Sun) with auto-calculated dates">🔄 Reset Weekend (Fri-Sun)</button>
               <button type="button" class="admin-add-btn" onclick="addAdminScheduleDay()">+ Add Schedule Day</button>
               <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
                 <span>💾</span> Save & Apply Schedule
@@ -7245,7 +7585,10 @@
           </div>
 
           <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-            <button type="button" class="admin-add-btn" onclick="addAdminScheduleDay()">+ Add Schedule Day</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="action-mini-btn" onclick="resetAdminScheduleToWeekend()" title="Reset to standard 3 weekend days (Fri, Sat, Sun) with auto-calculated dates">🔄 Reset Weekend (Fri-Sun)</button>
+              <button type="button" class="admin-add-btn" onclick="addAdminScheduleDay()">+ Add Schedule Day</button>
+            </div>
             <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
               <span>💾</span> Save & Apply Schedule
             </button>
@@ -7426,7 +7769,32 @@
     function addAdminScheduleDay() {
       const container = document.getElementById('adminScheduleDaysContainer');
       if (!container) return;
-      const dayIdx = container.querySelectorAll('.admin-day-card').length;
+      const cards = container.querySelectorAll('.admin-day-card');
+      const dayIdx = cards.length;
+
+      let defaultDay = 'Monday';
+      let defaultIso = '';
+      let defaultDateStr = '';
+
+      if (cards.length > 0) {
+        const lastCard = cards[cards.length - 1];
+        const lastIso = lastCard.querySelector('.schedule-day-datepicker')?.value;
+        if (lastIso) {
+          const parts = lastIso.split('-');
+          if (parts.length === 3) {
+            const nextDt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            nextDt.setDate(nextDt.getDate() + 1);
+            const y = nextDt.getFullYear();
+            const m = String(nextDt.getMonth() + 1).padStart(2, '0');
+            const d = String(nextDt.getDate()).padStart(2, '0');
+            defaultIso = `${y}-${m}-${d}`;
+            defaultDateStr = formatDateToMonthDay(defaultIso);
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            defaultDay = days[nextDt.getDay()];
+          }
+        }
+      }
+
       const div = document.createElement('div');
       div.className = 'admin-preview-card admin-day-card';
       div.style = 'margin-bottom:14px;';
@@ -7434,11 +7802,11 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:260px;flex-wrap:wrap;">
             <select class="admin-select-field schedule-day-name" style="width:125px;font-weight:700;">
-              ${['Friday', 'Saturday', 'Sunday', 'Monday', 'Thursday', 'Weekend'].map(d => `<option value="${d}">${d}</option>`).join('')}
+              ${['Friday', 'Saturday', 'Sunday', 'Monday', 'Thursday', 'Weekend'].map(d => `<option value="${d}" ${d === defaultDay ? 'selected' : ''}>${d}</option>`).join('')}
             </select>
             <div style="display:flex;align-items:center;gap:4px;">
-              <input type="date" class="admin-input-field schedule-day-datepicker" onchange="onAdminDayDatepickerChange(this)" style="padding:5px 8px;font-size:12px;width:120px;" title="Pick Date" />
-              <input type="text" class="admin-input-field schedule-day-date" placeholder="e.g. Sept 5" style="width:85px;font-weight:600;" title="Formatted Date" />
+              <input type="date" class="admin-input-field schedule-day-datepicker" value="${defaultIso}" onchange="onAdminDayDatepickerChange(this)" style="padding:5px 8px;font-size:12px;width:120px;" title="Pick Date" />
+              <input type="text" class="admin-input-field schedule-day-date" value="${defaultDateStr}" placeholder="e.g. Sept 5" readonly style="width:85px;font-weight:600;background:var(--bg-surface);color:var(--text-main);cursor:default;" title="Auto-formatted Date (Read-Only)" />
             </div>
             <input type="text" class="admin-input-field schedule-day-subtitle" placeholder="Subtitle (optional)" style="flex:1;min-width:140px;" />
           </div>
