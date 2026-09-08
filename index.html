@@ -2035,6 +2035,27 @@
       color: #dc2626;
     }
 
+    @media (max-width: 440px) {
+      .wave-divider {
+        padding: 4px 8px;
+        gap: 6px;
+      }
+      .wave-schedule-step.step-stage,
+      .wave-schedule-sep.sep-stage {
+        display: none;
+      }
+      .wave-schedule-strip {
+        padding: 0 6px;
+        gap: 4px;
+        height: 22px;
+      }
+      .wave-laps-toggle-btn {
+        height: 22px;
+        min-width: 22px;
+        padding: 0 4px;
+      }
+    }
+
     .rider-expand-icon {
       display: inline-flex;
       align-items: center;
@@ -8145,17 +8166,9 @@
           waveHeader.className = 'wave-divider';
 
           const steps = [];
-          if (waveWarmupTime) {
-            steps.push(`
-              <span class="wave-schedule-step" title="Warm-up starts ${notifConfig.warmupOffset || 45}m before staging">
-                <span class="step-lbl">Warm-up:</span>
-                <span class="step-time">${escapeHtml(waveWarmupTime)}</span>
-              </span>
-            `);
-          }
           if (stageTime) {
             steps.push(`
-              <span class="wave-schedule-step" title="Staging grid call-up">
+              <span class="wave-schedule-step step-stage" title="Staging grid call-up">
                 <span class="step-lbl">Stage:</span>
                 <span class="step-time">${escapeHtml(stageTime)}</span>
               </span>
@@ -8163,13 +8176,13 @@
           }
           if (waveTime) {
             steps.push(`
-              <span class="wave-schedule-step" title="Official wave gun start">
+              <span class="wave-schedule-step step-start" title="Official wave gun start">
                 <span class="step-lbl">Start:</span>
                 <span class="step-time">${escapeHtml(waveTime)}</span>
               </span>
             `);
           }
-          const timeHtml = steps.length > 0 ? `<div class="wave-schedule-strip">${steps.join('<span class="wave-schedule-sep">›</span>')}</div>` : '';
+          const timeHtml = steps.length > 0 ? `<div class="wave-schedule-strip">${steps.join('<span class="wave-schedule-sep sep-stage">›</span>')}</div>` : '';
 
           const ridersInWave = waves[wKey].sort((a, b) => {
             const pa = parseInt(a.pl) || parseInt(a.bib) || 0;
@@ -8193,7 +8206,7 @@
             <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;">
               <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-left:auto;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-left:auto;flex-shrink:0;">
               ${timeHtml}
               ${hasWaveLaps ? `
                 <button type="button" class="wave-laps-toggle-btn" onclick="event.stopPropagation(); toggleRiderKeySet(${waveKeysJson});" title="Click to ${isAllWaveExpanded ? 'collapse' : 'expand'} all lap splits in this wave">
