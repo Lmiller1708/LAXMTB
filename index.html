@@ -6999,9 +6999,9 @@
                 <h4 style="margin:0;font-size:14px;color:var(--text-main);">📍 Race Venue & General Info</h4>
                 <span style="font-size:11px;color:var(--text-muted);">Directly edit race name, trailhead, dates, and navigation instructions</span>
               </div>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:var(--bg-surface);padding:4px 10px;border-radius:6px;border:1px solid var(--border);">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:var(--bg-surface);padding:4px 10px;border-radius:6px;border:1px solid var(--border);" title="When enabled, Start Lists and Live Results connect to RaceResult. When disabled, displays Upcoming Race preview.">
                 <input type="checkbox" id="edit_race_isPublished" ${race.isPublished ? 'checked' : ''} />
-                <span style="font-weight:600;color:var(--text-main);">Published on Switcher</span>
+                <span style="font-weight:600;color:var(--text-main);">Live Timing & Results Active</span>
               </label>
             </div>
             
@@ -7037,7 +7037,7 @@
                     <span style="font-size:11px;color:var(--text-muted);font-weight:600;">End:</span>
                     <input type="date" id="edit_race_endDate" class="admin-input-field" value="${raceDates.end || ''}" onchange="onAdminRaceDatesPickerChange()" style="padding:6px 8px;font-size:12px;" />
                   </div>
-                  <input type="text" id="edit_race_dateStr" class="admin-input-field" value="${escapeHtml(race.dateStr || '')}" placeholder="e.g. 04 - 07 Sept 2026" style="flex:1;min-width:140px;font-weight:600;" title="Formatted display date" />
+                  <input type="text" id="edit_race_dateStr" class="admin-input-field" value="${escapeHtml(race.dateStr || '')}" readonly style="flex:1;min-width:140px;font-weight:700;background:var(--bg-surface);color:var(--text-main);cursor:default;opacity:0.9;" title="Auto-generated Date Range (Read-Only)" />
                 </div>
               </div>
               <div class="admin-form-group">
