@@ -8268,9 +8268,7 @@
                   <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 4</th>
                   <th class="col-avg col-desktop-only" style="width:75px;text-align:right;">Avg Pace</th>
                   <th class="col-pen col-desktop-only" style="width:58px;text-align:right;">Pen</th>
-                  <th class="col-time${hasWaveLaps ? ' th-expand-all' : ''}" style="width:85px;text-align:right;" ${hasWaveLaps ? `onclick="toggleRiderKeySet(${waveKeysJson})" title="Click to ${isAllWaveExpanded ? 'collapse' : 'expand'} all lap splits in this wave"` : ''}>
-                    Time${hasWaveLaps ? ` <span class="expand-all-icon">${isAllWaveExpanded ? '▲' : '▼'}</span>` : ''}
-                  </th>
+                  <th class="col-time" style="width:85px;text-align:right;">Time</th>
                 ` : `
                   <th>Team / School</th>
                   <th style="text-align:center;width:44px;">Div</th>
@@ -8483,9 +8481,7 @@
                 <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 4</th>
                 <th class="col-avg col-desktop-only" style="width:75px;text-align:right;">Avg Pace</th>
                 <th class="col-pen col-desktop-only" style="width:58px;text-align:right;">Pen</th>
-                <th class="col-time${hasTeamLaps ? ' th-expand-all' : ''}" style="width:85px;text-align:right;" ${hasTeamLaps ? `onclick="toggleRiderKeySet(${teamKeysJson})" title="Click to ${isAllTeamExpanded ? 'collapse' : 'expand'} all lap splits for ${escapeHtml(team)}"` : ''}>
-                  Time${hasTeamLaps ? ` <span class="expand-all-icon">${isAllTeamExpanded ? '▲' : '▼'}</span>` : ''}
-                </th>
+                <th class="col-time" style="width:85px;text-align:right;">Time</th>
               ` : `
                 <th>Category</th>
                 <th style="text-align:center;width:44px;">Div</th>
