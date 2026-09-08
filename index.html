@@ -1772,11 +1772,62 @@
       border-color: #e5e7eb;
     }
 
+    .wave-divider.clickable-wave-header {
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease, border-left-color 0.15s ease;
+    }
+    .wave-divider.clickable-wave-header:hover {
+      background: var(--bg-hover);
+    }
+    :root[data-theme="light"] .wave-divider.clickable-wave-header:hover {
+      background: #f3f4f6 !important;
+    }
+
+    .wave-laps-toggle-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 24px;
+      min-width: 24px;
+      padding: 0 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-sizing: border-box;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      user-select: none;
+      line-height: 1;
+    }
+    .wave-divider.clickable-wave-header:hover .wave-laps-toggle-icon,
+    .wave-laps-toggle-icon:hover {
+      color: var(--accent-red);
+      border-color: var(--accent-red);
+      background: var(--bg-hover);
+    }
+    :root[data-theme="light"] .wave-laps-toggle-icon {
+      background: #ffffff;
+      border-color: #e5e7eb;
+      color: #4b5563;
+    }
+    :root[data-theme="light"] .wave-divider.clickable-wave-header:hover .wave-laps-toggle-icon,
+    :root[data-theme="light"] .wave-laps-toggle-icon:hover {
+      color: var(--accent-red);
+      border-color: var(--accent-red);
+      background: #f3f4f6;
+    }
+
     .wave-laps-toggle-btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 4px;
-      padding: 2px 8px;
+      height: 24px;
+      padding: 0 8px;
       font-size: 10.5px;
       font-weight: 700;
       color: var(--text-main);
@@ -1789,6 +1840,8 @@
       transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
       vertical-align: middle;
       user-select: none;
+      box-sizing: border-box;
+      line-height: 1;
     }
     .wave-laps-toggle-btn:hover {
       background: var(--bg-hover);
@@ -8185,17 +8238,24 @@
           const isAllWaveExpanded = hasWaveLaps && waveRiderKeys.every(k => selectedRiderKeys.has(k));
           const waveKeysJson = escapeHtml(JSON.stringify(waveRiderKeys));
 
+          if (hasWaveLaps) {
+            waveHeader.className = 'wave-divider clickable-wave-header';
+            waveHeader.setAttribute('onclick', `toggleRiderKeySet(${waveKeysJson})`);
+            waveHeader.title = `Click to ${isAllWaveExpanded ? 'collapse' : 'expand'} all lap splits in this wave`;
+          } else {
+            waveHeader.className = 'wave-divider';
+          }
+
           waveHeader.innerHTML = `
-            <div style="display:flex;align-items:center;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;">
               <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;margin-left:auto;">
               ${timeHtml}
               ${hasWaveLaps ? `
-                <button type="button" class="wave-laps-toggle-btn" onclick="event.stopPropagation(); toggleRiderKeySet(${waveKeysJson});" title="Click to ${isAllWaveExpanded ? 'collapse' : 'expand'} all lap splits in this wave">
-                  <span style="font-size:9.5px;">${isAllWaveExpanded ? '▲' : '▼'}</span>
-                  <span>${isAllWaveExpanded ? 'Collapse' : 'Laps'}</span>
-                </button>
+                <span class="wave-laps-toggle-icon" title="Click to ${isAllWaveExpanded ? 'collapse' : 'expand'} all lap splits in this wave">
+                  ${isAllWaveExpanded ? '▲' : '▼'}
+                </span>
               ` : ''}
             </div>
           `;
@@ -8403,9 +8463,8 @@
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             ${hasTeamLaps ? `
-              <button type="button" class="wave-laps-toggle-btn" onclick="event.stopPropagation(); toggleRiderKeySet(${teamKeysJson});" title="Click to ${isAllTeamExpanded ? 'collapse' : 'expand'} all lap splits for ${escapeHtml(team)}">
-                <span style="font-size:9.5px;">${isAllTeamExpanded ? '▲' : '▼'}</span>
-                <span>${isAllTeamExpanded ? 'Collapse' : 'Laps'}</span>
+              <button type="button" class="wave-laps-toggle-btn" onclick="event.stopPropagation(); toggleRiderKeySet(${teamKeysJson});" title="Click to ${isAllTeamExpanded ? 'collapse' : 'expand'} all lap splits for ${escapeHtml(team)}" style="padding:0 7px;">
+                <span style="font-size:10px;">${isAllTeamExpanded ? '▲' : '▼'}</span>
               </button>
             ` : ''}
             ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span></button>` : ''}
