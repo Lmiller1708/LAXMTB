@@ -3031,6 +3031,9 @@
       justify-content: center;
       padding: 16px;
       backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      touch-action: none;
+      overscroll-behavior: contain;
     }
 
     .photo-lightbox-overlay.show {
@@ -3773,7 +3776,7 @@
             <span id="menuAdminIcon">⚙️</span>
             <div>
               <div class="mobile-menu-item-title">Coach Admin</div>
-              <div id="menuAdminSubtext" style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Passcode Protected</div>
+              <div id="menuAdminSubtext" style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Google Sign-in Required</div>
             </div>
           </div>
           <span class="mobile-menu-badge" id="menuAdminBadge" style="background:rgba(234,179,8,0.15);border-color:rgba(234,179,8,0.3);color:var(--text-main);">Coaches</span>
@@ -4431,8 +4434,6 @@
         ]
       }
     ];
-
-    const racesData = SEASON_RACES;
 
     let currentRaceIndex = 0;
     let currentTab = 'details';
@@ -5645,6 +5646,42 @@
       return [];
     }
 
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
+    function handleLightboxTouchStart(e) {
+      if (!e.touches || e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchEndX = touchStartX;
+      touchEndY = touchStartY;
+    }
+
+    function handleLightboxTouchMove(e) {
+      if (!e.touches || e.touches.length !== 1) return;
+      touchEndX = e.touches[0].clientX;
+      touchEndY = e.touches[0].clientY;
+    }
+
+    function handleLightboxTouchEnd() {
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+      const absX = Math.abs(diffX);
+      const absY = Math.abs(diffY);
+
+      if (absX > 45 && absX > absY * 1.5) {
+        if (diffX < 0) {
+          navPhotoLightbox(1); // Swipe left -> next photo
+        } else {
+          navPhotoLightbox(-1); // Swipe right -> prev photo
+        }
+      } else if (diffY > 80 && absY > absX * 1.5) {
+        closePhotoLightbox(); // Swipe down -> close lightbox
+      }
+    }
+
     function openPhotoLightbox(idx) {
       if (!loadedPhotosList || idx < 0 || idx >= loadedPhotosList.length) return;
       currentLightboxIdx = idx;
@@ -5666,8 +5703,11 @@
       if (nextBtn) nextBtn.disabled = idx === loadedPhotosList.length - 1;
 
       if (overlay) {
-        overlay.classList.add('show');
-        lockBodyScroll();
+        const wasOpen = overlay.classList.contains('show');
+        if (!wasOpen) {
+          overlay.classList.add('show');
+          lockBodyScroll();
+        }
       }
     }
 
@@ -5675,9 +5715,9 @@
       const overlay = document.getElementById('photoLightboxOverlay');
       if (overlay) {
         overlay.classList.remove('show');
-        unlockBodyScroll();
       }
       currentLightboxIdx = -1;
+      unlockBodyScroll();
     }
 
     function navPhotoLightbox(direction) {
@@ -5842,7 +5882,7 @@
         </div>
 
         <!-- Lightbox Modal Container -->
-        <div id="photoLightboxOverlay" class="photo-lightbox-overlay" onclick="closePhotoLightbox()">
+        <div id="photoLightboxOverlay" class="photo-lightbox-overlay" onclick="closePhotoLightbox()" ontouchstart="handleLightboxTouchStart(event)" ontouchmove="handleLightboxTouchMove(event)" ontouchend="handleLightboxTouchEnd()">
           <div class="photo-lightbox-content" onclick="event.stopPropagation()">
             <button type="button" class="lightbox-close-btn" onclick="closePhotoLightbox()" title="Close viewer">✕</button>
             <img id="lightboxImg" class="photo-lightbox-img" src="" alt="LAX MTB Full Photo" />
@@ -6093,7 +6133,7 @@
         if (savedCfg) notifConfig = Object.assign(notifConfig, JSON.parse(savedCfg));
         const savedSubs = localStorage.getItem(NOTIF_SUBS_KEY);
         if (savedSubs) notifSubs = Object.assign(notifSubs, JSON.parse(savedSubs));
-        const savedFired = sessionStorage.getItem(NOTIF_FIRED_KEY);
+        const savedFired = localStorage.getItem(NOTIF_FIRED_KEY) || sessionStorage.getItem(NOTIF_FIRED_KEY);
         if (savedFired) firedAlerts = new Set(JSON.parse(savedFired));
       } catch (e) {
         console.warn('Could not load notification data from storage:', e);
@@ -6112,16 +6152,21 @@
 
     function saveFiredAlerts() {
       try {
-        sessionStorage.setItem(NOTIF_FIRED_KEY, JSON.stringify(Array.from(firedAlerts)));
+        localStorage.setItem(NOTIF_FIRED_KEY, JSON.stringify(Array.from(firedAlerts)));
       } catch (e) {}
     }
 
     let modalScrollY = 0;
     let activeModalCount = 0;
 
+    function hasAnyOpenModal() {
+      const openOverlays = document.querySelectorAll('.modal-overlay.show, .photo-lightbox-overlay.show');
+      return openOverlays.length > 0;
+    }
+
     function lockBodyScroll() {
       activeModalCount++;
-      if (activeModalCount === 1) {
+      if (!document.body.classList.contains('modal-open')) {
         modalScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
         document.body.style.position = 'fixed';
         document.body.style.top = `-${modalScrollY}px`;
@@ -6133,9 +6178,10 @@
       }
     }
 
-    function unlockBodyScroll() {
+    function unlockBodyScroll(force = false) {
       activeModalCount = Math.max(0, activeModalCount - 1);
-      if (activeModalCount === 0) {
+      if (force || activeModalCount === 0 || !hasAnyOpenModal()) {
+        activeModalCount = 0;
         const top = document.body.style.top;
         document.body.style.position = '';
         document.body.style.top = '';
@@ -6618,77 +6664,278 @@
       return hours * 60 + minutes;
     }
 
+    function getRaceDaysForRace(race) {
+      if (!race) return [];
+      const yr = new Date().getFullYear();
+      const raceDays = [];
+
+      if (Array.isArray(race.schedule) && race.schedule.length > 0) {
+        for (const item of race.schedule) {
+          if (Array.isArray(item.events)) {
+            const isExplicitRaceDay = item.isRaceDay === true;
+            const hasRaceSubtitle = item.subtitle && /race\s*day/i.test(item.subtitle);
+            const hasRacingEvent = item.events.some(e => {
+              if (e.tag === 'Spectating') return false;
+              if (e.desc && /south conference/i.test(e.desc)) return false;
+              return e.isRace === true ||
+                e.tag === 'Racing' ||
+                (/\b(racing starts|race waves|racing waves|middle school races|high school races)\b/i.test(e.desc) && !/pre-ride|spectating/i.test(e.desc));
+            });
+
+            if (isExplicitRaceDay || hasRaceSubtitle || hasRacingEvent) {
+              let iso = item.isoDate;
+              if (!iso && item.date) {
+                iso = parseMonthDayToIso(item.date, yr);
+              }
+              if (iso && !raceDays.includes(iso)) {
+                raceDays.push(iso);
+              }
+            }
+          } else {
+            const text = ((item.time || '') + ' ' + (item.desc || '')).toLowerCase();
+            if (/\b(racing|waves|races)\b/.test(text) && !/pre-ride|spectating|south conference/.test(text)) {
+              const range = (race.startDate && race.endDate) ? { start: race.startDate, end: race.endDate } : parseDateRange(race.dateStr);
+              if (range.start && range.end) {
+                let curr = new Date(range.start + 'T12:00:00');
+                const end = new Date(range.end + 'T12:00:00');
+                while (curr <= end) {
+                  const d = curr.getDay();
+                  const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][d];
+                  if (text.includes(dayName)) {
+                    const y = curr.getFullYear();
+                    const m = String(curr.getMonth() + 1).padStart(2, '0');
+                    const dt = String(curr.getDate()).padStart(2, '0');
+                    const iso = `${y}-${m}-${dt}`;
+                    if (!raceDays.includes(iso)) raceDays.push(iso);
+                  }
+                  curr.setDate(curr.getDate() + 1);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Fallback: If no schedule day was explicitly identified as racing,
+      // Wisconsin NICA races occur on weekend days (Saturday / Sunday) during the event date range.
+      if (raceDays.length === 0) {
+        const range = (race.startDate && race.endDate) ? { start: race.startDate, end: race.endDate } : parseDateRange(race.dateStr);
+        if (range.start && range.end) {
+          let curr = new Date(range.start + 'T12:00:00');
+          const end = new Date(range.end + 'T12:00:00');
+          while (curr <= end) {
+            const d = curr.getDay();
+            if (d === 0 || d === 6) { // Sunday (0) or Saturday (6)
+              const y = curr.getFullYear();
+              const m = String(curr.getMonth() + 1).padStart(2, '0');
+              const dt = String(curr.getDate()).padStart(2, '0');
+              const iso = `${y}-${m}-${dt}`;
+              if (!raceDays.includes(iso)) raceDays.push(iso);
+            }
+            curr.setDate(curr.getDate() + 1);
+          }
+        } else if (range.start) {
+          raceDays.push(range.start);
+        }
+      }
+
+      return raceDays;
+    }
+
+    function isTodayRaceDay(race, now) {
+      if (!race) return false;
+      const today = now || new Date();
+      const yr = today.getFullYear();
+      const mo = String(today.getMonth() + 1).padStart(2, '0');
+      const da = String(today.getDate()).padStart(2, '0');
+      const todayIso = `${yr}-${mo}-${da}`;
+
+      const raceDays = getRaceDaysForRace(race);
+      return raceDays.includes(todayIso);
+    }
+
+    function isCategoryRacingToday(race, category, now) {
+      if (!race || !category) return false;
+      const today = now || new Date();
+      const yr = today.getFullYear();
+      const mo = String(today.getMonth() + 1).padStart(2, '0');
+      const da = String(today.getDate()).padStart(2, '0');
+      const todayIso = `${yr}-${mo}-${da}`;
+
+      if (!isTodayRaceDay(race, today)) return false;
+      if (!Array.isArray(race.schedule) || race.schedule.length === 0) return true;
+
+      const dayOfWeekNum = today.getDay();
+      const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][dayOfWeekNum];
+
+      const normCat = category.toLowerCase();
+      const isMsCat = normCat.includes('6th') || normCat.includes('7th') || normCat.includes('8th') || normCat.includes('ms2') || normCat.includes('middle');
+
+      const isGrouped = race.schedule.some(item => Array.isArray(item.events));
+      let matchedDesc = '';
+
+      if (isGrouped) {
+        const todayGroup = race.schedule.find(dg => {
+          let iso = dg.isoDate;
+          if (!iso && dg.date) iso = parseMonthDayToIso(dg.date, yr);
+          if (iso) return iso === todayIso;
+          if (dg.day && dg.day.toLowerCase().includes(dayName)) return true;
+          return false;
+        });
+
+        if (todayGroup) {
+          matchedDesc = [todayGroup.subtitle || '', ...(todayGroup.events || []).map(e => e.desc || '')].join(' ').toLowerCase();
+        }
+      } else {
+        const todayItems = race.schedule.filter(item => {
+          const t = (item.time || '').toLowerCase();
+          return t.includes(dayName);
+        });
+        matchedDesc = todayItems.map(i => `${i.time} ${i.desc}`).join(' ').toLowerCase();
+      }
+
+      if (matchedDesc) {
+        const hasHsRacing = /\bhigh school\b/i.test(matchedDesc) && /\b(racing|waves|races)\b/i.test(matchedDesc);
+        const hasMsRacing = /\bmiddle school\b/i.test(matchedDesc) && /\b(racing|waves|races)\b/i.test(matchedDesc);
+
+        if (hasHsRacing && !hasMsRacing && isMsCat) return false;
+        if (hasMsRacing && !hasHsRacing && !isMsCat) return false;
+      }
+
+      return true;
+    }
+
     function checkScheduledAlerts() {
       if (!SEASON_RACES || SEASON_RACES.length === 0) return;
-      const race = SEASON_RACES[currentRaceIndex];
-      if (!race) return;
 
       const now = new Date();
+      const yr = now.getFullYear();
+      const mo = String(now.getMonth() + 1).padStart(2, '0');
+      const da = String(now.getDate()).padStart(2, '0');
+      const todayIso = `${yr}-${mo}-${da}`;
+
+      // Find race(s) that have an active race day today
+      // Priority: user's currently selected race if it races today, otherwise any season race racing today
+      let activeRaces = SEASON_RACES.filter(r => isTodayRaceDay(r, now));
+      if (activeRaces.length === 0) {
+        // Guard 1: Not a race day today (e.g. day after the race, weekday, travel day). NEVER fire alerts.
+        return;
+      }
+
+      // If current selected race is one of the active races, prioritize it
+      const currentRace = SEASON_RACES[currentRaceIndex];
+      if (currentRace && activeRaces.some(r => r.id === currentRace.id)) {
+        activeRaces = [currentRace];
+      }
+
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-      // Check category subscriptions
-      notifSubs.categories.forEach(cat => {
-        const entry = getWaveScheduleEntry(race, cat, '1');
-        if (!entry) return;
-        const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
-        const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
-        if (targetMinutes === null) return;
-        const alertMinutes = targetMinutes - notifConfig.offset;
-        const alertKey = `cat_${cat}_${race.id || currentRaceIndex}_${now.toDateString()}`;
+      activeRaces.forEach(race => {
+        const raceId = race.id || 'race';
 
-        if (nowMinutes >= alertMinutes && nowMinutes <= alertMinutes + 10 && !firedAlerts.has(alertKey)) {
-          firedAlerts.add(alertKey);
-          saveFiredAlerts();
-          const label = notifConfig.target === 'stage' ? 'Staging Call-up' : 'Race Start';
-          const title = `🔔 ${cat} ${label} in ${notifConfig.offset}m`;
-          const body = `${cat} ${label} is at ${targetTimeStr} (Start: ${entry.start}). Head to staging grids!`;
-          showToastNotification(title, body);
-          dispatchSystemNotification(title, body);
-        }
-      });
+        // Check category subscriptions
+        notifSubs.categories.forEach(cat => {
+          if (!isCategoryRacingToday(race, cat, now)) return;
+          const entry = getWaveScheduleEntry(race, cat, '1');
+          if (!entry) return;
+          const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
+          const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
+          if (targetMinutes === null) return;
+          const alertMinutes = targetMinutes - notifConfig.offset;
+          const alertKey = `cat_${cat}_${raceId}_${todayIso}`;
 
-      // Check wave subscriptions
-      notifSubs.waves.forEach(waveKey => {
-        const [cat, wKey] = waveKey.split('::');
-        const entry = getWaveScheduleEntry(race, cat, wKey);
-        if (!entry) return;
-        const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
-        const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
-        if (targetMinutes === null) return;
-        const alertMinutes = targetMinutes - notifConfig.offset;
-        const alertKey = `wave_${cat}_${wKey}_${race.id || currentRaceIndex}_${now.toDateString()}`;
+          // Guard 2: If notification time has already passed or event has started, do NOT fire.
+          const minutesDiff = nowMinutes - alertMinutes;
+          if (minutesDiff > 1 || nowMinutes >= targetMinutes) {
+            if (!firedAlerts.has(alertKey)) {
+              firedAlerts.add(alertKey);
+              saveFiredAlerts();
+            }
+            return;
+          }
 
-        if (nowMinutes >= alertMinutes && nowMinutes <= alertMinutes + 10 && !firedAlerts.has(alertKey)) {
-          firedAlerts.add(alertKey);
-          saveFiredAlerts();
-          const label = notifConfig.target === 'stage' ? 'Staging Call-up' : 'Race Start';
-          const title = `🔔 ${cat} (${wKey}) ${label} in ${notifConfig.offset}m`;
-          const body = `${cat} ${wKey} ${label} is at ${targetTimeStr} (Start: ${entry.start}).`;
-          showToastNotification(title, body);
-          dispatchSystemNotification(title, body);
-        }
-      });
+          // Guard 3: Must be on the exact minute of notification (or within first 15s of minute+1)
+          const isDue = (minutesDiff === 0 || (minutesDiff === 1 && now.getSeconds() <= 15)) && (nowMinutes < targetMinutes);
+          if (isDue && !firedAlerts.has(alertKey)) {
+            firedAlerts.add(alertKey);
+            saveFiredAlerts();
+            const label = notifConfig.target === 'stage' ? 'Staging Call-up' : 'Race Start';
+            const title = `🔔 ${cat} ${label} in ${notifConfig.offset}m`;
+            const body = `${cat} ${label} is at ${targetTimeStr} (Start: ${entry.start}). Head to staging grids!`;
+            showToastNotification(title, body);
+            dispatchSystemNotification(title, body);
+          }
+        });
 
-      // Check rider subscriptions
-      Object.keys(notifSubs.riders).forEach(id => {
-        const r = notifSubs.riders[id];
-        const entry = getWaveScheduleEntry(race, r.cat, r.wave || '1');
-        if (!entry) return;
-        const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
-        const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
-        if (targetMinutes === null) return;
-        const alertMinutes = targetMinutes - notifConfig.offset;
-        const alertKey = `rider_${id}_${race.id || currentRaceIndex}_${now.toDateString()}`;
+        // Check wave subscriptions
+        notifSubs.waves.forEach(waveKey => {
+          const [cat, wKey] = waveKey.split('::');
+          if (!isCategoryRacingToday(race, cat, now)) return;
+          const entry = getWaveScheduleEntry(race, cat, wKey);
+          if (!entry) return;
+          const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
+          const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
+          if (targetMinutes === null) return;
+          const alertMinutes = targetMinutes - notifConfig.offset;
+          const alertKey = `wave_${cat}_${wKey}_${raceId}_${todayIso}`;
 
-        if (nowMinutes >= alertMinutes && nowMinutes <= alertMinutes + 10 && !firedAlerts.has(alertKey)) {
-          firedAlerts.add(alertKey);
-          saveFiredAlerts();
-          const label = notifConfig.target === 'stage' ? 'Staging' : 'Start';
-          const title = `🔔 ${r.name} ${label} in ${notifConfig.offset}m`;
-          const body = `${r.name} (${r.cat}) ${label} is at ${targetTimeStr}.`;
-          showToastNotification(title, body);
-          dispatchSystemNotification(title, body);
-        }
+          // Guard 2: If notification time has already passed or event has started, do NOT fire.
+          const minutesDiff = nowMinutes - alertMinutes;
+          if (minutesDiff > 1 || nowMinutes >= targetMinutes) {
+            if (!firedAlerts.has(alertKey)) {
+              firedAlerts.add(alertKey);
+              saveFiredAlerts();
+            }
+            return;
+          }
+
+          // Guard 3: Must be on the exact minute of notification
+          const isDue = (minutesDiff === 0 || (minutesDiff === 1 && now.getSeconds() <= 15)) && (nowMinutes < targetMinutes);
+          if (isDue && !firedAlerts.has(alertKey)) {
+            firedAlerts.add(alertKey);
+            saveFiredAlerts();
+            const label = notifConfig.target === 'stage' ? 'Staging Call-up' : 'Race Start';
+            const title = `🔔 ${cat} (${wKey}) ${label} in ${notifConfig.offset}m`;
+            const body = `${cat} ${wKey} ${label} is at ${targetTimeStr} (Start: ${entry.start}).`;
+            showToastNotification(title, body);
+            dispatchSystemNotification(title, body);
+          }
+        });
+
+        // Check rider subscriptions
+        Object.keys(notifSubs.riders).forEach(id => {
+          const r = notifSubs.riders[id];
+          if (!isCategoryRacingToday(race, r.cat, now)) return;
+          const entry = getWaveScheduleEntry(race, r.cat, r.wave || '1');
+          if (!entry) return;
+          const targetTimeStr = notifConfig.target === 'stage' && entry.stage ? entry.stage : entry.start;
+          const targetMinutes = parseTimeStrToMinutes(targetTimeStr);
+          if (targetMinutes === null) return;
+          const alertMinutes = targetMinutes - notifConfig.offset;
+          const alertKey = `rider_${id}_${raceId}_${todayIso}`;
+
+          // Guard 2: If notification time has already passed or event has started, do NOT fire.
+          const minutesDiff = nowMinutes - alertMinutes;
+          if (minutesDiff > 1 || nowMinutes >= targetMinutes) {
+            if (!firedAlerts.has(alertKey)) {
+              firedAlerts.add(alertKey);
+              saveFiredAlerts();
+            }
+            return;
+          }
+
+          // Guard 3: Must be on the exact minute of notification
+          const isDue = (minutesDiff === 0 || (minutesDiff === 1 && now.getSeconds() <= 15)) && (nowMinutes < targetMinutes);
+          if (isDue && !firedAlerts.has(alertKey)) {
+            firedAlerts.add(alertKey);
+            saveFiredAlerts();
+            const label = notifConfig.target === 'stage' ? 'Staging' : 'Start';
+            const title = `🔔 ${r.name} ${label} in ${notifConfig.offset}m`;
+            const body = `${r.name} (${r.cat}) ${label} is at ${targetTimeStr}.`;
+            showToastNotification(title, body);
+            dispatchSystemNotification(title, body);
+          }
+        });
       });
     }
 
@@ -6697,10 +6944,22 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        closePhotoLightbox();
+        exitMapAppFullscreen();
         closeWhatsNewModal();
         closeNotificationModal();
         closeAdminPortal();
         closeMobileMenu();
+      } else if (e.key === 'ArrowLeft') {
+        const lightbox = document.getElementById('photoLightboxOverlay');
+        if (lightbox && lightbox.classList.contains('show')) {
+          navPhotoLightbox(-1);
+        }
+      } else if (e.key === 'ArrowRight') {
+        const lightbox = document.getElementById('photoLightboxOverlay');
+        if (lightbox && lightbox.classList.contains('show')) {
+          navPhotoLightbox(1);
+        }
       }
     });
 
@@ -7432,12 +7691,6 @@
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        exitMapAppFullscreen();
-      }
-    });
-
     // =========================================================
     // GOOGLE SHEETS LIVE SYNC ENGINE (One Tab Per Race • KISS)
     // =========================================================
@@ -8092,10 +8345,6 @@
       }
     }
 
-    function checkAdminInviteToken() {
-      // Retain backward-compatible query param login if token matches admin
-    }
-
     function openAdminPortal(targetTab = null) {
       closeMobileMenu();
       const modal = document.getElementById('adminModalOverlay');
@@ -8235,15 +8484,6 @@
         coachPill.textContent = coachEmail ? `👤 ${coachEmail}` : '';
         coachPill.style.display = coachEmail ? 'inline-block' : 'none';
       }
-    }
-
-    function escapeHtml(str) {
-      if (str === undefined || str === null) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
     }
 
     function switchAdminTab(tabKey) {
@@ -9034,7 +9274,6 @@
       }
     }
 
-    checkAdminInviteToken();
     initTheme();
     loadNotifData();
     updateAdminMenuUI();
