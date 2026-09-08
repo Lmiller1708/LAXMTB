@@ -203,7 +203,13 @@ onMounted(() => {
             title="View photo full-size"
             @click="openLightbox(idx)"
           >
-            <img :src="`${p.url}=w400-h400-c`" alt="LAX MTB Team Photo" class="photo-thumb-img" loading="lazy">
+            <img
+              :src="`${p.url}=w400-h400-c`"
+              alt="LAX MTB Team Photo"
+              class="photo-thumb-img"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+            >
             <div class="photo-thumb-overlay">
               <span class="photo-zoom-icon">🔍</span>
             </div>
@@ -325,6 +331,7 @@ onMounted(() => {
           :src="`${photos[currentLightboxIdx].url}=w1920-h1280`"
           alt="LAX MTB Full Photo"
           class="photo-lightbox-img"
+          referrerpolicy="no-referrer"
         >
         <div class="photo-lightbox-controls">
           <button type="button" class="lightbox-nav-btn" title="Previous photo" @click="navLightbox(-1)">‹</button>
