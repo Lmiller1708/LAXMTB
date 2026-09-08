@@ -3773,7 +3773,7 @@
             <span id="menuAdminIcon">⚙️</span>
             <div>
               <div class="mobile-menu-item-title">Coach Admin</div>
-              <div id="menuAdminSubtext" style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Passcode Protected</div>
+              <div id="menuAdminSubtext" style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Google Sign-in Required</div>
             </div>
           </div>
           <span class="mobile-menu-badge" id="menuAdminBadge" style="background:rgba(234,179,8,0.15);border-color:rgba(234,179,8,0.3);color:var(--text-main);">Coaches</span>
@@ -4431,8 +4431,6 @@
         ]
       }
     ];
-
-    const racesData = SEASON_RACES;
 
     let currentRaceIndex = 0;
     let currentTab = 'details';
@@ -6898,10 +6896,22 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        closePhotoLightbox();
+        exitMapAppFullscreen();
         closeWhatsNewModal();
         closeNotificationModal();
         closeAdminPortal();
         closeMobileMenu();
+      } else if (e.key === 'ArrowLeft') {
+        const lightbox = document.getElementById('photoLightboxOverlay');
+        if (lightbox && lightbox.classList.contains('show')) {
+          navPhotoLightbox(-1);
+        }
+      } else if (e.key === 'ArrowRight') {
+        const lightbox = document.getElementById('photoLightboxOverlay');
+        if (lightbox && lightbox.classList.contains('show')) {
+          navPhotoLightbox(1);
+        }
       }
     });
 
@@ -7633,12 +7643,6 @@
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        exitMapAppFullscreen();
-      }
-    });
-
     // =========================================================
     // GOOGLE SHEETS LIVE SYNC ENGINE (One Tab Per Race • KISS)
     // =========================================================
@@ -8293,10 +8297,6 @@
       }
     }
 
-    function checkAdminInviteToken() {
-      // Retain backward-compatible query param login if token matches admin
-    }
-
     function openAdminPortal(targetTab = null) {
       closeMobileMenu();
       const modal = document.getElementById('adminModalOverlay');
@@ -8436,15 +8436,6 @@
         coachPill.textContent = coachEmail ? `👤 ${coachEmail}` : '';
         coachPill.style.display = coachEmail ? 'inline-block' : 'none';
       }
-    }
-
-    function escapeHtml(str) {
-      if (str === undefined || str === null) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
     }
 
     function switchAdminTab(tabKey) {
@@ -9235,7 +9226,6 @@
       }
     }
 
-    checkAdminInviteToken();
     initTheme();
     loadNotifData();
     updateAdminMenuUI();
