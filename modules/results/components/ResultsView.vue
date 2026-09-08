@@ -1,7 +1,16 @@
 <script setup lang="ts">
 import type { Rider, ResultsSortOrder, ResultsGroupMode } from '../types/results'
 import type { Race } from '~/modules/races/types/race'
-import { targetTeamKeywords, categoryOrder } from '../services/raceresultService'
+import {
+  targetTeamKeywords,
+  categoryOrder,
+  getWaveScheduleEntry,
+  getWaveWarmupTime,
+  getCategoryStartTime,
+  getCategoryStageTime,
+  compareCategories
+} from '../services/raceresultService'
+import { useNotificationSubscriptions } from '~/modules/notifications/composables/useNotificationSubscriptions'
 
 const props = defineProps<{
   race: Race
@@ -18,6 +27,8 @@ const emit = defineEmits<{
   (e: 'switchTab', tab: 'details'): void
   (e: 'editWaves'): void
 }>()
+
+const { isCategorySubscribed, toggleCategorySubscription } = useNotificationSubscriptions()
 
 const selectedRiderKeys = ref<Set<string>>(new Set())
 const cardStateOverrides = ref<Record<string, boolean>>({})
@@ -84,23 +95,23 @@ const groupedByCategory = computed(() => {
     grouped[cat][wave].push(r)
   })
 
-  // Sort categories
+  // Sort categories using compareCategories
   const sortedCats = Object.keys(grouped).sort((a, b) => {
-    const ia = categoryOrder.indexOf(a)
-    const ib = categoryOrder.indexOf(b)
-    if (ia !== -1 && ib !== -1) return ia - ib
-    if (ia !== -1) return -1
-    if (ib !== -1) return 1
-    return a.localeCompare(b)
+    return compareCategories(a, b, props.sortOrder, props.race)
   })
 
   return sortedCats.map(cat => {
     const waves = grouped[cat]
     const sortedWaveKeys = Object.keys(waves).sort()
     const totalInCat = Object.values(waves).reduce((acc, list) => acc + list.length, 0)
+    const catStartTime = getCategoryStartTime(props.race, cat)
+    const catStageTime = getCategoryStageTime(props.race, cat)
+
     return {
       category: cat,
       totalInCat,
+      catStartTime,
+      catStageTime,
       waves: sortedWaveKeys.map(wKey => {
         const ridersInWave = [...waves[wKey]].sort((a, b) => {
           const pa = parseInt(a.pl || '') || parseInt(a.bib) || 0
@@ -110,10 +121,18 @@ const groupedByCategory = computed(() => {
         const waveRiderKeys = ridersInWave
           .filter(r => Array.isArray(r.laps) && r.laps.length > 0)
           .map(r => getRiderKey(r))
+        const waveEntry = getWaveScheduleEntry(props.race, cat, wKey)
+        const waveTime = waveEntry ? waveEntry.start : null
+        const stageTime = waveEntry ? waveEntry.stage : null
+        const waveWarmupTime = getWaveWarmupTime(props.race, cat, wKey)
+
         return {
           waveKey: wKey,
           riders: ridersInWave,
-          waveRiderKeys
+          waveRiderKeys,
+          waveTime,
+          stageTime,
+          waveWarmupTime
         }
       })
     }
@@ -196,8 +215,27 @@ const groupedByTeam = computed(() => {
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;">
             <span>{{ catGroup.category }}</span>
             <span class="category-badge">{{ catGroup.totalInCat }} RIDERS</span>
+            <span
+              v-if="catGroup.catStartTime"
+              class="category-time-badge"
+              :title="`Category Start: ${catGroup.catStartTime}${catGroup.catStageTime ? ` | Stage: ${catGroup.catStageTime}` : ''}`"
+            >
+              Race Starts: {{ catGroup.catStartTime }}
+            </span>
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <button
+              type="button"
+              class="notif-sub-btn cat-notif-btn"
+              :class="{ active: isCategorySubscribed(catGroup.category) }"
+              :title="isCategorySubscribed(catGroup.category) ? `Notifications enabled for ${catGroup.category}` : `Enable notifications for ${catGroup.category}`"
+              @click.stop="toggleCategorySubscription(catGroup.category)"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" :fill="isCategorySubscribed(catGroup.category) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+            </button>
             <button
               v-if="isCoachAuth"
               type="button"
@@ -219,11 +257,27 @@ const groupedByTeam = computed(() => {
                 <span>🚩 {{ w.waveKey.includes('Wave') ? w.waveKey : `Wave: ${w.waveKey}` }}</span>
               </div>
               <div class="wave-schedule-wrap" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0;">
+                <div v-if="w.waveWarmupTime || w.stageTime || w.waveTime" class="wave-schedule-strip">
+                  <span v-if="w.waveWarmupTime" class="wave-schedule-step step-warmup" title="Warm-up starts 45m before staging">
+                    <span class="step-lbl"><span class="lbl-full">Warm-up:</span><span class="lbl-short">Warm:</span></span>
+                    <span class="step-time">{{ w.waveWarmupTime }}</span>
+                  </span>
+                  <span v-if="w.waveWarmupTime && (w.stageTime || w.waveTime)" class="wave-schedule-sep">›</span>
+                  <span v-if="w.stageTime" class="wave-schedule-step step-stage" title="Staging grid call-up">
+                    <span class="step-lbl">Stage:</span>
+                    <span class="step-time">{{ w.stageTime }}</span>
+                  </span>
+                  <span v-if="w.stageTime && w.waveTime" class="wave-schedule-sep">›</span>
+                  <span v-if="w.waveTime" class="wave-schedule-step step-start" title="Official wave gun start">
+                    <span class="step-lbl">Start:</span>
+                    <span class="step-time">{{ w.waveTime }}</span>
+                  </span>
+                </div>
                 <button
                   v-if="currentTab === 'results' && w.waveRiderKeys.length > 0"
                   type="button"
                   class="wave-laps-toggle-btn"
-                  title="Toggle all lap splits in this wave"
+                  :title="w.waveRiderKeys.every(k => selectedRiderKeys.has(k)) ? 'Collapse all lap splits in this wave' : 'Expand all lap splits in this wave'"
                   @click.stop="toggleRiderKeySet(w.waveRiderKeys)"
                 >
                   {{ w.waveRiderKeys.every(k => selectedRiderKeys.has(k)) ? '▲' : '▼' }}

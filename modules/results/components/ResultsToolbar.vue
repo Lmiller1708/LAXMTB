@@ -2,6 +2,7 @@
 import type { ResultsSortOrder, ResultsGroupMode, TeamScope } from '../types/results'
 
 const props = defineProps<{
+  currentTab: 'list' | 'results'
   categories: string[]
   isLive: boolean
   totalCount: number
@@ -9,6 +10,7 @@ const props = defineProps<{
 
 const searchQuery = defineModel<string>('searchQuery', { default: '' })
 const listMode = defineModel<ResultsGroupMode>('listMode', { default: 'WAVE' })
+const selectedListId = defineModel<string>('selectedListId', { default: 'A76F6B' })
 const sortOrder = defineModel<ResultsSortOrder>('sortOrder', { default: 'GRADE' })
 const selectedCategory = defineModel<string>('selectedCategory', { default: 'ALL' })
 const selectedTeamScope = defineModel<TeamScope>('selectedTeamScope', { default: 'DEFAULT_TEAMS' })
@@ -18,6 +20,15 @@ const emit = defineEmits<{
 }>()
 
 const isFilterOpen = ref(false)
+
+const onListChange = () => {
+  if (selectedListId.value === '747B52' || selectedListId.value === 'E07F7C') {
+    listMode.value = 'TEAM'
+  } else {
+    listMode.value = 'WAVE'
+  }
+  emit('refresh')
+}
 
 const clearSearch = () => {
   searchQuery.value = ''
@@ -36,29 +47,49 @@ const removeTeamFilter = () => {
 }
 
 const activeFilterChips = computed(() => {
-  const chips: { label: string; onRemove?: () => void }[] = []
+  const chips: { label: string; strongText?: string; isLaxScope?: boolean; onRemove?: () => void }[] = []
 
-  if (selectedTeamScope.value === 'DEFAULT_TEAMS') {
-    chips.push({
-      label: 'Team: LAXMTB',
-      onRemove: removeTeamFilter
-    })
+  // View chip
+  if (selectedListId.value === '747B52' || selectedListId.value === 'E07F7C') {
+    chips.push({ label: 'View: ', strongText: 'By Team' })
   } else {
-    chips.push({
-      label: 'All Teams'
-    })
+    chips.push({ label: 'View: ', strongText: 'Wave & Category' })
   }
 
+  // Sort chip
+  if (sortOrder.value === 'TIME') {
+    chips.push({ label: 'Sort: ', strongText: '⏱️ Start Time' })
+  }
+
+  // Category chip
   if (selectedCategory.value !== 'ALL') {
     chips.push({
-      label: `Category: ${selectedCategory.value}`,
+      label: 'Category: ',
+      strongText: selectedCategory.value,
       onRemove: removeCategoryFilter
     })
   }
 
+  // Team scope chip
+  if (selectedTeamScope.value === 'DEFAULT_TEAMS') {
+    chips.push({
+      label: 'Scope: ',
+      strongText: 'LAXMTB Team',
+      isLaxScope: true,
+      onRemove: removeTeamFilter
+    })
+  } else {
+    chips.push({
+      label: 'Scope: ',
+      strongText: 'All Teams'
+    })
+  }
+
+  // Search query chip
   if (searchQuery.value.trim()) {
     chips.push({
-      label: `"${searchQuery.value.trim()}"`,
+      label: 'Search: ',
+      strongText: `"${searchQuery.value.trim()}"`,
       onRemove: clearSearch
     })
   }
@@ -104,9 +135,16 @@ const activeFilterChips = computed(() => {
       <div class="filters-grid">
         <div class="filter-group">
           <label class="filter-label">Group By / View</label>
-          <select v-model="listMode" id="listSelect" class="select-dropdown">
-            <option value="WAVE">Category & Wave</option>
-            <option value="TEAM">By Team</option>
+          <select v-model="selectedListId" id="listSelect" class="select-dropdown" @change="onListChange">
+            <template v-if="currentTab === 'list'">
+              <option value="A76F6B">Category & Wave</option>
+              <option value="747B52">By Team</option>
+            </template>
+            <template v-else>
+              <option value="4C8C1F">Individual Results - ALL</option>
+              <option value="E07F7C">Individual Results - By Team</option>
+              <option value="674D5B">Team Results</option>
+            </template>
           </select>
         </div>
 
@@ -142,8 +180,9 @@ const activeFilterChips = computed(() => {
         v-for="(chip, idx) in activeFilterChips"
         :key="idx"
         class="filter-chip"
+        :style="chip.isLaxScope ? 'border-color:var(--accent-red);color:var(--accent-red);' : ''"
       >
-        <span>{{ chip.label }}</span>
+        <span>{{ chip.label }}<strong v-if="chip.strongText">{{ chip.strongText }}</strong></span>
         <span
           v-if="chip.onRemove"
           class="chip-remove"
