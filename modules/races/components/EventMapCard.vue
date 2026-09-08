@@ -46,46 +46,70 @@ const toggleFullscreen = () => {
 </script>
 
 <template>
-  <div v-if="race.embedMapUrl" class="event-map-container" :class="{ 'map-fullscreen-active': isFullscreen }" id="eventMapContainer">
+  <div v-if="race.embedMapUrl" class="event-map-container" :class="{ 'card-collapsed': !isOpen, 'map-fullscreen-active': isFullscreen }" id="eventMapContainer">
     <div class="event-map-header collapsible-header" @click="isOpen = !isOpen">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button
-          v-if="isCoachAuth"
-          type="button"
-          class="card-inline-edit-btn"
-          title="Edit Course Map Links"
-          @click.stop="emit('edit')"
-        >
-          <span>✏️</span>
-        </button>
-        <div class="map-header-actions" style="display:flex;align-items:center;gap:6px;">
-          <a
-            v-if="directMapUrl"
-            :href="directMapUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn-icon"
-            style="text-decoration:none;font-size:11px;padding:4px 10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;"
-            title="Open course map in Google Maps"
-            @click.stop
-          >
-            <span>🗺️</span> <span>Open Map ↗</span>
-          </a>
-          <button
-            type="button"
-            class="btn-icon"
-            id="mapAppFullscreenBtn"
-            style="font-size:11px;padding:4px 10px;font-weight:700;"
-            @click.stop="toggleFullscreen"
-          >
-            <span id="mapFsIcon">{{ isFullscreen ? '✕' : '⛶' }}</span>
-            <span id="mapFsLabel">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Map' }}</span>
-          </button>
+      <div class="event-map-header-main" style="display:flex;align-items:center;justify-content:space-between;width:100%;min-width:0;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
         </div>
-        <span class="card-toggle-icon" :class="{ collapsed: !isOpen }" id="mapToggleChevron" title="Toggle Map">▼</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <button
+            v-if="isCoachAuth"
+            type="button"
+            class="card-inline-edit-btn"
+            title="Edit Course Map Links"
+            @click.stop="emit('edit')"
+          >
+            <span>✏️</span>
+          </button>
+          <div v-show="isOpen" class="map-header-actions desktop-map-actions" style="display:flex;align-items:center;gap:6px;">
+            <a
+              v-if="directMapUrl"
+              :href="directMapUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-icon"
+              style="text-decoration:none;font-size:11px;padding:4px 10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;"
+              title="Open course map in Google Maps"
+              @click.stop
+            >
+              <span>🗺️</span> <span>Open Map ↗</span>
+            </a>
+            <button
+              type="button"
+              class="btn-icon"
+              id="mapAppFullscreenBtn"
+              style="font-size:11px;padding:4px 10px;font-weight:700;"
+              @click.stop="toggleFullscreen"
+            >
+              <span id="mapFsIcon">{{ isFullscreen ? '✕' : '⛶' }}</span>
+              <span id="mapFsLabel">{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Map' }}</span>
+            </button>
+          </div>
+          <span class="card-toggle-icon" :class="{ collapsed: !isOpen }" id="mapToggleChevron" title="Toggle Map">▼</span>
+        </div>
+      </div>
+      <div v-show="isOpen" class="map-header-actions mobile-map-actions" style="display:none;width:100%;gap:6px;margin-top:8px;" @click.stop>
+        <a
+          v-if="directMapUrl"
+          :href="directMapUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-icon"
+          style="text-decoration:none;font-size:11px;padding:4px 10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;"
+          title="Open course map in Google Maps"
+        >
+          <span>🗺️</span> <span>Open Map ↗</span>
+        </a>
+        <button
+          type="button"
+          class="btn-icon"
+          style="font-size:11px;padding:4px 10px;font-weight:700;"
+          @click="toggleFullscreen"
+        >
+          <span>{{ isFullscreen ? '✕' : '⛶' }}</span>
+          <span>{{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Map' }}</span>
+        </button>
       </div>
     </div>
     <div v-show="isOpen" class="collapsible-body">
@@ -103,3 +127,17 @@ const toggleFullscreen = () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.mobile-map-actions {
+  display: none;
+}
+@media (max-width: 600px) {
+  .desktop-map-actions {
+    display: none !important;
+  }
+  .mobile-map-actions {
+    display: flex !important;
+  }
+}
+</style>

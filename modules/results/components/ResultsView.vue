@@ -363,14 +363,31 @@ const groupedByTeam = computed(() => {
 
                     <!-- Expanded Lap Splits Row -->
                     <tr
-                      v-if="currentTab === 'results' && selectedRiderKeys.has(getRiderKey(r)) && r.laps && r.laps.length > 0"
+                      v-if="currentTab === 'results' && selectedRiderKeys.has(getRiderKey(r))"
                       class="rider-laps-detail-row"
                     >
                       <td colspan="12">
-                        <div class="rider-laps-flex">
-                          <span v-for="(lapVal, idx) in r.laps" :key="idx" class="lap-badge">
-                            <span class="lap-num">Lap {{ idx + 1 }}:</span>
-                            <span class="lap-val">{{ lapVal }}</span>
+                        <div class="laps-detail-wrapper">
+                          <template v-if="r.laps && r.laps.length > 0">
+                            <span v-for="(lapVal, idx) in r.laps" :key="idx" class="lap-badge">
+                              <span class="lap-num">Lap {{ idx + 1 }}:</span>
+                              <span class="lap-val">{{ lapVal }}</span>
+                            </span>
+                            <span v-if="r.avgLap" class="lap-badge lap-avg">
+                              <span class="lap-num">Avg Pace:</span>
+                              <span class="lap-val">{{ r.avgLap }} / lap</span>
+                            </span>
+                            <span v-if="r.penalty" class="lap-badge lap-penalty">
+                              <span class="lap-num">Penalty:</span>
+                              <span class="lap-val">+{{ r.penalty }}</span>
+                            </span>
+                            <span v-if="r.totalTime" class="lap-badge lap-total">
+                              <span class="lap-num">Total:</span>
+                              <span class="lap-val">{{ r.totalTime }}</span>
+                            </span>
+                          </template>
+                          <span v-else style="color:var(--text-muted);font-style:italic;">
+                            No individual lap splits recorded for this rider.
                           </span>
                         </div>
                       </td>
@@ -414,16 +431,56 @@ const groupedByTeam = computed(() => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="r in teamGroup.riders" :key="getRiderKey(r)">
-                  <td style="text-align:center;font-weight:700;color:var(--text-muted);">{{ r.pl || '-' }}</td>
-                  <td style="text-align:center;"><span class="plate-number">#{{ r.no || r.bib }}</span></td>
-                  <td><span class="rider-name">{{ r.name }}</span></td>
-                  <td><span class="category-pill">{{ r.category }}</span></td>
-                  <td style="text-align:center;"><span class="div-tag">D{{ r.div || '1' }}</span></td>
-                  <td v-if="currentTab === 'results'" class="col-time" style="text-align:right;white-space:nowrap;">
-                    <span>{{ r.totalTime || r.return_val || '-' }}</span>
-                  </td>
-                </tr>
+                <template v-for="r in teamGroup.riders" :key="getRiderKey(r)">
+                  <tr
+                    :class="[
+                      currentTab === 'results' ? 'selectable-rider-row' : '',
+                      selectedRiderKeys.has(getRiderKey(r)) ? 'selected' : ''
+                    ]"
+                    :title="currentTab === 'results' ? 'Tap to toggle lap splits' : undefined"
+                    @click="currentTab === 'results' && toggleRiderSelection(getRiderKey(r))"
+                  >
+                    <td style="text-align:center;font-weight:700;color:var(--text-muted);">{{ r.pl || '-' }}</td>
+                    <td style="text-align:center;"><span class="plate-number">#{{ r.no || r.bib }}</span></td>
+                    <td><span class="rider-name">{{ r.name }}</span></td>
+                    <td><span class="category-pill">{{ r.category }}</span></td>
+                    <td style="text-align:center;"><span class="div-tag">D{{ r.div || '1' }}</span></td>
+                    <td v-if="currentTab === 'results'" class="col-time" style="text-align:right;white-space:nowrap;">
+                      <span>{{ r.totalTime || r.return_val || '-' }}</span>
+                      <span v-if="r.laps && r.laps.length > 0" class="rider-expand-icon">▼</span>
+                    </td>
+                  </tr>
+                  <tr
+                    v-if="currentTab === 'results' && selectedRiderKeys.has(getRiderKey(r))"
+                    class="rider-laps-detail-row"
+                  >
+                    <td colspan="6">
+                      <div class="laps-detail-wrapper">
+                        <template v-if="r.laps && r.laps.length > 0">
+                          <span v-for="(lapVal, idx) in r.laps" :key="idx" class="lap-badge">
+                            <span class="lap-num">Lap {{ idx + 1 }}:</span>
+                            <span class="lap-val">{{ lapVal }}</span>
+                          </span>
+                          <span v-if="r.avgLap" class="lap-badge lap-avg">
+                            <span class="lap-num">Avg Pace:</span>
+                            <span class="lap-val">{{ r.avgLap }} / lap</span>
+                          </span>
+                          <span v-if="r.penalty" class="lap-badge lap-penalty">
+                            <span class="lap-num">Penalty:</span>
+                            <span class="lap-val">+{{ r.penalty }}</span>
+                          </span>
+                          <span v-if="r.totalTime" class="lap-badge lap-total">
+                            <span class="lap-num">Total:</span>
+                            <span class="lap-val">{{ r.totalTime }}</span>
+                          </span>
+                        </template>
+                        <span v-else style="color:var(--text-muted);font-style:italic;">
+                          No individual lap splits recorded for this rider.
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>

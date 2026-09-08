@@ -12,7 +12,7 @@ const isOpen = ref(true)
 </script>
 
 <template>
-  <div class="detail-section" id="guidelinesDetailSection">
+  <div class="detail-section" :class="{ 'card-collapsed': !isOpen }" id="guidelinesDetailSection">
     <div class="detail-section-header collapsible-header" @click="isOpen = !isOpen">
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="detail-section-title"><span>🏕️</span> Venue Guidelines & Spectator Info</span>
@@ -35,9 +35,12 @@ const isOpen = ref(true)
         No specific guidelines posted yet for this venue.
       </div>
       <div v-else style="display:flex;flex-direction:column;gap:6px;">
-        <p v-for="(g, idx) in guidelines" :key="idx" class="guideline-item">
-          • {{ g }}
-        </p>
+        <p
+          v-for="(g, idx) in guidelines"
+          :key="idx"
+          class="guideline-item"
+          v-html="'• ' + g"
+        />
       </div>
     </div>
   </div>

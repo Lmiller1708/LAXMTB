@@ -1714,6 +1714,12 @@
       display: none !important;
     }
 
+    .card-collapsed .detail-section-header,
+    .card-collapsed .event-map-header,
+    .card-collapsed .category-header {
+      border-bottom: none !important;
+    }
+
     .category-badge {
       font-size: 10px;
       font-weight: 700;
@@ -1819,6 +1825,12 @@
       color: var(--accent-red);
       border-color: var(--accent-red);
       background: #f3f4f6;
+    }
+
+    @media (min-width: 768px) {
+      .wave-laps-toggle-btn {
+        display: none !important;
+      }
     }
 
     .map-direct-bar {

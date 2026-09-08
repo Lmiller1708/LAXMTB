@@ -44,7 +44,7 @@ const removeGuideline = (idx: number) => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="modal-overlay" id="adminModalOverlay" @click.self="emit('close')">
+  <div v-if="isOpen" class="modal-overlay show" id="adminModalOverlay" @click.self="emit('close')">
     <div class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
       <!-- Authenticated Admin Dashboard Screen -->
       <div id="adminDashboardScreen" style="display:flex;flex-direction:column;height:100%;flex:1;overflow:hidden;">

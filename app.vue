@@ -86,6 +86,39 @@ const refreshData = () => {
   }
 }
 
+const showNotifToast = (msg: string) => {
+  if (!import.meta.client) return
+  const container = document.getElementById('notifToastContainer')
+  if (!container) return
+  const toast = document.createElement('div')
+  toast.className = 'notif-toast'
+  toast.innerHTML = `
+    <div class="notif-toast-content">
+      <div class="notif-toast-title">${msg}</div>
+    </div>
+    <button type="button" class="notif-toast-close" aria-label="Dismiss">✕</button>
+  `
+  toast.querySelector('.notif-toast-close')?.addEventListener('click', () => toast.remove())
+  container.appendChild(toast)
+  setTimeout(() => {
+    toast.remove()
+  }, 3500)
+}
+
+const handleSyncData = () => {
+  showNotifToast('🔄 Checking Google Sheets for latest updates...')
+  refreshData()
+  setTimeout(() => {
+    showNotifToast('✅ Data synced successfully!')
+  }, 1000)
+}
+
+watch([isWhatsNewOpen, isNotifOpen, isAdminOpen], ([wn, notif, admin]) => {
+  if (import.meta.client) {
+    document.body.classList.toggle('modal-open', Boolean(wn || notif || admin))
+  }
+})
+
 const handlePrint = () => {
   if (import.meta.client) {
     window.print()
@@ -95,6 +128,9 @@ const handlePrint = () => {
 
 <template>
   <div>
+    <!-- Toast Notification Container -->
+    <div class="notif-toast-container" id="notifToastContainer" />
+
     <!-- Site Header -->
     <header class="site-header">
       <!-- 1. Fixed Brand Header & Controls -->
@@ -102,7 +138,7 @@ const handlePrint = () => {
         @open-whats-new="isWhatsNewOpen = true"
         @open-notifications="isNotifOpen = true"
         @open-admin="openAdminWithTab('venue')"
-        @sync-data="refreshData"
+        @sync-data="handleSyncData"
       />
 
       <!-- 2. Season Race Switcher Bar -->
@@ -183,8 +219,10 @@ const handlePrint = () => {
         <EventVenueCard :race="currentRace" :is-coach-auth="true" @edit="openAdminWithTab('venue')" />
         <EventSignupsCard :signups="currentRace.signups" :race-name="currentRace.name" :is-coach-auth="true" @edit="openAdminWithTab('signups')" />
         <EventMapCard :race="currentRace" :is-coach-auth="true" @edit="openAdminWithTab('maps')" />
-        <ScheduleTimeline :schedule="currentRace.schedule" :is-coach-auth="true" @edit="openAdminWithTab('schedule')" />
-        <EventGuidelinesCard :guidelines="currentRace.guidelines" :is-coach-auth="true" @edit="openAdminWithTab('announcements')" />
+        <div class="event-details-grid">
+          <ScheduleTimeline :schedule="currentRace.schedule" :is-coach-auth="true" @edit="openAdminWithTab('schedule')" />
+          <EventGuidelinesCard :guidelines="currentRace.guidelines" :is-coach-auth="true" @edit="openAdminWithTab('announcements')" />
+        </div>
       </div>
 
       <!-- Tab 2 & 3: Start Lists & Results -->
