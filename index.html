@@ -2711,6 +2711,223 @@
       color: var(--text-main);
     }
 
+    /* =========================================================
+       TEAM PHOTOS TAB & SHARED ALBUM STYLING
+       ========================================================= */
+    .photos-tab-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 4px;
+      margin-bottom: 30px;
+    }
+
+    .photos-hero-card {
+      background: linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, var(--bg-card) 60%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .photos-hero-card::after {
+      content: '📸';
+      position: absolute;
+      right: 18px;
+      bottom: -15px;
+      font-size: 110px;
+      opacity: 0.08;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .photos-hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .photos-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: rgba(220, 38, 38, 0.15);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      color: var(--accent-red);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+
+    .photos-hero-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text-main);
+      margin: 0 0 6px;
+      line-height: 1.15;
+    }
+
+    .photos-hero-subtitle {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin: 0 0 18px;
+      line-height: 1.5;
+      max-width: 680px;
+    }
+
+    .photos-actions-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-photos-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: 8px;
+      background: var(--accent-red);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-photos-primary:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(220, 38, 38, 0.45);
+      color: #ffffff;
+    }
+
+    .btn-photos-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 11px 18px;
+      border-radius: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-photos-secondary:hover {
+      background: var(--bg-subtle);
+      border-color: var(--text-muted);
+      color: var(--text-main);
+    }
+
+    .photos-features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .photo-feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .photo-feature-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+      line-height: 1;
+      padding-top: 2px;
+    }
+
+    .photo-feature-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 0 0 3px;
+    }
+
+    .photo-feature-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    .photos-guide-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .photos-guide-card h4 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .photos-guide-steps {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .photos-guide-steps li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .photos-step-num {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
     /* Dedicated Print Header Styling */
     .print-header {
       display: none;
@@ -3616,6 +3833,7 @@
             <button type="button" class="admin-tab-btn" id="adminTabBtn_waves" onclick="switchAdminTab('waves')">⏱️ Race Info</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_schedule" onclick="switchAdminTab('schedule')">📅 Team Schedule</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_signups" onclick="switchAdminTab('signups')">🤝 Volunteers & Food</button>
+            <button type="button" class="admin-tab-btn" id="adminTabBtn_photos" onclick="switchAdminTab('photos')">📸 Photos Album</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_maps" onclick="switchAdminTab('maps')">🗺️ Course Maps</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_announcements" onclick="switchAdminTab('announcements')">📢 Guidelines</button>
             <button type="button" class="admin-tab-btn" id="adminTabBtn_config" onclick="switchAdminTab('config')">⚙️ Config / Export</button>
@@ -3664,6 +3882,9 @@
             </div>
             <div class="nav-tab inactive" id="tabLiveResults" onclick="switchTab('results')">
               <span>⏱️</span> Live Results
+            </div>
+            <div class="nav-tab inactive" id="tabPhotos" onclick="switchTab('photos')">
+              <span>📸</span> Team Photos
             </div>
           </div>
         </div>
@@ -4248,7 +4469,14 @@
       'map': 'details',
       'volunteer': 'details',
       'food': 'details',
-      'signup': 'details'
+      'signup': 'details',
+      'photos': 'photos',
+      'photo': 'photos',
+      'pictures': 'photos',
+      'picture': 'photos',
+      'gallery': 'photos',
+      'album': 'photos',
+      'teamphotos': 'photos'
     };
 
     function getRaceSlug(idx) {
@@ -4265,6 +4493,7 @@
     function getTabSlug(tab) {
       if (tab === 'results') return 'LiveResults';
       if (tab === 'details') return 'EventDetails';
+      if (tab === 'photos') return 'TeamPhotos';
       return 'StartLists';
     }
 
@@ -4309,6 +4538,11 @@
         return;
       }
 
+      if (currentTab === 'photos') {
+        renderPhotosTab(race);
+        return;
+      }
+
       if (!race.isPublished || !race.eventId) {
         renderUpcomingRace(race);
       } else {
@@ -4327,6 +4561,10 @@
       document.getElementById('tabStartLists').className = tab === 'list' ? 'nav-tab active' : 'nav-tab inactive';
       document.getElementById('tabLiveResults').className = tab === 'results' ? 'nav-tab active' : 'nav-tab inactive';
       document.getElementById('tabEventDetails').className = tab === 'details' ? 'nav-tab active' : 'nav-tab inactive';
+      const photosTabEl = document.getElementById('tabPhotos');
+      if (photosTabEl) {
+        photosTabEl.className = tab === 'photos' ? 'nav-tab active' : 'nav-tab inactive';
+      }
       
       const race = SEASON_RACES[currentRaceIndex];
 
@@ -4337,6 +4575,14 @@
         document.getElementById('statusBar').style.display = 'none';
         document.getElementById('noticeContainer').innerHTML = '';
         renderEventDetails(race);
+        return;
+      }
+
+      if (tab === 'photos') {
+        document.getElementById('controlsPanel').style.display = 'none';
+        document.getElementById('statusBar').style.display = 'none';
+        document.getElementById('noticeContainer').innerHTML = '';
+        renderPhotosTab(race);
         return;
       }
 
@@ -5170,6 +5416,132 @@
       `;
       document.getElementById('liveStatusText').textContent = 'Upcoming Race';
       document.getElementById('liveDot').style.backgroundColor = '#707070';
+    }
+
+    // =========================================================
+    // TEAM PHOTOS & SHARED GOOGLE PHOTOS ALBUM
+    // =========================================================
+    const DEFAULT_TEAM_PHOTOS_URL = 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9';
+
+    function getRacePhotosUrl(race) {
+      if (race && race.photosUrl) return race.photosUrl;
+      return DEFAULT_TEAM_PHOTOS_URL;
+    }
+
+    function copyPhotoLinkToClipboard(url) {
+      if (!url) url = DEFAULT_TEAM_PHOTOS_URL;
+      navigator.clipboard.writeText(url).then(() => {
+        showNotifToast('📋 Google Photos Album link copied to clipboard!');
+      }).catch(() => {
+        prompt('Copy album link:', url);
+      });
+    }
+
+    function renderPhotosTab(race) {
+      if (currentTab !== 'photos') return;
+      document.getElementById('noticeContainer').innerHTML = '';
+      document.getElementById('controlsPanel').style.display = 'none';
+      document.getElementById('statusBar').style.display = 'none';
+
+      const isCoachAuth = isCoachLoggedIn();
+      const albumUrl = getRacePhotosUrl(race);
+      const container = document.getElementById('tablesContainer');
+
+      container.innerHTML = `
+        <div class="photos-tab-wrapper">
+          <!-- 1. Hero Action Card -->
+          <div class="photos-hero-card">
+            <div class="photos-hero-top">
+              <div style="flex:1;min-width:260px;">
+                <div class="photos-hero-badge">📸 Shared Google Photos Album</div>
+                <h2 class="photos-hero-title">LAX MTB Team Race Photos</h2>
+                <p class="photos-hero-subtitle">
+                  View, download, and contribute race weekend photos! Tap below to open the shared album directly in the Google Photos app or browser to scroll full resolution, add your shots from the course, comment, and save your favorites.
+                </p>
+                <div class="photos-actions-row">
+                  <a href="${albumUrl}" target="_blank" rel="noopener noreferrer" class="btn-photos-primary" title="Open Google Photos Shared Album">
+                    <span>📷</span> Open Google Photos Album
+                  </a>
+                  <button type="button" class="btn-photos-secondary" onclick="copyPhotoLinkToClipboard('${albumUrl}')" title="Copy shareable album link">
+                    <span>🔗</span> Copy Album Link
+                  </button>
+                  ${isCoachAuth ? `
+                    <button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('photos');" title="Edit Album Link for this Event" style="padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700;">
+                      <span>✏️</span> Edit Album Link
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Interactive Features Grid -->
+          <div class="photos-features-grid">
+            <div class="photo-feature-card">
+              <div class="photo-feature-icon">📤</div>
+              <div>
+                <h4 class="photo-feature-title">Add Your Photos</h4>
+                <p class="photo-feature-desc">Parents & riders can upload directly from their phone camera roll to the team album during race weekends.</p>
+              </div>
+            </div>
+            <div class="photo-feature-card">
+              <div class="photo-feature-icon">💬</div>
+              <div>
+                <h4 class="photo-feature-title">Comment & Cheer</h4>
+                <p class="photo-feature-desc">Leave comments on great trail captures, tag riders, and cheer on teammates with Google Photos reactions.</p>
+              </div>
+            </div>
+            <div class="photo-feature-card">
+              <div class="photo-feature-icon">💾</div>
+              <div>
+                <h4 class="photo-feature-title">Full Resolution Downloads</h4>
+                <p class="photo-feature-desc">Save original high-resolution photos and videos directly to your device or Google Photos library for free.</p>
+              </div>
+            </div>
+            <div class="photo-feature-card">
+              <div class="photo-feature-icon">🔔</div>
+              <div>
+                <h4 class="photo-feature-title">Join for Updates</h4>
+                <p class="photo-feature-desc">Tap "Join" in Google Photos to receive notifications as soon as coaches and parents upload fresh race shots.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. How to Contribute Guide -->
+          <div class="photos-guide-card">
+            <h4><span>💡</span> How to Share Your Photos with the Team</h4>
+            <ul class="photos-guide-steps">
+              <li>
+                <span class="photos-step-num">1</span>
+                <div>
+                  <strong>Open the Album:</strong> Tap <strong>"Open Google Photos Album"</strong> above. If you have the Google Photos app installed, it opens instantly.
+                </div>
+              </li>
+              <li>
+                <span class="photos-step-num">2</span>
+                <div>
+                  <strong>Tap "Join":</strong> Tap the <strong>Join</strong> button at the top of the album in Google Photos so you can contribute and comment.
+                </div>
+              </li>
+              <li>
+                <span class="photos-step-num">3</span>
+                <div>
+                  <strong>Tap the "+" or "Add Photos" Icon:</strong> Select your best course shots, pit zone candids, and podium moments from your camera roll.
+                </div>
+              </li>
+              <li>
+                <span class="photos-step-num">4</span>
+                <div>
+                  <strong>Upload & Enjoy:</strong> Your photos will appear instantly for all LAX MTB team families and athletes to see and save!
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      `;
+
+      const statusCount = document.getElementById('statusCount');
+      if (statusCount) statusCount.textContent = 'Shared Team Album';
     }
 
     // 3. SignUp.com Volunteer & Hospitality Data & Mobile Detection
@@ -6778,7 +7150,8 @@
           eventId: race.eventId || ''
         },
         schedule: race.schedule || [],
-        signups: race.signups || {},
+        signups: Object.assign({}, race.signups || {}, { photos: race.photosUrl || DEFAULT_TEAM_PHOTOS_URL }),
+        photosUrl: race.photosUrl || DEFAULT_TEAM_PHOTOS_URL,
         guidelines: race.guidelines || [],
         waveSchedule: race.waveSchedule || {}
       };
@@ -6996,6 +7369,7 @@
       // 3. Convert links
       const links = {};
       let embedMapUrl = '';
+      let photosUrl = '';
       linkRows.forEach(r => {
         const name = (r[0] || '').toLowerCase();
         const url = (r[1] || '').trim();
@@ -7003,6 +7377,7 @@
         if (name.includes('volunteer')) links.volunteer = url;
         else if (name.includes('dinner') || name.includes('food') || name.includes('hospitality')) links.food = url;
         else if (name.includes('coach') || name.includes('ride') || name.includes('league')) links.league = url;
+        else if (name.includes('photo') || name.includes('picture') || name.includes('album')) photosUrl = url;
         else if (name.includes('map')) embedMapUrl = url;
       });
 
@@ -7035,6 +7410,7 @@
         venueInfo: Object.keys(venueInfo).length > 0 ? venueInfo : null,
         schedule: dayGroups.length > 0 ? dayGroups : null,
         signups: Object.keys(links).length > 0 ? links : null,
+        photosUrl: photosUrl || null,
         embedMapUrl: embedMapUrl || null,
         guidelines: announcementRows.length > 0 ? announcementRows : null,
         waveSchedule: Object.keys(waveSchedule).length > 0 ? waveSchedule : null
@@ -7059,6 +7435,10 @@
         let hasUpdates = false;
         if (parsed.venueInfo) {
           Object.assign(race, parsed.venueInfo);
+          hasUpdates = true;
+        }
+        if (parsed.photosUrl) {
+          race.photosUrl = parsed.photosUrl;
           hasUpdates = true;
         }
         if (parsed.schedule) {
@@ -7241,6 +7621,8 @@
         const race = SEASON_RACES[currentRaceIndex];
         if (currentTab === 'details') {
           if (race) renderEventDetails(race);
+        } else if (currentTab === 'photos') {
+          if (race) renderPhotosTab(race);
         } else if (currentTab === 'list' || currentTab === 'results') {
           if (race && race.isPublished && race.eventId && currentRiders && currentRiders.length > 0) {
             renderData();
@@ -7670,6 +8052,12 @@
         if (foodEl) race.signups.food = foodEl.value.trim();
         const coachEl = document.getElementById('edit_signup_coach');
         if (coachEl) race.signups.league = coachEl.value.trim();
+      } else if (tabKey === 'photos') {
+        const photoEl = document.getElementById('edit_race_photosUrl');
+        if (photoEl) {
+          const val = photoEl.value.trim();
+          race.photosUrl = val || DEFAULT_TEAM_PHOTOS_URL;
+        }
       } else if (tabKey === 'maps') {
         const embedEl = document.getElementById('edit_map_embedUrl');
         if (embedEl) {
@@ -8015,6 +8403,31 @@
             <div class="admin-form-group">
               <label class="admin-form-label">Coach Ride Leaders / League Shifts (SignUp.com URL or ID)</label>
               <input type="text" id="edit_signup_coach" class="admin-input-field" value="${escapeHtml(signups.league || signups.coach || '')}" placeholder="e.g. 773733678034 or https://signup.com/..." />
+            </div>
+          </div>
+        `;
+      } else if (tab === 'photos') {
+        const curAlbumUrl = getRacePhotosUrl(race);
+        container.innerHTML = `
+          <div class="admin-preview-card">
+            <div style="margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+              <h4 style="margin:0;font-size:14px;color:var(--text-main);">📸 Team Shared Photo Album</h4>
+              <span style="font-size:11px;color:var(--text-muted);">Configure the Google Photos shared album link for ${escapeHtml(race.name)}</span>
+            </div>
+
+            <div class="admin-form-group">
+              <label class="admin-form-label">Google Photos Album Link</label>
+              <input type="url" id="edit_race_photosUrl" class="admin-input-field" value="${escapeHtml(curAlbumUrl)}" placeholder="https://photos.app.goo.gl/..." />
+              <span style="font-size:11px;color:var(--text-muted);margin-top:2px;">Paste any Google Photos shared album link (e.g. <code>https://photos.app.goo.gl/...</code>). Riders and parents can open the album, scroll full-res photos, upload from camera rolls, and leave comments.</span>
+            </div>
+
+            <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <a href="${curAlbumUrl}" target="_blank" rel="noopener noreferrer" class="admin-action-btn primary" style="text-decoration:none;">
+                <span>↗</span> Test Open in Google Photos
+              </a>
+              <button type="button" class="admin-action-btn" onclick="document.getElementById('edit_race_photosUrl').value = '${DEFAULT_TEAM_PHOTOS_URL}';">
+                <span>🔄</span> Reset to Default Album
+              </button>
             </div>
           </div>
         `;
