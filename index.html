@@ -1187,27 +1187,17 @@
       min-height: 36px;
     }
 
+    .btn-navigation,
     .btn-google-maps {
       background: #1a73e8;
       border: 1px solid #1a73e8;
       color: #ffffff !important;
     }
 
+    .btn-navigation:hover,
     .btn-google-maps:hover {
       background: #1557b0;
       border-color: #1557b0;
-      transform: translateY(-1px);
-    }
-
-    .btn-apple-maps {
-      background: #242424;
-      border: 1px solid #3d3d3d;
-      color: #ffffff !important;
-    }
-
-    .btn-apple-maps:hover {
-      background: #333333;
-      border-color: #555555;
       transform: translateY(-1px);
     }
 
@@ -1222,16 +1212,6 @@
       border-color: var(--accent-red);
       color: var(--accent-red) !important;
       transform: translateY(-1px);
-    }
-
-    :root[data-theme="light"] .btn-apple-maps {
-      background: #e8e8e8;
-      border-color: #cccccc;
-      color: #141414 !important;
-    }
-
-    :root[data-theme="light"] .btn-apple-maps:hover {
-      background: #d8d8d8;
     }
 
     :root[data-theme="light"] .btn-league-page {
@@ -3734,11 +3714,10 @@
         address: 'Powers Bluff North Trailhead, Arpin, WI 54410 (Wood County)',
         city: 'Marshfield, WI',
         warning: '<strong>⚠️ Navigation Warning:</strong> Navigating to generic <em>"Powers Bluff County Park"</em> will put you on the wrong side of the venue! Navigate directly to <strong>Powers Bluff North Trailhead</strong>.',
-        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Powers+Bluff+North+Trailhead+Arpin+WI',
-        appleMapsUrl: 'https://maps.apple.com/?daddr=Powers+Bluff+North+Trailhead,+Arpin,+WI&q=Powers+Bluff+North+Trailhead',
+        navigationUrl: 'https://www.google.com/maps/dir/?api=1&destination=Powers+Bluff+North+Trailhead+Arpin+WI',
+        googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Powers+Bluff+North+Trailhead+Arpin+WI',
         eventGuideUrl: 'https://wisconsinmtb.org/events/bluff-bash-festival/',
         embedMapUrl: 'https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F',
-        fullMapUrl: 'https://www.google.com/maps/d/viewer?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI',
         conference: 'North Conference (Sunday Racing) • South Conference (Saturday Racing)',
         logo: 'logos/bluff-bash.png',
         eventId: 418104,
@@ -3828,11 +3807,10 @@
         address: '42225 Telemark Village Rd, Cable, WI 54821',
         city: 'Cable, WI',
         warning: '<strong>📍 Venue Info:</strong> Start & finish located under the iconic American Birkebeiner arch at Carlson Competition Stadium.',
-        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Mt+Telemark+Village+42225+Telemark+Village+Cable+WI+54821',
-        appleMapsUrl: 'https://maps.apple.com/?daddr=42225+Telemark+Village,+Cable,+WI+54821&q=Mt+Telemark+Village',
+        navigationUrl: 'https://www.google.com/maps/dir/?api=1&destination=Carlson+Competition+Stadium+42225+Telemark+Village+Rd+Cable+WI+54821',
+        googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Carlson+Competition+Stadium+42225+Telemark+Village+Rd+Cable+WI+54821',
         eventGuideUrl: 'https://wisconsinmtb.org/events/cable-conquest-festival/',
         embedMapUrl: null,
-        fullMapUrl: null,
         conference: 'North Conference',
         logo: 'logos/cable-conquest.png',
         eventId: null,
@@ -3863,11 +3841,10 @@
         address: '5403 Spider Lake Rd, Rhinelander, WI 54501',
         city: 'Rhinelander, WI',
         warning: '<strong>📍 Scout Camp Venue:</strong> Located on private scout reservation singletrack around Spider Lake.',
-        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Camp+Tesomas+5403+Spider+Lake+Rd+Rhinelander+WI+54501',
-        appleMapsUrl: 'https://maps.apple.com/?daddr=5403+Spider+Lake+Rd,+Rhinelander,+WI+54501&q=Camp+Tesomas',
+        navigationUrl: 'https://www.google.com/maps/dir/?api=1&destination=Camp+Tesomas+Boy+Scout+Reservation+5403+Spider+Lake+Rd+Rhinelander+WI+54501',
+        googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Camp+Tesomas+Boy+Scout+Reservation+5403+Spider+Lake+Rd+Rhinelander+WI+54501',
         eventGuideUrl: 'https://wisconsinmtb.org/events/hodag-hustle-festival/',
         embedMapUrl: null,
-        fullMapUrl: null,
         conference: 'North Conference',
         logo: 'logos/hodag-hustle.png',
         eventId: null,
@@ -3897,11 +3874,10 @@
         address: 'W5806 County Rd W, Wild Rose, WI 54984',
         city: 'Wild Rose, WI',
         warning: '<strong>📍 Ski Resort Venue:</strong> Staging and viewing located directly in front of the main ski chalet bowl.',
-        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984',
-        appleMapsUrl: 'https://maps.apple.com/?daddr=W5806+County+Rd+W,+Wild+Rose,+WI+54984&q=Nordic+Mountain',
+        navigationUrl: 'https://www.google.com/maps/dir/?api=1&destination=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984',
+        googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984',
         eventGuideUrl: 'https://wisconsinmtb.org/events/gnarly-nordic-festival/',
         embedMapUrl: null,
-        fullMapUrl: null,
         conference: 'North Conference',
         logo: 'logos/gnarly-nordic.png',
         eventId: null,
@@ -3931,11 +3907,10 @@
         address: '97 Canal Rd, Waterloo, WI 53594',
         city: 'Waterloo, WI',
         warning: '<strong>🏆 State Championship Finale:</strong> Exclusive access to private Trek World HQ Trails, historic Red Barn festival, pump track, and night ride.',
-        googleMapsUrl: 'https://www.google.com/maps/search/?api=1&query=Trek+Trails+97+Canal+Rd+Waterloo+WI+53594',
-        appleMapsUrl: 'https://maps.apple.com/?daddr=97+Canal+Rd,+Waterloo,+WI+53594&q=Trek+Trails',
+        navigationUrl: 'https://www.google.com/maps/dir/?api=1&destination=Trek+Headquarters+Trails+97+Canal+Rd+Waterloo+WI+53594',
+        googleMapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=Trek+Headquarters+Trails+97+Canal+Rd+Waterloo+WI+53594',
         eventGuideUrl: 'https://wisconsinmtb.org/events/red-barn-state-championship/',
         embedMapUrl: null,
-        fullMapUrl: null,
         conference: 'State Championship (All Wisconsin Conferences Combined)',
         logo: 'logos/red-barn.png',
         eventId: null,
@@ -4806,6 +4781,31 @@
       `;
     }
 
+    function getNavigationUrl(race) {
+      if (!race) return '#';
+      if (race.navigationUrl && race.navigationUrl.trim()) return race.navigationUrl.trim();
+      if (race.googleMapsUrl && race.googleMapsUrl.trim()) return race.googleMapsUrl.trim();
+      const dest = [race.exactTrailhead, race.venue, race.address].filter(Boolean).join(' ');
+      return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest || race.address || race.name)}`;
+    }
+
+    function formatCourseMapEmbedUrl(url) {
+      if (!url || typeof url !== 'string') return '';
+      let trimmed = url.trim();
+      if (!trimmed) return '';
+      // Support iframe tags if pasted directly
+      const iframeMatch = trimmed.match(/src=["']([^"']+)["']/i);
+      if (iframeMatch && iframeMatch[1]) {
+        trimmed = iframeMatch[1].trim();
+      }
+      // If Google MyMaps URL (viewer/embed/edit)
+      const midMatch = trimmed.match(/[?&]mid=([a-zA-Z0-9_\-]+)/);
+      if (midMatch && midMatch[1]) {
+        return `https://www.google.com/maps/d/embed?mid=${midMatch[1]}&ehbc=2E312F`;
+      }
+      return trimmed;
+    }
+
     function renderEventDetails(race) {
       if (currentTab !== 'details') return;
       document.getElementById('noticeContainer').innerHTML = '';
@@ -4865,11 +4865,8 @@
               </div>
             ` : ''}
             <div class="event-action-buttons">
-              <a href="${race.googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-google-maps">
-                <span>🗺️</span> Google Maps
-              </a>
-              <a href="${race.appleMapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-apple-maps">
-                <span>🍏</span> Apple Maps (iPhone)
+              <a href="${getNavigationUrl(race)}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-navigation">
+                <span>🧭</span> Navigation Directions
               </a>
             </div>
           </div>
@@ -5038,11 +5035,8 @@
           <p style="margin-top:4px;font-size:12px;color:var(--text-muted);">📍 <strong>${race.exactTrailhead || race.venue}</strong> • ${race.address}</p>
           
           <div style="margin-top:14px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
-            <a href="${race.googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-google-maps" style="font-size:11px;padding:5px 10px;min-height:30px;">
-              <span>🗺️</span> Google Maps
-            </a>
-            <a href="${race.appleMapsUrl}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-apple-maps" style="font-size:11px;padding:5px 10px;min-height:30px;">
-              <span>🍏</span> Apple Maps
+            <a href="${getNavigationUrl(race)}" target="_blank" rel="noopener noreferrer" class="btn-maps btn-navigation" style="font-size:11px;padding:5px 12px;min-height:30px;">
+              <span>🧭</span> Navigation Directions
             </a>
             <button class="btn-icon" onclick="switchTab('details')" style="font-size:11px;padding:5px 10px;min-height:30px;">
               <span>📍</span> View Full Schedule & Details
@@ -6720,11 +6714,12 @@
         else if (key.includes('date range') || key === 'dates' || key === 'date') venueInfo.dateStr = v;
         else if (key.includes('conference')) venueInfo.conference = v;
         else if (key.includes('warning') || key.includes('note')) venueInfo.warning = v;
-        else if (key.includes('google maps')) venueInfo.googleMapsUrl = v;
-        else if (key.includes('apple maps')) venueInfo.appleMapsUrl = v;
+        else if (key.includes('navigation') || key.includes('google maps') || key.includes('directions')) {
+          venueInfo.navigationUrl = v;
+          venueInfo.googleMapsUrl = v;
+        }
         else if (key.includes('event guide')) venueInfo.eventGuideUrl = v;
-        else if (key.includes('embed') || key.includes('course map embed')) venueInfo.embedMapUrl = v;
-        else if (key.includes('full') && key.includes('map')) venueInfo.fullMapUrl = v;
+        else if (key.includes('map') || key.includes('embed') || key.includes('course map')) venueInfo.embedMapUrl = formatCourseMapEmbedUrl(v);
         else if (key.includes('event id') || key.includes('raceresult')) {
           const num = parseInt(v, 10);
           if (!isNaN(num) && num > 0) venueInfo.eventId = num;
@@ -7172,14 +7167,14 @@
         if (pubEl) race.isPublished = pubEl.checked;
         const warningEl = document.getElementById('edit_race_warning');
         if (warningEl) race.warning = warningEl.value.trim();
-        const gmapsEl = document.getElementById('edit_race_googleMapsUrl');
-        if (gmapsEl) race.googleMapsUrl = gmapsEl.value.trim();
-        const amapsEl = document.getElementById('edit_race_appleMapsUrl');
-        if (amapsEl) race.appleMapsUrl = amapsEl.value.trim();
+        const navEl = document.getElementById('edit_race_navigationUrl');
+        if (navEl) {
+          race.navigationUrl = navEl.value.trim();
+          race.googleMapsUrl = race.navigationUrl;
+        }
+        delete race.appleMapsUrl;
         const guideEl = document.getElementById('edit_race_eventGuideUrl');
         if (guideEl) race.eventGuideUrl = guideEl.value.trim();
-        const embedMapEl = document.getElementById('edit_race_embedMapUrl');
-        if (embedMapEl) race.embedMapUrl = embedMapEl.value.trim();
       } else if (tabKey === 'waves') {
         const tbody = document.getElementById('adminWaveTableBody');
         if (tbody) {
@@ -7252,13 +7247,11 @@
         if (coachEl) race.signups.league = coachEl.value.trim();
       } else if (tabKey === 'maps') {
         const embedEl = document.getElementById('edit_map_embedUrl');
-        if (embedEl) race.embedMapUrl = embedEl.value.trim();
-        const fullMapEl = document.getElementById('edit_map_fullMapUrl');
-        if (fullMapEl) race.fullMapUrl = fullMapEl.value.trim();
-        const gmapsEl = document.getElementById('edit_map_googleMapsUrl');
-        if (gmapsEl) race.googleMapsUrl = gmapsEl.value.trim();
-        const amapsEl = document.getElementById('edit_map_appleMapsUrl');
-        if (amapsEl) race.appleMapsUrl = amapsEl.value.trim();
+        if (embedEl) {
+          race.embedMapUrl = formatCourseMapEmbedUrl(embedEl.value.trim());
+        }
+        delete race.fullMapUrl;
+        delete race.appleMapsUrl;
       } else if (tabKey === 'announcements') {
         const container = document.getElementById('adminGuidelinesContainer');
         if (container) {
@@ -7372,20 +7365,14 @@
 
             <div class="admin-grid-2" style="margin-top:4px;">
               <div class="admin-form-group">
-                <label class="admin-form-label">Google Maps URL</label>
-                <input type="url" id="edit_race_googleMapsUrl" class="admin-input-field" value="${escapeHtml(race.googleMapsUrl || '')}" placeholder="https://maps.google.com/..." />
-              </div>
-              <div class="admin-form-group">
-                <label class="admin-form-label">Apple Maps URL</label>
-                <input type="url" id="edit_race_appleMapsUrl" class="admin-input-field" value="${escapeHtml(race.appleMapsUrl || '')}" placeholder="https://maps.apple.com/..." />
+                <label class="admin-form-label">Navigation / Directions URL (Works on all devices)</label>
+                <input type="url" id="edit_race_navigationUrl" class="admin-input-field" value="${escapeHtml(race.navigationUrl || race.googleMapsUrl || '')}" placeholder="https://www.google.com/maps/dir/?api=1&destination=..." />
+                <span style="font-size:11px;color:var(--text-muted);margin-top:2px;">Universal directions link. Leave blank to auto-generate from trailhead and address.</span>
               </div>
               <div class="admin-form-group">
                 <label class="admin-form-label">Event Guide URL</label>
                 <input type="url" id="edit_race_eventGuideUrl" class="admin-input-field" value="${escapeHtml(race.eventGuideUrl || '')}" placeholder="https://wisconsinmtb.org/events/..." />
-              </div>
-              <div class="admin-form-group">
-                <label class="admin-form-label">Course Map Embed URL</label>
-                <input type="url" id="edit_race_embedMapUrl" class="admin-input-field" value="${escapeHtml(race.embedMapUrl || '')}" placeholder="https://www.google.com/maps/d/embed?..." />
+                <span style="font-size:11px;color:var(--text-muted);margin-top:2px;">Official Wisconsin League event guide website URL.</span>
               </div>
             </div>
 
@@ -7606,36 +7593,20 @@
         container.innerHTML = `
           <div class="admin-preview-card">
             <div style="margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
-              <h4 style="margin:0;font-size:14px;color:var(--text-main);">🗺️ Course & Venue Maps</h4>
-              <span style="font-size:11px;color:var(--text-muted);">Configure interactive course map embeds, full viewer links, and navigation addresses for ${escapeHtml(race.name)}</span>
+              <h4 style="margin:0;font-size:14px;color:var(--text-main);">🗺️ Course Map</h4>
+              <span style="font-size:11px;color:var(--text-muted);">Configure the interactive course map for ${escapeHtml(race.name)}</span>
             </div>
 
             <div class="admin-form-group">
-              <label class="admin-form-label">Course Map Embed URL (Google MyMaps Embed / iframe)</label>
-              <input type="url" id="edit_map_embedUrl" class="admin-input-field" value="${escapeHtml(race.embedMapUrl || '')}" placeholder="https://www.google.com/maps/d/embed?mid=...&ehbc=2E312F" />
-              <span style="font-size:11px;color:var(--text-muted);margin-top:2px;">Renders directly inside the interactive Course Map card on the details page.</span>
-            </div>
-
-            <div class="admin-form-group">
-              <label class="admin-form-label">Full Course Map Viewer URL (Interactive Full Page)</label>
-              <input type="url" id="edit_map_fullMapUrl" class="admin-input-field" value="${escapeHtml(race.fullMapUrl || '')}" placeholder="https://www.google.com/maps/d/viewer?mid=..." />
-            </div>
-
-            <div class="admin-grid-2">
-              <div class="admin-form-group">
-                <label class="admin-form-label">Google Maps Directions URL</label>
-                <input type="url" id="edit_map_googleMapsUrl" class="admin-input-field" value="${escapeHtml(race.googleMapsUrl || '')}" placeholder="https://www.google.com/maps/search/?api=1&query=..." />
-              </div>
-              <div class="admin-form-group">
-                <label class="admin-form-label">Apple Maps Directions URL</label>
-                <input type="url" id="edit_map_appleMapsUrl" class="admin-input-field" value="${escapeHtml(race.appleMapsUrl || '')}" placeholder="https://maps.apple.com/?daddr=..." />
-              </div>
+              <label class="admin-form-label">Course Map URL (Google MyMaps)</label>
+              <input type="url" id="edit_map_embedUrl" class="admin-input-field" value="${escapeHtml(race.embedMapUrl || '')}" placeholder="https://www.google.com/maps/d/viewer?mid=... or embed URL" />
+              <span style="font-size:11px;color:var(--text-muted);margin-top:2px;">Paste any Google MyMaps share, viewer, or embed link. It is automatically converted into an interactive embedded map for riders and parents.</span>
             </div>
 
             ${race.embedMapUrl ? `
               <div style="margin-top:14px;">
                 <label class="admin-form-label">Live Course Map Embed Preview</label>
-                <div style="width:100%;height:220px;border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+                <div style="width:100%;height:240px;border-radius:6px;overflow:hidden;border:1px solid var(--border);">
                   <iframe src="${race.embedMapUrl}" width="100%" height="100%" style="border:none;" loading="lazy"></iframe>
                 </div>
               </div>
@@ -7643,7 +7614,7 @@
 
             <div style="margin-top:14px;display:flex;justify-content:flex-end;">
               <button type="button" class="admin-action-btn admin-save-btn" onclick="saveAdminCurrentRace()">
-                <span>💾</span> Save & Apply Maps
+                <span>💾</span> Save & Apply Map
               </button>
             </div>
           </div>
