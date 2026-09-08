@@ -1996,19 +1996,13 @@
     .col-desktop-only {
       display: none !important;
     }
-    .col-mobile-only {
-      display: table-cell !important;
-    }
 
     @media (min-width: 768px) {
       .results-table {
-        min-width: 680px;
+        min-width: 740px;
       }
       .col-desktop-only {
         display: table-cell !important;
-      }
-      .col-mobile-only {
-        display: none !important;
       }
       .rider-expand-icon {
         display: none !important;
@@ -2028,6 +2022,12 @@
       color: var(--text-muted);
       opacity: 0.45;
       text-align: center !important;
+    }
+    .col-avg {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11.5px;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
     }
     .col-time {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -7623,22 +7623,29 @@
         catTitle.className = 'category-header collapsible-header';
         catTitle.onclick = function() { toggleCard(this); };
         catTitle.innerHTML = `
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;">
             <span>${escapeHtml(cat)}</span>
             <span class="category-badge">${totalInCat} RIDERS</span>
             ${catStartTime ? `<span class="category-time-badge" title="Scheduled Category Start Time${catStageTime ? ` (Stage: ${escapeHtml(catStageTime)})` : ''}">Race Starts: ${escapeHtml(catStartTime)}</span>` : ''}
-            <button type="button" class="notif-sub-btn ${isCatSub ? 'active' : ''}" onclick="toggleCategoryNotification(event, '${escapeHtml(cat)}')" title="${isCatSub ? 'Notifications enabled for ' + escapeHtml(cat) : 'Enable notifications for ' + escapeHtml(cat)}">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <button type="button" class="notif-sub-btn cat-notif-btn ${isCatSub ? 'active' : ''}" title="${isCatSub ? 'Notifications enabled for ' + escapeHtml(cat) : 'Enable notifications for ' + escapeHtml(cat)}">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="${isCatSub ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
               </svg>
             </button>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
             ${isCoachLoggedIn() ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('waves');" title="Edit Wave Times & Staging"><span>✏️</span></button>` : ''}
             <span class="card-toggle-icon ${isCardCollapsed ? 'collapsed' : ''}" title="Toggle ${escapeHtml(cat)}">▼</span>
           </div>
         `;
+        const catNotifBtn = catTitle.querySelector('.cat-notif-btn');
+        if (catNotifBtn) {
+          catNotifBtn.onclick = function(e) {
+            e.stopPropagation();
+            toggleCategoryNotification(e, cat);
+          };
+        }
         catCard.appendChild(catTitle);
 
         const cardBody = document.createElement('div');
@@ -7684,15 +7691,15 @@
                 <th style="width:55px;text-align:center;">Plate #</th>
                 <th>Rider Name</th>
                 <th>Team / School</th>
+                <th style="text-align:center;width:44px;">Div</th>
                 ${currentTab === 'results' ? `
-                  <th class="col-div col-desktop-only" style="width:40px;text-align:center;">Div</th>
                   <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 1</th>
                   <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 2</th>
                   <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 3</th>
                   <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 4</th>
+                  <th class="col-avg col-desktop-only" style="width:75px;text-align:right;">Avg Pace</th>
                   <th class="col-time col-desktop-only" style="width:80px;text-align:right;">Time</th>
-                  <th class="col-mobile-time col-mobile-only" style="text-align:right;white-space:nowrap;">Time / Avg Lap</th>
-                ` : '<th style="text-align:center;width:48px;">Div</th>'}
+                ` : ''}
               </tr>
             </thead>
             <tbody></tbody>
@@ -7720,7 +7727,7 @@
 
             if (currentTab === 'results') {
               const displayTime = r.totalTime || r.return_val || '-';
-              const avgLapStr = r.avgLap ? `Avg: ${escapeHtml(r.avgLap)}` : '';
+              const avgLapStr = r.avgLap ? escapeHtml(r.avgLap) : '';
               const lap1 = r.lap1 || (r.laps && r.laps[0]) || '-';
               const lap2 = r.lap2 || (r.laps && r.laps[1]) || '-';
               const lap3 = r.lap3 || (r.laps && r.laps[2]) || '-';
@@ -7734,18 +7741,13 @@
                   ${hasLaps ? `<span class="rider-expand-icon">▼</span>` : ''}
                 </td>
                 <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${escapeHtml(r.team)}</span></td>
-                <td class="col-div col-desktop-only" style="text-align:center;color:var(--text-muted);">${escapeHtml(r.div || '1')}</td>
+                <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
                 <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
                 <td class="col-lap col-desktop-only ${lap2 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap2)}</td>
                 <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
                 <td class="col-lap col-desktop-only ${lap4 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap4)}</td>
+                <td class="col-avg col-desktop-only" style="text-align:right;">${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : '<span class="lap-empty">-</span>'}</td>
                 <td class="col-time col-desktop-only" style="text-align:right;">${escapeHtml(displayTime)}</td>
-                <td class="col-mobile-time col-mobile-only" style="text-align:right;">
-                  <div class="racer-time-cell">
-                    <span class="racer-total-time">${escapeHtml(displayTime)}</span>
-                    ${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : ''}
-                  </div>
-                </td>
               `;
               tbody.appendChild(tr);
 
@@ -7869,15 +7871,15 @@
               <th style="width:55px;text-align:center;">Plate #</th>
               <th>Rider Name</th>
               <th>Category</th>
+              <th style="text-align:center;width:44px;">Div</th>
               ${currentTab === 'results' ? `
-                <th class="col-div col-desktop-only" style="width:40px;text-align:center;">Div</th>
                 <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 1</th>
                 <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 2</th>
                 <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 3</th>
                 <th class="col-lap col-desktop-only" style="width:68px;text-align:right;">Lap 4</th>
+                <th class="col-avg col-desktop-only" style="width:75px;text-align:right;">Avg Pace</th>
                 <th class="col-time col-desktop-only" style="width:80px;text-align:right;">Time</th>
-                <th class="col-mobile-time col-mobile-only" style="text-align:right;white-space:nowrap;">Time / Avg Lap</th>
-              ` : '<th style="text-align:center;width:48px;">Div</th>'}
+              ` : ''}
             </tr>
           </thead>
           <tbody></tbody>
@@ -7908,7 +7910,7 @@
 
           if (currentTab === 'results') {
             const displayTime = r.totalTime || r.return_val || '-';
-            const avgLapStr = r.avgLap ? `Avg: ${escapeHtml(r.avgLap)}` : '';
+            const avgLapStr = r.avgLap ? escapeHtml(r.avgLap) : '';
             const lap1 = r.lap1 || (r.laps && r.laps[0]) || '-';
             const lap2 = r.lap2 || (r.laps && r.laps[1]) || '-';
             const lap3 = r.lap3 || (r.laps && r.laps[2]) || '-';
@@ -7925,18 +7927,13 @@
                 <strong style="color:var(--text-main);display:inline;word-break:break-word;">${escapeHtml(r.category || '')}</strong>
                 ${rTime ? `<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;color:var(--accent-red);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:3px;vertical-align:middle;" title="Scheduled Wave Start: ${escapeHtml(rTime)}">${escapeHtml(rTime)}</span>` : ''}
               </td>
-              <td class="col-div col-desktop-only" style="text-align:center;color:var(--text-muted);">${escapeHtml(r.div || '1')}</td>
+              <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
               <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
               <td class="col-lap col-desktop-only ${lap2 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap2)}</td>
               <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
               <td class="col-lap col-desktop-only ${lap4 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap4)}</td>
+              <td class="col-avg col-desktop-only" style="text-align:right;">${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : '<span class="lap-empty">-</span>'}</td>
               <td class="col-time col-desktop-only" style="text-align:right;">${escapeHtml(displayTime)}</td>
-              <td class="col-mobile-time col-mobile-only" style="text-align:right;">
-                <div class="racer-time-cell">
-                  <span class="racer-total-time">${escapeHtml(displayTime)}</span>
-                  ${avgLapStr ? `<span class="racer-avg-lap">${avgLapStr}</span>` : ''}
-                </div>
-              </td>
             `;
             tbody.appendChild(tr);
 
