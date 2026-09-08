@@ -1894,31 +1894,69 @@
       white-space: nowrap;
     }
 
-    .category-warmup-badge {
+    .wave-schedule-strip {
       display: inline-flex;
       align-items: center;
-      padding: 1px 7px;
-      border-radius: 4px;
+      gap: 5px;
       font-size: 11px;
       font-weight: 700;
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      letter-spacing: 0.2px;
+      color: var(--accent-red);
+      background: rgba(220, 38, 38, 0.1);
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: normal;
+      text-transform: none;
       white-space: nowrap;
     }
 
-    .wave-warmup-tag {
-      font-size: 11px;
-      font-weight: 700;
-      color: #38bdf8;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      padding: 1px 6px;
-      border-radius: 4px;
+    .wave-schedule-step {
       display: inline-flex;
       align-items: center;
-      white-space: nowrap;
+      gap: 3px;
+    }
+
+    .wave-schedule-step .step-lbl {
+      font-size: 9.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: var(--text-muted);
+    }
+
+    .wave-schedule-step.step-start .step-lbl {
+      color: var(--accent-red);
+    }
+
+    .wave-schedule-step .step-time {
+      font-variant-numeric: tabular-nums;
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .wave-schedule-step.step-start .step-time {
+      color: var(--accent-red);
+    }
+
+    .wave-schedule-arrow {
+      color: var(--accent-red);
+      opacity: 0.55;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    :root[data-theme="light"] .wave-schedule-strip {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    :root[data-theme="light"] .wave-schedule-step .step-time {
+      color: #1f2937;
+    }
+
+    :root[data-theme="light"] .wave-schedule-step.step-start .step-time {
+      color: #b91c1c;
     }
 
     .rider-expand-icon {
@@ -7790,7 +7828,6 @@
         const catEntry = getWaveScheduleEntry(SEASON_RACES[currentRaceIndex], cat, '1');
         const catStartTime = catEntry ? catEntry.start : null;
         const catStageTime = catEntry ? catEntry.stage : null;
-        const catWarmupTime = getWaveWarmupTime(SEASON_RACES[currentRaceIndex], cat, '1');
         const isCatSub = isCatSubscribed(cat);
         const catTitle = document.createElement('div');
         catTitle.className = 'category-header collapsible-header';
@@ -7799,8 +7836,7 @@
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;">
             <span>${escapeHtml(cat)}</span>
             <span class="category-badge">${totalInCat} RIDERS</span>
-            ${catWarmupTime ? `<span class="category-warmup-badge" title="Warm-up starts ${notifConfig.warmupOffset || 45}m before staging (${escapeHtml(catWarmupTime)})">Warm-up: ${escapeHtml(catWarmupTime)}</span>` : ''}
-            ${catStartTime ? `<span class="category-time-badge" title="Scheduled Category Start Time${catStageTime ? ` (Stage: ${escapeHtml(catStageTime)})` : ''}">Race Starts: ${escapeHtml(catStartTime)}</span>` : ''}
+            ${catStartTime ? `<span class="category-time-badge" title="Category Start: ${escapeHtml(catStartTime)}${catStageTime ? ` | Stage: ${escapeHtml(catStageTime)}` : ''}">Race Starts: ${escapeHtml(catStartTime)}</span>` : ''}
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
             <button type="button" class="notif-sub-btn cat-notif-btn ${isCatSub ? 'active' : ''}" title="${isCatSub ? 'Notifications enabled for ' + escapeHtml(cat) : 'Enable notifications for ' + escapeHtml(cat)}">
@@ -7836,28 +7872,55 @@
           const isWaveSub = isWaveSubscribed(cat, wKey);
           const waveHeader = document.createElement('div');
           waveHeader.className = 'wave-divider';
-          let timeHtml = '';
-          if (waveTime && stageTime) {
-            timeHtml = `
-              ${waveWarmupTime ? `<span class="wave-warmup-tag" title="Warm-up starts ${notifConfig.warmupOffset || 45}m before staging">Warm-up: ${escapeHtml(waveWarmupTime)}</span>` : ''}
-              <span class="wave-time-tag" title="Stage: ${escapeHtml(stageTime)} | Start: ${escapeHtml(waveTime)}">Wave Start: ${escapeHtml(waveTime)} <span style="opacity:0.8;font-size:10px;font-weight:normal;">(Stage: ${escapeHtml(stageTime)})</span></span>
-            `;
-          } else if (waveTime) {
-            timeHtml = `
-              ${waveWarmupTime ? `<span class="wave-warmup-tag" title="Warm-up">Warm-up: ${escapeHtml(waveWarmupTime)}</span>` : ''}
-              <span class="wave-time-tag" title="Scheduled Wave Start Time">Wave Start: ${escapeHtml(waveTime)}</span>
-            `;
+
+          const steps = [];
+          if (waveWarmupTime) {
+            steps.push(`
+              <span class="wave-schedule-step" title="Warm-up starts ${notifConfig.warmupOffset || 45}m before staging">
+                <span class="step-lbl">Warm-up</span>
+                <span class="step-time">${escapeHtml(waveWarmupTime)}</span>
+              </span>
+            `);
           }
+          if (stageTime) {
+            steps.push(`
+              <span class="wave-schedule-step" title="Staging grid call-up">
+                <span class="step-lbl">Stage</span>
+                <span class="step-time">${escapeHtml(stageTime)}</span>
+              </span>
+            `);
+          }
+          if (waveTime) {
+            steps.push(`
+              <span class="wave-schedule-step step-start" title="Official wave gun start">
+                <span class="step-lbl">Start</span>
+                <span class="step-time">${escapeHtml(waveTime)}</span>
+              </span>
+            `);
+          }
+          const timeHtml = steps.length > 0 ? `<div class="wave-schedule-strip">${steps.join('<span class="wave-schedule-arrow">›</span>')}</div>` : '';
+
           waveHeader.innerHTML = `
-            <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
-            ${timeHtml}
-            <button type="button" class="notif-sub-btn wave-notif-btn ${isWaveSub ? 'active' : ''}" onclick="toggleWaveNotification(event, '${escapeHtml(cat)}', '${escapeHtml(wKey)}')" title="${isWaveSub ? 'Notifications enabled for ' + escapeHtml(cat) + ' ' + escapeHtml(wKey) : 'Enable notifications for ' + escapeHtml(cat) + ' ' + escapeHtml(wKey)}">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="${isWaveSub ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-            </button>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span>🚩 ${escapeHtml(wKey.includes('Wave') ? wKey : `Wave: ${wKey}`)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;">
+              ${timeHtml}
+              <button type="button" class="notif-sub-btn wave-notif-btn ${isWaveSub ? 'active' : ''}" title="${isWaveSub ? 'Notifications enabled for ' + escapeHtml(cat) + ' ' + escapeHtml(wKey) : 'Enable notifications for ' + escapeHtml(cat) + ' ' + escapeHtml(wKey)}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="${isWaveSub ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              </button>
+            </div>
           `;
+          const waveNotifBtn = waveHeader.querySelector('.wave-notif-btn');
+          if (waveNotifBtn) {
+            waveNotifBtn.onclick = function(e) {
+              e.stopPropagation();
+              toggleWaveNotification(e, cat, wKey);
+            };
+          }
           cardBody.appendChild(waveHeader);
 
           const tableWrapper = document.createElement('div');
