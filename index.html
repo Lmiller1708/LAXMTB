@@ -35,8 +35,15 @@
       }
     }
 
+    :root {
+      --header-brand-height: 46px;
+      --subnav-height: 40px;
+    }
+
     /* Strict Pure Black & Neutral Gray Palette */
     :root[data-theme="dark"] {
+      --header-brand-height: 46px;
+      --subnav-height: 40px;
       --bg-body: #0d0d0d;
       --bg-header: #141414;
       --bg-card: #181818;
@@ -1264,7 +1271,7 @@
     /* Ultra-Compact Sticky Search & Filter Toolbar (Docks under sticky sub-nav) */
     .compact-toolbar {
       position: sticky;
-      top: calc(var(--header-brand-height) + var(--subnav-height) + 6px);
+      top: 154px;
       z-index: 90;
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -1272,6 +1279,12 @@
       padding: 8px 10px;
       margin-bottom: 10px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    @media (max-width: 767px) {
+      .compact-toolbar {
+        top: 86px;
+      }
     }
 
     .toolbar-main-row {
@@ -5184,7 +5197,7 @@
       listDropdown.innerHTML = '';
       if (tab === 'list') {
         listDropdown.innerHTML = `
-          <option value="22E0EB">Category & Wave</option>
+          <option value="A76F6B">Category & Wave</option>
           <option value="747B52">By Team</option>
         `;
       } else {
@@ -5246,7 +5259,7 @@
         }
       }
 
-      let targetTab = 'details';
+      let targetTab = (typeof currentTab !== 'undefined' && currentTab) ? currentTab : 'details';
       if (tabQuery) {
         const normTab = tabQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
         if (TAB_SLUG_MAP[normTab]) {
@@ -7458,7 +7471,20 @@
         }
 
         const lists = config?.TabConfig?.Lists || [];
-        const targetList = lists.find(l => l.ID === selectedListId) || lists[0];
+        let targetList = null;
+        if (currentTab === 'list') {
+          if (selectedListId === '747B52') {
+            targetList = lists.find(l => l.ID === '747B52') || lists.find(l => (l.Name || '').toLowerCase().includes('team'));
+          } else {
+            targetList = lists.find(l => l.ID === selectedListId) ||
+                         lists.find(l => l.ID === 'A76F6B') ||
+                         lists.find(l => (l.Name || '').toLowerCase().includes('category') && !(l.Name || '').toLowerCase().includes('cable')) ||
+                         lists.find(l => (l.Name || '').toLowerCase().includes('category')) ||
+                         lists[0];
+          }
+        } else {
+          targetList = lists.find(l => l.ID === selectedListId) || lists[0];
+        }
         const listName = targetList ? targetList.Name : '';
 
         const params = new URLSearchParams({
@@ -7470,9 +7496,34 @@
           l: '0'
         });
 
-        const listResp = await fetch(`https://my.raceresult.com/${race.eventId}/${currentTab}/list?` + params.toString());
+        let listResp = await fetch(`https://my.raceresult.com/${race.eventId}/${currentTab}/list?` + params.toString());
         if (!listResp.ok) throw new Error(`List HTTP ${listResp.status}`);
-        const resultData = await listResp.json();
+        let resultData = await listResp.json();
+
+        // Resilience: If chosen list returned empty data (e.g. expired or cable template 22E0EB), try alternative start list
+        if (currentTab === 'list' && Array.isArray(resultData?.data) && resultData.data.length === 0) {
+          console.warn('[LAXMTB] Primary list returned empty data, attempting alternative start list...');
+          const altList = lists.find(l => l.ID === 'A76F6B') ||
+                          lists.find(l => l.ID !== (targetList ? targetList.ID : ''));
+          if (altList) {
+            const altParams = new URLSearchParams({
+              key: key,
+              listname: altList.Name,
+              page: currentTab,
+              contest: '0',
+              r: 'all',
+              l: '0'
+            });
+            const altResp = await fetch(`https://my.raceresult.com/${race.eventId}/${currentTab}/list?` + altParams.toString());
+            if (altResp.ok) {
+              const altData = await altResp.json();
+              if (altData?.data && (!Array.isArray(altData.data) || altData.data.length > 0)) {
+                resultData = altData;
+                targetList = altList;
+              }
+            }
+          }
+        }
 
         if (currentTab !== 'results' && currentTab !== 'list') return;
 
@@ -7525,6 +7576,16 @@
       }
     }
 
+    function normalizeCategoryName(raw) {
+      if (!raw) return '';
+      let clean = String(raw).replace(/\s+\d+$/, '').trim();
+      const m = clean.match(/^(Boys|Girls)\s+(.*)$/i);
+      if (m) {
+        clean = `${m[2].trim()} ${m[1].trim()}`;
+      }
+      return clean;
+    }
+
     function parseUniversalData(resultData, listInfo, cacheKey) {
       if (currentTab !== 'results' && currentTab !== 'list') return;
       const rawData = resultData?.data;
@@ -7547,8 +7608,8 @@
 
             if (cleanKey.includes('Wave')) {
               newCtx.wave = cleanKey;
-            } else if (categoryOrder.some(c => cleanKey.includes(c)) || cleanKey.includes('Boys') || cleanKey.includes('Girls') || cleanKey.includes('Open')) {
-              newCtx.category = cleanKey;
+            } else if (categoryOrder.some(c => cleanKey.includes(c)) || cleanKey.includes('Boys') || cleanKey.includes('Girls') || cleanKey.includes('Open') || cleanKey.includes('Varsity') || cleanKey.includes('JV') || cleanKey.includes('Grade') || cleanKey.includes('MS')) {
+              newCtx.category = normalizeCategoryName(cleanKey);
             } else if (cleanKey.includes('School') || cleanKey.includes('Composite') || cleanKey.includes('Team') || cleanKey.includes('Cycling') || cleanKey.includes('Spooner')) {
               newCtx.team = cleanKey.replace(/\s*\(Division\s*\d+\)/i, '').trim();
             }
@@ -7561,10 +7622,11 @@
 
               if (listId === '747B52') {
                 rider.bib = row[1] || '';
-                rider.no = row[1] || '';
+                rider.no = row[0] || '';
                 rider.name = row[2] || '';
                 rider.gender = row[3] || '';
-                rider.category = row[4] || rider.category || '';
+                rider.category = normalizeCategoryName(row[4] || rider.category || '');
+                rider.team = rider.team || '';
                 rider.wave = rider.wave || 'Wave: 1';
                 rider.div = rider.team && rider.team.includes('Division 1') ? '1' : '2';
                 rider.wv = '1';
@@ -7583,6 +7645,7 @@
                 rider.pl = row[2] || '';
                 rider.name = row[3] || '';
                 rider.team = row[4] || rider.team || '';
+                rider.category = normalizeCategoryName(rider.category || '');
                 rider.div = row[5] || '1';
                 rider.wv = row[6] || '1';
                 rider.wv_rank = row[2] || '';
@@ -7637,6 +7700,7 @@
                 rider.pl = row[2] || '';
                 rider.name = row[3] || '';
                 rider.team = row[4] || rider.team || '';
+                rider.category = normalizeCategoryName(rider.category || '');
                 rider.div = row[5] || '1';
                 rider.wv = row[6] || '1';
                 rider.wv_rank = row[2] || '';
@@ -7671,6 +7735,15 @@
             riders: extracted
           }));
         } catch(e) {}
+      }
+
+      const controlsPanel = document.getElementById('controlsPanel');
+      const statusBar = document.getElementById('statusBar');
+      if (controlsPanel && (currentTab === 'list' || currentTab === 'results')) {
+        controlsPanel.style.display = 'block';
+      }
+      if (statusBar && (currentTab === 'list' || currentTab === 'results')) {
+        statusBar.style.display = 'flex';
       }
 
       populateFilterDropdowns();
