@@ -1433,7 +1433,7 @@
 
     @media (min-width: 768px) {
       .filters-grid {
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       }
       .collapsible-filters {
         display: flex !important;
@@ -4259,6 +4259,14 @@
           </div>
 
           <div class="filter-group">
+            <label class="filter-label">Sort By</label>
+            <select id="sortOrderSelect" class="select-dropdown" onchange="onSortOrderChange()">
+              <option value="GRADE" selected>Grade / Division (Default)</option>
+              <option value="TIME">Start Time (Earliest First)</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
             <label class="filter-label">Category</label>
             <select id="categoryFilter" class="select-dropdown" onchange="onFilterChange()">
               <option value="ALL">&lt;All Categories&gt;</option>
@@ -4565,6 +4573,7 @@
     let autoRefreshTimer = null;
     let isFilterDrawerOpen = false;
     let selectedRiderKeys = new Set();
+    let currentCategorySortOrder = localStorage.getItem('laxmtb_sort_order') || 'GRADE';
 
     function toggleRiderSelection(riderKey) {
       if (selectedRiderKeys.has(riderKey)) {
@@ -4651,6 +4660,37 @@
       return entry ? entry.start : null;
     }
 
+    function parseTimeStrToMinutes(timeStr) {
+      if (!timeStr) return null;
+      const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!match) return null;
+      let hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      const meridiem = match[3].toUpperCase();
+      if (meridiem === 'PM' && hours < 12) hours += 12;
+      if (meridiem === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    }
+
+    function getCategoryStartTimeMinutes(race, category) {
+      const startStr = getCategoryStartTime(race, category);
+      if (!startStr) return 9999;
+      const mins = parseTimeStrToMinutes(startStr);
+      return mins !== null ? mins : 9999;
+    }
+
+    function compareCategories(a, b, sortOrder, race) {
+      if (sortOrder === 'TIME') {
+        const timeA = getCategoryStartTimeMinutes(race, a);
+        const timeB = getCategoryStartTimeMinutes(race, b);
+        if (timeA !== timeB) return timeA - timeB;
+      }
+      let ia = categoryOrder.indexOf(a), ib = categoryOrder.indexOf(b);
+      if (ia === -1) ia = 99;
+      if (ib === -1) ib = 99;
+      return ia - ib;
+    }
+
     // Online/Offline Network Listeners
     window.addEventListener('online', () => {
       setOnlineBadge(true);
@@ -4698,6 +4738,19 @@
       renderData();
     }
 
+    function onSortOrderChange() {
+      const select = document.getElementById('sortOrderSelect');
+      if (select) {
+        currentCategorySortOrder = select.value;
+        try {
+          localStorage.setItem('laxmtb_sort_order', currentCategorySortOrder);
+        } catch (e) {}
+      }
+      populateFilterDropdowns();
+      updateFilterSummaryChips();
+      renderData();
+    }
+
     function updateFilterSummaryChips() {
       const chipsContainer = document.getElementById('filterSummaryChips');
       const cat = document.getElementById('categoryFilter').value;
@@ -4709,6 +4762,10 @@
         html += '<span class="filter-chip">View: <strong>By Team</strong></span>';
       } else {
         html += '<span class="filter-chip">View: <strong>Wave & Category</strong></span>';
+      }
+
+      if (currentCategorySortOrder === 'TIME') {
+        html += '<span class="filter-chip">Sort: <strong>⏱️ Start Time</strong></span>';
       }
 
       if (cat !== 'ALL') {
@@ -6781,18 +6838,6 @@
       dispatchSystemNotification(title, body);
     }
 
-    function parseTimeStrToMinutes(timeStr) {
-      if (!timeStr) return null;
-      const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
-      if (!match) return null;
-      let hours = parseInt(match[1], 10);
-      const minutes = parseInt(match[2], 10);
-      const meridiem = match[3].toUpperCase();
-      if (meridiem === 'PM' && hours < 12) hours += 12;
-      if (meridiem === 'AM' && hours === 12) hours = 0;
-      return hours * 60 + minutes;
-    }
-
     function getRaceDaysForRace(race) {
       if (!race) return [];
       const yr = new Date().getFullYear();
@@ -7322,13 +7367,15 @@
     }
 
     function populateFilterDropdowns() {
+      const sortSelect = document.getElementById('sortOrderSelect');
+      if (sortSelect && currentCategorySortOrder) {
+        sortSelect.value = currentCategorySortOrder;
+      }
+
       const catSelect = document.getElementById('categoryFilter');
       const prevCat = catSelect.value;
       const categories = [...new Set(currentRiders.map(r => r.category).filter(Boolean))].sort((a, b) => {
-        let ia = categoryOrder.indexOf(a), ib = categoryOrder.indexOf(b);
-        if (ia === -1) ia = 99;
-        if (ib === -1) ib = 99;
-        return ia - ib;
+        return compareCategories(a, b, currentCategorySortOrder, SEASON_RACES[currentRaceIndex]);
       });
 
       catSelect.innerHTML = '<option value="ALL">&lt;All Categories&gt;</option>';
@@ -7432,10 +7479,7 @@
       });
 
       const sortedCatKeys = Object.keys(grouped).sort((a, b) => {
-        let ia = categoryOrder.indexOf(a), ib = categoryOrder.indexOf(b);
-        if (ia === -1) ia = 99;
-        if (ib === -1) ib = 99;
-        return ia - ib;
+        return compareCategories(a, b, currentCategorySortOrder, SEASON_RACES[currentRaceIndex]);
       });
 
       sortedCatKeys.forEach(cat => {
@@ -7698,10 +7742,11 @@
 
         const tbody = table.querySelector('tbody');
         const teamRiders = grouped[team].sort((a, b) => {
-          let ia = categoryOrder.indexOf(a.category), ib = categoryOrder.indexOf(b.category);
-          if (ia === -1) ia = 99;
-          if (ib === -1) ib = 99;
-          if (ia !== ib) return ia - ib;
+          const catComp = compareCategories(a.category, b.category, currentCategorySortOrder, SEASON_RACES[currentRaceIndex]);
+          if (catComp !== 0) return catComp;
+          const waveA = String(a.wave || a.wv || '');
+          const waveB = String(b.wave || b.wv || '');
+          if (waveA !== waveB) return waveA.localeCompare(waveB);
           return (a.name || '').localeCompare(b.name || '');
         });
 
