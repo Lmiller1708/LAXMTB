@@ -2561,14 +2561,14 @@
     }
 
     .event-map-header {
-      padding: 10px 14px;
+      padding: 12px 16px;
       background: var(--bg-subtle);
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
     }
 
     .event-map-title {
@@ -2576,10 +2576,15 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--accent-red);
+      color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+    }
+
+    .event-map-container.card-collapsed .map-header-actions,
+    .event-map-container:has(.collapsible-body.collapsed) .map-header-actions {
+      display: none !important;
     }
 
     .map-iframe-wrapper {
@@ -2916,22 +2921,44 @@
     }
 
     .detail-section {
-      background: var(--bg-subtle);
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
     }
 
+    .detail-section-header {
+      padding: 12px 16px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+
+    .detail-section-header:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .detail-section-title,
     .detail-section h3 {
       font-size: 13px;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--accent-red);
-      margin-bottom: 10px;
+      color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .detail-section-body {
+      padding: 16px;
     }
 
     /* Day-Grouped Schedule Highlights */
@@ -6149,17 +6176,21 @@
           ${race.embedMapUrl ? `
             <div class="event-map-container" id="eventMapContainer">
               <div class="event-map-header collapsible-header" onclick="toggleCard(this)">
-                <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
-                <div style="display:flex;align-items:center;gap:6px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
                   ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('maps');" title="Edit Course Map Links"><span>✏️</span></button>` : ''}
-                  ${directMapUrl ? `
-                    <a href="${directMapUrl}" target="_blank" rel="noopener noreferrer" class="btn-icon" style="text-decoration:none;font-size:11px;padding:4px 10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;" onclick="event.stopPropagation()" title="Open course map in Google Maps">
-                      <span>🗺️</span> <span>Open Map ↗</span>
-                    </a>
-                  ` : ''}
-                  <button type="button" class="btn-icon" id="mapAppFullscreenBtn" onclick="toggleMapAppFullscreen(event)" style="font-size:11px;padding:4px 10px;font-weight:700;">
-                    <span id="mapFsIcon">⛶</span> <span id="mapFsLabel">Fullscreen Map</span>
-                  </button>
+                  <div class="map-header-actions" style="display:flex;align-items:center;gap:6px;">
+                    ${directMapUrl ? `
+                      <a href="${directMapUrl}" target="_blank" rel="noopener noreferrer" class="btn-icon" style="text-decoration:none;font-size:11px;padding:4px 10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;" onclick="event.stopPropagation()" title="Open course map in Google Maps">
+                        <span>🗺️</span> <span>Open Map ↗</span>
+                      </a>
+                    ` : ''}
+                    <button type="button" class="btn-icon" id="mapAppFullscreenBtn" onclick="toggleMapAppFullscreen(event)" style="font-size:11px;padding:4px 10px;font-weight:700;">
+                      <span id="mapFsIcon">⛶</span> <span id="mapFsLabel">Fullscreen Map</span>
+                    </button>
+                  </div>
                   <span class="card-toggle-icon" id="mapToggleChevron" title="Toggle Map">▼</span>
                 </div>
               </div>
@@ -6183,28 +6214,32 @@
             
             <!-- Schedule Section -->
             <div class="detail-section" id="scheduleDetailSection">
-              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
-                <h3 style="margin:0;"><span>⏱️</span> LAXMTB TEAM SCHEDULE HIGHLIGHTS</h3>
+              <div class="detail-section-header collapsible-header" onclick="toggleCard(this)">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="detail-section-title"><span>⏱️</span> LAXMTB Team Schedule Highlights</span>
+                </div>
                 <div style="display:flex;align-items:center;gap:8px;">
                   ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('schedule');" title="Edit Team Schedule"><span>✏️</span></button>` : ''}
                   <span class="card-toggle-icon" title="Toggle Schedule">▼</span>
                 </div>
               </div>
-              <div class="collapsible-body">
+              <div class="collapsible-body detail-section-body">
                 ${renderScheduleGrouped(race.schedule)}
               </div>
             </div>
 
             <!-- Guidelines & Venue Info Section -->
             <div class="detail-section" id="guidelinesDetailSection">
-              <div class="collapsible-header" onclick="toggleCard(this)" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;cursor:pointer;user-select:none;">
-                <h3 style="margin:0;"><span>🏕️</span> Venue Guidelines & Spectator Info</h3>
+              <div class="detail-section-header collapsible-header" onclick="toggleCard(this)">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="detail-section-title"><span>🏕️</span> Venue Guidelines & Spectator Info</span>
+                </div>
                 <div style="display:flex;align-items:center;gap:8px;">
                   ${isCoachAuth ? `<button type="button" class="card-inline-edit-btn" onclick="event.stopPropagation(); openAdminPortal('announcements');" title="Edit Guidelines & Announcements"><span>✏️</span></button>` : ''}
                   <span class="card-toggle-icon" title="Toggle Guidelines">▼</span>
                 </div>
               </div>
-              <div class="collapsible-body">
+              <div class="collapsible-body detail-section-body">
                 <div style="display:flex;flex-direction:column;gap:6px;">
                   ${race.guidelines.map(g => `<p class="guideline-item">• ${g}</p>`).join('')}
                 </div>
@@ -8622,6 +8657,7 @@
       const toggleIcon = headerEl.querySelector('.card-toggle-icon');
       if (body) {
         const isCollapsed = body.classList.toggle('collapsed');
+        card.classList.toggle('card-collapsed', isCollapsed);
         if (toggleIcon) {
           toggleIcon.classList.toggle('collapsed', isCollapsed);
         }
@@ -8637,12 +8673,21 @@
       cardStateOverrides = {}; // Clear individual overrides so global expand/collapse applies to all
       const bodies = document.querySelectorAll('#tablesContainer .collapsible-body');
       const icons = document.querySelectorAll('#tablesContainer .card-toggle-icon');
+      const cards = document.querySelectorAll('#tablesContainer .table-card, #tablesContainer .signup-hub-section, #tablesContainer .event-map-container, #tablesContainer .detail-section, #tablesContainer .event-location-card');
       
       bodies.forEach(b => {
         if (allCardsCollapsed) {
           b.classList.add('collapsed');
         } else {
           b.classList.remove('collapsed');
+        }
+      });
+
+      cards.forEach(c => {
+        if (allCardsCollapsed) {
+          c.classList.add('card-collapsed');
+        } else {
+          c.classList.remove('card-collapsed');
         }
       });
 
