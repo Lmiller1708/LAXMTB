@@ -1976,17 +1976,26 @@
     }
 
     .rider-expand-icon {
-      display: inline-block;
-      font-size: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
       color: var(--text-muted);
-      margin-left: 5px;
-      transition: transform 0.15s ease;
+      margin-left: 4px;
+      transition: transform 0.2s ease, color 0.15s ease;
       vertical-align: middle;
+      opacity: 0.7;
+    }
+
+    .selectable-rider-row:hover .rider-expand-icon {
+      opacity: 1;
+      color: var(--text-main);
     }
 
     .selectable-rider-row.selected .rider-expand-icon {
       transform: rotate(180deg);
       color: var(--accent-red);
+      opacity: 1;
     }
 
     .rider-laps-detail-row td {
@@ -8056,12 +8065,12 @@
               tr.innerHTML = `
                 <td style="text-align:center;font-weight:700;color:var(--text-muted);">${escapeHtml(r.pl || '-')}</td>
                 <td style="text-align:center;"><span class="plate-number">#${escapeHtml(r.no || r.bib)}</span></td>
-                <td>
-                  <span class="rider-name">${escapeHtml(r.name)}</span>
-                  ${hasLaps ? `<span class="rider-expand-icon">▼</span>` : ''}
-                </td>
+                <td><span class="rider-name">${escapeHtml(r.name)}</span></td>
                 <td><span class="${isTarget ? 'team-name-lax' : 'team-name'}">${escapeHtml(r.team)}</span></td>
-                <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
+                <td style="text-align:center;white-space:nowrap;">
+                  <span class="div-tag">D${escapeHtml(r.div || '1')}</span>
+                  ${hasLaps ? `<span class="rider-expand-icon" title="View Lap Times">▼</span>` : ''}
+                </td>
                 <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
                 <td class="col-lap col-desktop-only ${lap2 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap2)}</td>
                 <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
@@ -8240,15 +8249,15 @@
             tr.innerHTML = `
               <td style="text-align:center;font-weight:700;color:var(--text-muted);">${escapeHtml(r.pl || '-')}</td>
               <td style="text-align:center;"><span class="plate-number">#${escapeHtml(r.bib || r.no)}</span></td>
-              <td>
-                <span class="rider-name">${escapeHtml(r.name)}</span>
-                ${hasLaps ? `<span class="rider-expand-icon">▼</span>` : ''}
-              </td>
+              <td><span class="rider-name">${escapeHtml(r.name)}</span></td>
               <td>
                 <strong style="color:var(--text-main);display:inline;word-break:break-word;">${escapeHtml(r.category || '')}</strong>
                 ${rTime ? `<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;color:var(--accent-red);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:3px;vertical-align:middle;" title="Wave Start: ${escapeHtml(rTime)}${rWarmup ? ` | Warm-up: ${escapeHtml(rWarmup)}` : ''}">${escapeHtml(rTime)}</span>` : ''}
               </td>
-              <td style="text-align:center;"><span class="div-tag">D${escapeHtml(r.div || '1')}</span></td>
+              <td style="text-align:center;white-space:nowrap;">
+                <span class="div-tag">D${escapeHtml(r.div || '1')}</span>
+                ${hasLaps ? `<span class="rider-expand-icon" title="View Lap Times">▼</span>` : ''}
+              </td>
               <td class="col-lap col-desktop-only ${lap1 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap1)}</td>
               <td class="col-lap col-desktop-only ${lap2 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap2)}</td>
               <td class="col-lap col-desktop-only ${lap3 === '-' ? 'lap-empty' : ''}">${escapeHtml(lap3)}</td>
