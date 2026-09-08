@@ -2888,6 +2888,175 @@
         color: #374151 !important;
       }
     }
+
+    /* Coach Admin Portal Styles */
+    .modal-card.admin-modal-card {
+      max-width: 820px;
+      width: 95vw;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .admin-status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    :root[data-theme="light"] .admin-status-pill {
+      background: #dcfce7;
+      color: #15803d;
+      border-color: #bbf7d0;
+    }
+    .admin-top-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 18px;
+      background: var(--bg-surface, var(--bg-card));
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .admin-select-field, .admin-input-field {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s ease;
+      box-sizing: border-box;
+    }
+    :root[data-theme="light"] .admin-select-field, :root[data-theme="light"] .admin-input-field {
+      background: #ffffff;
+      border-color: #d1d5db;
+    }
+    .admin-select-field:focus, .admin-input-field:focus {
+      border-color: #2563eb;
+    }
+    .admin-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-card);
+      color: var(--text-main);
+      transition: all 0.15s ease;
+    }
+    :root[data-theme="light"] .admin-action-btn {
+      background: #ffffff;
+      border-color: #d1d5db;
+    }
+    .admin-action-btn:hover {
+      background: var(--bg-surface);
+      border-color: var(--text-muted);
+    }
+    .admin-action-btn.primary {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #1d4ed8;
+    }
+    .admin-action-btn.primary:hover {
+      background: #1d4ed8;
+    }
+    .admin-tab-bar {
+      display: flex;
+      gap: 4px;
+      padding: 8px 18px 0;
+      background: var(--bg-surface, var(--bg-card));
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .admin-tab-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .admin-tab-btn {
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .admin-tab-btn:hover {
+      color: var(--text-main);
+    }
+    .admin-tab-btn.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+      font-weight: 700;
+    }
+    :root[data-theme="light"] .admin-tab-btn.active {
+      color: #1d4ed8;
+      border-bottom-color: #1d4ed8;
+    }
+    .admin-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 18px;
+    }
+    .admin-preview-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    :root[data-theme="light"] .admin-preview-card {
+      background: #f9fafb;
+      border-color: #e5e7eb;
+    }
+    .admin-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .admin-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    .admin-data-table th, .admin-data-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .admin-data-table th {
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--bg-surface);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+    }
+    :root[data-theme="light"] .admin-data-table th {
+      background: #f3f4f6;
+    }
+    .admin-data-table tr:hover td {
+      background: rgba(255,255,255,0.02);
+    }
+    :root[data-theme="light"] .admin-data-table tr:hover td {
+      background: #f9fafb;
+    }
   </style>
 </head>
 <body>
@@ -2949,6 +3118,13 @@
             <span class="mobile-menu-item-title">Race Notifications</span>
           </div>
           <span class="mobile-menu-badge" id="menuNotifBadge">Stage • 15m</span>
+        </div>
+        <div class="mobile-menu-item" onclick="openAdminPortal();">
+          <div class="mobile-menu-item-left">
+            <span>⚙️</span>
+            <span class="mobile-menu-item-title">Coach Admin</span>
+          </div>
+          <span class="mobile-menu-badge" style="background:rgba(234,179,8,0.15);border-color:rgba(234,179,8,0.3);color:var(--text-main);">Coaches</span>
         </div>
       </div>
     </div>
@@ -3115,6 +3291,101 @@
           <button type="button" class="test-alert-btn" onclick="triggerTestNotification()">🔔 Test Notification</button>
           <button type="button" class="done-modal-btn" onclick="closeNotificationModal()">Done</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Coach Admin Portal Modal -->
+    <div class="modal-overlay" id="adminModalOverlay" onclick="handleAdminOverlayClick(event)">
+      <div class="modal-card admin-modal-card" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+
+        <!-- Passcode Screen (Shown if not authenticated) -->
+        <div id="adminPasscodeScreen" style="display:none;padding:16px;">
+          <div class="modal-header" style="border-bottom:none;padding:0 0 12px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">🔒</span>
+              <div>
+                <h3 id="adminModalTitle" style="margin:0;font-size:17px;font-weight:700;color:var(--text-main);">Coach Portal</h3>
+                <p style="margin:2px 0 0;font-size:12px;color:var(--text-muted);">Enter coach passcode to manage Google Sheet sync & event settings</p>
+              </div>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeAdminPortal()" aria-label="Close modal">✕</button>
+          </div>
+          <div style="padding:12px 0 8px;">
+            <form onsubmit="handleAdminAuth(event)" style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:12px;font-weight:600;color:var(--text-main);">Coach Passcode</label>
+                <input type="password" id="adminPasscodeInput" class="admin-input-field" placeholder="Enter coach passcode" autocomplete="current-password" autofocus />
+                <span id="adminPasscodeError" style="display:none;font-size:12px;color:#ef4444;">Incorrect passcode. Please try again.</span>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                <button type="button" class="action-mini-btn" style="background:transparent;border-color:var(--border);" onclick="closeAdminPortal()">Cancel</button>
+                <button type="submit" class="action-mini-btn" style="padding:8px 20px;font-size:13px;">Unlock Portal</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Authenticated Admin Dashboard Screen -->
+        <div id="adminDashboardScreen" style="display:none;flex-direction:column;height:100%;flex:1;overflow:hidden;">
+          <div class="modal-header">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:20px;">⚙️</span>
+              <div>
+                <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text-main);">Coach Admin Portal</h3>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                  <span id="adminSyncStatusBadge" class="admin-status-pill">🟢 Live Google Sheet Sync</span>
+                  <span id="adminSyncStatusTime" style="font-size:11px;color:var(--text-muted);"></span>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeAdminPortal()" aria-label="Close modal">✕</button>
+          </div>
+
+          <!-- Top Toolbar: Race Selector, Open Sheet Link & Sync Now -->
+          <div class="admin-top-toolbar">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:220px;">
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-muted);white-space:nowrap;">Active Race:</label>
+              <select id="adminRaceSelect" class="admin-select-field" onchange="onAdminRaceSelect(this.value)" style="flex:1;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="admin-action-btn" onclick="openActiveGoogleSheetTab()" title="Open Google Sheet tab for this race">
+                <span>✏️</span> Open in Google Sheets ↗
+              </button>
+              <button type="button" class="admin-action-btn primary" onclick="syncWithGoogleSheets(true)">
+                <span>🔄</span> Force Sync Now
+              </button>
+            </div>
+          </div>
+
+          <!-- Admin Navigation Tabs -->
+          <div class="admin-tab-bar">
+            <button type="button" class="admin-tab-btn active" id="adminTabBtn_venue" onclick="switchAdminTab('venue')">📍 Venue Info</button>
+            <button type="button" class="admin-tab-btn" id="adminTabBtn_waves" onclick="switchAdminTab('waves')">⏱️ Waves & Staging</button>
+            <button type="button" class="admin-tab-btn" id="adminTabBtn_schedule" onclick="switchAdminTab('schedule')">📅 Team Schedule</button>
+            <button type="button" class="admin-tab-btn" id="adminTabBtn_signups" onclick="switchAdminTab('signups')">🔗 Links & Maps</button>
+            <button type="button" class="admin-tab-btn" id="adminTabBtn_announcements" onclick="switchAdminTab('announcements')">📢 Guidelines</button>
+            <button type="button" class="admin-tab-btn" id="adminTabBtn_config" onclick="switchAdminTab('config')">⚙️ Config / Export</button>
+          </div>
+
+          <!-- Admin Tab Contents -->
+          <div class="modal-body admin-modal-body" id="adminTabContent">
+            <!-- Dynamic tab content rendered by renderAdminView() -->
+          </div>
+
+          <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;padding:10px 18px;">
+            <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+              <span>Sheet ID:</span>
+              <code id="adminFooterSheetId" style="font-size:11px;background:var(--bg-surface);padding:2px 6px;border-radius:4px;border:1px solid var(--border);"></code>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="action-mini-btn" style="background:transparent;border-color:var(--border);" onclick="lockAdminPortal()">Lock</button>
+              <button type="button" class="done-modal-btn" onclick="closeAdminPortal()">Done</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -3764,6 +4035,13 @@
       const race = SEASON_RACES[currentRaceIndex];
 
       if (updateUrl) updateUrlState();
+
+      // Trigger background sync with Google Sheets for newly selected race
+      syncWithGoogleSheets();
+
+      // Update admin selector if open
+      const adminSelect = document.getElementById('adminRaceSelect');
+      if (adminSelect) adminSelect.value = idx;
 
       if (currentTab === 'details') {
         renderEventDetails(race);
@@ -5720,7 +5998,7 @@
     // =========================================================
     // GOOGLE SHEETS LIVE SYNC ENGINE (One Tab Per Race • KISS)
     // =========================================================
-    let googleSheetId = '';
+    let googleSheetId = localStorage.getItem('laxmtb_sheet_id') || '1vicChOhjglaieWpuJPHsN2LGAN8RA6kE0oDWt0OAPvM';
     let lastSheetSyncTime = null;
 
     function parseCSV(text) {
@@ -5772,45 +6050,90 @@
 
     function parseRaceTabCSV(rows) {
       let section = 'UNKNOWN';
+      const venueRows = [];
       const scheduleRows = [];
       const linkRows = [];
       const announcementRows = [];
+      const waveRows = [];
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const firstCell = (row[0] || '').toLowerCase().trim();
+        if (!firstCell) continue;
 
-        // Detect section transitions
-        if (firstCell.includes('schedule')) {
-          section = 'SCHEDULE';
-          continue;
-        } else if (firstCell.includes('link') || firstCell.includes('signup')) {
-          section = 'LINKS';
-          continue;
-        } else if (firstCell.includes('announcement') || firstCell.includes('guideline')) {
-          section = 'ANNOUNCEMENTS';
-          continue;
+        // Detect section transitions (banners are enclosed in '---')
+        const isBanner = firstCell.includes('---');
+
+        if (isBanner) {
+          if (firstCell.includes('announcement') || firstCell.includes('guideline')) {
+            section = 'ANNOUNCEMENTS';
+            continue;
+          } else if (firstCell.includes('wave') || firstCell.includes('staging')) {
+            section = 'WAVES';
+            continue;
+          } else if (firstCell.includes('link') || firstCell.includes('signup')) {
+            section = 'LINKS';
+            continue;
+          } else if (firstCell.includes('schedule')) {
+            section = 'SCHEDULE';
+            continue;
+          } else if (firstCell.includes('venue') || firstCell.includes('general info')) {
+            section = 'VENUE';
+            continue;
+          }
         }
 
-        if (section === 'SCHEDULE') {
+        if (section === 'VENUE') {
+          if (firstCell === 'setting / field' || firstCell === 'field' || firstCell === 'setting') continue;
+          if (row.length >= 2 && row[0] && row[1]) {
+            venueRows.push([row[0].trim(), row[1].trim()]);
+          }
+        } else if (section === 'SCHEDULE') {
           if (firstCell === 'day') continue; // Header row
           if (row.length >= 4 && row[0] && row[2]) {
             scheduleRows.push(row);
           }
         } else if (section === 'LINKS') {
-          if (firstCell === 'link name' || firstCell === 'type') continue; // Header row
-          if (row.length >= 2 && row[0]) {
+          if (firstCell === 'link name' || firstCell === 'type' || firstCell === 'name') continue; // Header row
+          if (row.length >= 2 && row[0] && row[1]) {
             linkRows.push(row);
           }
         } else if (section === 'ANNOUNCEMENTS') {
-          if (firstCell.includes('guideline') || firstCell.includes('text')) continue; // Header row
-          if (row[0]) {
-            announcementRows.push(row[0]);
+          if (firstCell.includes('guideline') || firstCell.includes('text') || firstCell.includes('announcement')) continue; // Header row
+          if (row[0] && row[0].trim()) {
+            announcementRows.push(row[0].trim());
+          }
+        } else if (section === 'WAVES') {
+          if (firstCell === 'category' || firstCell === 'division') continue; // Header row
+          if (row.length >= 3 && row[0]) {
+            waveRows.push(row);
           }
         }
       }
 
-      // Convert schedule rows into Day Groups
+      // 1. Parse Venue Info
+      const venueInfo = {};
+      venueRows.forEach(([k, v]) => {
+        const key = k.toLowerCase();
+        if (key.includes('venue name') || key === 'venue') venueInfo.venue = v;
+        else if (key.includes('trailhead')) venueInfo.exactTrailhead = v;
+        else if (key.includes('address')) venueInfo.address = v;
+        else if (key.includes('city')) venueInfo.city = v;
+        else if (key.includes('date range') || key === 'dates' || key === 'date') venueInfo.dateStr = v;
+        else if (key.includes('conference')) venueInfo.conference = v;
+        else if (key.includes('warning') || key.includes('note')) venueInfo.warning = v;
+        else if (key.includes('google maps')) venueInfo.googleMapsUrl = v;
+        else if (key.includes('apple maps')) venueInfo.appleMapsUrl = v;
+        else if (key.includes('event guide')) venueInfo.eventGuideUrl = v;
+        else if (key.includes('embed') || key.includes('course map embed')) venueInfo.embedMapUrl = v;
+        else if (key.includes('full') && key.includes('map')) venueInfo.fullMapUrl = v;
+        else if (key.includes('event id') || key.includes('raceresult')) {
+          const num = parseInt(v, 10);
+          if (!isNaN(num) && num > 0) venueInfo.eventId = num;
+        }
+      });
+
+      // 2. Convert schedule rows into Day Groups
       const dayMap = {};
       const dayGroups = [];
       scheduleRows.forEach(r => {
@@ -5870,28 +6193,59 @@
         });
       });
 
-      // Convert links
+      // 3. Convert links
       const links = {};
       let embedMapUrl = '';
       linkRows.forEach(r => {
         const name = (r[0] || '').toLowerCase();
-        const url = r[1] || '';
+        const url = (r[1] || '').trim();
+        if (!url) return;
         if (name.includes('volunteer')) links.volunteer = url;
-        else if (name.includes('dinner') || name.includes('food') || name.includes('hospitality')) links.hospitality = url;
-        else if (name.includes('coach') || name.includes('ride')) links.coach = url;
+        else if (name.includes('dinner') || name.includes('food') || name.includes('hospitality')) links.food = url;
+        else if (name.includes('coach') || name.includes('ride') || name.includes('league')) links.league = url;
         else if (name.includes('map')) embedMapUrl = url;
       });
 
+      // 4. Parse Wave Schedule
+      const waveSchedule = {};
+      waveRows.forEach(r => {
+        const cat = (r[0] || '').trim();
+        if (!cat || cat.toLowerCase() === 'category') return;
+        let waveNum = '1';
+        let stageTime = '';
+        let startTime = '';
+        if (r.length >= 4) {
+          waveNum = (r[1] || '1').toString().trim() || '1';
+          stageTime = (r[2] || '').trim();
+          startTime = (r[3] || '').trim();
+        } else if (r.length === 3) {
+          stageTime = (r[1] || '').trim();
+          startTime = (r[2] || '').trim();
+        }
+        if (cat && (stageTime || startTime)) {
+          if (!waveSchedule[cat]) waveSchedule[cat] = {};
+          waveSchedule[cat][waveNum] = {
+            start: startTime,
+            stage: stageTime
+          };
+        }
+      });
+
       return {
+        venueInfo: Object.keys(venueInfo).length > 0 ? venueInfo : null,
         schedule: dayGroups.length > 0 ? dayGroups : null,
         signups: Object.keys(links).length > 0 ? links : null,
         embedMapUrl: embedMapUrl || null,
-        guidelines: announcementRows.length > 0 ? announcementRows : null
+        guidelines: announcementRows.length > 0 ? announcementRows : null,
+        waveSchedule: Object.keys(waveSchedule).length > 0 ? waveSchedule : null
       };
     }
 
-    async function syncWithGoogleSheets() {
-      if (!googleSheetId) return;
+    async function syncWithGoogleSheets(isManual = false) {
+      if (!googleSheetId) {
+        if (isManual) showNotifToast('⚠️ Google Sheet ID is not configured.');
+        return;
+      }
 
       const race = SEASON_RACES[currentRaceIndex];
       if (!race) return;
@@ -5903,15 +6257,17 @@
         const parsed = parseRaceTabCSV(rows);
 
         let hasUpdates = false;
+        if (parsed.venueInfo) {
+          Object.assign(race, parsed.venueInfo);
+          hasUpdates = true;
+        }
         if (parsed.schedule) {
           race.schedule = parsed.schedule;
           hasUpdates = true;
         }
         if (parsed.signups) {
           if (!race.signups) race.signups = {};
-          if (parsed.signups.volunteer) race.signups.volunteer = parsed.signups.volunteer;
-          if (parsed.signups.hospitality) race.signups.hospitality = parsed.signups.hospitality;
-          if (parsed.signups.coach) race.signups.coach = parsed.signups.coach;
+          Object.assign(race.signups, parsed.signups);
           hasUpdates = true;
         }
         if (parsed.embedMapUrl) {
@@ -5922,16 +6278,28 @@
           race.guidelines = parsed.guidelines;
           hasUpdates = true;
         }
+        if (parsed.waveSchedule) {
+          race.waveSchedule = parsed.waveSchedule;
+          hasUpdates = true;
+        }
 
-        if (hasUpdates) {
-          lastSheetSyncTime = new Date();
-          localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
-          if (currentTab === 'details') {
-            renderEventDetails(race);
-          }
+        lastSheetSyncTime = new Date();
+        localStorage.setItem('laxmtb_events_config', JSON.stringify(SEASON_RACES));
+        renderRaceSwitcher();
+        if (currentTab === 'details') {
+          renderEventDetails(race);
+        }
+
+        updateAdminSyncStatus();
+        if (isManual) {
+          showNotifToast(`✅ Synced "${tabName}" with Google Sheets!`);
+          renderAdminView();
         }
       } catch (err) {
         console.warn(`[LAXMTB] Google Sheet sync for "${tabName}" not found or failed (using bundled events.json):`, err);
+        if (isManual) {
+          showNotifToast(`⚠️ Sync failed for "${tabName}". Check sheet permissions or tab name.`);
+        }
       }
     }
 
@@ -5956,12 +6324,12 @@
           let racesList = [];
           if (Array.isArray(fresh) && fresh.length > 0) {
             racesList = fresh;
-            if (fresh[0] && fresh[0].googleSheetId) {
+            if (fresh[0] && fresh[0].googleSheetId && !localStorage.getItem('laxmtb_sheet_id')) {
               googleSheetId = fresh[0].googleSheetId;
             }
           } else if (fresh && fresh.races) {
             racesList = fresh.races;
-            if (fresh.googleSheetId) {
+            if (fresh.googleSheetId && !localStorage.getItem('laxmtb_sheet_id')) {
               googleSheetId = fresh.googleSheetId;
             }
           }
@@ -5984,6 +6352,431 @@
 
       // 3. Trigger Google Sheets live sync
       syncWithGoogleSheets();
+    }
+
+    // =========================================================
+    // COACH ADMIN PORTAL CONTROLLER
+    // =========================================================
+    let currentAdminTab = 'venue';
+
+    function openAdminPortal() {
+      closeMobileMenu();
+      const modal = document.getElementById('adminModalOverlay');
+      if (!modal) return;
+
+      const isAuth = sessionStorage.getItem('laxmtb_coach_auth') === 'true';
+      const passcodeScreen = document.getElementById('adminPasscodeScreen');
+      const dashboardScreen = document.getElementById('adminDashboardScreen');
+
+      if (isAuth) {
+        if (passcodeScreen) passcodeScreen.style.display = 'none';
+        if (dashboardScreen) dashboardScreen.style.display = 'flex';
+        initAdminDashboard();
+      } else {
+        if (passcodeScreen) passcodeScreen.style.display = 'block';
+        if (dashboardScreen) dashboardScreen.style.display = 'none';
+        const input = document.getElementById('adminPasscodeInput');
+        if (input) {
+          input.value = '';
+          setTimeout(() => input.focus(), 150);
+        }
+        const err = document.getElementById('adminPasscodeError');
+        if (err) err.style.display = 'none';
+      }
+
+      modal.classList.add('show');
+    }
+
+    function closeAdminPortal() {
+      const modal = document.getElementById('adminModalOverlay');
+      if (modal) modal.classList.remove('show');
+    }
+
+    function handleAdminOverlayClick(e) {
+      if (e.target && e.target.id === 'adminModalOverlay') {
+        closeAdminPortal();
+      }
+    }
+
+    function handleAdminAuth(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('adminPasscodeInput');
+      const err = document.getElementById('adminPasscodeError');
+      const val = (input?.value || '').trim();
+
+      if (val.toLowerCase() === 'laxmtb2026') {
+        sessionStorage.setItem('laxmtb_coach_auth', 'true');
+        if (err) err.style.display = 'none';
+        const passcodeScreen = document.getElementById('adminPasscodeScreen');
+        const dashboardScreen = document.getElementById('adminDashboardScreen');
+        if (passcodeScreen) passcodeScreen.style.display = 'none';
+        if (dashboardScreen) dashboardScreen.style.display = 'flex';
+        initAdminDashboard();
+      } else {
+        if (err) err.style.display = 'block';
+        if (input) input.focus();
+      }
+    }
+
+    function lockAdminPortal() {
+      sessionStorage.removeItem('laxmtb_coach_auth');
+      const passcodeScreen = document.getElementById('adminPasscodeScreen');
+      const dashboardScreen = document.getElementById('adminDashboardScreen');
+      if (passcodeScreen) passcodeScreen.style.display = 'block';
+      if (dashboardScreen) dashboardScreen.style.display = 'none';
+      const input = document.getElementById('adminPasscodeInput');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    function initAdminDashboard() {
+      const raceSelect = document.getElementById('adminRaceSelect');
+      if (raceSelect) {
+        raceSelect.innerHTML = SEASON_RACES.map((r, i) => `
+          <option value="${i}" ${i === currentRaceIndex ? 'selected' : ''}>
+            ${r.name} (${r.dateStr})
+          </option>
+        `).join('');
+      }
+
+      const footerSheetId = document.getElementById('adminFooterSheetId');
+      if (footerSheetId) {
+        footerSheetId.textContent = googleSheetId || 'Not set';
+      }
+
+      updateAdminSyncStatus();
+      renderAdminView();
+    }
+
+    function onAdminRaceSelect(val) {
+      const idx = parseInt(val, 10);
+      if (!isNaN(idx) && SEASON_RACES[idx]) {
+        selectRace(idx);
+        renderAdminView();
+      }
+    }
+
+    function openActiveGoogleSheetTab() {
+      if (!googleSheetId) {
+        showNotifToast('⚠️ Google Sheet ID is not set.');
+        return;
+      }
+      const url = `https://docs.google.com/spreadsheets/d/${googleSheetId}/edit`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
+    function updateAdminSyncStatus() {
+      const badge = document.getElementById('adminSyncStatusBadge');
+      const timeEl = document.getElementById('adminSyncStatusTime');
+      if (!badge || !timeEl) return;
+
+      if (lastSheetSyncTime) {
+        badge.textContent = '🟢 Synced with Sheet';
+        badge.className = 'admin-status-pill';
+        timeEl.textContent = lastSheetSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        badge.textContent = '⚪ Bundled / Local Cache';
+        badge.className = 'admin-status-pill';
+        timeEl.textContent = 'Awaiting sync';
+      }
+    }
+
+    function switchAdminTab(tabKey) {
+      currentAdminTab = tabKey;
+      document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      const activeBtn = document.getElementById(`adminTabBtn_${tabKey}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderAdminView();
+    }
+
+    function renderAdminView() {
+      const container = document.getElementById('adminTabContent');
+      if (!container) return;
+
+      const race = SEASON_RACES[currentRaceIndex];
+      if (!race) {
+        container.innerHTML = '<p style="color:var(--text-muted);">No race selected.</p>';
+        return;
+      }
+
+      const tab = currentAdminTab;
+
+      if (tab === 'venue') {
+        container.innerHTML = `
+          <div class="admin-preview-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+              <div>
+                <h4 style="margin:0;font-size:15px;color:var(--text-main);">${race.name}</h4>
+                <span style="font-size:12px;color:var(--text-muted);">${race.conference || 'Wisconsin League'}</span>
+              </div>
+              <span class="admin-status-pill" style="font-size:10px;">${race.isPublished ? 'Published' : 'Upcoming'}</span>
+            </div>
+            
+            <div class="admin-grid-2">
+              <div>
+                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Venue Name</strong>
+                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);">${race.venue || '—'}</p>
+
+                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Exact Trailhead</strong>
+                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);">${race.exactTrailhead || '—'}</p>
+
+                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Address / City</strong>
+                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);">${race.address || '—'}</p>
+              </div>
+              <div>
+                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Date Range</strong>
+                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);">${race.dateStr || '—'}</p>
+
+                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Race Result Event ID</strong>
+                <p style="margin:2px 0 10px;font-size:13px;color:var(--text-main);font-family:monospace;">${race.eventId || 'None (Unpublished)'}</p>
+
+                <strong style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Map Coordinates / URLs</strong>
+                <div style="margin:4px 0 10px;display:flex;gap:8px;flex-wrap:wrap;">
+                  ${race.googleMapsUrl ? `<a href="${race.googleMapsUrl}" target="_blank" class="action-mini-btn" style="text-decoration:none;">Google Maps ↗</a>` : ''}
+                  ${race.appleMapsUrl ? `<a href="${race.appleMapsUrl}" target="_blank" class="action-mini-btn" style="text-decoration:none;">Apple Maps ↗</a>` : ''}
+                  ${race.eventGuideUrl ? `<a href="${race.eventGuideUrl}" target="_blank" class="action-mini-btn" style="text-decoration:none;">Event Guide ↗</a>` : ''}
+                </div>
+              </div>
+            </div>
+
+            ${race.warning ? `
+              <div style="margin-top:10px;padding:10px 12px;background:rgba(234,179,8,0.1);border-left:3px solid #eab308;border-radius:4px;font-size:12px;color:var(--text-main);line-height:1.4;">
+                ${race.warning}
+              </div>
+            ` : ''}
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);text-align:right;">
+            💡 Edit these fields in the <strong>--- VENUE & GENERAL INFO ---</strong> section of your Google Sheet tab.
+          </div>
+        `;
+      } else if (tab === 'waves') {
+        const waves = race.waveSchedule || {};
+        const catKeys = Object.keys(waves);
+
+        if (catKeys.length === 0) {
+          container.innerHTML = `
+            <div class="admin-preview-card" style="text-align:center;padding:24px;">
+              <p style="margin:0 0 8px;font-size:13px;color:var(--text-muted);">No custom wave schedules synced for this race.</p>
+              <p style="margin:0;font-size:12px;color:var(--text-muted);">Add categories and times under <strong>--- WAVE & STAGING SCHEDULE ---</strong> in the Google Sheet.</p>
+            </div>
+          `;
+          return;
+        }
+
+        let tableRows = '';
+        catKeys.forEach(cat => {
+          const waveObj = waves[cat];
+          Object.keys(waveObj).forEach(wNum => {
+            const entry = waveObj[wNum];
+            tableRows += `
+              <tr>
+                <td><strong>${cat}</strong></td>
+                <td>Wave ${wNum}</td>
+                <td><span style="font-weight:600;color:#2563eb;">${entry.stage || '—'}</span></td>
+                <td><span style="font-weight:700;color:var(--text-main);">${entry.start || '—'}</span></td>
+              </tr>
+            `;
+          });
+        });
+
+        container.innerHTML = `
+          <div class="admin-preview-card" style="padding:0;overflow:hidden;">
+            <table class="admin-data-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Wave</th>
+                  <th>Staging Call-up</th>
+                  <th>Gun Start</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:8px;">
+            💡 Edit times in the <strong>--- WAVE & STAGING SCHEDULE ---</strong> section of your Google Sheet tab.
+          </div>
+        `;
+      } else if (tab === 'schedule') {
+        const schedule = race.schedule || [];
+        if (schedule.length === 0) {
+          container.innerHTML = `<p style="color:var(--text-muted);">No schedule events configured.</p>`;
+          return;
+        }
+
+        let scheduleHtml = '';
+        schedule.forEach(dayGroup => {
+          if (dayGroup.events) {
+            scheduleHtml += `
+              <div class="admin-preview-card" style="margin-bottom:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:6px;">
+                  <strong style="font-size:14px;color:var(--text-main);">${dayGroup.day} <span style="font-size:12px;color:var(--text-muted);font-weight:normal;">(${dayGroup.date || ''})</span></strong>
+                  <span style="font-size:11px;color:var(--text-muted);">${dayGroup.subtitle || ''}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  ${dayGroup.events.map(ev => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;">
+                      <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-weight:700;min-width:110px;color:var(--text-main);">${ev.time}</span>
+                        <span style="color:var(--text-main);">${ev.desc}</span>
+                        ${ev.isSpecial ? '<span style="font-size:10px;background:rgba(220,38,38,0.15);color:var(--accent-red);padding:1px 6px;border-radius:4px;font-weight:600;">Team Meal</span>' : ''}
+                      </div>
+                      ${ev.tag ? `<span class="schedule-tag" style="font-size:10px;padding:1px 6px;border-radius:4px;">${ev.tag}</span>` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          } else {
+            scheduleHtml += `
+              <div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
+                <strong>${dayGroup.time}</strong> — ${dayGroup.desc}
+              </div>
+            `;
+          }
+        });
+
+        container.innerHTML = `
+          ${scheduleHtml}
+          <div style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:8px;">
+            💡 Edit events in the <strong>--- SCHEDULE ---</strong> section of your Google Sheet tab.
+          </div>
+        `;
+      } else if (tab === 'signups') {
+        const signups = race.signups || {};
+        container.innerHTML = `
+          <div class="admin-preview-card">
+            <h4 style="margin:0 0 12px;font-size:14px;color:var(--text-main);">SignUp.com & Registration Links</h4>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border);">
+                <span>🤝 Volunteer Sheet</span>
+                <span style="font-family:monospace;font-size:12px;color:var(--text-muted);">${signups.volunteer || 'Not set'}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border);">
+                <span>🥗 Team Dinner / Food</span>
+                <span style="font-family:monospace;font-size:12px;color:var(--text-muted);">${signups.food || signups.hospitality || 'Not set'}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border);">
+                <span>🚴 Coach Ride Leaders</span>
+                <span style="font-family:monospace;font-size:12px;color:var(--text-muted);">${signups.league || signups.coach || 'Not set'}</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;">
+                <span>🗺️ Course Map Embed</span>
+                <span style="font-size:11px;color:var(--text-muted);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${race.embedMapUrl || 'None'}</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);text-align:right;">
+            💡 Edit links in the <strong>--- SIGNUP LINKS ---</strong> section of your Google Sheet tab.
+          </div>
+        `;
+      } else if (tab === 'announcements') {
+        const guidelines = race.guidelines || [];
+        container.innerHTML = `
+          <div class="admin-preview-card">
+            <h4 style="margin:0 0 12px;font-size:14px;color:var(--text-main);">Venue Rules & Weekend Announcements</h4>
+            <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.6;color:var(--text-main);">
+              ${guidelines.map(g => `<li style="margin-bottom:6px;">${g}</li>`).join('')}
+            </ul>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);text-align:right;">
+            💡 Edit text in the <strong>--- ANNOUNCEMENTS & VENUE GUIDELINES ---</strong> section of your Google Sheet tab.
+          </div>
+        `;
+      } else if (tab === 'config') {
+        container.innerHTML = `
+          <div class="admin-preview-card">
+            <h4 style="margin:0 0 8px;font-size:14px;color:var(--text-main);">Google Sheets Data Source</h4>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px;">This sheet ID is used for live synchronization across all devices.</p>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" id="customSheetIdInput" class="admin-input-field" value="${googleSheetId}" style="flex:1;font-family:monospace;" />
+              <button type="button" class="action-mini-btn" onclick="saveCustomSheetId()">Save</button>
+            </div>
+          </div>
+
+          <div class="admin-preview-card">
+            <h4 style="margin:0 0 8px;font-size:14px;color:var(--text-main);">Export & Repository Backup</h4>
+            <p style="font-size:12px;color:var(--text-muted);margin:0 0 12px;">Export current full season configuration (with synced updates) as JSON to commit to GitHub.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button type="button" class="admin-action-btn primary" onclick="copyEventsJson()">
+                📋 Copy events.json to Clipboard
+              </button>
+              <button type="button" class="admin-action-btn" onclick="downloadEventsJson()">
+                ⬇️ Download events.json
+              </button>
+              <a href="./LAXMTB_Race_Data.xlsx" download class="admin-action-btn" style="text-decoration:none;">
+                📥 Download Excel Template
+              </a>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function saveCustomSheetId() {
+      const input = document.getElementById('customSheetIdInput');
+      const val = (input?.value || '').trim();
+      if (!val) {
+        showNotifToast('⚠️ Sheet ID cannot be empty');
+        return;
+      }
+      googleSheetId = val;
+      localStorage.setItem('laxmtb_sheet_id', val);
+      const footerSheetId = document.getElementById('adminFooterSheetId');
+      if (footerSheetId) footerSheetId.textContent = val;
+      showNotifToast('✅ Google Sheet ID updated!');
+      syncWithGoogleSheets(true);
+    }
+
+    function copyEventsJson() {
+      try {
+        const jsonStr = JSON.stringify(SEASON_RACES, null, 2);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(jsonStr).then(() => {
+            showNotifToast('📋 Copied events.json to clipboard!');
+          }).catch(() => {
+            fallbackCopyText(jsonStr);
+          });
+        } else {
+          fallbackCopyText(jsonStr);
+        }
+      } catch (err) {
+        showNotifToast('⚠️ Failed to copy events.json');
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      showNotifToast('📋 Copied events.json to clipboard!');
+    }
+
+    function downloadEventsJson() {
+      try {
+        const jsonStr = JSON.stringify(SEASON_RACES, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'events.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showNotifToast('⬇️ Downloaded events.json');
+      } catch (err) {
+        showNotifToast('⚠️ Download failed');
+      }
     }
 
     initTheme();
