@@ -1,0 +1,102 @@
+// https://nuxt.com/docs/api/configuration/nuxt-config
+export default defineNuxtConfig({
+  compatibilityDate: '2024-04-03',
+  devtools: { enabled: false },
+  ssr: false, // Client-side hydration for maximum offline PWA responsiveness
+
+  app: {
+    baseURL: process.env.NODE_ENV === 'production' ? '/LAXMTB/' : '/',
+    head: {
+      title: 'LAX MTB // RACE CENTRAL',
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover' },
+        { name: 'theme-color', content: '#0d0d0d' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/png', href: 'favicon.png' },
+        { rel: 'apple-touch-icon', href: 'apple-touch-icon.png' },
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Teko:wght@600;700&display=swap' }
+      ]
+    }
+  },
+
+  modules: [
+    '@nuxtjs/tailwindcss',
+    '@pinia/nuxt',
+    '@vite-pwa/nuxt'
+  ],
+
+  // Auto-import components from domain feature folders
+  components: [
+    { path: '~/modules/core/components', prefix: '' },
+    { path: '~/modules/races/components', prefix: '' },
+    { path: '~/modules/schedule/components', prefix: '' },
+    { path: '~/modules/results/components', prefix: '' },
+    { path: '~/modules/coach-admin/components', prefix: '' },
+    { path: '~/modules/photos/components', prefix: '' },
+    { path: '~/modules/notifications/components', prefix: '' },
+    { path: '~/components', prefix: '' }
+  ],
+
+  // Auto-import composables from domain feature folders
+  imports: {
+    dirs: [
+      'modules/core/composables',
+      'modules/races/composables',
+      'modules/schedule/composables',
+      'modules/results/composables',
+      'modules/coach-admin/composables',
+      'modules/photos/composables',
+      'modules/notifications/composables',
+      'composables'
+    ]
+  },
+
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'LAX MTB Race Central',
+      short_name: 'LAX MTB',
+      description: 'Offline-capable Live MTB Race Tracker for La Crosse Area Teams',
+      start_url: './',
+      display: 'standalone',
+      background_color: '#0d0d0d',
+      theme_color: '#0d0d0d',
+      orientation: 'portrait',
+      icons: [
+        { src: 'favicon.png', sizes: '64x64', type: 'image/png' },
+        { src: 'apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+      ]
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,json}'],
+      runtimeCaching: [
+        {
+          urlPattern: /^https:\/\/my\.raceresult\.com\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'raceresult-api-cache',
+            expiration: { maxEntries: 30, maxAgeSeconds: 86400 },
+            networkTimeoutSeconds: 4
+          }
+        },
+        {
+          urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'firestore-network-cache'
+          }
+        }
+      ]
+    }
+  },
+
+  nitro: {
+    preset: 'github-pages'
+  }
+})

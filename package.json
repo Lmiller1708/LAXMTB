@@ -1,0 +1,26 @@
+{
+  "name": "laxmtb-race-central",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "firebase": "^10.13.1"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.12.1",
+    "@pinia/nuxt": "^0.5.4",
+    "@types/node": "^22.5.4",
+    "@vite-pwa/nuxt": "^1.1.1",
+    "nuxt": "^3.13.0",
+    "pinia": "^2.2.2",
+    "typescript": "^5.5.4",
+    "vue": "^3.4.38",
+    "vue-router": "^4.4.3"
+  }
+}
