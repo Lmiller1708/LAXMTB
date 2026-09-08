@@ -2521,6 +2521,47 @@
       font-weight: 700;
     }
 
+    .time-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.2px;
+      line-height: 1.2;
+    }
+    .time-to-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin: 0 3px;
+      text-transform: lowercase;
+    }
+    .schedule-row.special-event .time-badge {
+      border-color: rgba(220, 38, 38, 0.4);
+      background: rgba(220, 38, 38, 0.1);
+      color: var(--accent-red);
+    }
+    .schedule-date-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    :root[data-theme="light"] .schedule-date-badge {
+      background: #e5e7eb;
+      border-color: #d1d5db;
+    }
+
     .schedule-tag {
       font-size: 9px;
       font-weight: 800;
@@ -2974,39 +3015,61 @@
     }
     .admin-tab-bar {
       display: flex;
-      gap: 4px;
-      padding: 8px 18px 0;
+      gap: 6px;
+      padding: 10px 18px;
       background: var(--bg-surface, var(--bg-card));
       border-bottom: 1px solid var(--border);
       overflow-x: auto;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      align-items: center;
     }
     .admin-tab-bar::-webkit-scrollbar {
       display: none;
     }
     .admin-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       padding: 8px 14px;
       font-size: 12px;
       font-weight: 600;
+      line-height: 1;
       color: var(--text-muted);
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
+      background: var(--bg-subtle, rgba(255, 255, 255, 0.04));
+      border: 1px solid var(--border);
+      border-radius: 8px;
       cursor: pointer;
       white-space: nowrap;
       transition: all 0.15s ease;
+      box-sizing: border-box;
     }
     .admin-tab-btn:hover {
       color: var(--text-main);
+      background: var(--bg-card);
+      border-color: var(--border-strong);
     }
     .admin-tab-btn.active {
-      color: #2563eb;
-      border-bottom-color: #2563eb;
+      color: #ffffff !important;
+      background: var(--accent-red, #dc2626) !important;
+      border-color: var(--accent-red, #dc2626) !important;
       font-weight: 700;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+    }
+    :root[data-theme="light"] .admin-tab-btn {
+      background: #f3f4f6;
+      border-color: #e5e7eb;
+      color: #4b5563;
+    }
+    :root[data-theme="light"] .admin-tab-btn:hover {
+      background: #e5e7eb;
+      color: #111827;
     }
     :root[data-theme="light"] .admin-tab-btn.active {
-      color: #1d4ed8;
-      border-bottom-color: #1d4ed8;
+      background: #dc2626 !important;
+      border-color: #dc2626 !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
     }
     .admin-modal-body {
       flex: 1;
@@ -4250,6 +4313,184 @@
       updateUrlState();
     }
 
+    // =========================================================
+    // DATE & TIME HELPERS (For Displays & Admin Dropdowns)
+    // =========================================================
+    function splitTimeRange(str) {
+      if (!str) return { start: '', end: '' };
+      const parts = String(str).split(/\s*[-–—]\s*|\s+to\s+/i);
+      if (parts.length >= 2) {
+        return { start: parts[0].trim(), end: parts[1].trim() };
+      }
+      return { start: String(str).trim(), end: '' };
+    }
+
+    function normalizeTimeString(t) {
+      if (!t) return '';
+      t = String(t).trim();
+      const m = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+      if (m) {
+        let h = parseInt(m[1], 10);
+        const min = m[2];
+        let ampm = m[3] ? m[3].toUpperCase() : (h >= 12 ? 'PM' : 'AM');
+        if (!m[3]) {
+          if (h > 12) h -= 12;
+          else if (h === 0) h = 12;
+        }
+        return `${h}:${min} ${ampm}`;
+      }
+      return t;
+    }
+
+    function buildTimeOptions(selectedTime, allowNone = false, noneLabel = '-- None --') {
+      const normSelected = normalizeTimeString(selectedTime);
+      const times = [];
+      for (let h = 6; h <= 21; h++) {
+        for (let m = 0; m < 60; m += 15) {
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          const dispH = h % 12 === 0 ? 12 : h % 12;
+          const dispM = m < 10 ? '0' + m : '' + m;
+          times.push(`${dispH}:${dispM} ${ampm}`);
+        }
+      }
+      times.push('9:30 PM', '10:00 PM');
+
+      let hasMatch = false;
+      let html = '';
+      if (allowNone) {
+        html += `<option value="" ${!normSelected ? 'selected' : ''}>${noneLabel}</option>`;
+      }
+
+      times.forEach(t => {
+        const isSel = normSelected.toLowerCase() === t.toLowerCase();
+        if (isSel) hasMatch = true;
+        html += `<option value="${t}" ${isSel ? 'selected' : ''}>${t}</option>`;
+      });
+
+      if (normSelected && !hasMatch && normSelected !== noneLabel) {
+        html = `<option value="${escapeHtml(normSelected)}" selected>${escapeHtml(normSelected)}</option>` + html;
+      }
+      return html;
+    }
+
+    function buildWaveTimeOptions(selectedTime) {
+      const normSelected = normalizeTimeString(selectedTime);
+      const times = [];
+      for (let h = 7; h <= 17; h++) {
+        for (let m = 0; m < 60; m += 5) {
+          if (h === 17 && m > 30) break;
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          const dispH = h % 12 === 0 ? 12 : h % 12;
+          const dispM = m < 10 ? '0' + m : '' + m;
+          times.push(`${dispH}:${dispM} ${ampm}`);
+        }
+      }
+
+      let hasMatch = false;
+      let html = `<option value="" ${!normSelected ? 'selected' : ''}>-- Select Time --</option>`;
+
+      times.forEach(t => {
+        const isSel = normSelected.toLowerCase() === t.toLowerCase();
+        if (isSel) hasMatch = true;
+        html += `<option value="${t}" ${isSel ? 'selected' : ''}>${t}</option>`;
+      });
+
+      if (normSelected && !hasMatch) {
+        html = `<option value="${escapeHtml(normSelected)}" selected>${escapeHtml(normSelected)}</option>` + html;
+      }
+      return html;
+    }
+
+    function parseDateRange(dateStr) {
+      if (!dateStr) return { start: '', end: '' };
+      const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', sept: '09', oct: '10', nov: '11', dec: '12' };
+      const m = String(dateStr).match(/(\d{1,2})\s*[-–—]\s*(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+      if (m) {
+        const d1 = m[1].padStart(2, '0');
+        const d2 = m[2].padStart(2, '0');
+        const monKey = m[3].toLowerCase().slice(0, 4);
+        const mo = months[monKey] || months[m[3].toLowerCase().slice(0, 3)] || '09';
+        const yr = m[4];
+        return { start: `${yr}-${mo}-${d1}`, end: `${yr}-${mo}-${d2}` };
+      }
+      return { start: '', end: '' };
+    }
+
+    function formatDatesToDateRange(startIso, endIso) {
+      if (!startIso) return '';
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+      const sParts = startIso.split('-');
+      const sy = sParts[0];
+      const sm = parseInt(sParts[1], 10) - 1;
+      const sd = sParts[2].padStart(2, '0');
+      const monthName = monthNames[sm] || '';
+
+      if (!endIso || endIso === startIso) {
+        return `${sd} ${monthName} ${sy}`;
+      }
+      const eParts = endIso.split('-');
+      const ey = eParts[0];
+      const em = parseInt(eParts[1], 10) - 1;
+      const ed = eParts[2].padStart(2, '0');
+      const endMonthName = monthNames[em] || '';
+
+      if (sy === ey && sm === em) {
+        return `${sd} - ${ed} ${monthName} ${sy}`;
+      }
+      return `${sd} ${monthName} - ${ed} ${endMonthName} ${ey}`;
+    }
+
+    function formatDateToMonthDay(isoDate) {
+      if (!isoDate) return '';
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+      const parts = isoDate.split('-');
+      if (parts.length < 3) return isoDate;
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      return `${monthNames[m]} ${d}`;
+    }
+
+    function parseMonthDayToIso(monthDayStr, year = '2026') {
+      if (!monthDayStr) return '';
+      const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', sept: '09', oct: '10', nov: '11', dec: '12' };
+      const m = String(monthDayStr).match(/([A-Za-z]+)\s*(\d{1,2})/);
+      if (m) {
+        const mo = months[m[1].toLowerCase().slice(0, 4)] || months[m[1].toLowerCase().slice(0, 3)] || '09';
+        const day = m[2].padStart(2, '0');
+        return `${year}-${mo}-${day}`;
+      }
+      return '';
+    }
+
+    function onAdminRaceDatesPickerChange() {
+      const startEl = document.getElementById('edit_race_startDate');
+      const endEl = document.getElementById('edit_race_endDate');
+      const dateStrEl = document.getElementById('edit_race_dateStr');
+      if (startEl && endEl && dateStrEl && startEl.value) {
+        dateStrEl.value = formatDatesToDateRange(startEl.value, endEl.value);
+      }
+    }
+
+    function onAdminDayDatepickerChange(pickerEl) {
+      if (!pickerEl || !pickerEl.value) return;
+      const card = pickerEl.closest('.admin-day-card');
+      if (!card) return;
+      const dateTextEl = card.querySelector('.schedule-day-date');
+      if (dateTextEl) {
+        dateTextEl.value = formatDateToMonthDay(pickerEl.value);
+      }
+      const parts = pickerEl.value.split('-');
+      if (parts.length === 3) {
+        const dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayName = days[dateObj.getDay()];
+        const daySelectEl = card.querySelector('.schedule-day-name');
+        if (daySelectEl && dayName) {
+          daySelectEl.value = dayName;
+        }
+      }
+    }
+
     function renderScheduleGrouped(schedule) {
       if (!schedule || !Array.isArray(schedule) || schedule.length === 0) {
         return '<p class="no-results" style="padding:16px;">Schedule details coming soon.</p>';
@@ -4294,7 +4535,7 @@
                   <div style="display:flex;align-items:center;gap:6px;">
                     <span>${dayIcon}</span>
                     <span style="font-weight:800;">${escapeHtml(grp.day)}</span>
-                    ${grp.date ? `<span style="font-weight:600;opacity:0.85;font-size:10px;">• ${escapeHtml(grp.date)}</span>` : ''}
+                    ${grp.date ? `<span class="schedule-date-badge">📅 ${escapeHtml(grp.date)}</span>` : ''}
                   </div>
                   ${grp.subtitle ? `<span class="schedule-day-badge">${escapeHtml(grp.subtitle)}</span>` : (isRaceDay ? `<span class="schedule-day-badge">RACE DAY</span>` : '')}
                 </div>
@@ -4304,9 +4545,13 @@
                     const isPreRide = ev.tag === 'Pre-Ride' || ev.desc.toLowerCase().includes('pre-ride');
                     const isRace = ev.isRace || ev.tag === 'Racing' || ev.desc.toLowerCase().includes('racing starts') || ev.desc.toLowerCase().includes('race waves');
                     const isAwards = ev.tag === 'Awards' || ev.desc.toLowerCase().includes('awards');
+                    const tParts = splitTimeRange(ev.time || '');
                     return `
                       <li class="schedule-row ${isSpecial ? 'special-event' : ''}">
-                        <span class="schedule-row-time">${escapeHtml(ev.time)}</span>
+                        <span class="schedule-row-time">
+                          <span class="time-badge">${escapeHtml(tParts.start || ev.time)}</span>
+                          ${tParts.end ? `<span class="time-to-badge">to</span><span class="time-badge">${escapeHtml(tParts.end)}</span>` : ''}
+                        </span>
                         <div class="schedule-row-desc">
                           <span>${escapeHtml(ev.desc)}</span>
                           ${isSpecial ? `<span class="schedule-tag tag-special">${ev.desc.toLowerCase().includes('dinner') ? '🍽️ Team Dinner' : ev.desc.toLowerCase().includes('breakfast') ? '🍽️ Team Breakfast' : '★ Team Event'}</span>` : ''}
@@ -6600,6 +6845,10 @@
         if (addressEl) race.address = addressEl.value.trim();
         const cityEl = document.getElementById('edit_race_city');
         if (cityEl) race.city = cityEl.value.trim();
+        const startDateEl = document.getElementById('edit_race_startDate');
+        if (startDateEl) race.startDate = startDateEl.value;
+        const endDateEl = document.getElementById('edit_race_endDate');
+        if (endDateEl) race.endDate = endDateEl.value;
         const dateStrEl = document.getElementById('edit_race_dateStr');
         if (dateStrEl) race.dateStr = dateStrEl.value.trim();
         const confEl = document.getElementById('edit_race_conference');
@@ -6646,17 +6895,23 @@
           dayCards.forEach(card => {
             const dayName = card.querySelector('.schedule-day-name')?.value.trim() || 'Weekend';
             const dateStr = card.querySelector('.schedule-day-date')?.value.trim() || '';
+            const datePicker = card.querySelector('.schedule-day-datepicker')?.value || '';
             const subtitle = card.querySelector('.schedule-day-subtitle')?.value.trim() || '';
             const eventRows = card.querySelectorAll('.admin-schedule-row');
             const events = [];
             eventRows.forEach(er => {
-              const time = er.querySelector('.event-time')?.value.trim() || '';
+              const startTime = er.querySelector('.event-start-time')?.value.trim() || '';
+              const endTime = er.querySelector('.event-end-time')?.value.trim() || '';
+              const fallbackTime = er.querySelector('.event-time')?.value.trim() || '';
+              const time = startTime && endTime ? `${startTime} - ${endTime}` : (startTime || endTime || fallbackTime);
               const desc = er.querySelector('.event-desc')?.value.trim() || '';
               const tag = er.querySelector('.event-tag')?.value || 'Venue';
               const isSpecial = er.querySelector('.event-special')?.checked || false;
               if (time || desc) {
                 events.push({
                   time: time,
+                  startTime: startTime,
+                  endTime: endTime,
                   desc: desc,
                   tag: tag,
                   isSpecial: isSpecial,
@@ -6667,6 +6922,7 @@
             dayGroups.push({
               day: dayName,
               date: dateStr,
+              isoDate: datePicker,
               subtitle: subtitle,
               isRaceDay: dayName.toLowerCase().includes('sun'),
               events: events
@@ -6735,6 +6991,7 @@
       const tab = currentAdminTab;
 
       if (tab === 'venue') {
+        const raceDates = (race.startDate && race.endDate) ? { start: race.startDate, end: race.endDate } : parseDateRange(race.dateStr);
         container.innerHTML = `
           <div class="admin-preview-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
@@ -6770,8 +7027,18 @@
                 <input type="text" id="edit_race_city" class="admin-input-field" value="${escapeHtml(race.city || '')}" placeholder="e.g. Marshfield, WI" />
               </div>
               <div class="admin-form-group">
-                <label class="admin-form-label">Date Range</label>
-                <input type="text" id="edit_race_dateStr" class="admin-input-field" value="${escapeHtml(race.dateStr || '')}" placeholder="e.g. 04 - 07 Sept 2026" />
+                <label class="admin-form-label">Race Date Range</label>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="font-size:11px;color:var(--text-muted);font-weight:600;">Start:</span>
+                    <input type="date" id="edit_race_startDate" class="admin-input-field" value="${raceDates.start || ''}" onchange="onAdminRaceDatesPickerChange()" style="padding:6px 8px;font-size:12px;" />
+                  </div>
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="font-size:11px;color:var(--text-muted);font-weight:600;">End:</span>
+                    <input type="date" id="edit_race_endDate" class="admin-input-field" value="${raceDates.end || ''}" onchange="onAdminRaceDatesPickerChange()" style="padding:6px 8px;font-size:12px;" />
+                  </div>
+                  <input type="text" id="edit_race_dateStr" class="admin-input-field" value="${escapeHtml(race.dateStr || '')}" placeholder="e.g. 04 - 07 Sept 2026" style="flex:1;min-width:140px;font-weight:600;" title="Formatted display date" />
+                </div>
               </div>
               <div class="admin-form-group">
                 <label class="admin-form-label">Conference</label>
@@ -6826,10 +7093,18 @@
               const entry = waveObj[wNum] || {};
               tableRowsHtml += `
                 <tr class="admin-wave-row">
-                  <td><input type="text" class="admin-input-field wave-cat" value="${escapeHtml(cat)}" placeholder="Category Name" style="width:100%;" /></td>
+                  <td><input type="text" list="adminWaveCategoriesList" class="admin-input-field wave-cat" value="${escapeHtml(cat)}" placeholder="Category Name" style="width:100%;" /></td>
                   <td><input type="number" class="admin-input-field wave-num" value="${wNum}" min="1" max="9" style="width:55px;" /></td>
-                  <td><input type="text" class="admin-input-field wave-stage" value="${escapeHtml(entry.stage || '')}" placeholder="e.g. 9:45 AM" style="width:100%;" /></td>
-                  <td><input type="text" class="admin-input-field wave-start" value="${escapeHtml(entry.start || '')}" placeholder="e.g. 10:00 AM" style="width:100%;" /></td>
+                  <td>
+                    <select class="admin-select-field wave-stage" style="width:100%;">
+                      ${buildWaveTimeOptions(entry.stage || '')}
+                    </select>
+                  </td>
+                  <td>
+                    <select class="admin-select-field wave-start" style="width:100%;">
+                      ${buildWaveTimeOptions(entry.start || '')}
+                    </select>
+                  </td>
                   <td style="text-align:center;"><button type="button" class="admin-row-delete-btn" onclick="this.closest('tr').remove()" title="Delete row">🗑️</button></td>
                 </tr>
               `;
@@ -6838,6 +7113,18 @@
         }
 
         container.innerHTML = `
+          <datalist id="adminWaveCategoriesList">
+            <option value="Middle School Boys">
+            <option value="Middle School Girls">
+            <option value="Freshman Boys">
+            <option value="Freshman Girls">
+            <option value="JV3 Boys">
+            <option value="JV3 Girls">
+            <option value="JV2 Boys">
+            <option value="JV2 Girls">
+            <option value="Varsity Boys">
+            <option value="Varsity Girls">
+          </datalist>
           <div class="admin-preview-card" style="padding:14px 16px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
               <div>
@@ -6853,8 +7140,8 @@
                   <tr>
                     <th style="min-width:160px;">Category</th>
                     <th style="width:70px;">Wave</th>
-                    <th style="width:120px;">Staging Time</th>
-                    <th style="width:120px;">Gun Start Time</th>
+                    <th style="width:140px;">Staging Time</th>
+                    <th style="width:140px;">Gun Start Time</th>
                     <th style="width:50px;text-align:center;">Del</th>
                   </tr>
                 </thead>
@@ -6881,11 +7168,22 @@
             const events = dayGroup.events || [];
             let eventsHtml = '';
             events.forEach(ev => {
+              const tParts = splitTimeRange(ev.time || '');
+              const startVal = ev.startTime || tParts.start || '';
+              const endVal = ev.endTime || tParts.end || '';
               eventsHtml += `
-                <div class="admin-schedule-row" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
-                  <input type="text" class="admin-input-field event-time" value="${escapeHtml(ev.time || '')}" placeholder="Time (e.g. 5:00 PM - 6:00 PM)" style="width:160px;" />
-                  <input type="text" class="admin-input-field event-desc" value="${escapeHtml(ev.desc || '')}" placeholder="Activity Description" style="flex:1;min-width:180px;" />
-                  <select class="admin-select-field event-tag" style="width:120px;">
+                <div class="admin-schedule-row" style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:4px;">
+                    <select class="admin-select-field event-start-time" style="width:125px;" title="Start Time">
+                      ${buildTimeOptions(startVal, false)}
+                    </select>
+                    <span style="font-size:11px;color:var(--text-muted);font-weight:600;">to</span>
+                    <select class="admin-select-field event-end-time" style="width:125px;" title="End Time (optional)">
+                      ${buildTimeOptions(endVal, true, '-- End Time --')}
+                    </select>
+                  </div>
+                  <input type="text" class="admin-input-field event-desc" value="${escapeHtml(ev.desc || '')}" placeholder="Activity Description" style="flex:1;min-width:170px;" />
+                  <select class="admin-select-field event-tag" style="width:115px;">
                     ${['Venue', 'Pre-Ride', 'Spectating', 'Team Ride', 'Team Event', 'Racing', 'Awards', 'Other'].map(t => `
                       <option value="${t}" ${ev.tag === t ? 'selected' : ''}>${t}</option>
                     `).join('')}
@@ -6899,12 +7197,22 @@
               `;
             });
 
+            const dayOptions = ['Friday', 'Saturday', 'Sunday', 'Monday', 'Thursday', 'Weekend'];
+            const curDay = dayGroup.day || '';
             scheduleDaysHtml += `
               <div class="admin-preview-card admin-day-card" style="margin-bottom:14px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
-                  <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px;">
-                    <input type="text" class="admin-input-field schedule-day-name" value="${escapeHtml(dayGroup.day || '')}" placeholder="Day (e.g. Saturday)" style="width:130px;font-weight:700;" />
-                    <input type="text" class="admin-input-field schedule-day-date" value="${escapeHtml(dayGroup.date || '')}" placeholder="Date (e.g. Sept 5)" style="width:110px;" />
+                  <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:260px;flex-wrap:wrap;">
+                    <select class="admin-select-field schedule-day-name" style="width:125px;font-weight:700;">
+                      ${dayOptions.map(d => `
+                        <option value="${d}" ${d.toLowerCase() === curDay.toLowerCase() ? 'selected' : ''}>${d}</option>
+                      `).join('')}
+                      ${!dayOptions.map(d => d.toLowerCase()).includes(curDay.toLowerCase()) && curDay ? `<option value="${escapeHtml(curDay)}" selected>${escapeHtml(curDay)}</option>` : ''}
+                    </select>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                      <input type="date" class="admin-input-field schedule-day-datepicker" value="${parseMonthDayToIso(dayGroup.date)}" onchange="onAdminDayDatepickerChange(this)" style="padding:5px 8px;font-size:12px;width:120px;" title="Pick Date" />
+                      <input type="text" class="admin-input-field schedule-day-date" value="${escapeHtml(dayGroup.date || '')}" placeholder="e.g. Sept 5" style="width:85px;font-weight:600;" title="Formatted Date" />
+                    </div>
                     <input type="text" class="admin-input-field schedule-day-subtitle" value="${escapeHtml(dayGroup.subtitle || '')}" placeholder="Subtitle (e.g. Pre-Rides & Team Dinner)" style="flex:1;min-width:140px;" />
                   </div>
                   <button type="button" class="admin-row-delete-btn" onclick="this.closest('.admin-day-card').remove()" title="Remove entire day">🗑️ Remove Day</button>
@@ -7062,10 +7370,18 @@
       const tr = document.createElement('tr');
       tr.className = 'admin-wave-row';
       tr.innerHTML = `
-        <td><input type="text" class="admin-input-field wave-cat" value="${escapeHtml(cat)}" placeholder="Category Name" style="width:100%;" /></td>
+        <td><input type="text" list="adminWaveCategoriesList" class="admin-input-field wave-cat" value="${escapeHtml(cat)}" placeholder="Category Name" style="width:100%;" /></td>
         <td><input type="number" class="admin-input-field wave-num" value="${wave}" min="1" max="9" style="width:55px;" /></td>
-        <td><input type="text" class="admin-input-field wave-stage" value="${escapeHtml(stage)}" placeholder="e.g. 9:45 AM" style="width:100%;" /></td>
-        <td><input type="text" class="admin-input-field wave-start" value="${escapeHtml(start)}" placeholder="e.g. 10:00 AM" style="width:100%;" /></td>
+        <td>
+          <select class="admin-select-field wave-stage" style="width:100%;">
+            ${buildWaveTimeOptions(stage)}
+          </select>
+        </td>
+        <td>
+          <select class="admin-select-field wave-start" style="width:100%;">
+            ${buildWaveTimeOptions(start)}
+          </select>
+        </td>
         <td style="text-align:center;"><button type="button" class="admin-row-delete-btn" onclick="this.closest('tr').remove()" title="Delete row">🗑️</button></td>
       `;
       tbody.appendChild(tr);
@@ -7076,11 +7392,19 @@
       if (!container) return;
       const div = document.createElement('div');
       div.className = 'admin-schedule-row';
-      div.style = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;';
+      div.style = 'display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;';
       div.innerHTML = `
-        <input type="text" class="admin-input-field event-time" placeholder="Time (e.g. 5:00 PM - 6:00 PM)" style="width:160px;" />
-        <input type="text" class="admin-input-field event-desc" placeholder="Activity Description" style="flex:1;min-width:180px;" />
-        <select class="admin-select-field event-tag" style="width:120px;">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <select class="admin-select-field event-start-time" style="width:125px;" title="Start Time">
+            ${buildTimeOptions('8:00 AM', false)}
+          </select>
+          <span style="font-size:11px;color:var(--text-muted);font-weight:600;">to</span>
+          <select class="admin-select-field event-end-time" style="width:125px;" title="End Time (optional)">
+            ${buildTimeOptions('', true, '-- End Time --')}
+          </select>
+        </div>
+        <input type="text" class="admin-input-field event-desc" placeholder="Activity Description" style="flex:1;min-width:170px;" />
+        <select class="admin-select-field event-tag" style="width:115px;">
           <option value="Venue">Venue</option>
           <option value="Pre-Ride">Pre-Ride</option>
           <option value="Spectating">Spectating</option>
@@ -7108,9 +7432,14 @@
       div.style = 'margin-bottom:14px;';
       div.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap;gap:8px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px;">
-            <input type="text" class="admin-input-field schedule-day-name" placeholder="Day (e.g. Saturday)" style="width:130px;font-weight:700;" />
-            <input type="text" class="admin-input-field schedule-day-date" placeholder="Date (e.g. Sept 5)" style="width:110px;" />
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:260px;flex-wrap:wrap;">
+            <select class="admin-select-field schedule-day-name" style="width:125px;font-weight:700;">
+              ${['Friday', 'Saturday', 'Sunday', 'Monday', 'Thursday', 'Weekend'].map(d => `<option value="${d}">${d}</option>`).join('')}
+            </select>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <input type="date" class="admin-input-field schedule-day-datepicker" onchange="onAdminDayDatepickerChange(this)" style="padding:5px 8px;font-size:12px;width:120px;" title="Pick Date" />
+              <input type="text" class="admin-input-field schedule-day-date" placeholder="e.g. Sept 5" style="width:85px;font-weight:600;" title="Formatted Date" />
+            </div>
             <input type="text" class="admin-input-field schedule-day-subtitle" placeholder="Subtitle (optional)" style="flex:1;min-width:140px;" />
           </div>
           <button type="button" class="admin-row-delete-btn" onclick="this.closest('.admin-day-card').remove()" title="Remove entire day">🗑️ Remove Day</button>
@@ -7120,6 +7449,7 @@
         <button type="button" class="admin-add-btn" onclick="addAdminScheduleEvent(${dayIdx})">+ Add Activity</button>
       `;
       container.appendChild(div);
+      addAdminScheduleEvent(dayIdx);
     }
 
     function addAdminGuideline(text = '') {
