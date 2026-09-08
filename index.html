@@ -9046,17 +9046,42 @@
       const rows = parseCSV(text);
 
       // Google Sheets gviz workaround: Date formatting in early rows causes gviz to infer Column B as Date,
-      // which drops string URLs lower down in Column B. Query range A10:G40 to guarantee link URLs are preserved.
-      try {
-        const linksUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}&range=A10:G40&t=${Date.now()}`;
-        const linksRes = await fetch(linksUrl);
-        if (linksRes.ok) {
-          const linksText = await linksRes.text();
-          const linksRows = parseCSV(linksText);
-          rows.push(...linksRows);
+      // which drops string URLs lower down in Column B. Query range around the signup links to merge URLs in-place.
+      let linkBannerIdx = -1;
+      for (let i = 0; i < rows.length; i++) {
+        const cell = (rows[i][0] || '').toLowerCase().trim();
+        if (cell.includes('---') && (cell.includes('link') || cell.includes('signup'))) {
+          linkBannerIdx = i;
+          break;
         }
-      } catch (err) {
-        console.warn('[LAXMTB] Secondary range fetch failed:', err);
+      }
+
+      if (linkBannerIdx !== -1) {
+        try {
+          const startRow = Math.max(1, linkBannerIdx + 1);
+          const endRow = startRow + 15;
+          const linksUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}&range=A${startRow}:B${endRow}&t=${Date.now()}`;
+          const linksRes = await fetch(linksUrl);
+          if (linksRes.ok) {
+            const linksText = await linksRes.text();
+            const linksRows = parseCSV(linksText);
+            for (const lr of linksRows) {
+              const name = (lr[0] || '').toLowerCase().trim();
+              const urlVal = (lr[1] || '').trim();
+              if (!urlVal || name.includes('---') || name === 'link name') continue;
+              for (let i = linkBannerIdx + 1; i < rows.length; i++) {
+                if (rows[i][0] && rows[i][0].includes('---')) break;
+                const targetCell = (rows[i][0] || '').toLowerCase().trim();
+                if (targetCell === name && !rows[i][1]) {
+                  rows[i][1] = urlVal;
+                  break;
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('[LAXMTB] Targeted link range fetch failed:', err);
+        }
       }
 
       return rows;
@@ -9114,8 +9139,14 @@
           }
         } else if (section === 'ANNOUNCEMENTS') {
           if (firstCell.includes('guideline') || firstCell.includes('text') || firstCell.includes('announcement')) continue; // Header row
+          const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'weekend'];
+          if (dayNames.includes(firstCell)) continue; // Guard against stray schedule day labels
+          if (/^https?:\/\//i.test(row[0] || '')) continue; // Guard against stray URLs
           if (row[0] && row[0].trim()) {
-            announcementRows.push(row[0].trim());
+            const cleanText = row[0].trim();
+            if (!announcementRows.includes(cleanText)) {
+              announcementRows.push(cleanText);
+            }
           }
         } else if (section === 'WAVES') {
           if (firstCell === 'category' || firstCell === 'division') continue; // Header row
