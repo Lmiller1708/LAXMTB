@@ -13,7 +13,7 @@ const { races, currentRaceIndex, selectRace } = useCurrentRace()
           :class="{ active: currentRaceIndex === index }"
           @click="selectRace(index)"
         >
-          <img :src="race.logo" :alt="race.name" class="tab-mini-logo" onerror="this.style.display='none'">
+          <img :src="resolveLogoUrl(race.logo)" :alt="race.name" class="tab-mini-logo" onerror="this.style.display='none'">
           <div class="tab-text-col">
             <span class="race-tab-date">Race {{ index + 1 }} • {{ race.dateStr.split('2026')[0].trim() }}</span>
             <span class="race-tab-title">{{ race.name }}</span>

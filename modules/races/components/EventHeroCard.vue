@@ -14,7 +14,7 @@ const emit = defineEmits<{
 <template>
   <div class="event-hero-card">
     <div style="display:flex;align-items:center;gap:18px;flex:1;min-width:260px;">
-      <img :src="race.logo" :alt="race.name" class="event-hero-logo" onerror="this.style.display='none'">
+      <img :src="resolveLogoUrl(race.logo)" :alt="race.name" class="event-hero-logo" onerror="this.style.display='none'">
       <div class="event-hero-meta">
         <h2>{{ race.name }}</h2>
         <div class="event-hero-meta-badges">
