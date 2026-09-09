@@ -217,6 +217,121 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
     ev.time = '9:00 AM'
   }
 }
+
+// Drag and Drop: Venue Guidelines
+const draggedGuidelineIdx = ref<number | null>(null)
+const guidelineDragOverIdx = ref<number | null>(null)
+
+const onGuidelineDragStart = (idx: number, e: DragEvent) => {
+  draggedGuidelineIdx.value = idx
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(idx))
+  }
+}
+
+const onGuidelineDragOver = (idx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedGuidelineIdx.value !== null && draggedGuidelineIdx.value !== idx) {
+    guidelineDragOverIdx.value = idx
+  }
+}
+
+const onGuidelineDrop = (targetIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedGuidelineIdx.value === null || !form.value.guidelines) return
+  const from = draggedGuidelineIdx.value
+  const to = targetIdx
+  if (from !== to && form.value.guidelines[from] !== undefined) {
+    const item = form.value.guidelines.splice(from, 1)[0]
+    form.value.guidelines.splice(to, 0, item)
+  }
+  draggedGuidelineIdx.value = null
+  guidelineDragOverIdx.value = null
+}
+
+const onGuidelineDragEnd = () => {
+  draggedGuidelineIdx.value = null
+  guidelineDragOverIdx.value = null
+}
+
+// Drag and Drop: Schedule Events (within and across days)
+const draggedEvent = ref<{ dayIdx: number; evIdx: number } | null>(null)
+const eventDragOver = ref<{ dayIdx: number; evIdx: number } | null>(null)
+
+const onEventDragStart = (dayIdx: number, evIdx: number, e: DragEvent) => {
+  draggedEvent.value = { dayIdx, evIdx }
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', `${dayIdx}:${evIdx}`)
+  }
+}
+
+const onEventDragOver = (dayIdx: number, evIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedEvent.value) {
+    eventDragOver.value = { dayIdx, evIdx }
+  }
+}
+
+const onEventDrop = (targetDayIdx: number, targetEvIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (!draggedEvent.value || !form.value.schedule) return
+  const { dayIdx: srcDayIdx, evIdx: srcEvIdx } = draggedEvent.value
+  const srcEvents = form.value.schedule[srcDayIdx]?.events
+  const targetEvents = form.value.schedule[targetDayIdx]?.events
+  if (!srcEvents || !targetEvents) return
+
+  const item = srcEvents.splice(srcEvIdx, 1)[0]
+  if (item) {
+    targetEvents.splice(targetEvIdx, 0, item)
+  }
+
+  draggedEvent.value = null
+  eventDragOver.value = null
+}
+
+const onEventDragEnd = () => {
+  draggedEvent.value = null
+  eventDragOver.value = null
+}
+
+// Drag and Drop: Schedule Days
+const draggedDayIdx = ref<number | null>(null)
+const dayDragOverIdx = ref<number | null>(null)
+
+const onDayDragStart = (dayIdx: number, e: DragEvent) => {
+  draggedDayIdx.value = dayIdx
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(dayIdx))
+  }
+}
+
+const onDayDragOver = (dayIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedDayIdx.value !== null && draggedDayIdx.value !== dayIdx) {
+    dayDragOverIdx.value = dayIdx
+  }
+}
+
+const onDayDrop = (targetDayIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedDayIdx.value === null || !form.value.schedule) return
+  const from = draggedDayIdx.value
+  const to = targetDayIdx
+  if (from !== to && form.value.schedule[from] !== undefined) {
+    const dayItem = form.value.schedule.splice(from, 1)[0]
+    form.value.schedule.splice(to, 0, dayItem)
+  }
+  draggedDayIdx.value = null
+  dayDragOverIdx.value = null
+}
+
+const onDayDragEnd = () => {
+  draggedDayIdx.value = null
+  dayDragOverIdx.value = null
+}
 </script>
 
 <template>
@@ -415,10 +530,34 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
             <div
               v-for="(day, dayIdx) in form.schedule"
               :key="dayIdx"
-              style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;"
+              draggable="true"
+              class="drag-row"
+              :style="{
+                background: 'var(--bg-card)',
+                border: dayDragOverIdx === dayIdx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                opacity: draggedDayIdx === dayIdx ? '0.4' : '1',
+                transition: 'all 0.15s ease'
+              }"
+              @dragstart="onDayDragStart(dayIdx, $event)"
+              @dragover="onDayDragOver(dayIdx, $event)"
+              @dragleave="dayDragOverIdx = null"
+              @drop="onDayDrop(dayIdx, $event)"
+              @dragend="onDayDragEnd"
             >
               <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
                 <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px;">
+                  <span
+                    class="drag-handle"
+                    title="Drag day to reorder"
+                    style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 4px;"
+                  >
+                    ⠿
+                  </span>
                   <span style="font-weight:800;font-size:13px;color:var(--text-main);">Day {{ dayIdx + 1 }}:</span>
                   <input
                     v-model="day.day"
@@ -426,6 +565,8 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
                     placeholder="e.g. Friday / Saturday / Sunday"
                     class="custom-minutes-input"
                     style="width:130px;font-weight:700;"
+                    draggable="false"
+                    @dragstart.stop
                   >
                   <input
                     v-model="day.date"
@@ -433,6 +574,8 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
                     placeholder="e.g. Sept 5"
                     class="custom-minutes-input"
                     style="width:100px;"
+                    draggable="false"
+                    @dragstart.stop
                   >
                   <input
                     v-model="day.subtitle"
@@ -440,10 +583,12 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
                     placeholder="Subtitle (e.g. Race Day, Camping Opens)"
                     class="custom-minutes-input"
                     style="flex:1;min-width:140px;"
+                    draggable="false"
+                    @dragstart.stop
                   >
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;">
-                  <label style="display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;color:var(--text-muted);white-space:nowrap;">
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;color:var(--text-muted);white-space:nowrap;" draggable="false" @dragstart.stop>
                     <input v-model="day.isRaceDay" type="checkbox">
                     <span>🏁 Race Day</span>
                   </label>
@@ -469,10 +614,40 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
                 <div
                   v-for="(ev, evIdx) in day.events"
                   :key="evIdx"
-                  style="display:flex;align-items:center;gap:6px;padding:6px;background:var(--bg-subtle);border-radius:6px;border:1px solid var(--border);flex-wrap:wrap;"
+                  draggable="true"
+                  class="drag-row"
+                  :style="{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 8px',
+                    background: eventDragOver?.dayIdx === dayIdx && eventDragOver?.evIdx === evIdx ? 'rgba(99, 102, 241, 0.12)' : 'var(--bg-subtle)',
+                    borderRadius: '6px',
+                    border: eventDragOver?.dayIdx === dayIdx && eventDragOver?.evIdx === evIdx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                    opacity: draggedEvent?.dayIdx === dayIdx && draggedEvent?.evIdx === evIdx ? '0.4' : '1',
+                    flexWrap: 'wrap',
+                    transition: 'all 0.15s ease'
+                  }"
+                  @dragstart="onEventDragStart(dayIdx, evIdx, $event)"
+                  @dragover="onEventDragOver(dayIdx, evIdx, $event)"
+                  @dragleave="eventDragOver = null"
+                  @drop="onEventDrop(dayIdx, evIdx, $event)"
+                  @dragend="onEventDragEnd"
                 >
+                  <span
+                    class="drag-handle"
+                    title="Drag event to reorder"
+                    style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 2px;"
+                  >
+                    ⠿
+                  </span>
+
                   <!-- Time Selection: Start / End / TBD -->
-                  <div style="display:flex;align-items:center;gap:4px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:3px 6px;">
+                  <div
+                    style="display:flex;align-items:center;gap:4px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:3px 6px;"
+                    draggable="false"
+                    @dragstart.stop
+                  >
                     <label style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-muted);user-select:none;">
                       <input
                         type="checkbox"
@@ -518,6 +693,8 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
                     placeholder="Event Description (e.g. LAXMTB Team Dinner)"
                     class="custom-minutes-input"
                     style="flex:1;min-width:180px;font-size:11.5px;"
+                    draggable="false"
+                    @dragstart.stop
                   >
                   <input
                     v-model="ev.tag"
@@ -525,8 +702,14 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
                     placeholder="Tag (e.g. Pre-Ride, Venue)"
                     class="custom-minutes-input"
                     style="width:105px;font-size:11.5px;"
+                    draggable="false"
+                    @dragstart.stop
                   >
-                  <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text-muted);white-space:nowrap;">
+                  <label
+                    style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text-muted);white-space:nowrap;"
+                    draggable="false"
+                    @dragstart.stop
+                  >
                     <input v-model="ev.isSpecial" type="checkbox">
                     <span>⭐ Highlight</span>
                   </label>
@@ -601,9 +784,52 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
               <label class="modal-label" style="margin:0;">Venue Guidelines & Spectator Rules</label>
               <button type="button" class="action-mini-btn" @click="addGuideline">+ Add Item</button>
             </div>
-            <div v-for="(g, idx) in form.guidelines" :key="idx" style="display:flex;gap:8px;align-items:center;">
-              <input v-model="form.guidelines[idx]" type="text" class="custom-minutes-input" style="flex:1;">
-              <button type="button" class="search-clear-btn" style="position:static;display:block;" @click="removeGuideline(idx)">✕</button>
+            <div
+              v-for="(g, idx) in form.guidelines"
+              :key="idx"
+              draggable="true"
+              class="drag-row"
+              :style="{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'center',
+                padding: '4px 6px',
+                borderRadius: '6px',
+                transition: 'all 0.15s ease',
+                opacity: draggedGuidelineIdx === idx ? '0.4' : '1',
+                border: guidelineDragOverIdx === idx ? '2px dashed #6366f1' : '1px solid transparent',
+                background: guidelineDragOverIdx === idx ? 'rgba(99, 102, 241, 0.08)' : 'transparent'
+              }"
+              @dragstart="onGuidelineDragStart(idx, $event)"
+              @dragover="onGuidelineDragOver(idx, $event)"
+              @dragleave="guidelineDragOverIdx = null"
+              @drop="onGuidelineDrop(idx, $event)"
+              @dragend="onGuidelineDragEnd"
+            >
+              <span
+                class="drag-handle"
+                title="Drag to rearrange"
+                style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 4px;"
+              >
+                ⠿
+              </span>
+              <input
+                v-model="form.guidelines[idx]"
+                type="text"
+                class="custom-minutes-input"
+                style="flex:1;"
+                draggable="false"
+                @dragstart.stop
+              >
+              <button
+                type="button"
+                class="search-clear-btn"
+                style="position:static;display:block;"
+                title="Delete rule"
+                @click="removeGuideline(idx)"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
@@ -708,3 +934,29 @@ const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.drag-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  user-select: none;
+  padding: 3px 5px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.drag-handle:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.08);
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.drag-row {
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+</style>

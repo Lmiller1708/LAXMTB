@@ -17,9 +17,13 @@ const emit = defineEmits<{
       <img :src="resolveLogoUrl(race.logo)" :alt="race.name" class="event-hero-logo" onerror="this.style.display='none'">
       <div class="event-hero-meta">
         <h2>{{ race.name }}</h2>
-        <div v-if="race.theme" class="event-hero-theme" style="font-size:14px;font-weight:800;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;line-height:1.3;">
-          <span>🏕️ Camping Theme:</span>
-          <span>{{ race.theme.replace(/^camping theme:\s*/i, '') }}</span>
+        <div
+          v-if="race.theme"
+          class="event-hero-theme"
+          style="font-size: 14px; font-weight: 400; color: #ffffff; margin-top: 10px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; line-height: 1.4;"
+        >
+          <span style="font-size: 16px;">🏕️</span>
+          <span>Camping Theme: {{ race.theme.replace(/^camping theme:\s*/i, '') }}</span>
         </div>
         <div class="event-hero-meta-badges">
           <span class="event-meta-pill">📅 <strong>{{ race.dateStr }}</strong></span>
