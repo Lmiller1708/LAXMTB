@@ -1,5 +1,14 @@
 <script setup lang="ts">
+const emit = defineEmits<{
+  (e: 'selectRace', index: number): void
+}>()
+
 const { races, currentRaceIndex, selectRace } = useCurrentRace()
+
+const onRaceClick = (index: number) => {
+  selectRace(index)
+  emit('selectRace', index)
+}
 </script>
 
 <template>
@@ -11,7 +20,7 @@ const { races, currentRaceIndex, selectRace } = useCurrentRace()
           :key="race.id"
           class="race-tab-btn"
           :class="{ active: currentRaceIndex === index }"
-          @click="selectRace(index)"
+          @click="onRaceClick(index)"
         >
           <img :src="resolveLogoUrl(race.logo)" :alt="race.name" class="tab-mini-logo" onerror="this.style.display='none'">
           <div class="tab-text-col">

@@ -6,19 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     // GitHub Pages SPA deep link router
-    // Converts direct URLs like /LAXMTB/BluffBashFestival/LiveResults into /LAXMTB/#/BluffBashFestival/LiveResults
     (function() {
       var path = window.location.pathname;
-      var repoName = '/LAXMTB';
+      var isGithubPagesSubdir = window.location.hostname.indexOf('github.io') !== -1;
+      var repoName = isGithubPagesSubdir ? '/LAXMTB' : '';
       var relative = path;
-      if (relative.indexOf(repoName) === 0) {
+      if (repoName && relative.indexOf(repoName) === 0) {
         relative = relative.substring(repoName.length);
       }
       var cleanPath = relative.replace(/^\/+|\/+$/g, '');
       var search = window.location.search || '';
       var hash = window.location.hash || '';
       
-      var target = repoName + '/#/' + cleanPath + search + hash;
+      var target = (repoName ? repoName : '') + '/#/' + cleanPath + search + hash;
       window.location.replace(target);
     })();
   </script>

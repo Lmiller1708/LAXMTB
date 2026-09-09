@@ -115,13 +115,21 @@ export const useCurrentRace = () => {
   }
 
   /**
-   * Select race by URL slug — matches race id with hyphens removed
-   * e.g. slug "bluffbash" matches race.id "bluff-bash"
+   * Select race by URL slug — matches race id with hyphens removed, numeric index, or name
+   * e.g. slug "bluffbash" or "bluff-bash" matches race.id "bluff-bash"
    */
   const selectRaceBySlug = (slug: string): boolean => {
+    if (!slug) return false
+    const num = parseInt(slug, 10)
+    if (!isNaN(num) && num >= 1 && num <= races.value.length) {
+      currentRaceIndex.value = num - 1
+      return true
+    }
     const normalized = slug.toLowerCase().replace(/-/g, '')
     const idx = races.value.findIndex(r =>
-      r.id.replace(/-/g, '').toLowerCase() === normalized
+      r.id.replace(/-/g, '').toLowerCase() === normalized ||
+      r.id.toLowerCase() === slug.toLowerCase() ||
+      r.name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(normalized)
     )
     if (idx >= 0) {
       currentRaceIndex.value = idx

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TabType } from '~/modules/core/components/NavigationTabs.vue'
 import type { Race } from '~/modules/races/types/race'
-import { isRaceCompleted } from '~/modules/races/composables/useCurrentRace'
+import { isRaceCompleted, slugifyRaceId } from '~/modules/races/composables/useCurrentRace'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,7 +12,7 @@ const isNotifOpen = ref(false)
 const isAdminOpen = ref(false)
 const adminInitialTab = ref('venue')
 
-const { currentRace, currentRaceSlug, races, selectRaceBySlug, updateRace } = useCurrentRace()
+const { currentRace, currentRaceSlug, races, currentRaceIndex, selectRace, selectRaceBySlug, updateRace } = useCurrentRace()
 const { isCoachAuth } = useCoachAuth()
 
 const {
@@ -62,64 +62,107 @@ const refreshData = () => {
   }
 }
 
-const setTab = (tab: TabType, updateUrl = true) => {
-  currentTab.value = tab
-  if (tab === 'list' || tab === 'results') {
-    if (tab === 'list') {
-      selectedListId.value = listMode.value === 'TEAM' ? '747B52' : 'A76F6B'
-    } else {
-      selectedListId.value = listMode.value === 'TEAM' ? 'E07F7C' : '4C8C1F'
-    }
-    refreshData()
-  }
+let isSyncingRoute = false
 
-  if (updateUrl && import.meta.client) {
-    const target = `/race/${currentRaceSlug.value}/${tab}`
-    if (route.path !== target) {
-      router.push(target).catch(() => {})
+/**
+ * 100% Guaranteed URL Update
+ * Changes browser address bar synchronously via window.history
+ * and synchronizes Vue Router
+ */
+const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
+  if (!import.meta.client) return
+  const cleanSlug = raceSlug.toLowerCase().replace(/-/g, '')
+  const cleanTab = (tab || 'details').toLowerCase()
+  const target = `/race/${cleanSlug}/${cleanTab}`
+
+  if (window.location.pathname !== target) {
+    if (pushToHistory) {
+      window.history.pushState({ raceSlug: cleanSlug, tab: cleanTab }, '', target)
+    } else {
+      window.history.replaceState({ raceSlug: cleanSlug, tab: cleanTab }, '', target)
     }
+    router.push(target).catch(() => {})
   }
 }
 
-// Synchronize state from route path (e.g. /race/bluffbash/results)
+const setTab = (tab: TabType, pushToHistory = true) => {
+  currentTab.value = tab
+  if (tab === 'list') {
+    selectedListId.value = listMode.value === 'TEAM' ? '747B52' : 'A76F6B'
+  } else if (tab === 'results') {
+    selectedListId.value = listMode.value === 'TEAM' ? 'E07F7C' : '4C8C1F'
+  }
+  refreshData()
+
+  if (import.meta.client && !isSyncingRoute) {
+    const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
+    const slug = slugifyRaceId(race?.id || 'race')
+    updateUrl(slug, tab, pushToHistory)
+  }
+}
+
+const setRace = (index: number) => {
+  selectRace(index)
+  const race = races.value[index]
+  if (race && import.meta.client && !isSyncingRoute) {
+    const slug = slugifyRaceId(race.id)
+    updateUrl(slug, currentTab.value, true)
+  }
+  refreshData()
+}
+
+// Synchronize state from route path (e.g. /race/bluffbash/results or hash redirect)
 const syncFromRoute = () => {
   if (!import.meta.client) return
-  const path = route.path
+  isSyncingRoute = true
 
-  // Check URL query/hash legacy parameters first
-  const params = new URLSearchParams(window.location.search)
-  const tabParam = params.get('tab') || window.location.hash.replace(/^#/, '')
-  if (tabParam) {
-    const slug = tabParam.toLowerCase().replace(/[^a-z0-9]/g, '')
-    if (slug.includes('list') || slug.includes('start')) setTab('list')
-    else if (slug.includes('result')) setTab('results')
-    else if (slug.includes('photo')) setTab('photos')
-    else if (slug.includes('detail')) setTab('details')
-    return
-  }
+  try {
+    let path = window.location.pathname || route.path
 
-  // Parse path: /race/:slug/:tab
-  const match = path.match(/\/race\/([^\/]+)(?:\/([^\/]+))?/)
-  if (match) {
-    const raceSlug = match[1]
-    const tabSlug = match[2]
+    // Handle GitHub Pages hash redirect (e.g. /#/race/bluffbash/details)
+    if (window.location.hash && window.location.hash.startsWith('#/')) {
+      path = window.location.hash.substring(1)
+      window.history.replaceState(null, '', path)
+    }
 
-    selectRaceBySlug(raceSlug)
+    // Check URL query/hash legacy parameters
+    const params = new URLSearchParams(window.location.search)
+    const tabParam = params.get('tab') || window.location.hash.replace(/^#/, '')
+    if (tabParam && !tabParam.startsWith('/')) {
+      const slug = tabParam.toLowerCase().replace(/[^a-z0-9]/g, '')
+      if (slug.includes('list') || slug.includes('start')) setTab('list', false)
+      else if (slug.includes('result')) setTab('results', false)
+      else if (slug.includes('photo')) setTab('photos', false)
+      else if (slug.includes('detail')) setTab('details', false)
+      return
+    }
 
-    if (tabSlug) {
-      const lower = tabSlug.toLowerCase()
-      if (lower === 'results' || lower === 'result') currentTab.value = 'results'
-      else if (lower === 'list' || lower === 'start' || lower === 'startlist') currentTab.value = 'list'
-      else if (lower === 'photos' || lower === 'photo') currentTab.value = 'photos'
-      else if (lower === 'details' || lower === 'detail' || lower === 'info') currentTab.value = 'details'
+    // Parse path: /race/:slug/:tab
+    const match = path.match(/\/race\/([^\/]+)(?:\/([^\/]+))?/)
+    if (match) {
+      const raceSlug = match[1]
+      const tabSlug = match[2]
+
+      selectRaceBySlug(raceSlug)
+
+      if (tabSlug) {
+        const lower = tabSlug.toLowerCase()
+        if (lower === 'results' || lower === 'result') currentTab.value = 'results'
+        else if (lower === 'list' || lower === 'start' || lower === 'startlist') currentTab.value = 'list'
+        else if (lower === 'photos' || lower === 'photo') currentTab.value = 'photos'
+        else if (lower === 'details' || lower === 'detail' || lower === 'info') currentTab.value = 'details'
+      }
       refreshData()
+    } else {
+      // Landed on root / or /race -> push canonical path
+      const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
+      const raceSlug = slugifyRaceId(race?.id || 'race')
+      updateUrl(raceSlug, currentTab.value, false)
     }
-  } else {
-    // Landed on root / or /race -> push canonical path
-    const target = `/race/${currentRaceSlug.value}/${currentTab.value}`
-    if (route.path !== target) {
-      router.replace(target).catch(() => {})
-    }
+  } finally {
+    nextTick(() => {
+      isSyncingRoute = false
+    })
   }
 }
 
@@ -127,11 +170,12 @@ watch(() => route.path, () => {
   syncFromRoute()
 })
 
-watch(currentRace, (newRace) => {
-  if (import.meta.client) {
-    const target = `/race/${currentRaceSlug.value}/${currentTab.value}`
-    if (route.path !== target) {
-      router.push(target).catch(() => {})
+watch(currentRaceIndex, (newIdx) => {
+  if (!isSyncingRoute) {
+    const race = races.value[newIdx]
+    if (race && import.meta.client) {
+      const slug = slugifyRaceId(race.id)
+      updateUrl(slug, currentTab.value, true)
     }
   }
   refreshData()
@@ -143,10 +187,19 @@ onMounted(() => {
   syncFromRoute()
   startAlertScheduler(() => races.value as Race[])
 
-  if (import.meta.client && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
-      .then((reg) => console.log('[LAXMTB] PWA ServiceWorker registered with scope:', reg.scope))
-      .catch((err) => console.warn('[LAXMTB] ServiceWorker registration failed:', err))
+  if (import.meta.client) {
+    window.addEventListener('popstate', syncFromRoute)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then((reg) => console.log('[LAXMTB] PWA ServiceWorker registered with scope:', reg.scope))
+        .catch((err) => console.warn('[LAXMTB] ServiceWorker registration failed:', err))
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (import.meta.client) {
+    window.removeEventListener('popstate', syncFromRoute)
   }
 })
 
@@ -197,7 +250,7 @@ const handlePrint = () => {
       />
 
       <!-- 2. Season Race Switcher Bar -->
-      <RaceSwitcherBar />
+      <RaceSwitcherBar @select-race="setRace" />
 
       <!-- 3. Navigation Tabs -->
       <NavigationTabs :current-tab="currentTab" @change-tab="setTab" />
