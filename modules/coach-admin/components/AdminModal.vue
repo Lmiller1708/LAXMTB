@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Race } from '~/modules/races/types/race'
+import type { Race, ScheduleEvent } from '~/modules/races/types/race'
 
 const props = defineProps<{
   isOpen: boolean
@@ -151,6 +151,72 @@ const addScheduleEvent = (dayIdx: number) => {
 const removeScheduleEvent = (dayIdx: number, evIdx: number) => {
   form.value.schedule?.[dayIdx]?.events?.splice(evIdx, 1)
 }
+
+const TIME_OPTIONS = (() => {
+  const times: string[] = []
+  const periods = ['AM', 'PM']
+  for (let p = 0; p < 2; p++) {
+    const period = periods[p]
+    const hours = period === 'AM' ? [6, 7, 8, 9, 10, 11] : [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    for (const h of hours) {
+      for (const m of ['00', '15', '30', '45']) {
+        times.push(`${h}:${m} ${period}`)
+      }
+    }
+  }
+  return times
+})()
+
+const isEventTbd = (timeStr?: string) => {
+  if (!timeStr) return false
+  return timeStr.trim().toUpperCase() === 'TBD'
+}
+
+const getEventStart = (timeStr?: string) => {
+  const str = String(timeStr || '').trim()
+  if (!str || str.toUpperCase() === 'TBD') return ''
+  const parts = str.split(/\s*[-–—]\s*|\s+to\s+/i)
+  return parts[0]?.trim() || ''
+}
+
+const getEventEnd = (timeStr?: string) => {
+  const str = String(timeStr || '').trim()
+  if (!str || str.toUpperCase() === 'TBD') return ''
+  const parts = str.split(/\s*[-–—]\s*|\s+to\s+/i)
+  return parts.length >= 2 ? parts[1]?.trim() || '' : ''
+}
+
+const onStartChange = (ev: ScheduleEvent, newStart: string) => {
+  if (newStart === 'TBD') {
+    ev.time = 'TBD'
+    return
+  }
+  const end = getEventEnd(ev.time)
+  if (!newStart && !end) {
+    ev.time = 'TBD'
+  } else if (newStart && end) {
+    ev.time = `${newStart} - ${end}`
+  } else {
+    ev.time = newStart || end
+  }
+}
+
+const onEndChange = (ev: ScheduleEvent, newEnd: string) => {
+  const start = getEventStart(ev.time) || '9:00 AM'
+  if (newEnd) {
+    ev.time = `${start} - ${newEnd}`
+  } else {
+    ev.time = start
+  }
+}
+
+const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
+  if (isTbd) {
+    ev.time = 'TBD'
+  } else {
+    ev.time = '9:00 AM'
+  }
+}
 </script>
 
 <template>
@@ -297,8 +363,8 @@ const removeScheduleEvent = (dayIdx: number, evIdx: number) => {
               <input v-model="form.name" type="text" class="custom-minutes-input" style="width:100%;">
             </div>
             <div>
-              <label class="modal-label">Race / Weekend Theme (e.g. TROPICAL BEACH LUAU! 🌴🌺🏝️☀️)</label>
-              <input v-model="form.theme" type="text" placeholder="e.g. TROPICAL BEACH LUAU! 🌴🌺🏝️☀️" class="custom-minutes-input" style="width:100%;">
+              <label class="modal-label">Camping Theme</label>
+              <input v-model="form.theme" type="text" placeholder="Camping Theme" class="custom-minutes-input" style="width:100%;">
             </div>
             <div style="grid-template-columns:1fr 1fr;display:grid;gap:10px;">
               <div>
@@ -405,13 +471,47 @@ const removeScheduleEvent = (dayIdx: number, evIdx: number) => {
                   :key="evIdx"
                   style="display:flex;align-items:center;gap:6px;padding:6px;background:var(--bg-subtle);border-radius:6px;border:1px solid var(--border);flex-wrap:wrap;"
                 >
-                  <input
-                    v-model="ev.time"
-                    type="text"
-                    placeholder="Time (e.g. 10:00 AM)"
-                    class="custom-minutes-input"
-                    style="width:125px;font-size:11.5px;"
-                  >
+                  <!-- Time Selection: Start / End / TBD -->
+                  <div style="display:flex;align-items:center;gap:4px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:3px 6px;">
+                    <label style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-muted);user-select:none;">
+                      <input
+                        type="checkbox"
+                        :checked="isEventTbd(ev.time)"
+                        @change="toggleTbd(ev, ($event.target as HTMLInputElement).checked)"
+                      >
+                      <span :style="{ color: isEventTbd(ev.time) ? '#f59e0b' : 'inherit' }">TBD</span>
+                    </label>
+
+                    <template v-if="!isEventTbd(ev.time)">
+                      <span style="font-size:10.5px;color:var(--text-muted);margin-left:2px;">Start:</span>
+                      <select
+                        :value="getEventStart(ev.time)"
+                        class="custom-minutes-input"
+                        style="padding:2px 4px;font-size:11px;height:26px;width:94px;background:var(--bg-subtle);"
+                        @change="onStartChange(ev, ($event.target as HTMLSelectElement).value)"
+                      >
+                        <option value="TBD">TBD</option>
+                        <option v-if="getEventStart(ev.time) && !TIME_OPTIONS.includes(getEventStart(ev.time)) && getEventStart(ev.time) !== 'TBD'" :value="getEventStart(ev.time)">
+                          {{ getEventStart(ev.time) }}
+                        </option>
+                        <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                      </select>
+
+                      <span style="font-size:10.5px;color:var(--text-muted);">to</span>
+                      <select
+                        :value="getEventEnd(ev.time)"
+                        class="custom-minutes-input"
+                        style="padding:2px 4px;font-size:11px;height:26px;width:94px;background:var(--bg-subtle);"
+                        @change="onEndChange(ev, ($event.target as HTMLSelectElement).value)"
+                      >
+                        <option value="">-- None --</option>
+                        <option v-if="getEventEnd(ev.time) && !TIME_OPTIONS.includes(getEventEnd(ev.time))" :value="getEventEnd(ev.time)">
+                          {{ getEventEnd(ev.time) }}
+                        </option>
+                        <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                    </template>
+                  </div>
                   <input
                     v-model="ev.desc"
                     type="text"
