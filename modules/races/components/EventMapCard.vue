@@ -3,6 +3,7 @@ import type { Race } from '../types/race'
 
 const props = defineProps<{
   race: Race
+  isCompleted?: boolean
   isCoachAuth?: boolean
 }>()
 
@@ -50,7 +51,10 @@ const toggleFullscreen = () => {
     <div class="event-map-header collapsible-header" @click="isOpen = !isOpen">
       <div class="event-map-header-main" style="display:flex;align-items:center;justify-content:space-between;width:100%;min-width:0;gap:8px;">
         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-          <span class="event-map-title"><span>🗺️</span> Interactive Course & Venue Map</span>
+          <span class="event-map-title">
+            <span>🗺️</span> Interactive Course & Venue Map
+            <span v-if="isCompleted" class="signup-badge-closed">Event Concluded • Archived</span>
+          </span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <button
@@ -62,7 +66,7 @@ const toggleFullscreen = () => {
           >
             <span>✏️</span>
           </button>
-          <div v-show="isOpen" class="map-header-actions desktop-map-actions" style="display:flex;align-items:center;gap:6px;">
+          <div v-show="isOpen && !isCompleted" class="map-header-actions desktop-map-actions" style="display:flex;align-items:center;gap:6px;">
             <a
               v-if="directMapUrl"
               :href="directMapUrl"
@@ -89,7 +93,7 @@ const toggleFullscreen = () => {
           <span class="card-toggle-icon" :class="{ collapsed: !isOpen }" id="mapToggleChevron" title="Toggle Map">▼</span>
         </div>
       </div>
-      <div v-show="isOpen" class="map-header-actions mobile-map-actions" style="display:none;width:100%;gap:6px;margin-top:8px;" @click.stop>
+      <div v-show="isOpen && !isCompleted" class="map-header-actions mobile-map-actions" style="display:none;width:100%;gap:6px;margin-top:8px;" @click.stop>
         <a
           v-if="directMapUrl"
           :href="directMapUrl"
@@ -113,7 +117,44 @@ const toggleFullscreen = () => {
       </div>
     </div>
     <div v-show="isOpen" class="collapsible-body">
-      <div class="map-iframe-wrapper">
+      <!-- State A: Completed / Past Race Map -->
+      <div v-if="isCompleted" class="map-closed-container">
+        <div class="map-closed-card">
+          <div class="map-closed-icon-bubble">
+            <span>🏁</span>
+          </div>
+          <div class="map-closed-badge">Course Map Archived</div>
+          <h3 class="map-closed-title">{{ race.name }} Course Map</h3>
+          <p class="map-closed-desc">
+            This race has concluded and the active race-day course map has been archived by the league. Trailhead and venue directions are still available above!
+          </p>
+          <div v-if="race.navigationUrl || race.googleMapsUrl || directMapUrl" class="map-closed-actions">
+            <a
+              v-if="race.navigationUrl || race.googleMapsUrl"
+              :href="race.navigationUrl || race.googleMapsUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-primary"
+              style="font-size:12px;padding:8px 16px;"
+            >
+              <span>🧭</span> Navigate to Venue
+            </a>
+            <a
+              v-if="directMapUrl"
+              :href="directMapUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn-secondary"
+              style="font-size:12px;padding:8px 16px;"
+            >
+              <span>🗺️</span> Google My Maps Archive ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- State B: Active / Live Event Map -->
+      <div v-else class="map-iframe-wrapper">
         <iframe
           :src="mapEmbedUrl"
           width="100%"

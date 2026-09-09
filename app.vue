@@ -334,7 +334,12 @@ const handlePrint = () => {
           :is-coach-auth="isCoachAuth"
           @edit="openAdminWithTab('signups')"
         />
-        <EventMapCard :race="currentRace" :is-coach-auth="isCoachAuth" @edit="openAdminWithTab('maps')" />
+        <EventMapCard
+          :race="currentRace"
+          :is-completed="isRaceCompleted(currentRace)"
+          :is-coach-auth="isCoachAuth"
+          @edit="openAdminWithTab('maps')"
+        />
         <div class="event-details-grid">
           <ScheduleTimeline :schedule="currentRace.schedule" :is-coach-auth="isCoachAuth" @edit="openAdminWithTab('schedule')" />
           <EventGuidelinesCard :guidelines="currentRace.guidelines" :is-coach-auth="isCoachAuth" @edit="openAdminWithTab('announcements')" />
