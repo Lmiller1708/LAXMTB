@@ -2822,25 +2822,29 @@
       color: #3b82f6;
     }
 
-    /* Embedded SignUp Viewer */
-    .signup-viewer-container {
-      border-top: 1px solid var(--border);
-      background: var(--bg-card);
-    }
-
-    .signup-tabs-nav {
-      display: flex;
-      gap: 6px;
-      padding: 10px 16px;
+    /* Option 2 Unified SignUp Tabs Toolbar */
+    .signup-tabs-toolbar {
+      padding: 12px 16px;
       background: var(--bg-subtle);
       border-bottom: 1px solid var(--border);
-      overflow-x: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .signup-pills-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .signup-tab-pill {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 11px;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12px;
       font-weight: 700;
       border: 1px solid var(--border);
       background: var(--bg-card);
@@ -2856,30 +2860,36 @@
     .signup-tab-pill:hover {
       color: var(--text-main);
       border-color: var(--border-strong);
+      background: var(--bg-card-hover);
     }
 
     .signup-tab-pill.active {
       background: var(--accent-red);
       border-color: var(--accent-red);
       color: #ffffff;
+      box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
     }
 
     .signup-tab-pill.active.pill-league {
       background: #2563eb;
       border-color: #2563eb;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
     }
 
-    .signup-viewer-header {
-      padding: 8px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-      color: var(--text-muted);
+    /* Shift Summary Sub-Bar */
+    .signup-shift-summary {
+      padding: 10px 16px;
       background: var(--bg-card);
       border-bottom: 1px solid var(--border);
-      gap: 8px;
-      flex-wrap: wrap;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .signup-shift-desc {
+      color: var(--text-muted);
+      line-height: 1.4;
     }
 
     .btn-viewer-direct {
@@ -2930,13 +2940,58 @@
       border: 0;
     }
 
-    @media (max-width: 600px) {
-      .signup-iframe-wrapper {
-        height: 520px;
+    .signup-empty-state {
+      padding: 56px 20px;
+      text-align: center;
+      background: var(--bg-card);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .empty-icon {
+      font-size: 38px;
+      margin-bottom: 12px;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0 0 6px 0;
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      max-width: 440px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 700px) {
+      .signup-tabs-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .signup-pills-group {
+        width: 100%;
+        display: flex;
+      }
+      .signup-pills-group .signup-tab-pill {
+        flex: 1;
+        justify-content: center;
+        text-align: center;
+        padding: 8px 6px;
+        font-size: 11px;
       }
       .btn-viewer-direct {
         width: 100%;
-        margin-top: 4px;
+      }
+      .signup-iframe-wrapper {
+        height: 520px;
       }
     }
 
