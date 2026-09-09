@@ -17,6 +17,9 @@ const emit = defineEmits<{
       <img :src="resolveLogoUrl(race.logo)" :alt="race.name" class="event-hero-logo" onerror="this.style.display='none'">
       <div class="event-hero-meta">
         <h2>{{ race.name }}</h2>
+        <div v-if="race.theme" class="event-hero-theme" style="font-size:15px;font-weight:800;color:#22c55e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px;line-height:1.3;">
+          {{ race.theme }}
+        </div>
         <div class="event-hero-meta-badges">
           <span class="event-meta-pill">📅 <strong>{{ race.dateStr }}</strong></span>
           <span v-if="race.conference" class="event-meta-pill pill-conf">🏆 {{ race.conference }}</span>

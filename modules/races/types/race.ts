@@ -47,6 +47,7 @@ export interface Race {
   conference?: string;
   logo: string;
   eventId?: number | string | null;
+  theme?: string;
   isPublished: boolean;
   signups?: SignUpLinks;
   schedule?: ScheduleDay[];

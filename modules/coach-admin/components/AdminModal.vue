@@ -120,6 +120,37 @@ const addGuideline = () => {
 const removeGuideline = (idx: number) => {
   form.value.guidelines.splice(idx, 1)
 }
+
+const addScheduleDay = () => {
+  if (!form.value.schedule) form.value.schedule = []
+  form.value.schedule.push({
+    day: 'New Day',
+    date: '',
+    subtitle: '',
+    isRaceDay: false,
+    events: [
+      { time: '9:00 AM', desc: '', tag: 'Team Event' }
+    ]
+  })
+}
+
+const removeScheduleDay = (idx: number) => {
+  form.value.schedule?.splice(idx, 1)
+}
+
+const addScheduleEvent = (dayIdx: number) => {
+  if (!form.value.schedule || !form.value.schedule[dayIdx]) return
+  if (!form.value.schedule[dayIdx].events) form.value.schedule[dayIdx].events = []
+  form.value.schedule[dayIdx].events.push({
+    time: '10:00 AM',
+    desc: '',
+    tag: 'Team Event'
+  })
+}
+
+const removeScheduleEvent = (dayIdx: number, evIdx: number) => {
+  form.value.schedule?.[dayIdx]?.events?.splice(evIdx, 1)
+}
 </script>
 
 <template>
@@ -247,6 +278,7 @@ const removeGuideline = (idx: number) => {
         <!-- Admin Tabs -->
         <div class="admin-tab-bar">
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'venue' }" @click="activeTab = 'venue'">📍 Venue Info</button>
+          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'schedule' }" @click="activeTab = 'schedule'">⏱️ Schedule</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'waves' }" @click="activeTab = 'waves'">⏱️ Race Info</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'signups' }" @click="activeTab = 'signups'">🤝 Volunteers & Food</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'photos' }" @click="activeTab = 'photos'">📸 Photos Album</button>
@@ -263,6 +295,10 @@ const removeGuideline = (idx: number) => {
             <div>
               <label class="modal-label">Event Name</label>
               <input v-model="form.name" type="text" class="custom-minutes-input" style="width:100%;">
+            </div>
+            <div>
+              <label class="modal-label">Race / Weekend Theme (e.g. TROPICAL BEACH LUAU! 🌴🌺🏝️☀️)</label>
+              <input v-model="form.theme" type="text" placeholder="e.g. TROPICAL BEACH LUAU! 🌴🌺🏝️☀️" class="custom-minutes-input" style="width:100%;">
             </div>
             <div style="grid-template-columns:1fr 1fr;display:grid;gap:10px;">
               <div>
@@ -293,6 +329,118 @@ const removeGuideline = (idx: number) => {
             <div>
               <label class="modal-label">Warning Banner (HTML supported)</label>
               <textarea v-model="form.warning" rows="2" class="custom-minutes-input" style="width:100%;height:auto;" />
+            </div>
+          </div>
+
+          <!-- Schedule Highlights -->
+          <div v-else-if="activeTab === 'schedule'" style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <h4 style="margin:0;font-size:14px;font-weight:700;color:var(--text-main);">⏱️ Team Schedule Highlights</h4>
+                <p style="margin:2px 0 0;font-size:11.5px;color:var(--text-muted);">Manage weekend timeline days and scheduled events.</p>
+              </div>
+              <button type="button" class="action-mini-btn" @click="addScheduleDay">+ Add Day</button>
+            </div>
+
+            <div v-if="!form.schedule || form.schedule.length === 0" class="no-results" style="padding:16px;">
+              No schedule days added yet. Click "+ Add Day" above.
+            </div>
+
+            <div
+              v-for="(day, dayIdx) in form.schedule"
+              :key="dayIdx"
+              style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;"
+            >
+              <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px;">
+                  <span style="font-weight:800;font-size:13px;color:var(--text-main);">Day {{ dayIdx + 1 }}:</span>
+                  <input
+                    v-model="day.day"
+                    type="text"
+                    placeholder="e.g. Friday / Saturday / Sunday"
+                    class="custom-minutes-input"
+                    style="width:130px;font-weight:700;"
+                  >
+                  <input
+                    v-model="day.date"
+                    type="text"
+                    placeholder="e.g. Sept 5"
+                    class="custom-minutes-input"
+                    style="width:100px;"
+                  >
+                  <input
+                    v-model="day.subtitle"
+                    type="text"
+                    placeholder="Subtitle (e.g. Race Day, Camping Opens)"
+                    class="custom-minutes-input"
+                    style="flex:1;min-width:140px;"
+                  >
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <label style="display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;color:var(--text-muted);white-space:nowrap;">
+                    <input v-model="day.isRaceDay" type="checkbox">
+                    <span>🏁 Race Day</span>
+                  </label>
+                  <button
+                    type="button"
+                    class="search-clear-btn"
+                    style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
+                    title="Delete this whole day"
+                    @click="removeScheduleDay(dayIdx)"
+                  >
+                    ✕ Delete Day
+                  </button>
+                </div>
+              </div>
+
+              <!-- Events within Day -->
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Events ({{ day.events?.length || 0 }})</span>
+                  <button type="button" class="action-mini-btn" style="font-size:10.5px;padding:2px 8px;" @click="addScheduleEvent(dayIdx)">+ Add Event</button>
+                </div>
+
+                <div
+                  v-for="(ev, evIdx) in day.events"
+                  :key="evIdx"
+                  style="display:flex;align-items:center;gap:6px;padding:6px;background:var(--bg-subtle);border-radius:6px;border:1px solid var(--border);flex-wrap:wrap;"
+                >
+                  <input
+                    v-model="ev.time"
+                    type="text"
+                    placeholder="Time (e.g. 10:00 AM)"
+                    class="custom-minutes-input"
+                    style="width:125px;font-size:11.5px;"
+                  >
+                  <input
+                    v-model="ev.desc"
+                    type="text"
+                    placeholder="Event Description (e.g. LAXMTB Team Dinner)"
+                    class="custom-minutes-input"
+                    style="flex:1;min-width:180px;font-size:11.5px;"
+                  >
+                  <input
+                    v-model="ev.tag"
+                    type="text"
+                    placeholder="Tag (e.g. Pre-Ride, Venue)"
+                    class="custom-minutes-input"
+                    style="width:105px;font-size:11.5px;"
+                  >
+                  <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text-muted);white-space:nowrap;">
+                    <input v-model="ev.isSpecial" type="checkbox">
+                    <span>⭐ Highlight</span>
+                  </label>
+                  <button
+                    type="button"
+                    class="search-clear-btn"
+                    style="position:static;display:block;padding:2px 6px;"
+                    title="Remove event"
+                    @click="removeScheduleEvent(dayIdx, evIdx)"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

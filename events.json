@@ -17,6 +17,7 @@
     "conference": "North Conference (Sunday Racing) \u2022 South Conference (Saturday Racing)",
     "logo": "/logos/bluff-bash.png",
     "eventId": 418104,
+    "theme": "TROPICAL BEACH LUAU! 🌴🌺🏝️☀️",
     "isPublished": true,
     "signups": {
       "volunteer": "81287266078",
@@ -296,6 +297,7 @@
     "conference": "North Conference",
     "logo": "/logos/cable-conquest.png",
     "eventId": null,
+    "theme": "",
     "isPublished": false,
     "signups": {
       "volunteer": null,
@@ -544,6 +546,7 @@
     "conference": "North Conference",
     "logo": "/logos/hodag-hustle.png",
     "eventId": null,
+    "theme": "",
     "isPublished": false,
     "signups": {
       "volunteer": null,
@@ -783,6 +786,7 @@
     "conference": "North Conference",
     "logo": "/logos/gnarly-nordic.png",
     "eventId": null,
+    "theme": "",
     "isPublished": false,
     "signups": {
       "volunteer": null,
@@ -1022,6 +1026,7 @@
     "conference": "State Championship (All Wisconsin Conferences Combined)",
     "logo": "/logos/red-barn.png",
     "eventId": null,
+    "theme": "",
     "isPublished": false,
     "signups": {
       "volunteer": null,
