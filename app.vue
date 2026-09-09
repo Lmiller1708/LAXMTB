@@ -327,7 +327,13 @@ const handlePrint = () => {
       <div v-if="currentTab === 'details'">
         <EventHeroCard :race="currentRace" :is-coach-auth="isCoachAuth" @edit="openAdminWithTab('venue')" />
         <EventVenueCard :race="currentRace" :is-coach-auth="isCoachAuth" @edit="openAdminWithTab('venue')" />
-        <EventSignupsCard :signups="currentRace.signups" :race-name="currentRace.name" :is-coach-auth="isCoachAuth" @edit="openAdminWithTab('signups')" />
+        <EventSignupsCard
+          :signups="currentRace.signups"
+          :race-name="currentRace.name"
+          :is-completed="isRaceCompleted(currentRace)"
+          :is-coach-auth="isCoachAuth"
+          @edit="openAdminWithTab('signups')"
+        />
         <EventMapCard :race="currentRace" :is-coach-auth="isCoachAuth" @edit="openAdminWithTab('maps')" />
         <div class="event-details-grid">
           <ScheduleTimeline :schedule="currentRace.schedule" :is-coach-auth="isCoachAuth" @edit="openAdminWithTab('schedule')" />

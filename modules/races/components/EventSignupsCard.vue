@@ -4,6 +4,7 @@ import type { SignUpLinks } from '../types/race'
 const props = defineProps<{
   signups?: SignUpLinks
   raceName: string
+  isCompleted?: boolean
   isCoachAuth?: boolean
 }>()
 
@@ -71,7 +72,10 @@ const selectSignUpTab = (tab: 'volunteer' | 'food' | 'league') => {
     <!-- Main Card Header -->
     <div class="signup-hub-header collapsible-header" @click="isHubOpen = !isHubOpen">
       <div style="display:flex;align-items:center;gap:8px;">
-        <span class="signup-hub-title"><span>🤝</span> Team Volunteers & Race Hospitality</span>
+        <span class="signup-hub-title">
+          <span>🤝</span> Team Volunteers & Race Hospitality
+          <span v-if="isCompleted" class="signup-badge-closed">Event Concluded • Closed</span>
+        </span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <button
@@ -88,72 +92,94 @@ const selectSignUpTab = (tab: 'volunteer' | 'food' | 'league') => {
     </div>
 
     <div v-show="isHubOpen" class="collapsible-body">
-      <!-- Unified Segmented Tabs & Action Row -->
-      <div class="signup-tabs-toolbar">
-        <div class="signup-pills-group">
-          <button
-            type="button"
-            class="signup-tab-pill"
-            :class="{ active: activeSignUpTab === 'volunteer' }"
-            @click="selectSignUpTab('volunteer')"
-          >
-            <span>🤝</span> Team Volunteers
-          </button>
-          <button
-            type="button"
-            class="signup-tab-pill"
-            :class="{ active: activeSignUpTab === 'food' }"
-            @click="selectSignUpTab('food')"
-          >
-            <span>🥪</span> Food & Hospitality
-          </button>
-          <button
-            type="button"
-            class="signup-tab-pill pill-league"
-            :class="{ active: activeSignUpTab === 'league' }"
-            @click="selectSignUpTab('league')"
-          >
-            <span>🚵</span> WI League Shifts
-          </button>
-        </div>
-
-        <a
-          :href="currentUrl"
-          :target="currentCode ? '_blank' : undefined"
-          rel="noopener noreferrer"
-          class="btn-viewer-direct"
-          :class="{ 'btn-league-direct': activeSignUpTab === 'league' }"
-          :style="currentCode ? '' : 'opacity:0.6;pointer-events:none;box-shadow:none;'"
-        >
-          <span>{{ currentCode ? '✍️' : '⏳' }}</span> {{ currentCode ? 'Open in SignUp.com ↗' : 'Shifts Opening Soon' }}
-        </a>
-      </div>
-
-      <!-- Active Shift Context & Description -->
-      <div class="signup-shift-summary">
-        <span :class="currentTabInfo.badgeClass">{{ currentTabInfo.badgeText }}</span>
-        <span class="signup-shift-desc">{{ currentTabInfo.desc }}</span>
-      </div>
-
-      <!-- Embedded Sheet / Fallback -->
-      <div class="signup-iframe-wrapper">
-        <iframe
-          v-if="currentCode"
-          :key="currentUrl"
-          :src="currentUrl"
-          width="100%"
-          height="100%"
-          loading="lazy"
-          :title="`${currentTabInfo.sheetTitle} Sheet`"
-        />
-        <div v-else class="signup-empty-state">
-          <span class="empty-icon">📋</span>
-          <h3 class="empty-title">{{ currentTabInfo.sheetTitle }} • Opening Soon</h3>
-          <p class="empty-desc">
-            SignUp.com shifts for <strong>{{ raceName }}</strong> will open 2 weeks prior to race weekend. Links will automatically appear here once released!
+      <!-- State A: Event Has Concluded / Closed -->
+      <div v-if="isCompleted" class="signup-closed-container">
+        <div class="signup-closed-card">
+          <div class="signup-closed-icon-bubble">
+            <span>🏁</span>
+          </div>
+          <div class="signup-closed-badge">SignUps Closed</div>
+          <h3 class="signup-closed-title">{{ raceName }} Has Concluded</h3>
+          <p class="signup-closed-desc">
+            All volunteer, food & hospitality, and league shifts for this race weekend are officially completed. Thank you to all parents, coaches, and volunteers who supported our riders!
           </p>
+          <div class="signup-closed-pills">
+            <span class="signup-closed-tag"><span>🤝</span> Team Volunteers Closed</span>
+            <span class="signup-closed-tag"><span>🥪</span> Hospitality Closed</span>
+            <span class="signup-closed-tag"><span>🚵</span> League Shifts Closed</span>
+          </div>
         </div>
       </div>
+
+      <!-- State B: Active / Upcoming Event -->
+      <template v-else>
+        <!-- Unified Segmented Tabs & Action Row -->
+        <div class="signup-tabs-toolbar">
+          <div class="signup-pills-group">
+            <button
+              type="button"
+              class="signup-tab-pill"
+              :class="{ active: activeSignUpTab === 'volunteer' }"
+              @click="selectSignUpTab('volunteer')"
+            >
+              <span>🤝</span> Team Volunteers
+            </button>
+            <button
+              type="button"
+              class="signup-tab-pill"
+              :class="{ active: activeSignUpTab === 'food' }"
+              @click="selectSignUpTab('food')"
+            >
+              <span>🥪</span> Food & Hospitality
+            </button>
+            <button
+              type="button"
+              class="signup-tab-pill pill-league"
+              :class="{ active: activeSignUpTab === 'league' }"
+              @click="selectSignUpTab('league')"
+            >
+              <span>🚵</span> WI League Shifts
+            </button>
+          </div>
+
+          <a
+            :href="currentUrl"
+            :target="currentCode ? '_blank' : undefined"
+            rel="noopener noreferrer"
+            class="btn-viewer-direct"
+            :class="{ 'btn-league-direct': activeSignUpTab === 'league' }"
+            :style="currentCode ? '' : 'opacity:0.6;pointer-events:none;box-shadow:none;'"
+          >
+            <span>{{ currentCode ? '✍️' : '⏳' }}</span> {{ currentCode ? 'Open in SignUp.com ↗' : 'Shifts Opening Soon' }}
+          </a>
+        </div>
+
+        <!-- Active Shift Context & Description -->
+        <div class="signup-shift-summary">
+          <span :class="currentTabInfo.badgeClass">{{ currentTabInfo.badgeText }}</span>
+          <span class="signup-shift-desc">{{ currentTabInfo.desc }}</span>
+        </div>
+
+        <!-- Embedded Sheet / Fallback -->
+        <div class="signup-iframe-wrapper">
+          <iframe
+            v-if="currentCode"
+            :key="currentUrl"
+            :src="currentUrl"
+            width="100%"
+            height="100%"
+            loading="lazy"
+            :title="`${currentTabInfo.sheetTitle} Sheet`"
+          />
+          <div v-else class="signup-empty-state">
+            <span class="empty-icon">📋</span>
+            <h3 class="empty-title">{{ currentTabInfo.sheetTitle }} • Opening Soon</h3>
+            <p class="empty-desc">
+              SignUp.com shifts for <strong>{{ raceName }}</strong> will open 2 weeks prior to race weekend. Links will automatically appear here once released!
+            </p>
+          </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>
