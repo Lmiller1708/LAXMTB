@@ -1014,6 +1014,17 @@
       height: 2px;
       background: var(--accent-red);
     }
+    
+    .new-pill {
+      background: var(--accent-red-subtle);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--accent-red);
+      border-radius: 10px;
+      padding: 1px 6px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
 
     .current-race-badge {
       display: none;

@@ -2,6 +2,7 @@
 import type { TabType } from '~/modules/core/components/NavigationTabs.vue'
 import type { Race } from '~/modules/races/types/race'
 import { isRaceCompleted, slugifyRaceId } from '~/modules/races/composables/useCurrentRace'
+import EventCoachCard from '~/modules/races/components/EventCoachCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -133,6 +134,7 @@ const syncFromRoute = () => {
       if (slug.includes('list') || slug.includes('start')) setTab('list', false)
       else if (slug.includes('result')) setTab('results', false)
       else if (slug.includes('photo')) setTab('photos', false)
+      else if (slug.includes('coach')) setTab('coach', false)
       else if (slug.includes('detail')) setTab('details', false)
       return
     }
@@ -150,6 +152,7 @@ const syncFromRoute = () => {
         if (lower === 'results' || lower === 'result') currentTab.value = 'results'
         else if (lower === 'list' || lower === 'start' || lower === 'startlist') currentTab.value = 'list'
         else if (lower === 'photos' || lower === 'photo') currentTab.value = 'photos'
+        else if (lower === 'coach' || lower === 'coaches') currentTab.value = 'coach'
         else if (lower === 'details' || lower === 'detail' || lower === 'info') currentTab.value = 'details'
       }
       refreshData()
@@ -346,7 +349,15 @@ const handlePrint = () => {
         </div>
       </div>
 
-      <!-- Tab 2 & 3: Start Lists & Results -->
+      <!-- Tab 2: Coach Sign-Ups -->
+      <EventCoachCard
+        v-else-if="currentTab === 'coach'"
+        :race="currentRace"
+        :is-coach-auth="isCoachAuth"
+        @edit="openAdminWithTab('coach')"
+      />
+
+      <!-- Tab 3 & 4: Start Lists & Results -->
       <ResultsView
         v-else-if="currentTab === 'list' || currentTab === 'results'"
         :race="currentRace"
