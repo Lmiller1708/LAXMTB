@@ -1,4 +1,4 @@
-import { collection, doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore'
 import { useFirestore } from 'vuefire'
 import type { Race } from '../types/race'
 import fallbackEvents from '~/events.json'
@@ -51,15 +51,23 @@ export const useCurrentRace = () => {
 
   const currentRace = computed(() => races.value[currentRaceIndex.value] || races.value[0])
 
-  // Seed default races from events.json into Firestore
+  /**
+   * SEED GUARD: Only writes a race document if it does NOT already exist in Firestore.
+   * This prevents events.json from ever overwriting live admin-edited data.
+   * Called only when the entire 'races' collection is empty (first-time setup).
+   */
   const seedRacesToFirestore = async () => {
     if (!db) return
     try {
       for (const r of fallbackEvents as Race[]) {
         const docRef = doc(db, 'races', r.id)
-        await setDoc(docRef, r, { merge: true })
+        const existing = await getDoc(docRef)
+        if (!existing.exists()) {
+          await setDoc(docRef, r)
+          console.info('[Firestore] Seeded new race document:', r.id)
+        }
       }
-      console.info('[Firestore] Seeded default races to Firestore')
+      console.info('[Firestore] Seed complete — existing documents were NOT overwritten')
     } catch (e) {
       console.warn('[Firestore] Could not seed races to Firestore:', e)
     }

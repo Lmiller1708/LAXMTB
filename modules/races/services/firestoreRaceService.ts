@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   setDoc,
   getDocs,
   onSnapshot,
@@ -53,9 +54,17 @@ export async function saveRace(db: Firestore, race: Race): Promise<void> {
   await setDoc(docRef, race, { merge: true })
 }
 
+/**
+ * SEED GUARD: Only writes a race document if it does NOT already exist.
+ * This prevents stale events.json data from overwriting live admin-edited records.
+ */
 export async function seedDefaultRaces(db: Firestore): Promise<void> {
   for (const r of defaultRaces as Race[]) {
     const docRef = doc(db, 'races', r.id)
-    await setDoc(docRef, r, { merge: true })
+    const existing = await getDoc(docRef)
+    if (!existing.exists()) {
+      await setDoc(docRef, r)
+      console.info('[Firestore] Seeded new race document:', r.id)
+    }
   }
 }
