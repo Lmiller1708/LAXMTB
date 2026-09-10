@@ -75,7 +75,7 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
   })
 
   describe('Cable (421732) Feeds', () => {
-    it('parses category start list (CF1EA1) with Field metadata (not Wave)', () => {
+    it('parses category start list (CF1EA1) and normalizes Field metadata to Wave for UI display', () => {
       const parsed = parseUniversalData(cableCategoryList, 'CF1EA1', 'list')
       expect(parsed.viewType).toBe('category_start_list')
       expect(parsed.isEmpty).toBe(false)
@@ -86,8 +86,8 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
       expect(firstRider.bib).toBeTruthy()
       expect(firstRider.team).toBeTruthy()
       expect(firstRider.category).toBeTruthy()
-      expect(firstRider.wave).toMatch(/Field:\s*\d+/i)
-      expect(firstRider.waveOrFieldType).toBe('field')
+      expect(firstRider.wave).toMatch(/Wave:\s*\d+/i)
+      expect(firstRider.waveOrFieldType).toBe('wave')
     })
 
     it('parses Cable team start list (146470) correctly', () => {

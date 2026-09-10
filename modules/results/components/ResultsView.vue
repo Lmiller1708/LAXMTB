@@ -121,7 +121,11 @@ const groupedByCategory = computed(() => {
   const grouped: Record<string, Record<string, Rider[]>> = {}
   props.riders.forEach(r => {
     const cat = r.category || 'General'
-    const wave = r.wave || 'Wave: 1'
+    let wave = r.wave || 'Wave: 1'
+    if (/^field/i.test(wave)) {
+      const match = wave.match(/\d+/)
+      wave = `Wave: ${match ? match[0] : '1'}`
+    }
     if (!grouped[cat]) grouped[cat] = {}
     if (!grouped[cat][wave]) grouped[cat][wave] = []
     grouped[cat][wave].push(r)
@@ -199,6 +203,12 @@ const groupedByTeam = computed(() => {
     })
   }))
 })
+
+function formatWaveLabel(wKey?: string): string {
+  if (!wKey) return 'Wave: 1'
+  const match = String(wKey).match(/\d+/)
+  return match ? `Wave: ${match[0]}` : String(wKey).replace(/^field:?/i, 'Wave:')
+}
 </script>
 
 <template>
@@ -334,10 +344,10 @@ const groupedByTeam = computed(() => {
 
         <div v-show="!isCardCollapsed(`cat:${catGroup.category}`)" class="collapsible-body">
           <div v-for="w in catGroup.waves" :key="w.waveKey">
-            <!-- Wave / Field Header -->
+            <!-- Wave Header -->
             <div class="wave-divider">
               <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
-                <span>🚩 {{ w.waveKey }}</span>
+                <span>🚩 {{ formatWaveLabel(w.waveKey) }}</span>
               </div>
               <div class="wave-schedule-wrap" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0;">
                 <div v-if="w.waveWarmupTime || w.stageTime || w.waveTime" class="wave-schedule-strip">
