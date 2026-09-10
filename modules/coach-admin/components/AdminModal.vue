@@ -383,7 +383,7 @@ const onDayDragEnd = () => {
           </div>
 
           <p style="font-size:11.5px;color:var(--text-dim);margin:0;line-height:1.4;">
-            Access is restricted to authorized team coaches listed in the team's admin sheet or database.
+            Access is restricted to authorized team coaches listed in the team's admin database.
           </p>
         </div>
       </div>

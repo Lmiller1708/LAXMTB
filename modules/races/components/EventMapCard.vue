@@ -11,7 +11,7 @@ const emit = defineEmits<{
   (e: 'edit'): void
 }>()
 
-const isOpen = ref(true)
+const isOpen = ref(false)
 const isFullscreen = ref(false)
 
 const formatCourseMapEmbedUrl = (url?: string) => {

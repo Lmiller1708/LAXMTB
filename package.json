@@ -7,10 +7,11 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
+    "test": "vitest run",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "firebase": "^10.13.1",
+    "firebase": "^12.18.0",
     "nuxt-vuefire": "^1.1.2"
   },
   "devDependencies": {
@@ -21,6 +22,7 @@
     "nuxt": "^3.13.0",
     "pinia": "^2.2.2",
     "typescript": "^5.5.4",
+    "vitest": "^5.0.0",
     "vue": "^3.4.38",
     "vue-router": "^4.4.3"
   }

@@ -4,6 +4,8 @@ import type { ResultsSortOrder, ResultsGroupMode, TeamScope } from '../types/res
 const props = defineProps<{
   currentTab: 'list' | 'results'
   categories: string[]
+  teams?: string[]
+  availableReports?: { ID: string; Name: string }[]
   isLive: boolean
   isCompleted?: boolean
   totalCount: number
@@ -11,8 +13,8 @@ const props = defineProps<{
 
 const searchQuery = defineModel<string>('searchQuery', { default: '' })
 const listMode = defineModel<ResultsGroupMode>('listMode', { default: 'WAVE' })
-const selectedListId = defineModel<string>('selectedListId', { default: 'A76F6B' })
-const sortOrder = defineModel<ResultsSortOrder>('sortOrder', { default: 'GRADE' })
+const selectedListId = defineModel<string>('selectedListId', { default: '' })
+const sortOrder = defineModel<ResultsSortOrder>('sortOrder', { default: 'TIME' })
 const selectedCategory = defineModel<string>('selectedCategory', { default: 'ALL' })
 const selectedTeamScope = defineModel<TeamScope>('selectedTeamScope', { default: 'DEFAULT_TEAMS' })
 
@@ -22,12 +24,15 @@ const emit = defineEmits<{
 
 const isFilterOpen = ref(false)
 
+const formatReportName = (name?: string) => {
+  if (!name) return 'Standard View'
+  return name
+    .replace(/^(\d+\s*-\s*[^|]+\|)/i, '')
+    .replace(/\s*-\s*Print$/i, '')
+    .trim()
+}
+
 const onListChange = () => {
-  if (selectedListId.value === '747B52' || selectedListId.value === 'E07F7C') {
-    listMode.value = 'TEAM'
-  } else {
-    listMode.value = 'WAVE'
-  }
   emit('refresh')
 }
 
@@ -51,7 +56,13 @@ const activeFilterChips = computed(() => {
   const chips: { label: string; strongText?: string; isLaxScope?: boolean; onRemove?: () => void }[] = []
 
   // View chip
-  if (selectedListId.value === '747B52' || selectedListId.value === 'E07F7C') {
+  if (selectedListId.value && props.availableReports && props.availableReports.length > 0) {
+    const rep = props.availableReports.find(r => r.ID === selectedListId.value)
+    chips.push({
+      label: 'View: ',
+      strongText: formatReportName(rep ? rep.Name : '')
+    })
+  } else if (listMode.value === 'TEAM') {
     chips.push({ label: 'View: ', strongText: 'By Team' })
   } else {
     chips.push({ label: 'View: ', strongText: 'Wave & Category' })
@@ -60,6 +71,8 @@ const activeFilterChips = computed(() => {
   // Sort chip
   if (sortOrder.value === 'TIME') {
     chips.push({ label: 'Sort: ', strongText: '⏱️ Start Time' })
+  } else if (sortOrder.value === 'GRADE') {
+    chips.push({ label: 'Sort: ', strongText: 'Grade / Division' })
   }
 
   // Category chip
@@ -77,6 +90,12 @@ const activeFilterChips = computed(() => {
       label: 'Scope: ',
       strongText: 'LAXMTB Team',
       isLaxScope: true,
+      onRemove: removeTeamFilter
+    })
+  } else if (selectedTeamScope.value && selectedTeamScope.value !== 'ALL') {
+    chips.push({
+      label: 'Team: ',
+      strongText: selectedTeamScope.value,
       onRemove: removeTeamFilter
     })
   } else {
@@ -141,14 +160,20 @@ const activeFilterChips = computed(() => {
         <div class="filter-group">
           <label class="filter-label">Group By / View</label>
           <select v-model="selectedListId" id="listSelect" class="select-dropdown" @change="onListChange">
-            <template v-if="currentTab === 'list'">
-              <option value="A76F6B">Category & Wave</option>
-              <option value="747B52">By Team</option>
+            <template v-if="availableReports && availableReports.length > 0">
+              <option
+                v-for="rep in availableReports"
+                :key="rep.ID"
+                :value="rep.ID"
+              >
+                {{ formatReportName(rep.Name) }}
+              </option>
+            </template>
+            <template v-else-if="currentTab === 'list'">
+              <option value="">Category & Wave / Field</option>
             </template>
             <template v-else>
-              <option value="4C8C1F">Individual Results - ALL</option>
-              <option value="E07F7C">Individual Results - By Team</option>
-              <option value="674D5B">Team Results</option>
+              <option value="">Individual Results - ALL</option>
             </template>
           </select>
         </div>
@@ -156,8 +181,8 @@ const activeFilterChips = computed(() => {
         <div class="filter-group">
           <label class="filter-label">Sort By</label>
           <select v-model="sortOrder" id="sortOrderSelect" class="select-dropdown">
-            <option value="GRADE">Grade / Division (Default)</option>
-            <option value="TIME">Start Time (Earliest First)</option>
+            <option value="TIME">Start Time (Default)</option>
+            <option value="GRADE">Grade / Division</option>
           </select>
         </div>
 
@@ -174,6 +199,9 @@ const activeFilterChips = computed(() => {
           <select v-model="selectedTeamScope" id="teamFilter" class="select-dropdown">
             <option value="DEFAULT_TEAMS">LAXMTB Team (La Crosse, Holmen, La Crescent)</option>
             <option value="ALL">&lt;Show All Event Teams&gt;</option>
+            <optgroup v-if="teams && teams.length > 0" label="All Teams">
+              <option v-for="team in teams" :key="team" :value="team">{{ team }}</option>
+            </optgroup>
           </select>
         </div>
       </div>

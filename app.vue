@@ -2,6 +2,7 @@
 import type { TabType } from '~/modules/core/components/NavigationTabs.vue'
 import type { Race } from '~/modules/races/types/race'
 import { isRaceCompleted, slugifyRaceId } from '~/modules/races/composables/useCurrentRace'
+import EventCoachCard from '~/modules/races/components/EventCoachCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,7 +19,12 @@ const { isCoachAuth } = useCoachAuth()
 const {
   riders,
   filteredRiders,
+  teamStandings,
+  filteredTeamStandings,
+  feedViewType,
+  availableReports,
   categories,
+  teams,
   loading,
   lastUpdated,
   isLive,
@@ -86,6 +92,10 @@ const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
 }
 
 const setTab = (tab: TabType, pushToHistory = true) => {
+  // Guard: Coach Sign-Ups tab is restricted to authorized coaches only
+  if (tab === 'coach' && !isCoachAuth.value) {
+    tab = 'details'
+  }
   currentTab.value = tab
   if (tab === 'list') {
     selectedListId.value = listMode.value === 'TEAM' ? '747B52' : 'A76F6B'
@@ -133,6 +143,7 @@ const syncFromRoute = () => {
       if (slug.includes('list') || slug.includes('start')) setTab('list', false)
       else if (slug.includes('result')) setTab('results', false)
       else if (slug.includes('photo')) setTab('photos', false)
+      else if (slug.includes('coach')) setTab('coach', false)
       else if (slug.includes('detail')) setTab('details', false)
       return
     }
@@ -150,6 +161,7 @@ const syncFromRoute = () => {
         if (lower === 'results' || lower === 'result') currentTab.value = 'results'
         else if (lower === 'list' || lower === 'start' || lower === 'startlist') currentTab.value = 'list'
         else if (lower === 'photos' || lower === 'photo') currentTab.value = 'photos'
+        else if (lower === 'coach' || lower === 'coaches') currentTab.value = 'coach'
         else if (lower === 'details' || lower === 'detail' || lower === 'info') currentTab.value = 'details'
       }
       refreshData()
@@ -180,6 +192,19 @@ watch(currentRaceIndex, (newIdx) => {
   }
   refreshData()
 })
+
+// Re-fetch whenever Firestore pushes an updated eventId or isPublished flag
+// so the app reacts live without requiring a page reload or tab switch.
+watch(
+  () => [currentRace.value?.eventId, currentRace.value?.isPublished] as const,
+  ([newEventId, newIsPublished], [oldEventId, oldIsPublished]) => {
+    if (!newEventId || !newIsPublished) return
+    // Only re-fetch if something actually changed
+    if (newEventId !== oldEventId || newIsPublished !== oldIsPublished) {
+      refreshData()
+    }
+  }
+)
 
 const { startAlertScheduler } = useNotificationSubscriptions()
 
@@ -253,7 +278,7 @@ const handlePrint = () => {
       <RaceSwitcherBar @select-race="setRace" />
 
       <!-- 3. Navigation Tabs -->
-      <NavigationTabs :current-tab="currentTab" @change-tab="setTab" />
+      <NavigationTabs :current-tab="currentTab" :is-coach-auth="isCoachAuth" @change-tab="setTab" />
     </header>
 
     <!-- Modals -->
@@ -306,16 +331,18 @@ const handlePrint = () => {
           v-model:selected-team-scope="selectedTeamScope"
           :current-tab="currentTab"
           :categories="categories"
+          :teams="teams"
+          :available-reports="availableReports"
           :is-live="isLive"
           :is-completed="isRaceCompleted(currentRace)"
-          :total-count="filteredRiders.length"
+          :total-count="feedViewType === 'team_standings' ? filteredTeamStandings.length : filteredRiders.length"
           @refresh="refreshData"
         />
 
         <ResultsStatusBar
           v-if="currentRace?.isPublished && currentRace?.eventId"
-          :filtered-count="filteredRiders.length"
-          :total-count="riders.length"
+          :filtered-count="feedViewType === 'team_standings' ? filteredTeamStandings.length : filteredRiders.length"
+          :total-count="feedViewType === 'team_standings' ? teamStandings.length : riders.length"
           :last-updated="lastUpdated"
           :all-cards-collapsed="allCardsCollapsed"
           @toggle-all="toggleAllCards"
@@ -346,11 +373,21 @@ const handlePrint = () => {
         </div>
       </div>
 
-      <!-- Tab 2 & 3: Start Lists & Results -->
+      <!-- Tab 2: Coach Sign-Ups -->
+      <EventCoachCard
+        v-else-if="currentTab === 'coach'"
+        :race="currentRace"
+        :is-coach-auth="isCoachAuth"
+        @edit="openAdminWithTab('coach')"
+      />
+
+      <!-- Tab 3 & 4: Start Lists & Results -->
       <ResultsView
         v-else-if="currentTab === 'list' || currentTab === 'results'"
         :race="currentRace"
         :riders="filteredRiders"
+        :team-standings="filteredTeamStandings"
+        :feed-view-type="feedViewType"
         :current-tab="currentTab"
         :list-mode="listMode"
         :sort-order="sortOrder"

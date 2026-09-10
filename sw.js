@@ -59,8 +59,9 @@ self.addEventListener('notificationclick', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+  const hostname = url.hostname.toLowerCase();
 
-  if (url.hostname.includes('raceresult.com')) {
+  if (hostname === 'raceresult.com' || hostname.endsWith('.raceresult.com')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {

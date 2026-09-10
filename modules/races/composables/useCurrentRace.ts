@@ -1,4 +1,4 @@
-import { collection, doc, onSnapshot, setDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore'
 import { useFirestore } from 'vuefire'
 import type { Race } from '../types/race'
 import fallbackEvents from '~/events.json'
@@ -51,15 +51,23 @@ export const useCurrentRace = () => {
 
   const currentRace = computed(() => races.value[currentRaceIndex.value] || races.value[0])
 
-  // Seed default races from events.json into Firestore
+  /**
+   * SEED GUARD: Only writes a race document if it does NOT already exist in Firestore.
+   * This prevents events.json from ever overwriting live admin-edited data.
+   * Called only when the entire 'races' collection is empty (first-time setup).
+   */
   const seedRacesToFirestore = async () => {
     if (!db) return
     try {
       for (const r of fallbackEvents as Race[]) {
         const docRef = doc(db, 'races', r.id)
-        await setDoc(docRef, r, { merge: true })
+        const existing = await getDoc(docRef)
+        if (!existing.exists()) {
+          await setDoc(docRef, r)
+          console.info('[Firestore] Seeded new race document:', r.id)
+        }
       }
-      console.info('[Firestore] Seeded default races to Firestore')
+      console.info('[Firestore] Seed complete — existing documents were NOT overwritten')
     } catch (e) {
       console.warn('[Firestore] Could not seed races to Firestore:', e)
     }
@@ -84,7 +92,21 @@ export const useCurrentRace = () => {
 
             const list: Race[] = []
             snapshot.forEach((d) => {
-              list.push(d.data() as Race)
+              const rData = d.data() as Race
+              const fallback = (fallbackEvents as Race[]).find(f => f.id === rData.id)
+              if (fallback && fallback.waveSchedule) {
+                // Merge fallback waveSchedule to ensure standard categories always reflect official 2026 schedule
+                rData.waveSchedule = { ...(rData.waveSchedule || {}), ...fallback.waveSchedule }
+
+                // If Firestore record had stale or missing waveSchedule, sync in background
+                if (JSON.stringify(d.data().waveSchedule) !== JSON.stringify(fallback.waveSchedule)) {
+                  const docRef = doc(db, 'races', rData.id)
+                  setDoc(docRef, { waveSchedule: fallback.waveSchedule }, { merge: true }).catch((err) => {
+                    console.warn('[Firestore] Failed to sync updated wave schedule:', err)
+                  })
+                }
+              }
+              list.push(rData)
             })
 
             // Sort by order matching fallbackEvents or date

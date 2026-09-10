@@ -12,7 +12,7 @@ const emit = defineEmits<{
   (e: 'edit'): void
 }>()
 
-const isHubOpen = ref(true)
+const isHubOpen = ref(false)
 const activeSignUpTab = ref<'volunteer' | 'food' | 'league'>('volunteer')
 
 const getSignUpUrl = (code?: string | null) => {

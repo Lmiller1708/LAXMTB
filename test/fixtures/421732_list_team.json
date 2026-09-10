@@ -1,0 +1,1526 @@
+{
+  "list": {
+    "ListName": "07 - Participant Lists|Rider List - Start By Team",
+    "BottomPicture": "",
+    "BottomPictureShow": 0,
+    "ColumnHeadsFontName": "",
+    "ColumnHeadsFontSize": 12,
+    "ColumnHeadsFontBold": true,
+    "ColumnHeadsFontItalic": false,
+    "ColumnHeadsFontUnderlined": false,
+    "ColumnHeadsColor": "",
+    "ColumnHeadsShow": 2,
+    "Columns": 1,
+    "ColumnSpacing": 5,
+    "CoverSheet": "",
+    "BackSheet": "",
+    "Design": "",
+    "DesignShow": 2,
+    "EveryOtherLineGray": false,
+    "FontName": "Arial",
+    "FontSize": 10,
+    "FooterFontName": "",
+    "FooterFontSize": 10,
+    "FooterFontBold": false,
+    "FooterFontItalic": false,
+    "FooterFontUnderlined": false,
+    "FooterColor": "",
+    "GrayLine": true,
+    "HeadLine1": "Cable Conquest (North Conference)",
+    "HeadLine1FontName": "",
+    "HeadLine1FontSize": 16,
+    "HeadLine1FontBold": false,
+    "HeadLine1FontItalic": false,
+    "HeadLine1FontUnderlined": true,
+    "HeadLine2": "TEAM LIST",
+    "HeadLine1Color": "",
+    "HeadLine1Show": 2,
+    "HeadLine2FontName": "",
+    "HeadLine2FontSize": 16,
+    "HeadLine2FontBold": true,
+    "HeadLine2FontItalic": false,
+    "HeadLine2FontUnderlined": false,
+    "HeadLine2Color": "",
+    "HeadLine2Show": 2,
+    "HeightBottomPicture": 40,
+    "LineColor": "",
+    "LineBackColor": "",
+    "LineDynamicFormat": "",
+    "LineSpacing": 1,
+    "MaxRecords": 0,
+    "MultiplierField": "",
+    "PageFormat": 0,
+    "PageMarginBottom": 10,
+    "PageMarginLeft": 10,
+    "PageMarginRight": 10,
+    "PageMarginTop": 10,
+    "PageSize": 5,
+    "PageHeight": 279,
+    "PageWidth": 216,
+    "SepLine": true,
+    "TopRightPicture": "",
+    "TopRightPictureShow": 0,
+    "ListHeaderText": "",
+    "ListFooterText": "",
+    "ListHeaderFooterFontName": "",
+    "ListHeaderFooterFontSize": 10,
+    "ListHeaderFooterFontBold": false,
+    "ListHeaderFooterFontItalic": false,
+    "ListHeaderFooterFontUnderlined": false,
+    "ListHeaderFooterAlignment": 0,
+    "Remarks": "",
+    "LastChange": "2026-09-09 09:34:12",
+    "FooterText1": "",
+    "FooterText2": "",
+    "FooterText3": "[page]",
+    "Orders": [
+      {
+        "Expression": "\"Division \" & [Division]",
+        "Descending": false,
+        "Grouping": 2,
+        "GroupFilterDefault": 0,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "#c0c0c0",
+        "Spacing": 0
+      },
+      {
+        "Expression": "[CLUB] & \" (Division \" & [Division] & \")\"",
+        "Descending": false,
+        "Grouping": 2,
+        "GroupFilterDefault": 0,
+        "GroupFilterLabel": "",
+        "PageBreak": 1,
+        "FontName": "",
+        "FontSize": 14,
+        "FontBold": true,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 2
+      },
+      {
+        "Expression": "T12",
+        "Descending": true,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 0
+      },
+      {
+        "Expression": "CONTEST",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 0
+      },
+      {
+        "Expression": "SplitField",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 0
+      },
+      {
+        "Expression": "FieldRank_Seeding",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 0
+      }
+    ],
+    "Filters": [
+      {
+        "OrConjunction": false,
+        "Expression1": "CONTEST",
+        "Operator": ">",
+        "Expression2": "0"
+      }
+    ],
+    "Fields": [
+      {
+        "Expression": "BIB",
+        "Label": "Bib",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "[LASTNAME] & \", \" & [FIRSTNAME]",
+        "Label": "Name",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "SEX",
+        "Label": "Gender",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "CONTEST.NAME",
+        "Label": "Category",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "SplitField",
+        "Label": "FLD",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      }
+    ],
+    "SelectorResults": []
+  },
+  "data": {
+    "#1_Division 1": {
+      "#1_Chequamegon Bay Composite (Division 1)": [
+        [
+          "60",
+          "661",
+          "Rider_1, Anon_1",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "61",
+          "664",
+          "Rider_2, Anon_2",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "156",
+          "686",
+          "Rider_3, Anon_3",
+          "f",
+          "Varsity Girls",
+          "1"
+        ]
+      ],
+      "#2_Eau Claire Memorial High School (Division 1)": [
+        [
+          "72",
+          "646",
+          "Rider_4, Anon_4",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3545",
+          "528",
+          "Rider_5, Anon_5",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3546",
+          "531",
+          "Rider_6, Anon_6",
+          "m",
+          "JV III Boys",
+          "1"
+        ]
+      ],
+      "#3_Fox Valley Composite (Division 1)": [
+        [
+          "51",
+          "638",
+          "Rider_7, Anon_7",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3500",
+          "534",
+          "Rider_8, Anon_8",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3874",
+          "580",
+          "Rider_9, Anon_9",
+          "f",
+          "JV III Girls",
+          "1"
+        ]
+      ],
+      "#4_Green Bay Composite (Division 1)": [
+        [
+          "3535",
+          "518",
+          "Rider_10, Anon_10",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3534",
+          "520",
+          "Rider_11, Anon_11",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3536",
+          "521",
+          "Rider_12, Anon_12",
+          "m",
+          "JV III Boys",
+          "1"
+        ]
+      ],
+      "#5_Hayward High School (Division 1)": [
+        [
+          "54",
+          "639",
+          "Rider_13, Anon_13",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "52",
+          "643",
+          "Rider_14, Anon_14",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "55",
+          "644",
+          "Rider_15, Anon_15",
+          "m",
+          "Varsity Boys",
+          "1"
+        ]
+      ],
+      "#6_Marquette Senior High School (Division 1)": [
+        [
+          "65",
+          "635",
+          "Rider_16, Anon_16",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "66",
+          "637",
+          "Rider_17, Anon_17",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "64",
+          "640",
+          "Rider_18, Anon_18",
+          "m",
+          "Varsity Boys",
+          "1"
+        ]
+      ],
+      "#7_Sauk Prairie High School (Division 1)": [
+        [
+          "57",
+          "647",
+          "Rider_19, Anon_19",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "56",
+          "656",
+          "Rider_20, Anon_20",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3538",
+          "524",
+          "Rider_21, Anon_21",
+          "m",
+          "JV III Boys",
+          "1"
+        ]
+      ],
+      "#8_Sheboygan Composite (Division 1)": [
+        [
+          "58",
+          "645",
+          "Rider_22, Anon_22",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "59",
+          "659",
+          "Rider_23, Anon_23",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "155",
+          "674",
+          "Rider_24, Anon_24",
+          "f",
+          "Varsity Girls",
+          "1"
+        ]
+      ],
+      "#9_Stevens Point Area Senior High (Division 1)": [
+        [
+          "71",
+          "631",
+          "Rider_25, Anon_25",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "69",
+          "662",
+          "Rider_26, Anon_26",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "70",
+          "666",
+          "Rider_27, Anon_27",
+          "m",
+          "Varsity Boys",
+          "1"
+        ]
+      ]
+    },
+    "#2_Division 2": {
+      "#10_Central Wisconsin Composite (Division 2)": [
+        [
+          "9578",
+          "391",
+          "Rider_28, Anon_28",
+          "m",
+          "Freshman Boys",
+          "2"
+        ],
+        [
+          "9879",
+          "463",
+          "Rider_29, Anon_29",
+          "f",
+          "Freshman Girls",
+          "1"
+        ],
+        [
+          "2565",
+          "53",
+          "Rider_30, Anon_30",
+          "m",
+          "JV II Boys",
+          "1"
+        ]
+      ],
+      "#11_Chippewa Falls High School (Division 2)": [
+        [
+          "3504",
+          "536",
+          "Rider_31, Anon_31",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3529",
+          "516",
+          "Rider_32, Anon_32",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "9580",
+          "407",
+          "Rider_33, Anon_33",
+          "m",
+          "Freshman Boys",
+          "1"
+        ]
+      ],
+      "#12_Chippewa Valley Composite (Division 2)": [
+        [
+          "9566",
+          "418",
+          "Rider_34, Anon_34",
+          "m",
+          "Freshman Boys",
+          "1"
+        ],
+        [
+          "9505",
+          "425",
+          "Rider_35, Anon_35",
+          "m",
+          "Freshman Boys",
+          "1"
+        ],
+        [
+          "2547",
+          "31",
+          "Rider_36, Anon_36",
+          "m",
+          "JV II Boys",
+          "1"
+        ]
+      ],
+      "#13_DC Everest High School (Division 2)": [
+        [
+          "83",
+          "649",
+          "Rider_37, Anon_37",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "81",
+          "652",
+          "Rider_38, Anon_38",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "82",
+          "672",
+          "Rider_39, Anon_39",
+          "m",
+          "Varsity Boys",
+          "1"
+        ]
+      ],
+      "#14_Duluth Composite Team (Division 2)": [
+        [
+          "85",
+          "629",
+          "Rider_40, Anon_40",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3514",
+          "523",
+          "Rider_41, Anon_41",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3515",
+          "545",
+          "Rider_42, Anon_42",
+          "m",
+          "JV III Boys",
+          "1"
+        ]
+      ],
+      "#15_Duluth East High School (Division 2)": [
+        [
+          "3527",
+          "541",
+          "Rider_43, Anon_43",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3526",
+          "551",
+          "Rider_44, Anon_44",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "174",
+          "680",
+          "Rider_45, Anon_45",
+          "f",
+          "Varsity Girls",
+          "1"
+        ]
+      ],
+      "#16_Eau Claire Composite (Division 2)": [
+        [
+          "3521",
+          "530",
+          "Rider_46, Anon_46",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3522",
+          "537",
+          "Rider_47, Anon_47",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3524",
+          "514",
+          "Rider_48, Anon_48",
+          "m",
+          "JV III Boys",
+          "1"
+        ]
+      ],
+      "#17_Eau Claire North High School (Division 2)": [
+        [
+          "3528",
+          "515",
+          "Rider_49, Anon_49",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3868",
+          "568",
+          "Rider_50, Anon_50",
+          "f",
+          "JV III Girls",
+          "1"
+        ],
+        [
+          "9512",
+          "442",
+          "Rider_51, Anon_51",
+          "m",
+          "Freshman Boys",
+          "1"
+        ]
+      ],
+      "#18_Fond du Lac Youth Cycling (Division 2)": [
+        [
+          "95",
+          "636",
+          "Rider_52, Anon_52",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3532",
+          "540",
+          "Rider_53, Anon_53",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "5520",
+          "584",
+          "Rider_54, Anon_54",
+          "m",
+          "MS2 Boys",
+          "1"
+        ]
+      ],
+      "#19_Hayward Composite (Division 2)": [
+        [
+          "8555",
+          "299",
+          "Rider_55, Anon_55",
+          "m",
+          "8th Grade Boys",
+          "2"
+        ]
+      ],
+      "#20_Holmen High School MTB Team (Division 2)": [
+        [
+          "3531",
+          "553",
+          "Rider_56, Anon_56",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "5515",
+          "607",
+          "Rider_57, Anon_57",
+          "m",
+          "MS2 Boys",
+          "1"
+        ],
+        [
+          "8534",
+          "315",
+          "Rider_58, Anon_58",
+          "m",
+          "8th Grade Boys",
+          "1"
+        ]
+      ],
+      "#21_La Crescent High School (Division 2)": [
+        [
+          "94",
+          "665",
+          "Rider_59, Anon_59",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3525",
+          "539",
+          "Rider_60, Anon_60",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "5522",
+          "601",
+          "Rider_61, Anon_61",
+          "m",
+          "MS2 Boys",
+          "1"
+        ]
+      ],
+      "#22_La Crosse Aquinas High School (Division 2)": [
+        [
+          "167",
+          "684",
+          "Rider_62, Anon_62",
+          "f",
+          "Varsity Girls",
+          "1"
+        ],
+        [
+          "2872",
+          "490",
+          "Rider_63, Anon_63",
+          "f",
+          "JV II Girls",
+          "1"
+        ],
+        [
+          "2535",
+          "38",
+          "Rider_64, Anon_64",
+          "m",
+          "JV II Boys",
+          "1"
+        ]
+      ],
+      "#23_La Crosse Central High School (Division 2)": [
+        [
+          "74",
+          "634",
+          "Rider_65, Anon_65",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "73",
+          "670",
+          "Rider_66, Anon_66",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3857",
+          "560",
+          "Rider_67, Anon_67",
+          "f",
+          "JV III Girls",
+          "1"
+        ]
+      ],
+      "#24_La Crosse Composite (Division 2)": [
+        [
+          "75",
+          "655",
+          "Rider_68, Anon_68",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "76",
+          "663",
+          "Rider_69, Anon_69",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "164",
+          "695",
+          "Rider_70, Anon_70",
+          "f",
+          "Varsity Girls",
+          "1"
+        ]
+      ],
+      "#25_La Crosse Logan High School (Division 2)": [
+        [
+          "79",
+          "660",
+          "Rider_71, Anon_71",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3505",
+          "552",
+          "Rider_72, Anon_72",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3506",
+          "513",
+          "Rider_73, Anon_73",
+          "m",
+          "JV III Boys",
+          "1"
+        ]
+      ],
+      "#26_Marshfield Area Composite (Division 2)": [
+        [
+          "9867",
+          "459",
+          "Rider_74, Anon_74",
+          "f",
+          "Freshman Girls",
+          "1"
+        ],
+        [
+          "7536",
+          "181",
+          "Rider_75, Anon_75",
+          "m",
+          "7th Grade Boys",
+          "2"
+        ]
+      ],
+      "#27_Marshfield High School (Division 2)": [
+        [
+          "78",
+          "633",
+          "Rider_76, Anon_76",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "77",
+          "642",
+          "Rider_77, Anon_77",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "165",
+          "683",
+          "Rider_78, Anon_78",
+          "f",
+          "Varsity Girls",
+          "1"
+        ]
+      ],
+      "#28_MCIC Composite (Division 2)": [
+        [
+          "175",
+          "677",
+          "Rider_79, Anon_79",
+          "f",
+          "Varsity Girls",
+          "1"
+        ],
+        [
+          "8539",
+          "309",
+          "Rider_80, Anon_80",
+          "m",
+          "8th Grade Boys",
+          "1"
+        ],
+        [
+          "9876",
+          "479",
+          "Rider_81, Anon_81",
+          "f",
+          "Freshman Girls",
+          "1"
+        ]
+      ],
+      "#29_Neenah High School (Division 2)": [
+        [
+          "93",
+          "650",
+          "Rider_82, Anon_82",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3864",
+          "565",
+          "Rider_83, Anon_83",
+          "f",
+          "JV III Girls",
+          "1"
+        ],
+        [
+          "5514",
+          "592",
+          "Rider_84, Anon_84",
+          "m",
+          "MS2 Boys",
+          "1"
+        ]
+      ],
+      "#30_Negaunee High School (Division 2)": [
+        [
+          "3519",
+          "547",
+          "Rider_85, Anon_85",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "171",
+          "676",
+          "Rider_86, Anon_86",
+          "f",
+          "Varsity Girls",
+          "1"
+        ],
+        [
+          "172",
+          "687",
+          "Rider_87, Anon_87",
+          "f",
+          "Varsity Girls",
+          "1"
+        ]
+      ],
+      "#31_North Marinette County Composite (Division 2)": [
+        [
+          "9865",
+          "457",
+          "Rider_88, Anon_88",
+          "f",
+          "Freshman Girls",
+          "1"
+        ],
+        [
+          "6850",
+          "142",
+          "Rider_89, Anon_89",
+          "f",
+          "6th Grade Girls",
+          "1"
+        ]
+      ],
+      "#32_Rhinelander High School (Division 2)": [
+        [
+          "3507",
+          "522",
+          "Rider_90, Anon_90",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3509",
+          "526",
+          "Rider_91, Anon_91",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3508",
+          "542",
+          "Rider_92, Anon_92",
+          "m",
+          "JV III Boys",
+          "1"
+        ]
+      ],
+      "#33_Rhinelander-Northwoods Composite (Division 2)": [
+        [
+          "9575",
+          "400",
+          "Rider_93, Anon_93",
+          "m",
+          "Freshman Boys",
+          "1"
+        ],
+        [
+          "9523",
+          "447",
+          "Rider_94, Anon_94",
+          "m",
+          "Freshman Boys",
+          "2"
+        ],
+        [
+          "8522",
+          "311",
+          "Rider_95, Anon_95",
+          "m",
+          "8th Grade Boys",
+          "1"
+        ]
+      ],
+      "#34_Rice Lake Composite (Division 2)": [
+        [
+          "3520",
+          "519",
+          "Rider_96, Anon_96",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "173",
+          "678",
+          "Rider_97, Anon_97",
+          "f",
+          "Varsity Girls",
+          "1"
+        ],
+        [
+          "3865",
+          "582",
+          "Rider_98, Anon_98",
+          "f",
+          "JV III Girls",
+          "1"
+        ]
+      ],
+      "#35_Rice Lake High School (Division 2)": [
+        [
+          "80",
+          "630",
+          "Rider_99, Anon_99",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3530",
+          "525",
+          "Rider_100, Anon_100",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3510",
+          "533",
+          "Rider_101, Anon_101",
+          "m",
+          "JV III Boys",
+          "1"
+        ]
+      ],
+      "#36_Sauk Prairie Composite (Division 2)": [
+        [
+          "3512",
+          "557",
+          "Rider_102, Anon_102",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "3859",
+          "576",
+          "Rider_103, Anon_103",
+          "f",
+          "JV III Girls",
+          "1"
+        ],
+        [
+          "5517",
+          "596",
+          "Rider_104, Anon_104",
+          "m",
+          "MS2 Boys",
+          "1"
+        ]
+      ],
+      "#37_Spooner (Division 2)": [
+        [
+          "84",
+          "651",
+          "Rider_105, Anon_105",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3513",
+          "556",
+          "Rider_106, Anon_106",
+          "m",
+          "JV III Boys",
+          "1"
+        ],
+        [
+          "5512",
+          "589",
+          "Rider_107, Anon_107",
+          "m",
+          "MS2 Boys",
+          "1"
+        ]
+      ],
+      "#38_Vernon Trails Area Composite (Division 2)": [
+        [
+          "89",
+          "632",
+          "Rider_108, Anon_108",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "96",
+          "657",
+          "Rider_109, Anon_109",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "5861",
+          "622",
+          "Rider_110, Anon_110",
+          "f",
+          "MS2 Girls",
+          "1"
+        ]
+      ],
+      "#39_Viroqua Area School (Division 2)": [
+        [
+          "87",
+          "658",
+          "Rider_111, Anon_111",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "88",
+          "668",
+          "Rider_112, Anon_112",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "86",
+          "669",
+          "Rider_113, Anon_113",
+          "m",
+          "Varsity Boys",
+          "1"
+        ]
+      ],
+      "#40_Wausau  Composite (Division 2)": [
+        [
+          "90",
+          "648",
+          "Rider_114, Anon_114",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "9588",
+          "395",
+          "Rider_115, Anon_115",
+          "m",
+          "Freshman Boys",
+          "2"
+        ],
+        [
+          "8530",
+          "289",
+          "Rider_116, Anon_116",
+          "m",
+          "8th Grade Boys",
+          "2"
+        ]
+      ],
+      "#41_Wausau East High School (Division 2)": [
+        [
+          "3858",
+          "575",
+          "Rider_117, Anon_117",
+          "f",
+          "JV III Girls",
+          "1"
+        ],
+        [
+          "8531",
+          "290",
+          "Rider_118, Anon_118",
+          "m",
+          "8th Grade Boys",
+          "2"
+        ]
+      ],
+      "#42_Wausau West High School (Division 2)": [
+        [
+          "91",
+          "653",
+          "Rider_119, Anon_119",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "92",
+          "671",
+          "Rider_120, Anon_120",
+          "m",
+          "Varsity Boys",
+          "1"
+        ],
+        [
+          "3517",
+          "535",
+          "Rider_121, Anon_121",
+          "m",
+          "JV III Boys",
+          "1"
+        ]
+      ],
+      "#43_Wautoma Area Composite (Division 2)": [
+        [
+          "9591",
+          "430",
+          "Rider_122, Anon_122",
+          "m",
+          "Freshman Boys",
+          "1"
+        ],
+        [
+          "9581",
+          "444",
+          "Rider_123, Anon_123",
+          "m",
+          "Freshman Boys",
+          "2"
+        ],
+        [
+          "8533",
+          "313",
+          "Rider_124, Anon_124",
+          "m",
+          "8th Grade Boys",
+          "1"
+        ]
+      ],
+      "#44_Wautoma High School (Division 2)": [
+        [
+          "169",
+          "690",
+          "Rider_125, Anon_125",
+          "f",
+          "Varsity Girls",
+          "1"
+        ],
+        [
+          "9510",
+          "364",
+          "Rider_126, Anon_126",
+          "m",
+          "Freshman Boys",
+          "2"
+        ],
+        [
+          "8529",
+          "312",
+          "Rider_127, Anon_127",
+          "m",
+          "8th Grade Boys",
+          "1"
+        ]
+      ]
+    }
+  },
+  "DataFields": [
+    "BIB",
+    "ID",
+    "[LASTNAME] & \", \" & [FIRSTNAME]",
+    "SEX",
+    "CONTEST.NAME",
+    "SplitField"
+  ],
+  "comments": {},
+  "mid": 85918,
+  "groupFilters": [
+    {
+      "Type": 0,
+      "Value": "",
+      "Values": [
+        "Division 1",
+        "Division 2"
+      ]
+    },
+    {
+      "Type": 0,
+      "Value": "",
+      "Values": [
+        "Chequamegon Bay Composite (Division 1)",
+        "Eau Claire Memorial High School (Division 1)",
+        "Fox Valley Composite (Division 1)",
+        "Green Bay Composite (Division 1)",
+        "Hayward High School (Division 1)",
+        "Marquette Senior High School (Division 1)",
+        "Sauk Prairie High School (Division 1)",
+        "Sheboygan Composite (Division 1)",
+        "Stevens Point Area Senior High (Division 1)",
+        "Central Wisconsin Composite (Division 2)",
+        "Chippewa Falls High School (Division 2)",
+        "Chippewa Valley Composite (Division 2)",
+        "DC Everest High School (Division 2)",
+        "Duluth Composite Team (Division 2)",
+        "Duluth East High School (Division 2)",
+        "Eau Claire Composite (Division 2)",
+        "Eau Claire North High School (Division 2)",
+        "Fond du Lac Youth Cycling (Division 2)",
+        "Hayward Composite (Division 2)",
+        "Holmen High School MTB Team (Division 2)",
+        "La Crescent High School (Division 2)",
+        "La Crosse Aquinas High School (Division 2)",
+        "La Crosse Central High School (Division 2)",
+        "La Crosse Composite (Division 2)",
+        "La Crosse Logan High School (Division 2)",
+        "Marshfield Area Composite (Division 2)",
+        "Marshfield High School (Division 2)",
+        "MCIC Composite (Division 2)",
+        "Neenah High School (Division 2)",
+        "Negaunee High School (Division 2)",
+        "North Marinette County Composite (Division 2)",
+        "Rhinelander High School (Division 2)",
+        "Rhinelander-Northwoods Composite (Division 2)",
+        "Rice Lake Composite (Division 2)",
+        "Rice Lake High School (Division 2)",
+        "Sauk Prairie Composite (Division 2)",
+        "Spooner (Division 2)",
+        "Vernon Trails Area Composite (Division 2)",
+        "Viroqua Area School (Division 2)",
+        "Wausau  Composite (Division 2)",
+        "Wausau East High School (Division 2)",
+        "Wausau West High School (Division 2)",
+        "Wautoma Area Composite (Division 2)",
+        "Wautoma High School (Division 2)"
+      ]
+    }
+  ],
+  "users": {
+    "55": {
+      "UserName": "LyndonU11",
+      "DisplayName": "Lyndon Uitenbroek",
+      "PPV": 147585,
+      "ViewerFollowStatus": 0
+    },
+    "76": {
+      "UserName": "BodenB08",
+      "DisplayName": "Boden Bruce",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "207": {
+      "UserName": "LiamE13",
+      "DisplayName": "Liam Edlbeck",
+      "PPV": 471322,
+      "ViewerFollowStatus": 0
+    },
+    "511": {
+      "UserName": "LilithL09",
+      "DisplayName": "Lilith Lind",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "524": {
+      "UserName": "JacobW10",
+      "DisplayName": "Jacob Wishart",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "529": {
+      "UserName": "AuggieO10",
+      "DisplayName": "Auggie Osiedacz",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "531": {
+      "UserName": "GrahamG10",
+      "DisplayName": "Graham Giffey",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "532": {
+      "UserName": "LeoM",
+      "DisplayName": "Leo Madura",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "567": {
+      "UserName": "NoraS11",
+      "DisplayName": "Nora Schwanz",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "615": {
+      "UserName": "AddysonH13",
+      "DisplayName": "AddysonH13",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "677": {
+      "UserName": "LeahR906",
+      "DisplayName": "Leah Robinson",
+      "PPV": 533870,
+      "ViewerFollowStatus": 0
+    }
+  },
+  "LiveUpdateInterval": 10,
+  "Favorites": null
+}

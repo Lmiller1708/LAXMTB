@@ -1,20 +1,46 @@
-import type { Rider, ResultsSortOrder, ResultsGroupMode, TeamScope } from '../types/results'
-import { parseUniversalData, targetTeamKeywords, categoryOrder, normalizeCategoryName } from '../services/raceresultService'
+import type {
+  Rider,
+  ResultsSortOrder,
+  ResultsGroupMode,
+  TeamScope,
+  TeamStanding,
+  FeedViewType
+} from '../types/results'
+import {
+  parseUniversalData,
+  targetTeamKeywords,
+  categoryOrder,
+  normalizeCategoryName
+} from '../services/raceresultService'
 
 export const useRaceResults = () => {
   const riders = ref<Rider[]>([])
+  const teamStandings = ref<TeamStanding[]>([])
+  const feedViewType = ref<FeedViewType>('category_start_list')
+  const availableReports = ref<{ ID: string; Name: string }[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
   const lastUpdated = ref<string>('')
   const isLive = ref(false)
+  let activeRequestId = 0
 
   // Filters state
   const searchQuery = ref('')
   const listMode = ref<ResultsGroupMode>('WAVE')
-  const selectedListId = ref<string>('A76F6B')
-  const sortOrder = ref<ResultsSortOrder>('GRADE')
+  const selectedListId = ref<string>('')
+
+  // Initialize sortOrder from localStorage if available, default to 'TIME'
+  const initialSortOrder = (import.meta.client && localStorage.getItem('laxmtb_sortOrder')) as ResultsSortOrder | null
+  const sortOrder = ref<ResultsSortOrder>(initialSortOrder === 'GRADE' || initialSortOrder === 'TIME' ? initialSortOrder : 'TIME')
+
+  if (import.meta.client) {
+    watch(sortOrder, (newVal) => {
+      localStorage.setItem('laxmtb_sortOrder', newVal)
+    })
+  }
+
   const selectedCategory = ref('ALL')
-  const selectedTeamScope = ref<TeamScope>('DEFAULT_TEAMS')
+  const selectedTeamScope = ref<string>('DEFAULT_TEAMS')
   const isFilterOpen = ref(false)
   const allCardsCollapsed = ref(false)
   const selectedRiderKeys = ref<Set<string>>(new Set())
@@ -74,6 +100,18 @@ export const useRaceResults = () => {
     })
   })
 
+  // Teams list from current riders and team standings
+  const teams = computed(() => {
+    const set = new Set<string>()
+    riders.value.forEach(r => {
+      if (r.team) set.add(r.team)
+    })
+    teamStandings.value.forEach(s => {
+      if (s.team) set.add(s.team)
+    })
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  })
+
   // Filtered and Sorted Riders
   const filteredRiders = computed(() => {
     let list = [...riders.value]
@@ -83,6 +121,8 @@ export const useRaceResults = () => {
       list = list.filter(r =>
         targetTeamKeywords.some(kw => r.team && r.team.toLowerCase().includes(kw))
       )
+    } else if (selectedTeamScope.value && selectedTeamScope.value !== 'ALL') {
+      list = list.filter(r => r.team === selectedTeamScope.value)
     }
 
     // Category filter
@@ -105,40 +145,96 @@ export const useRaceResults = () => {
     return list
   })
 
+  // Filtered Team Standings
+  const filteredTeamStandings = computed(() => {
+    let list = [...teamStandings.value]
+
+    // Team Scope filter
+    if (selectedTeamScope.value === 'DEFAULT_TEAMS') {
+      list = list.filter(s =>
+        targetTeamKeywords.some(kw => s.team && s.team.toLowerCase().includes(kw))
+      )
+    } else if (selectedTeamScope.value && selectedTeamScope.value !== 'ALL') {
+      list = list.filter(s => s.team === selectedTeamScope.value)
+    }
+
+    // Search query filter
+    const q = searchQuery.value.trim().toLowerCase()
+    if (q) {
+      list = list.filter(s =>
+        (s.team && s.team.toLowerCase().includes(q)) ||
+        (s.division && s.division.toLowerCase().includes(q))
+      )
+    }
+
+    return list
+  })
+
+  // Resolve best matching report from event config
+  const resolveTargetReport = (
+    lists: { ID: string; Name: string }[],
+    page: 'list' | 'results',
+    explicitId?: string,
+    mode?: ResultsGroupMode
+  ) => {
+    if (!Array.isArray(lists) || lists.length === 0) return null
+
+    // 1. If explicit ID exists and is in the lists, use it
+    if (explicitId) {
+      const match = lists.find(l => l.ID === explicitId)
+      if (match) return match
+    }
+
+    // 2. Resolve by page and intent
+    if (page === 'list') {
+      if (mode === 'TEAM') {
+        return (
+          lists.find(l => (l.Name || '').toLowerCase().includes('start by team')) ||
+          lists.find(l => (l.Name || '').toLowerCase().includes('by team')) ||
+          lists[0]
+        )
+      }
+      // Category / Wave / Field start list
+      return (
+        lists.find(l => (l.Name || '').toLowerCase().includes('first - print')) ||
+        lists.find(l => (l.Name || '').toLowerCase().includes('category & wave')) ||
+        lists.find(l => (l.Name || '').toLowerCase().includes('category & field')) ||
+        lists.find(l => (l.Name || '').toLowerCase().includes('category') && !(l.Name || '').toLowerCase().includes('cable')) ||
+        lists.find(l => (l.Name || '').toLowerCase().includes('category')) ||
+        lists[0]
+      )
+    }
+
+    // page === 'results'
+    if (mode === 'TEAM') {
+      return (
+        lists.find(l => (l.Name || '').toLowerCase().includes('individual results - by team')) ||
+        lists.find(l => (l.Name || '').toLowerCase().includes('by team')) ||
+        lists[0]
+      )
+    }
+
+    // Individual results - ALL
+    return (
+      lists.find(l => (l.Name || '').toLowerCase().includes('individual results - all')) ||
+      lists.find(l => (l.Name || '').toLowerCase().includes('result lists')) ||
+      lists.find(l => (l.Name || '').toLowerCase().includes('individual')) ||
+      lists[0]
+    )
+  }
+
   // Fetch from RACE RESULT API
-  const fetchResults = async (eventId: string, page: 'list' | 'results', explicitListId?: string, isCompleted?: boolean) => {
+  const fetchResults = async (
+    eventId: string,
+    page: 'list' | 'results',
+    explicitListId?: string,
+    isCompleted?: boolean
+  ) => {
     if (!eventId) return
 
+    const requestId = ++activeRequestId
     loading.value = true
     error.value = null
-
-    if (explicitListId) {
-      selectedListId.value = explicitListId
-    } else {
-      if (page === 'list') {
-        selectedListId.value = listMode.value === 'TEAM' ? '747B52' : 'A76F6B'
-      } else {
-        selectedListId.value = listMode.value === 'TEAM' ? 'E07F7C' : '4C8C1F'
-      }
-    }
-
-    listMode.value = (selectedListId.value === '747B52' || selectedListId.value === 'E07F7C') ? 'TEAM' : 'WAVE'
-
-    const cacheKey = `laxmtb_cache_${eventId}_${page}_${selectedListId.value}`
-
-    // Offline check
-    if (import.meta.client && !navigator.onLine) {
-      const cached = localStorage.getItem(cacheKey)
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached)
-          riders.value = parsed.riders || []
-          lastUpdated.value = (parsed.time || '') + ' (Offline Cache)'
-          loading.value = false
-          return
-        } catch (e) {}
-      }
-    }
 
     try {
       const configResp = await fetch(`https://my.raceresult.com/${eventId}/${page}/config?lang=en`)
@@ -146,124 +242,114 @@ export const useRaceResults = () => {
       const config = await configResp.json()
       const key = config.key
 
-      const lists = config?.TabConfig?.Lists || []
-      let targetList = null
-      if (page === 'list') {
-        if (selectedListId.value === '747B52') {
-          targetList = lists.find((l: any) => l.ID === '747B52') || lists.find((l: any) => (l.Name || '').toLowerCase().includes('team'))
-        } else {
-          targetList = lists.find((l: any) => l.ID === selectedListId.value) ||
-                       lists.find((l: any) => l.ID === 'A76F6B') ||
-                       lists.find((l: any) => (l.Name || '').toLowerCase().includes('category') && !(l.Name || '').toLowerCase().includes('cable')) ||
-                       lists.find((l: any) => (l.Name || '').toLowerCase().includes('category')) ||
-                       lists[0]
-        }
-      } else {
-        // page === 'results'
-        if (selectedListId.value === 'E07F7C') {
-          targetList = lists.find((l: any) => l.ID === 'E07F7C') || lists.find((l: any) => (l.Name || '').toLowerCase().includes('team'))
-        } else if (selectedListId.value === '674D5B') {
-          targetList = lists.find((l: any) => l.ID === '674D5B') || lists.find((l: any) => (l.Name || '').toLowerCase().includes('team'))
-        } else {
-          targetList = lists.find((l: any) => l.ID === selectedListId.value) ||
-                       lists.find((l: any) => l.ID === '4C8C1F') ||
-                       lists.find((l: any) => (l.Name || '').toLowerCase().includes('individual results - all')) ||
-                       lists.find((l: any) => (l.Name || '').toLowerCase().includes('result lists')) ||
-                       lists.find((l: any) => (l.Name || '').toLowerCase().includes('individual')) ||
-                       lists[0]
+      if (requestId !== activeRequestId) return
+
+      const lists = (config?.TabConfig?.Lists || []).map((l: any) => ({
+        ID: l.ID,
+        Name: l.Name
+      }))
+      availableReports.value = lists
+
+      const targetList = resolveTargetReport(lists, page, explicitListId, listMode.value)
+      if (!targetList) {
+        throw new Error('No compatible report found for this event.')
+      }
+
+      selectedListId.value = targetList.ID
+      listMode.value = (targetList.Name || '').toLowerCase().includes('by team') ? 'TEAM' : 'WAVE'
+
+      const cacheKey = `laxmtb_v2_cache_${eventId}_${page}_${targetList.ID}`
+
+      // Offline check
+      if (import.meta.client && !navigator.onLine) {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached)
+            riders.value = parsed.riders || []
+            teamStandings.value = parsed.teamStandings || []
+            feedViewType.value = parsed.viewType || 'category_start_list'
+            lastUpdated.value = (parsed.time || '') + ' (Offline Cache)'
+            loading.value = false
+            return
+          } catch (e) {}
         }
       }
 
-      const listName = targetList ? targetList.Name : ''
       const params = new URLSearchParams({
         key: key,
-        listname: listName,
+        listname: targetList.Name,
         page: page,
         contest: '0',
         r: 'all',
         l: '0'
       })
 
-      let listResp = await fetch(`https://my.raceresult.com/${eventId}/${page}/list?` + params.toString())
+      const listResp = await fetch(`https://my.raceresult.com/${eventId}/${page}/list?` + params.toString())
       if (!listResp.ok) throw new Error(`List HTTP ${listResp.status}`)
-      let resultData = await listResp.json()
+      const resultData = await listResp.json()
 
-      // Resilience: Fallback if empty data
-      if (Array.isArray(resultData?.data) && resultData.data.length === 0) {
-        const altList = page === 'list'
-          ? (lists.find((l: any) => l.ID === 'A76F6B') || lists.find((l: any) => l.ID !== (targetList ? targetList.ID : '')))
-          : (lists.find((l: any) => l.ID === '4C8C1F') || lists.find((l: any) => (l.Name || '').toLowerCase().includes('result lists') && l.ID !== (targetList ? targetList.ID : '')) || lists.find((l: any) => (l.Name || '').toLowerCase().includes('individual') && l.ID !== (targetList ? targetList.ID : '')))
+      if (requestId !== activeRequestId) return
 
-        if (altList) {
-          const altParams = new URLSearchParams({
-            key: key,
-            listname: altList.Name,
-            page: page,
-            contest: '0',
-            r: 'all',
-            l: '0'
-          })
-          const altResp = await fetch(`https://my.raceresult.com/${eventId}/${page}/list?` + altParams.toString())
-          if (altResp.ok) {
-            const altData = await altResp.json()
-            if (altData?.data && (!Array.isArray(altData.data) || altData.data.length > 0)) {
-              resultData = altData
-              targetList = altList
-            }
-          }
-        }
-      }
+      const parsed = parseUniversalData(resultData, targetList.ID, page)
 
-      const targetListId = targetList?.ID || selectedListId.value
-      let parsedRiders = parseUniversalData(resultData, targetListId, page)
-      if (page === 'list' && parsedRiders.length === 0) {
-        parsedRiders = fallbackSnapshot
-      }
-
-      riders.value = parsedRiders
+      riders.value = parsed.riders
+      teamStandings.value = parsed.teamStandings
+      feedViewType.value = parsed.viewType
       isLive.value = !isCompleted
       lastUpdated.value = isCompleted
         ? 'Final Results • ' + new Date().toLocaleTimeString()
         : 'Updated ' + new Date().toLocaleTimeString()
 
-      if (import.meta.client && parsedRiders.length > 0) {
+      if (import.meta.client && (parsed.riders.length > 0 || parsed.teamStandings.length > 0)) {
         try {
           localStorage.setItem(cacheKey, JSON.stringify({
             time: new Date().toLocaleTimeString(),
-            riders: parsedRiders
+            riders: parsed.riders,
+            teamStandings: parsed.teamStandings,
+            viewType: parsed.viewType
           }))
         } catch (e) {}
       }
     } catch (err: any) {
+      if (requestId !== activeRequestId) return
       console.error('[RACE RESULT fetch error]:', err)
-      error.value = err.message || 'Failed to connect to live timing'
+      error.value = err.message || 'Failed to connect to timing feed'
       isLive.value = false
+      riders.value = []
+      teamStandings.value = []
 
-      // Try reading local storage or fallback snapshot
-      if (import.meta.client) {
+      // Try reading local storage cache
+      if (import.meta.client && selectedListId.value) {
+        const cacheKey = `laxmtb_v2_cache_${eventId}_${page}_${selectedListId.value}`
         const cached = localStorage.getItem(cacheKey)
         if (cached) {
           try {
             const parsed = JSON.parse(cached)
             riders.value = parsed.riders || []
+            teamStandings.value = parsed.teamStandings || []
+            feedViewType.value = parsed.viewType || 'category_start_list'
             lastUpdated.value = (parsed.time || '') + ' (Offline Cache)'
-            return
+            error.value = null
           } catch (e) {}
         }
       }
-      if (page === 'list') {
-        riders.value = fallbackSnapshot
-        lastUpdated.value = 'Snapshot (Offline)'
-      }
     } finally {
-      loading.value = false
+      if (requestId === activeRequestId) {
+        loading.value = false
+      }
     }
   }
 
   return {
     riders,
     filteredRiders,
+    teamStandings,
+    filteredTeamStandings,
+    feedViewType,
+    availableReports,
     categories,
+    teams,
     loading,
     error,
     lastUpdated,

@@ -1014,6 +1014,17 @@
       height: 2px;
       background: var(--accent-red);
     }
+    
+    .new-pill {
+      background: var(--accent-red-subtle);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--accent-red);
+      border-radius: 10px;
+      padding: 1px 6px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
 
     .current-race-badge {
       display: none;
@@ -2003,9 +2014,9 @@
     .wave-schedule-strip {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      height: 22px;
-      padding: 0 6px;
+      gap: 5px;
+      height: 24px;
+      padding: 0 8px;
       border-radius: 4px;
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -2019,14 +2030,14 @@
 
     .wave-schedule-step {
       display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      font-size: 10.5px;
+      align-items: baseline;
+      gap: 3px;
+      font-size: 11px;
       line-height: 1;
     }
 
     .wave-schedule-step .step-lbl {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--text-main);
       line-height: 1;
@@ -2034,7 +2045,7 @@
     }
 
     .wave-schedule-step .step-time {
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       color: var(--accent-red);
@@ -2042,12 +2053,14 @@
     }
 
     .wave-schedule-sep {
+      display: inline-flex;
+      align-items: center;
       color: var(--text-muted);
-      opacity: 0.35;
-      font-size: 8.5px;
+      opacity: 0.4;
+      font-size: 10px;
       line-height: 1;
       user-select: none;
-      margin: 0;
+      margin: 0 1px;
     }
 
     :root[data-theme="light"] .wave-schedule-strip {
@@ -2079,16 +2092,16 @@
         gap: 4px;
       }
       .wave-schedule-strip {
-        padding: 0 4px;
+        padding: 0 5px;
         gap: 3px;
         height: 22px;
       }
       .wave-schedule-step {
         font-size: 10px;
-        gap: 1.5px;
+        gap: 2px;
       }
       .wave-schedule-step .step-lbl {
-        font-size: 9.5px;
+        font-size: 10px;
       }
       .wave-schedule-step .step-time {
         font-size: 10px;
