@@ -20,6 +20,7 @@ const selectedTeamScope = defineModel<TeamScope>('selectedTeamScope', { default:
 
 const emit = defineEmits<{
   (e: 'refresh'): void
+  (e: 'reportChange', reportId: string): void
 }>()
 
 const isFilterOpen = ref(false)
@@ -33,7 +34,7 @@ const formatReportName = (name?: string) => {
 }
 
 const onListChange = () => {
-  emit('refresh')
+  emit('reportChange', selectedListId.value)
 }
 
 const clearSearch = () => {
