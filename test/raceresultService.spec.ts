@@ -12,7 +12,11 @@ import {
   resolveColumnIndices,
   detectFeedViewType,
   normalizeCategoryName,
-  compareCategories
+  compareCategories,
+  getWaveScheduleEntry,
+  getCategoryStartTime,
+  getCategoryStageTime,
+  getWaveWarmupTime
 } from '../modules/results/services/raceresultService'
 
 describe('RACE RESULT Metadata-Aware Parsing', () => {
@@ -190,6 +194,59 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
       expect(parsed.riders[0].bib).toBe('99')
       expect(parsed.riders[0].name).toBe('Jane Doe')
       expect(parsed.riders[0].category).toBe('Varsity Girls')
+    })
+  })
+
+  describe('Official 2026 Wave Schedule Times & Warm-up Calculation', () => {
+    it('returns exact 2026 schedule for 8th Grade Girls with Field: 1 and Wave: 1', () => {
+      const entryField = getWaveScheduleEntry(null, '8th Grade Girls', 'FIELD: 1')
+      expect(entryField).toEqual({ start: '1:58 PM', stage: '1:43 PM' })
+
+      const entryWave = getWaveScheduleEntry(null, '8th Grade Girls', 'Wave: 1')
+      expect(entryWave).toEqual({ start: '1:58 PM', stage: '1:43 PM' })
+
+      const startTime = getCategoryStartTime(null, '8th Grade Girls')
+      expect(startTime).toBe('1:58 PM')
+
+      const stageTime = getCategoryStageTime(null, '8th Grade Girls')
+      expect(stageTime).toBe('1:43 PM')
+
+      // Warm-up is Stage (1:43 PM) minus 45 mins = 12:58 PM
+      const warmup = getWaveWarmupTime(null, '8th Grade Girls', 'FIELD: 1')
+      expect(warmup).toBe('12:58 PM')
+    })
+
+    it('correctly orders all 2026 categories by wave start time', () => {
+      const categories = [
+        '8th Grade Girls',
+        'Varsity Boys',
+        'JV II Boys',
+        'Freshman Girls',
+        '6th Grade Girls',
+        'JV III Boys'
+      ]
+
+      const sorted = [...categories].sort((a, b) => compareCategories(a, b, 'TIME', null))
+      expect(sorted).toEqual([
+        'Varsity Boys',   // 8:00 AM
+        'JV III Boys',    // 8:05 AM
+        'Freshman Girls', // 11:40 AM
+        'JV II Boys',     // 12:45 PM
+        '8th Grade Girls',// 1:58 PM
+        '6th Grade Girls' // 2:09 PM
+      ])
+    })
+
+    it('ignores stale race.waveSchedule entries for standard categories', () => {
+      const staleRace = {
+        id: 'stale-race',
+        waveSchedule: {
+          '8th Grade Girls': { '1': { start: '11:56 AM', stage: '11:41 AM' } }
+        }
+      }
+
+      const entry = getWaveScheduleEntry(staleRace, '8th Grade Girls', '1')
+      expect(entry).toEqual({ start: '1:58 PM', stage: '1:43 PM' })
     })
   })
 })

@@ -30,7 +30,12 @@ export function subscribeToRaces(
 
       const racesList: Race[] = []
       snapshot.forEach((docSnap) => {
-        racesList.push(docSnap.data() as Race)
+        const rData = docSnap.data() as Race
+        const fallback = (defaultRaces as Race[]).find(f => f.id === rData.id)
+        if (fallback && fallback.waveSchedule) {
+          rData.waveSchedule = { ...(rData.waveSchedule || {}), ...fallback.waveSchedule }
+        }
+        racesList.push(rData)
       })
 
       // Sort by startDate if available

@@ -92,7 +92,21 @@ export const useCurrentRace = () => {
 
             const list: Race[] = []
             snapshot.forEach((d) => {
-              list.push(d.data() as Race)
+              const rData = d.data() as Race
+              const fallback = (fallbackEvents as Race[]).find(f => f.id === rData.id)
+              if (fallback && fallback.waveSchedule) {
+                // Merge fallback waveSchedule to ensure standard categories always reflect official 2026 schedule
+                rData.waveSchedule = { ...(rData.waveSchedule || {}), ...fallback.waveSchedule }
+
+                // If Firestore record had stale or missing waveSchedule, sync in background
+                if (JSON.stringify(d.data().waveSchedule) !== JSON.stringify(fallback.waveSchedule)) {
+                  const docRef = doc(db, 'races', rData.id)
+                  setDoc(docRef, { waveSchedule: fallback.waveSchedule }, { merge: true }).catch((err) => {
+                    console.warn('[Firestore] Failed to sync updated wave schedule:', err)
+                  })
+                }
+              }
+              list.push(rData)
             })
 
             // Sort by order matching fallbackEvents or date
