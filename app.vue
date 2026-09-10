@@ -102,7 +102,6 @@ const setTab = (tab: TabType, pushToHistory = true) => {
   } else if (tab === 'results') {
     selectedListId.value = listMode.value === 'TEAM' ? 'E07F7C' : '4C8C1F'
   }
-  refreshData()
 
   if (import.meta.client && !isSyncingRoute) {
     const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
@@ -207,12 +206,19 @@ watch(
 )
 
 const { startAlertScheduler } = useNotificationSubscriptions()
+let updateTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   syncFromRoute()
+  refreshData()
   startAlertScheduler(() => races.value as Race[])
 
   if (import.meta.client) {
+    // 30-second update timer for live timing feeds
+    updateTimer = setInterval(() => {
+      refreshData()
+    }, 30000)
+
     window.addEventListener('popstate', syncFromRoute)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js', { scope: '/' })
@@ -223,6 +229,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (updateTimer) {
+    clearInterval(updateTimer)
+  }
   if (import.meta.client) {
     window.removeEventListener('popstate', syncFromRoute)
   }
