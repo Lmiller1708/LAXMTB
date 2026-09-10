@@ -29,7 +29,7 @@ const emit = defineEmits<{
             id="tabCoachSignups"
             @click="emit('changeTab', 'coach')"
           >
-            <span>🚵</span> Coach Sign-Ups <span class="new-pill">NEW</span>
+            <span>🚵</span> Coach Sign-Ups
           </div>
           <div
             class="nav-tab"
