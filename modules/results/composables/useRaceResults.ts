@@ -24,6 +24,8 @@ export const useRaceResults = () => {
   const isLive = ref(false)
   let activeRequestId = 0
 
+  const tabCache = ref<Record<string, Record<string, any>>>({})
+
   // Filters state
   const searchQuery = ref('')
   const listMode = ref<ResultsGroupMode>('WAVE')
@@ -293,13 +295,32 @@ export const useRaceResults = () => {
 
       const parsed = parseUniversalData(resultData, targetList.ID, page)
 
-      riders.value = parsed.riders
-      teamStandings.value = parsed.teamStandings
-      feedViewType.value = parsed.viewType
-      isLive.value = !isCompleted
-      lastUpdated.value = isCompleted
-        ? 'Final Results • ' + new Date().toLocaleTimeString()
-        : 'Updated ' + new Date().toLocaleTimeString()
+      const entry = {
+        riders: parsed.riders,
+        teamStandings: parsed.teamStandings,
+        feedViewType: parsed.viewType,
+        availableReports: lists,
+        selectedListId: targetList.ID,
+        listMode: (targetList.Name || '').toLowerCase().includes('by team') ? ('TEAM' as ResultsGroupMode) : ('WAVE' as ResultsGroupMode),
+        lastUpdated: isCompleted
+          ? 'Final Results • ' + new Date().toLocaleTimeString()
+          : 'Updated ' + new Date().toLocaleTimeString(),
+        isLive: !isCompleted
+      }
+
+      if (!tabCache.value[eventId]) {
+        tabCache.value[eventId] = {}
+      }
+      tabCache.value[eventId][page] = entry
+
+      riders.value = entry.riders
+      teamStandings.value = entry.teamStandings
+      feedViewType.value = entry.feedViewType
+      availableReports.value = entry.availableReports
+      selectedListId.value = entry.selectedListId
+      listMode.value = entry.listMode
+      isLive.value = entry.isLive
+      lastUpdated.value = entry.lastUpdated
 
       if (import.meta.client && (parsed.riders.length > 0 || parsed.teamStandings.length > 0)) {
         try {
@@ -341,6 +362,29 @@ export const useRaceResults = () => {
     }
   }
 
+  const loadOrSwitchTab = async (
+    eventId: string,
+    page: 'list' | 'results',
+    isCompleted?: boolean
+  ) => {
+    if (!eventId) return
+    const cached = tabCache.value[eventId]?.[page]
+    if (cached) {
+      riders.value = cached.riders
+      teamStandings.value = cached.teamStandings
+      feedViewType.value = cached.feedViewType
+      availableReports.value = cached.availableReports
+      selectedListId.value = cached.selectedListId
+      listMode.value = cached.listMode
+      lastUpdated.value = cached.lastUpdated
+      isLive.value = cached.isLive
+      error.value = null
+      return
+    }
+    // Fetch if not yet loaded in memory
+    await fetchResults(eventId, page, undefined, isCompleted)
+  }
+
   return {
     riders,
     filteredRiders,
@@ -368,6 +412,7 @@ export const useRaceResults = () => {
     toggleCardCollapse,
     isCardCollapsed,
     toggleAllCards,
-    fetchResults
+    fetchResults,
+    loadOrSwitchTab
   }
 }

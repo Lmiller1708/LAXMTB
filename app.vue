@@ -36,7 +36,8 @@ const {
   selectedTeamScope,
   allCardsCollapsed,
   toggleAllCards,
-  fetchResults
+  fetchResults,
+  loadOrSwitchTab
 } = useRaceResults()
 
 const showNotifToast = (msg: string, body?: string) => {
@@ -97,10 +98,11 @@ const setTab = (tab: TabType, pushToHistory = true) => {
     tab = 'details'
   }
   currentTab.value = tab
-  if (tab === 'list') {
-    selectedListId.value = listMode.value === 'TEAM' ? '747B52' : 'A76F6B'
-  } else if (tab === 'results') {
-    selectedListId.value = listMode.value === 'TEAM' ? 'E07F7C' : '4C8C1F'
+  if (tab === 'list' || tab === 'results') {
+    if (currentRace.value?.isPublished && currentRace.value?.eventId) {
+      const completed = isRaceCompleted(currentRace.value)
+      loadOrSwitchTab(String(currentRace.value.eventId), tab, completed)
+    }
   }
 
   if (import.meta.client && !isSyncingRoute) {
@@ -163,7 +165,13 @@ const syncFromRoute = () => {
         else if (lower === 'coach' || lower === 'coaches') currentTab.value = 'coach'
         else if (lower === 'details' || lower === 'detail' || lower === 'info') currentTab.value = 'details'
       }
-      refreshData()
+
+      if (currentTab.value === 'list' || currentTab.value === 'results') {
+        if (currentRace.value?.isPublished && currentRace.value?.eventId) {
+          const completed = isRaceCompleted(currentRace.value)
+          loadOrSwitchTab(String(currentRace.value.eventId), currentTab.value, completed)
+        }
+      }
     } else {
       // Landed on root / or /race -> push canonical path
       const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
@@ -346,6 +354,7 @@ const handlePrint = () => {
           :is-completed="isRaceCompleted(currentRace)"
           :total-count="feedViewType === 'team_standings' ? filteredTeamStandings.length : filteredRiders.length"
           @refresh="refreshData"
+          @report-change="(repId) => fetchResults(String(currentRace?.eventId), currentTab, repId, isRaceCompleted(currentRace))"
         />
 
         <ResultsStatusBar
