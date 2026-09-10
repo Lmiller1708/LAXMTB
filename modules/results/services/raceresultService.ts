@@ -380,11 +380,11 @@ function extractGroupContext(key: string, currentCtx: GroupContext): GroupContex
   const cleanKey = key.includes('_') ? key.split('_').slice(1).join('_') : key
   const ctx: GroupContext = { ...currentCtx }
 
-  // Wave or Field header
+  // Wave or Field header -> Always normalize to Wave in UI
   if (cleanKey.match(/\bfield:\s*(\d+)/i) || cleanKey.match(/\bfield\s*(\d+)/i)) {
     const m = cleanKey.match(/\bfield:?\s*(\d+)/i)
-    ctx.waveOrField = `Field: ${m ? m[1] : cleanKey}`
-    ctx.waveOrFieldType = 'field'
+    ctx.waveOrField = `Wave: ${m ? m[1] : cleanKey}`
+    ctx.waveOrFieldType = 'wave'
     ctx.waveOrFieldNum = m ? m[1] : '1'
   } else if (cleanKey.match(/\bwave:\s*(\d+)/i) || cleanKey.match(/\bwave\s*(\d+)/i)) {
     const m = cleanKey.match(/\bwave:?\s*(\d+)/i)
@@ -539,11 +539,11 @@ export function parseUniversalData(
     const gender = String((map.gender !== undefined ? row[map.gender] : '') || '').trim()
     const div = String((map.division !== undefined ? row[map.division] : '') || ctx.division || '1').trim()
 
-    // Wave / Field
+    // Wave / Field -> Always normalize to Wave in UI
     const rawWaveOrField = String((map.waveOrField !== undefined ? row[map.waveOrField] : '') || ctx.waveOrFieldNum || '').trim()
-    const waveOrFieldType: 'wave' | 'field' = ctx.waveOrFieldType || (fields.some(f => String(f.Expression).includes('SplitField')) ? 'field' : 'wave')
-    const waveOrFieldNum = rawWaveOrField || ctx.waveOrFieldNum || '1'
-    const waveOrField = ctx.waveOrField || `${waveOrFieldType === 'field' ? 'Field' : 'Wave'}: ${waveOrFieldNum}`
+    const waveOrFieldNum = rawWaveOrField.replace(/\D/g, '') || ctx.waveOrFieldNum || '1'
+    const waveOrField = `Wave: ${waveOrFieldNum}`
+    const waveOrFieldType: 'wave' | 'field' = 'wave'
 
     // Seeding & Series Ranks
     const seedingRank = String((map.seedingRank !== undefined ? row[map.seedingRank] : '') || '').trim()
