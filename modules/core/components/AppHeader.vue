@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { isOnline } = useNetworkStatus()
 const { theme, toggleTheme } = useTheme()
-const { user, isCoachAuth, isAuthorizedCoach, signInWithGoogle, signOut, authLoading } = useCoachAuth()
+const { user, isCoachAuth, isAuthorizedCoach, isAdminCoach, signInWithGoogle, signOut, authLoading } = useCoachAuth()
 const { menuBadgeText } = useNotificationSubscriptions()
 
 const isMenuOpen = ref(false)
@@ -26,7 +26,11 @@ const handleSignIn = async () => {
   closeMenu()
   const result = await signInWithGoogle()
   if (result.success) {
-    emit('toast', `🔓 Welcome, ${user.value?.displayName || user.value?.email}! Coach Admin unlocked.`)
+    if (result.isAdmin) {
+      emit('toast', `🔓 Welcome, ${user.value?.displayName || user.value?.email}! Coach Admin unlocked.`)
+    } else {
+      emit('toast', `👋 Welcome, ${user.value?.displayName || user.value?.email}! Signed in as Team Coach.`)
+    }
   } else if (result.error) {
     emit('toast', `⛔ ${result.error}`)
   }
@@ -35,7 +39,7 @@ const handleSignIn = async () => {
 const handleSignOut = async () => {
   closeMenu()
   await signOut()
-  emit('toast', '👋 Signed out of Coach Admin')
+  emit('toast', '👋 Signed out')
 }
 
 // Admin badge styling
@@ -153,13 +157,13 @@ onMounted(() => {
       <!-- Divider -->
       <div style="height:1px;background:var(--border);margin:4px 14px;" />
 
-      <!-- CASE 1: NOT SIGNED IN AS ADMIN -> ONLY ONE OPTION: "Coach Sign In" -->
+      <!-- CASE 1: NOT SIGNED IN -> "Coach Sign In" -->
       <div v-if="!isAuthorizedCoach" class="mobile-menu-item" @click="handleSignIn">
         <div class="mobile-menu-item-left">
           <span>🔑</span>
           <div>
             <div class="mobile-menu-item-title">Coach Sign In</div>
-            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Sign in with Google to manage race</div>
+            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Sign in with Google account</div>
           </div>
         </div>
         <span class="mobile-menu-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:#22c55e;">
@@ -167,10 +171,10 @@ onMounted(() => {
         </span>
       </div>
 
-      <!-- CASE 2: SIGNED IN AS ADMIN -> CAN SEE ADMIN OPTIONS -->
+      <!-- CASE 2: SIGNED IN -->
       <template v-else>
-        <!-- Coach Admin Modal -->
-        <div class="mobile-menu-item" @click="handleAdmin">
+        <!-- Coach Admin Modal (for Admin coaches) -->
+        <div v-if="isAdminCoach" class="mobile-menu-item" @click="handleAdmin">
           <div class="mobile-menu-item-left">
             <span>{{ isCoachAuth ? '🔓' : '⚙️' }}</span>
             <div>
@@ -179,6 +183,18 @@ onMounted(() => {
             </div>
           </div>
           <span class="mobile-menu-badge" :style="adminBadgeStyle">{{ adminBadgeLabel }}</span>
+        </div>
+
+        <!-- Coach Profile Status (for non-admin coaches) -->
+        <div v-else class="mobile-menu-item" style="cursor:default;">
+          <div class="mobile-menu-item-left">
+            <span>🚵</span>
+            <div>
+              <div class="mobile-menu-item-title">Team Coach</div>
+              <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">{{ user?.displayName || user?.email }}</div>
+            </div>
+          </div>
+          <span class="mobile-menu-badge" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.3);color:#60a5fa;">Coach</span>
         </div>
 
         <!-- Sign Out -->

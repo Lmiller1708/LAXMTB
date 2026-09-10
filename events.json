@@ -7,16 +7,16 @@
     "exactTrailhead": "Powers Bluff North Trailhead",
     "address": "Powers Bluff North Trailhead, Arpin, WI 54410 (Wood County)",
     "city": "Marshfield, WI",
-    "warning": "<strong>⚠️ Navigation Warning:</strong> Navigating to generic <em>\"Powers Bluff County Park\"</em> will put you on the wrong side of the venue! Navigate directly to <strong>Powers Bluff North Trailhead</strong>.",
+    "warning": "<strong>\u26a0\ufe0f Navigation Warning:</strong> Navigating to generic <em>\"Powers Bluff County Park\"</em> will put you on the wrong side of the venue! Navigate directly to <strong>Powers Bluff North Trailhead</strong>.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Powers+Bluff+North+Trailhead+Arpin+WI",
     "appleMapsUrl": "https://maps.apple.com/?daddr=Powers+Bluff+North+Trailhead,+Arpin,+WI&q=Powers+Bluff+North+Trailhead",
     "eventGuideUrl": "https://wisconsinmtb.org/events/bluff-bash-festival/",
     "embedMapUrl": "https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F",
     "fullMapUrl": "https://www.google.com/maps/d/viewer?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI",
-    "conference": "North Conference (Sunday Racing) • South Conference (Saturday Racing)",
+    "conference": "North Conference (Sunday Racing) \u2022 South Conference (Saturday Racing)",
     "logo": "/logos/bluff-bash.png",
     "eventId": 418104,
-    "theme": "TROPICAL BEACH LUAU! 🌴🌺🏝️☀️",
+    "theme": "TROPICAL BEACH LUAU! \ud83c\udf34\ud83c\udf3a\ud83c\udfdd\ufe0f\u2600\ufe0f",
     "isPublished": true,
     "signups": {
       "volunteer": "81287266078",
@@ -277,7 +277,278 @@
         }
       }
     },
-    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9"
+    "photosUrl": "https://photos.app.goo.gl/XgNFXXB5XMakNz5U9",
+    "coachSignups": {
+      "policy": "Ride Leader must hold NICA Level 2+ and is responsible for participants. Multiple coaches can sign up for each spot.",
+      "preRides": [
+        {
+          "id": "pr-1",
+          "name": "North Conference Adventure Ride",
+          "meetingTime": "10:00 AM - 4:00 PM",
+          "ridersAllowed": "North Conference Adventure Ride",
+          "duration": "All Day",
+          "day": "Saturday",
+          "date": "Sept 5",
+          "subtitle": "South Conference",
+          "tag": "Adventure",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "pr-2",
+          "name": "North Conference Coaches Pre-Ride",
+          "meetingTime": "5:00 PM - 6:00 PM",
+          "ridersAllowed": "Coaches only Pre-ride",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Sept 5",
+          "subtitle": "South Conference",
+          "tag": "Coaches",
+          "tagClass": "tag-preride",
+          "leaders": [
+            "Emily"
+          ],
+          "support": [
+            "Nate"
+          ]
+        },
+        {
+          "id": "pr-3",
+          "name": "Varsity / JV3 Only Pre-Ride",
+          "meetingTime": "6:00 PM - 7:00 PM",
+          "ridersAllowed": "Varsity / JV3 Only",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Sept 5",
+          "subtitle": "South Conference",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [
+            "Matt",
+            "Mary"
+          ],
+          "support": [
+            "Andy M.",
+            "Lance",
+            "Nate",
+            "Ben V"
+          ]
+        },
+        {
+          "id": "pr-4",
+          "name": "Registered Riders & Coaches (7:00 AM)",
+          "meetingTime": "7:00 AM",
+          "ridersAllowed": "Registered Riders/Coaches",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "Pre-Ride",
+          "tagClass": "tag-preride",
+          "leaders": [
+            "Nate"
+          ],
+          "support": [
+            "Mike",
+            "Glenn",
+            "Nick"
+          ]
+        },
+        {
+          "id": "pr-5",
+          "name": "Registered Riders & Coaches (8:00 AM)",
+          "meetingTime": "8:00 AM",
+          "ridersAllowed": "Registered Riders/Coaches",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "Pre-Ride",
+          "tagClass": "tag-preride",
+          "leaders": [
+            "Carey",
+            "Ben V"
+          ],
+          "support": [
+            "Lance",
+            "Tiffany"
+          ]
+        },
+        {
+          "id": "pr-6",
+          "name": "Registered Riders & Coaches (9:00 AM)",
+          "meetingTime": "9:00 AM - 9:30 AM",
+          "ridersAllowed": "Registered Riders/Coaches",
+          "duration": "30 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "Pre-Ride",
+          "tagClass": "tag-preride",
+          "leaders": [
+            "Emily"
+          ],
+          "support": [
+            "Lance",
+            "Tiffany",
+            "Dustin"
+          ]
+        }
+      ],
+      "warmups": [
+        {
+          "id": "wu-1",
+          "name": "Varsity, JV3 Boys",
+          "meetingTime": "8:45 AM",
+          "stagingTime": "9:45 AM",
+          "ridersAllowed": "Varsity, JV3 Boys",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [
+            "Matt"
+          ],
+          "support": [
+            "Mike"
+          ]
+        },
+        {
+          "id": "wu-2",
+          "name": "Varsity, JV3 Girls",
+          "meetingTime": "10:00 AM",
+          "stagingTime": "11:10 AM",
+          "ridersAllowed": "Varsity, JV3 Girls",
+          "duration": "70 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [
+            "Andy M."
+          ],
+          "support": [
+            "Dustin"
+          ]
+        },
+        {
+          "id": "wu-3",
+          "name": "MS2, 9th, 8th Grade Boys",
+          "meetingTime": "11:45 AM",
+          "stagingTime": "12:50 PM",
+          "ridersAllowed": "MS2, 9th, 8th Grade Boys",
+          "duration": "65 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "MS / 9th / 8th",
+          "tagClass": "",
+          "leaders": [
+            "Emily",
+            "Ben V"
+          ],
+          "support": [
+            "Nick"
+          ]
+        },
+        {
+          "id": "wu-4",
+          "name": "MS2, 9th Grade Girls",
+          "meetingTime": "12:45 PM",
+          "stagingTime": "1:45 PM",
+          "ridersAllowed": "MS2, 9th Grade Girls",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "MS / 9th",
+          "tagClass": "",
+          "leaders": [
+            "Glenn"
+          ],
+          "support": [
+            "Kiel"
+          ]
+        },
+        {
+          "id": "wu-5",
+          "name": "JV2, 8th Grade Girls",
+          "meetingTime": "12:55 PM",
+          "stagingTime": "1:55 PM",
+          "ridersAllowed": "JV2, 8th Grade Girls",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "JV2 / 8th",
+          "tagClass": "",
+          "leaders": [
+            "Lance"
+          ],
+          "support": []
+        },
+        {
+          "id": "wu-6",
+          "name": "JV2, 7th Grade Boys",
+          "meetingTime": "1:45 PM",
+          "stagingTime": "2:40 PM",
+          "ridersAllowed": "JV2, 7th Grade Boys",
+          "duration": "55 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "JV2 / 7th",
+          "tagClass": "",
+          "leaders": [],
+          "support": [
+            "Mike",
+            "Scott"
+          ]
+        },
+        {
+          "id": "wu-7",
+          "name": "6th Grade Boys",
+          "meetingTime": "2:30 PM",
+          "stagingTime": "3:25 PM",
+          "ridersAllowed": "6th Grade Boys",
+          "duration": "55 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "6th Grade",
+          "tagClass": "",
+          "leaders": [
+            "Emily"
+          ],
+          "support": [
+            "Tiffany"
+          ]
+        },
+        {
+          "id": "wu-8",
+          "name": "7th, 6th Grade Girls, HSO",
+          "meetingTime": "2:30 PM",
+          "stagingTime": "3:31 PM",
+          "ridersAllowed": "7th, 6th Grade Girls, HS Open",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Sept 6",
+          "subtitle": "North Conference \u2022 Race Day",
+          "tag": "7th / 6th / HSO",
+          "tagClass": "",
+          "leaders": [
+            "Nick"
+          ],
+          "support": [
+            "Jim"
+          ]
+        }
+      ]
+    }
   },
   {
     "id": "cable-conquest",
@@ -287,7 +558,7 @@
     "exactTrailhead": "Carlson Competition Stadium (Birkie Trailhead)",
     "address": "42225 Telemark Village Rd, Cable, WI 54821",
     "city": "Cable, WI",
-    "warning": "<strong>📍 Venue Info:</strong> Start & finish located under the iconic American Birkebeiner arch at Carlson Competition Stadium.",
+    "warning": "<strong>\ud83d\udccd Venue Info:</strong> Start & finish located under the iconic American Birkebeiner arch at Carlson Competition Stadium.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Mt+Telemark+Village+42225+Telemark+Village+Cable+WI+54821",
     "appleMapsUrl": "https://maps.apple.com/?daddr=42225+Telemark+Village,+Cable,+WI+54821&q=Mt+Telemark+Village",
     "eventGuideUrl": "https://wisconsinmtb.org/events/cable-conquest-festival/",
@@ -526,6 +797,101 @@
           "stage": "1:56 PM"
         }
       }
+    },
+    "coachSignups": {
+      "policy": "Ride Leader must hold NICA Level 2+ and is responsible for participants. Multiple coaches can sign up for each spot.",
+      "preRides": [
+        {
+          "id": "pr-1",
+          "name": "Coaches Only Pre-Ride",
+          "meetingTime": "5:00 PM - 6:00 PM",
+          "ridersAllowed": "Course preview for credentialed coaches only.",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Race Weekend",
+          "subtitle": "Pre-Ride Session",
+          "tag": "Coaches",
+          "tagClass": "tag-preride",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "pr-2",
+          "name": "All-Team Pre-Ride",
+          "meetingTime": "6:00 PM - 7:00 PM",
+          "ridersAllowed": "All registered riders & coaches.",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Race Weekend",
+          "subtitle": "Pre-Ride Session",
+          "tag": "Team",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        }
+      ],
+      "warmups": [
+        {
+          "id": "wu-1",
+          "name": "Varsity, JV3 Boys",
+          "meetingTime": "8:45 AM",
+          "stagingTime": "9:45 AM",
+          "ridersAllowed": "Varsity, JV3 Boys",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-2",
+          "name": "Varsity, JV3 Girls",
+          "meetingTime": "10:00 AM",
+          "stagingTime": "11:10 AM",
+          "ridersAllowed": "Varsity, JV3 Girls",
+          "duration": "70 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-3",
+          "name": "MS2, 9th, 8th Grade Boys",
+          "meetingTime": "11:45 AM",
+          "stagingTime": "12:50 PM",
+          "ridersAllowed": "MS2, 9th, 8th Grade Boys",
+          "duration": "65 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "MS / 9th / 8th",
+          "tagClass": "",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-4",
+          "name": "MS2, 9th Grade Girls",
+          "meetingTime": "12:45 PM",
+          "stagingTime": "1:45 PM",
+          "ridersAllowed": "MS2, 9th Grade Girls",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "MS / 9th",
+          "tagClass": "",
+          "leaders": [],
+          "support": []
+        }
+      ]
     }
   },
   {
@@ -536,7 +902,7 @@
     "exactTrailhead": "Camp Tesomas Boy Scout Reservation",
     "address": "5403 Spider Lake Rd, Rhinelander, WI 54501",
     "city": "Rhinelander, WI",
-    "warning": "<strong>📍 Scout Camp Venue:</strong> Located on private scout reservation singletrack around Spider Lake.",
+    "warning": "<strong>\ud83d\udccd Scout Camp Venue:</strong> Located on private scout reservation singletrack around Spider Lake.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Camp+Tesomas+5403+Spider+Lake+Rd+Rhinelander+WI+54501",
     "appleMapsUrl": "https://maps.apple.com/?daddr=5403+Spider+Lake+Rd,+Rhinelander,+WI+54501&q=Camp+Tesomas",
     "eventGuideUrl": "https://wisconsinmtb.org/events/hodag-hustle-festival/",
@@ -766,6 +1132,101 @@
           "stage": "1:56 PM"
         }
       }
+    },
+    "coachSignups": {
+      "policy": "Ride Leader must hold NICA Level 2+ and is responsible for participants. Multiple coaches can sign up for each spot.",
+      "preRides": [
+        {
+          "id": "pr-1",
+          "name": "Coaches Only Pre-Ride",
+          "meetingTime": "5:00 PM - 6:00 PM",
+          "ridersAllowed": "Course preview for credentialed coaches only.",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Race Weekend",
+          "subtitle": "Pre-Ride Session",
+          "tag": "Coaches",
+          "tagClass": "tag-preride",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "pr-2",
+          "name": "All-Team Pre-Ride",
+          "meetingTime": "6:00 PM - 7:00 PM",
+          "ridersAllowed": "All registered riders & coaches.",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Race Weekend",
+          "subtitle": "Pre-Ride Session",
+          "tag": "Team",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        }
+      ],
+      "warmups": [
+        {
+          "id": "wu-1",
+          "name": "Varsity, JV3 Boys",
+          "meetingTime": "8:45 AM",
+          "stagingTime": "9:45 AM",
+          "ridersAllowed": "Varsity, JV3 Boys",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-2",
+          "name": "Varsity, JV3 Girls",
+          "meetingTime": "10:00 AM",
+          "stagingTime": "11:10 AM",
+          "ridersAllowed": "Varsity, JV3 Girls",
+          "duration": "70 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-3",
+          "name": "MS2, 9th, 8th Grade Boys",
+          "meetingTime": "11:45 AM",
+          "stagingTime": "12:50 PM",
+          "ridersAllowed": "MS2, 9th, 8th Grade Boys",
+          "duration": "65 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "MS / 9th / 8th",
+          "tagClass": "",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-4",
+          "name": "MS2, 9th Grade Girls",
+          "meetingTime": "12:45 PM",
+          "stagingTime": "1:45 PM",
+          "ridersAllowed": "MS2, 9th Grade Girls",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "MS / 9th",
+          "tagClass": "",
+          "leaders": [],
+          "support": []
+        }
+      ]
     }
   },
   {
@@ -776,7 +1237,7 @@
     "exactTrailhead": "Nordic Mountain Main Chalet & MTB Trailhead",
     "address": "W5806 County Rd W, Wild Rose, WI 54984",
     "city": "Wild Rose, WI",
-    "warning": "<strong>📍 Ski Resort Venue:</strong> Staging and viewing located directly in front of the main ski chalet bowl.",
+    "warning": "<strong>\ud83d\udccd Ski Resort Venue:</strong> Staging and viewing located directly in front of the main ski chalet bowl.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984",
     "appleMapsUrl": "https://maps.apple.com/?daddr=W5806+County+Rd+W,+Wild+Rose,+WI+54984&q=Nordic+Mountain",
     "eventGuideUrl": "https://wisconsinmtb.org/events/gnarly-nordic-festival/",
@@ -1006,6 +1467,101 @@
           "stage": "1:56 PM"
         }
       }
+    },
+    "coachSignups": {
+      "policy": "Ride Leader must hold NICA Level 2+ and is responsible for participants. Multiple coaches can sign up for each spot.",
+      "preRides": [
+        {
+          "id": "pr-1",
+          "name": "Coaches Only Pre-Ride",
+          "meetingTime": "5:00 PM - 6:00 PM",
+          "ridersAllowed": "Course preview for credentialed coaches only.",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Race Weekend",
+          "subtitle": "Pre-Ride Session",
+          "tag": "Coaches",
+          "tagClass": "tag-preride",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "pr-2",
+          "name": "All-Team Pre-Ride",
+          "meetingTime": "6:00 PM - 7:00 PM",
+          "ridersAllowed": "All registered riders & coaches.",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Race Weekend",
+          "subtitle": "Pre-Ride Session",
+          "tag": "Team",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        }
+      ],
+      "warmups": [
+        {
+          "id": "wu-1",
+          "name": "Varsity, JV3 Boys",
+          "meetingTime": "8:45 AM",
+          "stagingTime": "9:45 AM",
+          "ridersAllowed": "Varsity, JV3 Boys",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-2",
+          "name": "Varsity, JV3 Girls",
+          "meetingTime": "10:00 AM",
+          "stagingTime": "11:10 AM",
+          "ridersAllowed": "Varsity, JV3 Girls",
+          "duration": "70 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-3",
+          "name": "MS2, 9th, 8th Grade Boys",
+          "meetingTime": "11:45 AM",
+          "stagingTime": "12:50 PM",
+          "ridersAllowed": "MS2, 9th, 8th Grade Boys",
+          "duration": "65 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "MS / 9th / 8th",
+          "tagClass": "",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-4",
+          "name": "MS2, 9th Grade Girls",
+          "meetingTime": "12:45 PM",
+          "stagingTime": "1:45 PM",
+          "ridersAllowed": "MS2, 9th Grade Girls",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "MS / 9th",
+          "tagClass": "",
+          "leaders": [],
+          "support": []
+        }
+      ]
     }
   },
   {
@@ -1016,7 +1572,7 @@
     "exactTrailhead": "Trek Headquarters Trails",
     "address": "97 Canal Rd, Waterloo, WI 53594",
     "city": "Waterloo, WI",
-    "warning": "<strong>🏆 State Championship Finale:</strong> Exclusive access to private Trek World HQ Trails, historic Red Barn festival, pump track, and night ride.",
+    "warning": "<strong>\ud83c\udfc6 State Championship Finale:</strong> Exclusive access to private Trek World HQ Trails, historic Red Barn festival, pump track, and night ride.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Trek+Trails+97+Canal+Rd+Waterloo+WI+53594",
     "appleMapsUrl": "https://maps.apple.com/?daddr=97+Canal+Rd,+Waterloo,+WI+53594&q=Trek+Trails",
     "eventGuideUrl": "https://wisconsinmtb.org/events/red-barn-state-championship/",
@@ -1246,6 +1802,101 @@
           "stage": "1:56 PM"
         }
       }
+    },
+    "coachSignups": {
+      "policy": "Ride Leader must hold NICA Level 2+ and is responsible for participants. Multiple coaches can sign up for each spot.",
+      "preRides": [
+        {
+          "id": "pr-1",
+          "name": "Coaches Only Pre-Ride",
+          "meetingTime": "5:00 PM - 6:00 PM",
+          "ridersAllowed": "Course preview for credentialed coaches only.",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Race Weekend",
+          "subtitle": "Pre-Ride Session",
+          "tag": "Coaches",
+          "tagClass": "tag-preride",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "pr-2",
+          "name": "All-Team Pre-Ride",
+          "meetingTime": "6:00 PM - 7:00 PM",
+          "ridersAllowed": "All registered riders & coaches.",
+          "duration": "60 min",
+          "day": "Saturday",
+          "date": "Race Weekend",
+          "subtitle": "Pre-Ride Session",
+          "tag": "Team",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        }
+      ],
+      "warmups": [
+        {
+          "id": "wu-1",
+          "name": "Varsity, JV3 Boys",
+          "meetingTime": "8:45 AM",
+          "stagingTime": "9:45 AM",
+          "ridersAllowed": "Varsity, JV3 Boys",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-2",
+          "name": "Varsity, JV3 Girls",
+          "meetingTime": "10:00 AM",
+          "stagingTime": "11:10 AM",
+          "ridersAllowed": "Varsity, JV3 Girls",
+          "duration": "70 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "Varsity / JV3",
+          "tagClass": "tag-special",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-3",
+          "name": "MS2, 9th, 8th Grade Boys",
+          "meetingTime": "11:45 AM",
+          "stagingTime": "12:50 PM",
+          "ridersAllowed": "MS2, 9th, 8th Grade Boys",
+          "duration": "65 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "MS / 9th / 8th",
+          "tagClass": "",
+          "leaders": [],
+          "support": []
+        },
+        {
+          "id": "wu-4",
+          "name": "MS2, 9th Grade Girls",
+          "meetingTime": "12:45 PM",
+          "stagingTime": "1:45 PM",
+          "ridersAllowed": "MS2, 9th Grade Girls",
+          "duration": "60 min",
+          "day": "Sunday",
+          "date": "Race Day",
+          "subtitle": "Race Day Warm-ups",
+          "tag": "MS / 9th",
+          "tagClass": "",
+          "leaders": [],
+          "support": []
+        }
+      ]
     }
   }
 ]

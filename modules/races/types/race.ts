@@ -27,7 +27,27 @@ export interface WaveTime {
   stage?: string;
 }
 
-export type WaveSchedule = Record<string, Record<string, WaveTime>>;
+export interface CoachSlot {
+  id: string;
+  name: string;
+  meetingTime: string;
+  stagingTime?: string;
+  ridersAllowed?: string;
+  duration?: string;
+  day?: string;
+  date?: string;
+  subtitle?: string;
+  tag?: string;
+  tagClass?: string;
+  leaders: string[];
+  support: string[];
+}
+
+export interface CoachSignupsData {
+  policy?: string;
+  preRides?: CoachSlot[];
+  warmups?: CoachSlot[];
+}
 
 export interface Race {
   id: string;
@@ -54,4 +74,5 @@ export interface Race {
   guidelines?: string[];
   waveSchedule?: WaveSchedule;
   photosUrl?: string;
+  coachSignups?: CoachSignupsData;
 }
