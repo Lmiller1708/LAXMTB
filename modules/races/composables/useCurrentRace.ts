@@ -106,6 +106,13 @@ export const useCurrentRace = () => {
                   })
                 }
               }
+              if (fallback && fallback.coachSignups && !rData.coachSignups) {
+                rData.coachSignups = fallback.coachSignups
+                const docRef = doc(db, 'races', rData.id)
+                setDoc(docRef, { coachSignups: fallback.coachSignups }, { merge: true }).catch((err) => {
+                  console.warn('[Firestore] Failed to sync initial coach signups:', err)
+                })
+              }
               list.push(rData)
             })
 
