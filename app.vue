@@ -87,6 +87,10 @@ const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
 }
 
 const setTab = (tab: TabType, pushToHistory = true) => {
+  // Guard: Coach Sign-Ups tab is restricted to authorized coaches only
+  if (tab === 'coach' && !isCoachAuth.value) {
+    tab = 'details'
+  }
   currentTab.value = tab
   if (tab === 'list') {
     selectedListId.value = listMode.value === 'TEAM' ? '747B52' : 'A76F6B'
@@ -269,7 +273,7 @@ const handlePrint = () => {
       <RaceSwitcherBar @select-race="setRace" />
 
       <!-- 3. Navigation Tabs -->
-      <NavigationTabs :current-tab="currentTab" @change-tab="setTab" />
+      <NavigationTabs :current-tab="currentTab" :is-coach-auth="isCoachAuth" @change-tab="setTab" />
     </header>
 
     <!-- Modals -->

@@ -3,6 +3,7 @@ export type TabType = 'details' | 'coach' | 'list' | 'results' | 'photos'
 
 defineProps<{
   currentTab: TabType
+  isCoachAuth?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -24,6 +25,7 @@ const emit = defineEmits<{
             <span>📋</span> Event Details
           </div>
           <div
+            v-if="isCoachAuth"
             class="nav-tab"
             :class="currentTab === 'coach' ? 'active' : 'inactive'"
             id="tabCoachSignups"
