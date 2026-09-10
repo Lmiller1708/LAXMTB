@@ -7,13 +7,13 @@
     "exactTrailhead": "Powers Bluff North Trailhead",
     "address": "Powers Bluff North Trailhead, Arpin, WI 54410 (Wood County)",
     "city": "Marshfield, WI",
-    "warning": "<strong>\u26a0\ufe0f Navigation Warning:</strong> Navigating to generic <em>\"Powers Bluff County Park\"</em> will put you on the wrong side of the venue! Navigate directly to <strong>Powers Bluff North Trailhead</strong>.",
+    "warning": "<strong>⚠️ Navigation Warning:</strong> Navigating to generic <em>\"Powers Bluff County Park\"</em> will put you on the wrong side of the venue! Navigate directly to <strong>Powers Bluff North Trailhead</strong>.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Powers+Bluff+North+Trailhead+Arpin+WI",
     "appleMapsUrl": "https://maps.apple.com/?daddr=Powers+Bluff+North+Trailhead,+Arpin,+WI&q=Powers+Bluff+North+Trailhead",
     "eventGuideUrl": "https://wisconsinmtb.org/events/bluff-bash-festival/",
     "embedMapUrl": "https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F",
     "fullMapUrl": "https://www.google.com/maps/d/viewer?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI",
-    "conference": "North Conference (Sunday Racing) \u2022 South Conference (Saturday Racing)",
+    "conference": "North Conference (Sunday Racing) • South Conference (Saturday Racing)",
     "logo": "/logos/bluff-bash.png",
     "eventId": 418104,
     "theme": "TROPICAL BEACH LUAU! 🌴🌺🏝️☀️",
@@ -126,154 +126,154 @@
     "waveSchedule": {
       "Varsity Boys": {
         "1": {
-          "start": "10:00 AM",
-          "stage": "9:45 AM"
+          "start": "8:00 AM",
+          "stage": "7:45 AM"
         }
       },
       "JV III Boys": {
         "1": {
-          "start": "10:05 AM",
-          "stage": "9:50 AM"
+          "start": "8:05 AM",
+          "stage": "7:50 AM"
         },
         "2": {
-          "start": "10:06 AM",
-          "stage": "10:06 AM"
+          "start": "8:06 AM",
+          "stage": "7:50 AM"
         }
       },
       "Varsity Girls": {
         "1": {
-          "start": "11:25 AM",
-          "stage": "11:10 AM"
+          "start": "9:20 AM",
+          "stage": "9:05 AM"
         }
       },
       "JV III Girls": {
         "1": {
-          "start": "11:30 AM",
-          "stage": "11:15 AM"
+          "start": "9:25 AM",
+          "stage": "9:10 AM"
         }
       },
       "MS2 Boys": {
         "1": {
-          "start": "1:05 PM",
-          "stage": "12:50 PM"
+          "start": "10:48 AM",
+          "stage": "10:33 AM"
         }
       },
       "Freshman Boys": {
         "1": {
-          "start": "1:10 PM",
-          "stage": "12:55 PM"
+          "start": "10:53 AM",
+          "stage": "10:38 AM"
         },
         "2": {
-          "start": "1:11 PM",
-          "stage": "12:55 PM"
+          "start": "10:54 AM",
+          "stage": "10:38 AM"
         },
         "3": {
-          "start": "1:12 PM",
-          "stage": "12:55 PM"
-        }
-      },
-      "8th Grade Boys": {
-        "1": {
-          "start": "1:17 PM",
-          "stage": "1:02 PM"
-        },
-        "2": {
-          "start": "1:18 PM",
-          "stage": "1:02 PM"
+          "start": "10:55 AM",
+          "stage": "10:38 AM"
         }
       },
       "MS2 Girls": {
         "1": {
-          "start": "2:00 PM",
-          "stage": "1:45 PM"
+          "start": "11:35 AM",
+          "stage": "11:20 AM"
         }
       },
       "Freshman Girls": {
         "1": {
-          "start": "2:05 PM",
-          "stage": "1:50 PM"
+          "start": "11:40 AM",
+          "stage": "11:25 AM"
         }
       },
       "JV II Girls": {
         "1": {
-          "start": "2:10 PM",
-          "stage": "1:55 PM"
+          "start": "11:45 AM",
+          "stage": "11:30 AM"
         },
         "2": {
-          "start": "2:11 PM",
-          "stage": "1:55 PM"
-        }
-      },
-      "8th Grade Girls": {
-        "1": {
-          "start": "2:16 PM",
-          "stage": "2:01 PM"
+          "start": "11:46 AM",
+          "stage": "11:30 AM"
         }
       },
       "JV II Boys": {
         "1": {
-          "start": "2:55 PM",
-          "stage": "2:40 PM"
+          "start": "12:45 PM",
+          "stage": "12:30 PM"
         },
         "2": {
-          "start": "2:56 PM",
-          "stage": "2:40 PM"
+          "start": "12:46 PM",
+          "stage": "12:30 PM"
         },
         "3": {
-          "start": "2:57 PM",
-          "stage": "2:40 PM"
+          "start": "12:47 PM",
+          "stage": "12:30 PM"
         },
         "4": {
-          "start": "2:58 PM",
-          "stage": "2:40 PM"
+          "start": "12:48 PM",
+          "stage": "12:30 PM"
+        }
+      },
+      "8th Grade Boys": {
+        "1": {
+          "start": "1:30 PM",
+          "stage": "1:15 PM"
+        },
+        "2": {
+          "start": "1:31 PM",
+          "stage": "1:15 PM"
         }
       },
       "7th Grade Boys": {
         "1": {
-          "start": "3:03 PM",
-          "stage": "2:48 PM"
+          "start": "1:36 PM",
+          "stage": "1:21 PM"
         },
         "2": {
-          "start": "3:04 PM",
-          "stage": "2:48 PM"
+          "start": "1:37 PM",
+          "stage": "1:21 PM"
         }
       },
       "6th Grade Boys": {
         "1": {
-          "start": "3:40 PM",
-          "stage": "3:25 PM"
+          "start": "1:42 PM",
+          "stage": "1:27 PM"
         },
         "2": {
-          "start": "3:41 PM",
-          "stage": "3:25 PM"
+          "start": "1:43 PM",
+          "stage": "1:27 PM"
+        }
+      },
+      "8th Grade Girls": {
+        "1": {
+          "start": "1:58 PM",
+          "stage": "1:43 PM"
         }
       },
       "7th Grade Girls": {
         "1": {
-          "start": "3:46 PM",
-          "stage": "3:31 PM"
+          "start": "2:03 PM",
+          "stage": "1:48 PM"
         },
         "2": {
-          "start": "3:47 PM",
-          "stage": "3:31 PM"
+          "start": "2:04 PM",
+          "stage": "1:48 PM"
         }
       },
       "6th Grade Girls": {
         "1": {
-          "start": "3:52 PM",
-          "stage": "3:36 PM"
+          "start": "2:09 PM",
+          "stage": "1:54 PM"
         }
       },
       "HS Open Boys": {
         "1": {
-          "start": "3:53 PM",
-          "stage": "3:36 PM"
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
         }
       },
       "HS Open Girls": {
         "1": {
-          "start": "3:53 PM",
-          "stage": "3:36 PM"
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
         }
       }
     },
@@ -287,7 +287,7 @@
     "exactTrailhead": "Carlson Competition Stadium (Birkie Trailhead)",
     "address": "42225 Telemark Village Rd, Cable, WI 54821",
     "city": "Cable, WI",
-    "warning": "<strong>\ud83d\udccd Venue Info:</strong> Start & finish located under the iconic American Birkebeiner arch at Carlson Competition Stadium.",
+    "warning": "<strong>📍 Venue Info:</strong> Start & finish located under the iconic American Birkebeiner arch at Carlson Competition Stadium.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Mt+Telemark+Village+42225+Telemark+Village+Cable+WI+54821",
     "appleMapsUrl": "https://maps.apple.com/?daddr=42225+Telemark+Village,+Cable,+WI+54821&q=Mt+Telemark+Village",
     "eventGuideUrl": "https://wisconsinmtb.org/events/cable-conquest-festival/",
@@ -387,77 +387,61 @@
         },
         "2": {
           "start": "8:06 AM",
-          "stage": "8:06 AM"
+          "stage": "7:50 AM"
         }
       },
       "Varsity Girls": {
+        "1": {
+          "start": "9:20 AM",
+          "stage": "9:05 AM"
+        }
+      },
+      "JV III Girls": {
         "1": {
           "start": "9:25 AM",
           "stage": "9:10 AM"
         }
       },
-      "JV III Girls": {
-        "1": {
-          "start": "9:30 AM",
-          "stage": "9:15 AM"
-        }
-      },
       "MS2 Boys": {
         "1": {
-          "start": "10:55 AM",
-          "stage": "10:40 AM"
+          "start": "10:48 AM",
+          "stage": "10:33 AM"
         }
       },
       "Freshman Boys": {
         "1": {
-          "start": "11:00 AM",
-          "stage": "10:45 AM"
+          "start": "10:53 AM",
+          "stage": "10:38 AM"
         },
         "2": {
-          "start": "11:01 AM",
-          "stage": "10:45 AM"
+          "start": "10:54 AM",
+          "stage": "10:38 AM"
         },
         "3": {
-          "start": "11:02 AM",
-          "stage": "10:45 AM"
-        }
-      },
-      "8th Grade Boys": {
-        "1": {
-          "start": "11:07 AM",
-          "stage": "10:52 AM"
-        },
-        "2": {
-          "start": "11:08 AM",
-          "stage": "10:52 AM"
+          "start": "10:55 AM",
+          "stage": "10:38 AM"
         }
       },
       "MS2 Girls": {
+        "1": {
+          "start": "11:35 AM",
+          "stage": "11:20 AM"
+        }
+      },
+      "Freshman Girls": {
         "1": {
           "start": "11:40 AM",
           "stage": "11:25 AM"
         }
       },
-      "Freshman Girls": {
+      "JV II Girls": {
         "1": {
           "start": "11:45 AM",
           "stage": "11:30 AM"
-        }
-      },
-      "JV II Girls": {
-        "1": {
-          "start": "11:50 AM",
-          "stage": "11:35 AM"
         },
         "2": {
-          "start": "11:51 AM",
-          "stage": "11:51 AM"
-        }
-      },
-      "8th Grade Girls": {
-        "1": {
-          "start": "11:56 AM",
-          "stage": "11:41 AM"
+          "start": "11:46 AM",
+          "stage": "11:30 AM"
         }
       },
       "JV II Boys": {
@@ -478,52 +462,68 @@
           "stage": "12:30 PM"
         }
       },
-      "7th Grade Boys": {
+      "8th Grade Boys": {
         "1": {
-          "start": "12:53 PM",
-          "stage": "12:38 PM"
+          "start": "1:30 PM",
+          "stage": "1:15 PM"
         },
         "2": {
-          "start": "12:54 PM",
-          "stage": "12:38 PM"
+          "start": "1:31 PM",
+          "stage": "1:15 PM"
+        }
+      },
+      "7th Grade Boys": {
+        "1": {
+          "start": "1:36 PM",
+          "stage": "1:21 PM"
+        },
+        "2": {
+          "start": "1:37 PM",
+          "stage": "1:21 PM"
         }
       },
       "6th Grade Boys": {
         "1": {
-          "start": "1:40 PM",
-          "stage": "1:25 PM"
+          "start": "1:42 PM",
+          "stage": "1:27 PM"
         },
         "2": {
-          "start": "1:41 PM",
-          "stage": "1:25 PM"
+          "start": "1:43 PM",
+          "stage": "1:27 PM"
+        }
+      },
+      "8th Grade Girls": {
+        "1": {
+          "start": "1:58 PM",
+          "stage": "1:43 PM"
         }
       },
       "7th Grade Girls": {
         "1": {
-          "start": "1:46 PM",
-          "stage": "1:31 PM"
+          "start": "2:03 PM",
+          "stage": "1:48 PM"
         },
         "2": {
-          "start": "1:47 PM",
-          "stage": "1:31 PM"
+          "start": "2:04 PM",
+          "stage": "1:48 PM"
         }
       },
       "6th Grade Girls": {
         "1": {
-          "start": "1:52 PM",
-          "stage": "1:37 PM"
+          "start": "2:09 PM",
+          "stage": "1:54 PM"
         }
       },
       "HS Open Boys": {
         "1": {
-          "start": "1:53 PM",
-          "stage": "1:38 PM"
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
         }
       },
       "HS Open Girls": {
         "1": {
-          "start": "1:53 PM",
-          "stage": "1:38 PM"
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
         }
       }
     }
@@ -536,7 +536,7 @@
     "exactTrailhead": "Camp Tesomas Boy Scout Reservation",
     "address": "5403 Spider Lake Rd, Rhinelander, WI 54501",
     "city": "Rhinelander, WI",
-    "warning": "<strong>\ud83d\udccd Scout Camp Venue:</strong> Located on private scout reservation singletrack around Spider Lake.",
+    "warning": "<strong>📍 Scout Camp Venue:</strong> Located on private scout reservation singletrack around Spider Lake.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Camp+Tesomas+5403+Spider+Lake+Rd+Rhinelander+WI+54501",
     "appleMapsUrl": "https://maps.apple.com/?daddr=5403+Spider+Lake+Rd,+Rhinelander,+WI+54501&q=Camp+Tesomas",
     "eventGuideUrl": "https://wisconsinmtb.org/events/hodag-hustle-festival/",
@@ -627,77 +627,61 @@
         },
         "2": {
           "start": "8:06 AM",
-          "stage": "8:06 AM"
+          "stage": "7:50 AM"
         }
       },
       "Varsity Girls": {
+        "1": {
+          "start": "9:20 AM",
+          "stage": "9:05 AM"
+        }
+      },
+      "JV III Girls": {
         "1": {
           "start": "9:25 AM",
           "stage": "9:10 AM"
         }
       },
-      "JV III Girls": {
-        "1": {
-          "start": "9:30 AM",
-          "stage": "9:15 AM"
-        }
-      },
       "MS2 Boys": {
         "1": {
-          "start": "10:55 AM",
-          "stage": "10:40 AM"
+          "start": "10:48 AM",
+          "stage": "10:33 AM"
         }
       },
       "Freshman Boys": {
         "1": {
-          "start": "11:00 AM",
-          "stage": "10:45 AM"
+          "start": "10:53 AM",
+          "stage": "10:38 AM"
         },
         "2": {
-          "start": "11:01 AM",
-          "stage": "10:45 AM"
+          "start": "10:54 AM",
+          "stage": "10:38 AM"
         },
         "3": {
-          "start": "11:02 AM",
-          "stage": "10:45 AM"
-        }
-      },
-      "8th Grade Boys": {
-        "1": {
-          "start": "11:07 AM",
-          "stage": "10:52 AM"
-        },
-        "2": {
-          "start": "11:08 AM",
-          "stage": "10:52 AM"
+          "start": "10:55 AM",
+          "stage": "10:38 AM"
         }
       },
       "MS2 Girls": {
+        "1": {
+          "start": "11:35 AM",
+          "stage": "11:20 AM"
+        }
+      },
+      "Freshman Girls": {
         "1": {
           "start": "11:40 AM",
           "stage": "11:25 AM"
         }
       },
-      "Freshman Girls": {
+      "JV II Girls": {
         "1": {
           "start": "11:45 AM",
           "stage": "11:30 AM"
-        }
-      },
-      "JV II Girls": {
-        "1": {
-          "start": "11:50 AM",
-          "stage": "11:35 AM"
         },
         "2": {
-          "start": "11:51 AM",
-          "stage": "11:51 AM"
-        }
-      },
-      "8th Grade Girls": {
-        "1": {
-          "start": "11:56 AM",
-          "stage": "11:41 AM"
+          "start": "11:46 AM",
+          "stage": "11:30 AM"
         }
       },
       "JV II Boys": {
@@ -718,52 +702,68 @@
           "stage": "12:30 PM"
         }
       },
-      "7th Grade Boys": {
+      "8th Grade Boys": {
         "1": {
-          "start": "12:53 PM",
-          "stage": "12:38 PM"
+          "start": "1:30 PM",
+          "stage": "1:15 PM"
         },
         "2": {
-          "start": "12:54 PM",
-          "stage": "12:38 PM"
+          "start": "1:31 PM",
+          "stage": "1:15 PM"
+        }
+      },
+      "7th Grade Boys": {
+        "1": {
+          "start": "1:36 PM",
+          "stage": "1:21 PM"
+        },
+        "2": {
+          "start": "1:37 PM",
+          "stage": "1:21 PM"
         }
       },
       "6th Grade Boys": {
         "1": {
-          "start": "1:40 PM",
-          "stage": "1:25 PM"
+          "start": "1:42 PM",
+          "stage": "1:27 PM"
         },
         "2": {
-          "start": "1:41 PM",
-          "stage": "1:25 PM"
+          "start": "1:43 PM",
+          "stage": "1:27 PM"
+        }
+      },
+      "8th Grade Girls": {
+        "1": {
+          "start": "1:58 PM",
+          "stage": "1:43 PM"
         }
       },
       "7th Grade Girls": {
         "1": {
-          "start": "1:46 PM",
-          "stage": "1:31 PM"
+          "start": "2:03 PM",
+          "stage": "1:48 PM"
         },
         "2": {
-          "start": "1:47 PM",
-          "stage": "1:31 PM"
+          "start": "2:04 PM",
+          "stage": "1:48 PM"
         }
       },
       "6th Grade Girls": {
         "1": {
-          "start": "1:52 PM",
-          "stage": "1:37 PM"
+          "start": "2:09 PM",
+          "stage": "1:54 PM"
         }
       },
       "HS Open Boys": {
         "1": {
-          "start": "1:53 PM",
-          "stage": "1:38 PM"
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
         }
       },
       "HS Open Girls": {
         "1": {
-          "start": "1:53 PM",
-          "stage": "1:38 PM"
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
         }
       }
     }
@@ -776,7 +776,7 @@
     "exactTrailhead": "Nordic Mountain Main Chalet & MTB Trailhead",
     "address": "W5806 County Rd W, Wild Rose, WI 54984",
     "city": "Wild Rose, WI",
-    "warning": "<strong>\ud83d\udccd Ski Resort Venue:</strong> Staging and viewing located directly in front of the main ski chalet bowl.",
+    "warning": "<strong>📍 Ski Resort Venue:</strong> Staging and viewing located directly in front of the main ski chalet bowl.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984",
     "appleMapsUrl": "https://maps.apple.com/?daddr=W5806+County+Rd+W,+Wild+Rose,+WI+54984&q=Nordic+Mountain",
     "eventGuideUrl": "https://wisconsinmtb.org/events/gnarly-nordic-festival/",
@@ -867,77 +867,61 @@
         },
         "2": {
           "start": "8:06 AM",
-          "stage": "8:06 AM"
+          "stage": "7:50 AM"
         }
       },
       "Varsity Girls": {
+        "1": {
+          "start": "9:20 AM",
+          "stage": "9:05 AM"
+        }
+      },
+      "JV III Girls": {
         "1": {
           "start": "9:25 AM",
           "stage": "9:10 AM"
         }
       },
-      "JV III Girls": {
-        "1": {
-          "start": "9:30 AM",
-          "stage": "9:15 AM"
-        }
-      },
       "MS2 Boys": {
         "1": {
-          "start": "10:55 AM",
-          "stage": "10:40 AM"
+          "start": "10:48 AM",
+          "stage": "10:33 AM"
         }
       },
       "Freshman Boys": {
         "1": {
-          "start": "11:00 AM",
-          "stage": "10:45 AM"
+          "start": "10:53 AM",
+          "stage": "10:38 AM"
         },
         "2": {
-          "start": "11:01 AM",
-          "stage": "10:45 AM"
+          "start": "10:54 AM",
+          "stage": "10:38 AM"
         },
         "3": {
-          "start": "11:02 AM",
-          "stage": "10:45 AM"
-        }
-      },
-      "8th Grade Boys": {
-        "1": {
-          "start": "11:07 AM",
-          "stage": "10:52 AM"
-        },
-        "2": {
-          "start": "11:08 AM",
-          "stage": "10:52 AM"
+          "start": "10:55 AM",
+          "stage": "10:38 AM"
         }
       },
       "MS2 Girls": {
+        "1": {
+          "start": "11:35 AM",
+          "stage": "11:20 AM"
+        }
+      },
+      "Freshman Girls": {
         "1": {
           "start": "11:40 AM",
           "stage": "11:25 AM"
         }
       },
-      "Freshman Girls": {
+      "JV II Girls": {
         "1": {
           "start": "11:45 AM",
           "stage": "11:30 AM"
-        }
-      },
-      "JV II Girls": {
-        "1": {
-          "start": "11:50 AM",
-          "stage": "11:35 AM"
         },
         "2": {
-          "start": "11:51 AM",
-          "stage": "11:51 AM"
-        }
-      },
-      "8th Grade Girls": {
-        "1": {
-          "start": "11:56 AM",
-          "stage": "11:41 AM"
+          "start": "11:46 AM",
+          "stage": "11:30 AM"
         }
       },
       "JV II Boys": {
@@ -958,52 +942,68 @@
           "stage": "12:30 PM"
         }
       },
-      "7th Grade Boys": {
+      "8th Grade Boys": {
         "1": {
-          "start": "12:53 PM",
-          "stage": "12:38 PM"
+          "start": "1:30 PM",
+          "stage": "1:15 PM"
         },
         "2": {
-          "start": "12:54 PM",
-          "stage": "12:38 PM"
+          "start": "1:31 PM",
+          "stage": "1:15 PM"
+        }
+      },
+      "7th Grade Boys": {
+        "1": {
+          "start": "1:36 PM",
+          "stage": "1:21 PM"
+        },
+        "2": {
+          "start": "1:37 PM",
+          "stage": "1:21 PM"
         }
       },
       "6th Grade Boys": {
         "1": {
-          "start": "1:40 PM",
-          "stage": "1:25 PM"
+          "start": "1:42 PM",
+          "stage": "1:27 PM"
         },
         "2": {
-          "start": "1:41 PM",
-          "stage": "1:25 PM"
+          "start": "1:43 PM",
+          "stage": "1:27 PM"
+        }
+      },
+      "8th Grade Girls": {
+        "1": {
+          "start": "1:58 PM",
+          "stage": "1:43 PM"
         }
       },
       "7th Grade Girls": {
         "1": {
-          "start": "1:46 PM",
-          "stage": "1:31 PM"
+          "start": "2:03 PM",
+          "stage": "1:48 PM"
         },
         "2": {
-          "start": "1:47 PM",
-          "stage": "1:31 PM"
+          "start": "2:04 PM",
+          "stage": "1:48 PM"
         }
       },
       "6th Grade Girls": {
         "1": {
-          "start": "1:52 PM",
-          "stage": "1:37 PM"
+          "start": "2:09 PM",
+          "stage": "1:54 PM"
         }
       },
       "HS Open Boys": {
         "1": {
-          "start": "1:53 PM",
-          "stage": "1:38 PM"
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
         }
       },
       "HS Open Girls": {
         "1": {
-          "start": "1:53 PM",
-          "stage": "1:38 PM"
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
         }
       }
     }
@@ -1016,7 +1016,7 @@
     "exactTrailhead": "Trek Headquarters Trails",
     "address": "97 Canal Rd, Waterloo, WI 53594",
     "city": "Waterloo, WI",
-    "warning": "<strong>\ud83c\udfc6 State Championship Finale:</strong> Exclusive access to private Trek World HQ Trails, historic Red Barn festival, pump track, and night ride.",
+    "warning": "<strong>🏆 State Championship Finale:</strong> Exclusive access to private Trek World HQ Trails, historic Red Barn festival, pump track, and night ride.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Trek+Trails+97+Canal+Rd+Waterloo+WI+53594",
     "appleMapsUrl": "https://maps.apple.com/?daddr=97+Canal+Rd,+Waterloo,+WI+53594&q=Trek+Trails",
     "eventGuideUrl": "https://wisconsinmtb.org/events/red-barn-state-championship/",
@@ -1092,6 +1092,160 @@
       "<strong>Championship Venue:</strong> Private Trek World Headquarters Trails & Historic Red Barn.",
       "<strong>Season Finale:</strong> State individual jerseys and team division trophies awarded Sunday afternoon."
     ],
-    "photosUrl": "https://photos.app.goo.gl/eqEaqUA1C1QiuTiZA"
+    "photosUrl": "https://photos.app.goo.gl/eqEaqUA1C1QiuTiZA",
+    "waveSchedule": {
+      "Varsity Boys": {
+        "1": {
+          "start": "8:00 AM",
+          "stage": "7:45 AM"
+        }
+      },
+      "JV III Boys": {
+        "1": {
+          "start": "8:05 AM",
+          "stage": "7:50 AM"
+        },
+        "2": {
+          "start": "8:06 AM",
+          "stage": "7:50 AM"
+        }
+      },
+      "Varsity Girls": {
+        "1": {
+          "start": "9:20 AM",
+          "stage": "9:05 AM"
+        }
+      },
+      "JV III Girls": {
+        "1": {
+          "start": "9:25 AM",
+          "stage": "9:10 AM"
+        }
+      },
+      "MS2 Boys": {
+        "1": {
+          "start": "10:48 AM",
+          "stage": "10:33 AM"
+        }
+      },
+      "Freshman Boys": {
+        "1": {
+          "start": "10:53 AM",
+          "stage": "10:38 AM"
+        },
+        "2": {
+          "start": "10:54 AM",
+          "stage": "10:38 AM"
+        },
+        "3": {
+          "start": "10:55 AM",
+          "stage": "10:38 AM"
+        }
+      },
+      "MS2 Girls": {
+        "1": {
+          "start": "11:35 AM",
+          "stage": "11:20 AM"
+        }
+      },
+      "Freshman Girls": {
+        "1": {
+          "start": "11:40 AM",
+          "stage": "11:25 AM"
+        }
+      },
+      "JV II Girls": {
+        "1": {
+          "start": "11:45 AM",
+          "stage": "11:30 AM"
+        },
+        "2": {
+          "start": "11:46 AM",
+          "stage": "11:30 AM"
+        }
+      },
+      "JV II Boys": {
+        "1": {
+          "start": "12:45 PM",
+          "stage": "12:30 PM"
+        },
+        "2": {
+          "start": "12:46 PM",
+          "stage": "12:30 PM"
+        },
+        "3": {
+          "start": "12:47 PM",
+          "stage": "12:30 PM"
+        },
+        "4": {
+          "start": "12:48 PM",
+          "stage": "12:30 PM"
+        }
+      },
+      "8th Grade Boys": {
+        "1": {
+          "start": "1:30 PM",
+          "stage": "1:15 PM"
+        },
+        "2": {
+          "start": "1:31 PM",
+          "stage": "1:15 PM"
+        }
+      },
+      "7th Grade Boys": {
+        "1": {
+          "start": "1:36 PM",
+          "stage": "1:21 PM"
+        },
+        "2": {
+          "start": "1:37 PM",
+          "stage": "1:21 PM"
+        }
+      },
+      "6th Grade Boys": {
+        "1": {
+          "start": "1:42 PM",
+          "stage": "1:27 PM"
+        },
+        "2": {
+          "start": "1:43 PM",
+          "stage": "1:27 PM"
+        }
+      },
+      "8th Grade Girls": {
+        "1": {
+          "start": "1:58 PM",
+          "stage": "1:43 PM"
+        }
+      },
+      "7th Grade Girls": {
+        "1": {
+          "start": "2:03 PM",
+          "stage": "1:48 PM"
+        },
+        "2": {
+          "start": "2:04 PM",
+          "stage": "1:48 PM"
+        }
+      },
+      "6th Grade Girls": {
+        "1": {
+          "start": "2:09 PM",
+          "stage": "1:54 PM"
+        }
+      },
+      "HS Open Boys": {
+        "1": {
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
+        }
+      },
+      "HS Open Girls": {
+        "1": {
+          "start": "2:11 PM",
+          "stage": "1:56 PM"
+        }
+      }
+    }
   }
 ]

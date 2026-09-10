@@ -3,36 +3,69 @@ import type { Rider } from '../types/results'
 export const targetTeamKeywords = ['holmen', 'la crescent', 'la crosse', 'lacrosse', 'lacrescent', 'lax']
 
 export const categoryOrder = [
-  '6th Grade Boys', '6th Grade Girls',
-  '7th Grade Boys', '7th Grade Girls',
-  '8th Grade Boys', '8th Grade Girls',
-  'Freshman Boys', 'Freshman Girls',
-  'MS2 Boys', 'MS2 Girls',
-  'HS Open Boys', 'HS Open Girls',
-  'JV II Boys', 'JV II Girls',
-  'JV III Boys', 'JV III Girls',
-  'Varsity Boys', 'Varsity Girls'
+  'Varsity Boys',
+  'JV III Boys',
+  'Varsity Girls',
+  'JV III Girls',
+  'MS2 Boys',
+  'Freshman Boys',
+  'MS2 Girls',
+  'Freshman Girls',
+  'JV II Girls',
+  'JV II Boys',
+  '8th Grade Boys',
+  '7th Grade Boys',
+  '6th Grade Boys',
+  '8th Grade Girls',
+  '7th Grade Girls',
+  '6th Grade Girls',
+  'HS Open Boys',
+  'HS Open Girls'
 ]
 
 export const defaultWaveSchedule: Record<string, Record<string, { start: string; stage?: string }>> = {
-  'Varsity Boys': { '1': { start: '10:00 AM', stage: '9:45 AM' } },
-  'JV III Boys': { '1': { start: '10:05 AM', stage: '9:50 AM' }, '2': { start: '10:06 AM', stage: '10:06 AM' } },
-  'Varsity Girls': { '1': { start: '11:25 AM', stage: '11:10 AM' } },
-  'JV III Girls': { '1': { start: '11:30 AM', stage: '11:15 AM' } },
-  'MS2 Boys': { '1': { start: '1:05 PM', stage: '12:50 PM' } },
-  'Freshman Boys': { '1': { start: '1:10 PM', stage: '12:55 PM' }, '2': { start: '1:11 PM', stage: '12:55 PM' }, '3': { start: '1:12 PM', stage: '12:55 PM' } },
-  '8th Grade Boys': { '1': { start: '1:17 PM', stage: '1:02 PM' }, '2': { start: '1:18 PM', stage: '1:02 PM' } },
-  'MS2 Girls': { '1': { start: '2:00 PM', stage: '1:45 PM' } },
-  'Freshman Girls': { '1': { start: '2:05 PM', stage: '1:50 PM' } },
-  'JV II Girls': { '1': { start: '2:10 PM', stage: '1:55 PM' }, '2': { start: '2:11 PM', stage: '1:55 PM' } },
-  '8th Grade Girls': { '1': { start: '2:16 PM', stage: '2:01 PM' } },
-  'JV II Boys': { '1': { start: '2:55 PM', stage: '2:40 PM' }, '2': { start: '2:56 PM', stage: '2:40 PM' }, '3': { start: '2:57 PM', stage: '2:40 PM' }, '4': { start: '2:58 PM', stage: '2:40 PM' } },
-  '7th Grade Boys': { '1': { start: '3:03 PM', stage: '2:48 PM' }, '2': { start: '3:04 PM', stage: '2:48 PM' } },
-  '6th Grade Boys': { '1': { start: '3:40 PM', stage: '3:25 PM' }, '2': { start: '3:41 PM', stage: '3:25 PM' } },
-  '7th Grade Girls': { '1': { start: '3:46 PM', stage: '3:31 PM' }, '2': { start: '3:47 PM', stage: '3:31 PM' } },
-  '6th Grade Girls': { '1': { start: '3:52 PM', stage: '3:36 PM' } },
-  'HS Open Boys': { '1': { start: '3:53 PM', stage: '3:36 PM' } },
-  'HS Open Girls': { '1': { start: '3:53 PM', stage: '3:36 PM' } }
+  'Varsity Boys': { '1': { start: '8:00 AM', stage: '7:45 AM' } },
+  'JV III Boys': { '1': { start: '8:05 AM', stage: '7:50 AM' }, '2': { start: '8:06 AM', stage: '7:50 AM' } },
+  'Varsity Girls': { '1': { start: '9:20 AM', stage: '9:05 AM' } },
+  'JV III Girls': { '1': { start: '9:25 AM', stage: '9:10 AM' } },
+  'MS2 Boys': { '1': { start: '10:48 AM', stage: '10:33 AM' } },
+  'Freshman Boys': {
+    '1': { start: '10:53 AM', stage: '10:38 AM' },
+    '2': { start: '10:54 AM', stage: '10:38 AM' },
+    '3': { start: '10:55 AM', stage: '10:38 AM' }
+  },
+  'MS2 Girls': { '1': { start: '11:35 AM', stage: '11:20 AM' } },
+  'Freshman Girls': { '1': { start: '11:40 AM', stage: '11:25 AM' } },
+  'JV II Girls': {
+    '1': { start: '11:45 AM', stage: '11:30 AM' },
+    '2': { start: '11:46 AM', stage: '11:30 AM' }
+  },
+  'JV II Boys': {
+    '1': { start: '12:45 PM', stage: '12:30 PM' },
+    '2': { start: '12:46 PM', stage: '12:30 PM' },
+    '3': { start: '12:47 PM', stage: '12:30 PM' },
+    '4': { start: '12:48 PM', stage: '12:30 PM' }
+  },
+  '8th Grade Boys': {
+    '1': { start: '1:30 PM', stage: '1:15 PM' },
+    '2': { start: '1:31 PM', stage: '1:15 PM' }
+  },
+  '7th Grade Boys': {
+    '1': { start: '1:36 PM', stage: '1:21 PM' },
+    '2': { start: '1:37 PM', stage: '1:21 PM' }
+  },
+  '6th Grade Boys': {
+    '1': { start: '1:42 PM', stage: '1:27 PM' },
+    '2': { start: '1:43 PM', stage: '1:27 PM' }
+  },
+  '8th Grade Girls': { '1': { start: '1:58 PM', stage: '1:43 PM' } },
+  '7th Grade Girls': {
+    '1': { start: '2:03 PM', stage: '1:48 PM' },
+    '2': { start: '2:04 PM', stage: '1:48 PM' }
+  },
+  '6th Grade Girls': { '1': { start: '2:09 PM', stage: '1:54 PM' } },
+  'HS Open Boys': { '1': { start: '2:11 PM', stage: '1:56 PM' } },
+  'HS Open Girls': { '1': { start: '2:11 PM', stage: '1:56 PM' } }
 }
 
 export function parseTimeStrToMinutes(timeStr?: string | null): number | null {
