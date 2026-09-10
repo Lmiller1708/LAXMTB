@@ -184,6 +184,19 @@ watch(currentRaceIndex, (newIdx) => {
   refreshData()
 })
 
+// Re-fetch whenever Firestore pushes an updated eventId or isPublished flag
+// so the app reacts live without requiring a page reload or tab switch.
+watch(
+  () => [currentRace.value?.eventId, currentRace.value?.isPublished] as const,
+  ([newEventId, newIsPublished], [oldEventId, oldIsPublished]) => {
+    if (!newEventId || !newIsPublished) return
+    // Only re-fetch if something actually changed
+    if (newEventId !== oldEventId || newIsPublished !== oldIsPublished) {
+      refreshData()
+    }
+  }
+)
+
 const { startAlertScheduler } = useNotificationSubscriptions()
 
 onMounted(() => {
