@@ -44,7 +44,7 @@ export const useRaceResults = () => {
   const selectedCategory = ref('ALL')
   const selectedTeamScope = ref<string>('DEFAULT_TEAMS')
   const isFilterOpen = ref(false)
-  const allCardsCollapsed = ref(false)
+  const allCardsCollapsed = ref(true)
   const selectedRiderKeys = ref<Set<string>>(new Set())
   const cardStateOverrides = ref<Record<string, boolean>>({})
 
