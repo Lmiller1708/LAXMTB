@@ -1,6 +1,6 @@
 import type { Rider } from '../types/results'
 
-export const targetTeamKeywords = ['holmen', 'la crescent', 'la crosse']
+export const targetTeamKeywords = ['holmen', 'la crescent', 'la crosse', 'lacrosse', 'lacrescent', 'lax']
 
 export const categoryOrder = [
   '6th Grade Boys', '6th Grade Girls',

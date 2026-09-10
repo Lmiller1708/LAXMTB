@@ -4,6 +4,7 @@ import type { ResultsSortOrder, ResultsGroupMode, TeamScope } from '../types/res
 const props = defineProps<{
   currentTab: 'list' | 'results'
   categories: string[]
+  teams?: string[]
   isLive: boolean
   isCompleted?: boolean
   totalCount: number
@@ -12,7 +13,7 @@ const props = defineProps<{
 const searchQuery = defineModel<string>('searchQuery', { default: '' })
 const listMode = defineModel<ResultsGroupMode>('listMode', { default: 'WAVE' })
 const selectedListId = defineModel<string>('selectedListId', { default: 'A76F6B' })
-const sortOrder = defineModel<ResultsSortOrder>('sortOrder', { default: 'GRADE' })
+const sortOrder = defineModel<ResultsSortOrder>('sortOrder', { default: 'TIME' })
 const selectedCategory = defineModel<string>('selectedCategory', { default: 'ALL' })
 const selectedTeamScope = defineModel<TeamScope>('selectedTeamScope', { default: 'DEFAULT_TEAMS' })
 
@@ -60,6 +61,8 @@ const activeFilterChips = computed(() => {
   // Sort chip
   if (sortOrder.value === 'TIME') {
     chips.push({ label: 'Sort: ', strongText: '⏱️ Start Time' })
+  } else if (sortOrder.value === 'GRADE') {
+    chips.push({ label: 'Sort: ', strongText: 'Grade / Division' })
   }
 
   // Category chip
@@ -77,6 +80,12 @@ const activeFilterChips = computed(() => {
       label: 'Scope: ',
       strongText: 'LAXMTB Team',
       isLaxScope: true,
+      onRemove: removeTeamFilter
+    })
+  } else if (selectedTeamScope.value && selectedTeamScope.value !== 'ALL') {
+    chips.push({
+      label: 'Team: ',
+      strongText: selectedTeamScope.value,
       onRemove: removeTeamFilter
     })
   } else {
@@ -156,8 +165,8 @@ const activeFilterChips = computed(() => {
         <div class="filter-group">
           <label class="filter-label">Sort By</label>
           <select v-model="sortOrder" id="sortOrderSelect" class="select-dropdown">
-            <option value="GRADE">Grade / Division (Default)</option>
-            <option value="TIME">Start Time (Earliest First)</option>
+            <option value="TIME">Start Time (Default)</option>
+            <option value="GRADE">Grade / Division</option>
           </select>
         </div>
 
@@ -174,6 +183,9 @@ const activeFilterChips = computed(() => {
           <select v-model="selectedTeamScope" id="teamFilter" class="select-dropdown">
             <option value="DEFAULT_TEAMS">LAXMTB Team (La Crosse, Holmen, La Crescent)</option>
             <option value="ALL">&lt;Show All Event Teams&gt;</option>
+            <optgroup v-if="teams && teams.length > 0" label="All Teams">
+              <option v-for="team in teams" :key="team" :value="team">{{ team }}</option>
+            </optgroup>
           </select>
         </div>
       </div>

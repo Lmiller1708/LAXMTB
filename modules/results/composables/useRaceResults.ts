@@ -12,9 +12,18 @@ export const useRaceResults = () => {
   const searchQuery = ref('')
   const listMode = ref<ResultsGroupMode>('WAVE')
   const selectedListId = ref<string>('A76F6B')
-  const sortOrder = ref<ResultsSortOrder>('GRADE')
+  // Initialize sortOrder from localStorage if available, default to 'TIME'
+  const initialSortOrder = (import.meta.client && localStorage.getItem('laxmtb_sortOrder')) as ResultsSortOrder | null
+  const sortOrder = ref<ResultsSortOrder>(initialSortOrder === 'GRADE' || initialSortOrder === 'TIME' ? initialSortOrder : 'TIME')
+
+  if (import.meta.client) {
+    watch(sortOrder, (newVal) => {
+      localStorage.setItem('laxmtb_sortOrder', newVal)
+    })
+  }
+
   const selectedCategory = ref('ALL')
-  const selectedTeamScope = ref<TeamScope>('DEFAULT_TEAMS')
+  const selectedTeamScope = ref<string>('DEFAULT_TEAMS')
   const isFilterOpen = ref(false)
   const allCardsCollapsed = ref(false)
   const selectedRiderKeys = ref<Set<string>>(new Set())
@@ -74,6 +83,15 @@ export const useRaceResults = () => {
     })
   })
 
+  // Teams list from current riders
+  const teams = computed(() => {
+    const set = new Set<string>()
+    riders.value.forEach(r => {
+      if (r.team) set.add(r.team)
+    })
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  })
+
   // Filtered and Sorted Riders
   const filteredRiders = computed(() => {
     let list = [...riders.value]
@@ -83,6 +101,8 @@ export const useRaceResults = () => {
       list = list.filter(r =>
         targetTeamKeywords.some(kw => r.team && r.team.toLowerCase().includes(kw))
       )
+    } else if (selectedTeamScope.value && selectedTeamScope.value !== 'ALL') {
+      list = list.filter(r => r.team === selectedTeamScope.value)
     }
 
     // Category filter
@@ -264,6 +284,7 @@ export const useRaceResults = () => {
     riders,
     filteredRiders,
     categories,
+    teams,
     loading,
     error,
     lastUpdated,

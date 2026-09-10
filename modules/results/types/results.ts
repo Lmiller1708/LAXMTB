@@ -25,4 +25,4 @@ export interface Rider {
 
 export type ResultsSortOrder = 'GRADE' | 'TIME'
 export type ResultsGroupMode = 'WAVE' | 'TEAM'
-export type TeamScope = 'DEFAULT_TEAMS' | 'ALL'
+export type TeamScope = 'DEFAULT_TEAMS' | 'ALL' | string

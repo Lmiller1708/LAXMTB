@@ -20,6 +20,7 @@ const {
   riders,
   filteredRiders,
   categories,
+  teams,
   loading,
   lastUpdated,
   isLive,
@@ -326,6 +327,7 @@ const handlePrint = () => {
           v-model:selected-team-scope="selectedTeamScope"
           :current-tab="currentTab"
           :categories="categories"
+          :teams="teams"
           :is-live="isLive"
           :is-completed="isRaceCompleted(currentRace)"
           :total-count="filteredRiders.length"
