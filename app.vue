@@ -19,6 +19,10 @@ const { isCoachAuth } = useCoachAuth()
 const {
   riders,
   filteredRiders,
+  teamStandings,
+  filteredTeamStandings,
+  feedViewType,
+  availableReports,
   categories,
   teams,
   loading,
@@ -328,16 +332,17 @@ const handlePrint = () => {
           :current-tab="currentTab"
           :categories="categories"
           :teams="teams"
+          :available-reports="availableReports"
           :is-live="isLive"
           :is-completed="isRaceCompleted(currentRace)"
-          :total-count="filteredRiders.length"
+          :total-count="feedViewType === 'team_standings' ? filteredTeamStandings.length : filteredRiders.length"
           @refresh="refreshData"
         />
 
         <ResultsStatusBar
           v-if="currentRace?.isPublished && currentRace?.eventId"
-          :filtered-count="filteredRiders.length"
-          :total-count="riders.length"
+          :filtered-count="feedViewType === 'team_standings' ? filteredTeamStandings.length : filteredRiders.length"
+          :total-count="feedViewType === 'team_standings' ? teamStandings.length : riders.length"
           :last-updated="lastUpdated"
           :all-cards-collapsed="allCardsCollapsed"
           @toggle-all="toggleAllCards"
@@ -381,6 +386,8 @@ const handlePrint = () => {
         v-else-if="currentTab === 'list' || currentTab === 'results'"
         :race="currentRace"
         :riders="filteredRiders"
+        :team-standings="filteredTeamStandings"
+        :feed-view-type="feedViewType"
         :current-tab="currentTab"
         :list-mode="listMode"
         :sort-order="sortOrder"

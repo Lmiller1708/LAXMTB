@@ -146,216 +146,442 @@ export function normalizeCategoryName(name: string): string {
   return clean
 }
 
-export const fallbackSnapshot: Rider[] = [
-  { category: 'Varsity Boys', wave: 'Wave: 1', pl: '1', no: '74', bib: '584', name: 'Leonard, Ethan', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '1', return_val: '+' },
-  { category: 'Varsity Boys', wave: 'Wave: 1', pl: '17', no: '79', bib: '624', name: 'Thomsen, Izzy', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '17', return_val: '-' },
-  { category: 'Varsity Boys', wave: 'Wave: 1', pl: '22', no: '76', bib: '615', name: 'Ashby, Ezra', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '22', return_val: '-' },
-  { category: 'Varsity Boys', wave: 'Wave: 1', pl: '30', no: '94', bib: '619', name: 'Wilde, Landon', team: 'La Crescent High School', div: '2', wv: '1', wv_rank: '30', return_val: '-' },
-  { category: 'Varsity Boys', wave: 'Wave: 1', pl: '36', no: '75', bib: '612', name: 'Aslesen, Hosea', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '36', return_val: '-' },
-  { category: 'Varsity Boys', wave: 'Wave: 1', pl: '41', no: '73', bib: '600', name: 'Hamilton, Theron', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '41', return_val: '-' },
-  { category: 'JV III Boys', wave: 'Wave: 1', pl: '7', no: '3505', bib: '519', name: 'Larson, Charlie', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '7', return_val: '+' },
-  { category: 'JV III Boys', wave: 'Wave: 1', pl: '12', no: '3506', bib: '536', name: 'Wills, Maxwell', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '12', return_val: '-' },
-  { category: 'JV III Boys', wave: 'Wave: 1', pl: '22', no: '3525', bib: '527', name: 'Riffe, Tommy', team: 'La Crescent High School', div: '2', wv: '1', wv_rank: '22', return_val: '-' },
-  { category: 'JV III Boys', wave: 'Wave: 1', pl: '25', no: '3531', bib: '545', name: 'Gaulke, Jackson', team: 'Holmen High School MTB Team', div: '2', wv: '1', wv_rank: '25', return_val: '-' },
-  { category: 'Varsity Girls', wave: 'Wave: 1', pl: '12', no: '167', bib: '652', name: 'Hale, Lydia', team: 'La Crosse Aquinas High School', div: '2', wv: '1', wv_rank: '12', return_val: '-' },
-  { category: 'Varsity Girls', wave: 'Wave: 1', pl: '17', no: '164', bib: '649', name: 'Aslesen, Elizabeth', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '17', return_val: '-' },
-  { category: 'JV III Girls', wave: 'Wave: 1', pl: '17', no: '3857', bib: '580', name: 'Meyers, Gracie', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '17', return_val: '-' },
-  { category: 'MS2 Boys', wave: 'Wave: 1', pl: '6', no: '5522', bib: '660', name: 'Riffe, Cole', team: 'La Crescent High School', div: '2', wv: '1', wv_rank: '6', return_val: '-' },
-  { category: 'MS2 Boys', wave: 'Wave: 1', pl: '10', no: '5511', bib: '664', name: 'Marti, Stanley', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '10', return_val: '+' },
-  { category: 'MS2 Boys', wave: 'Wave: 1', pl: '19', no: '5510', bib: '673', name: 'Oldenburg, Jensen', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '19', return_val: '-' },
-  { category: 'MS2 Boys', wave: 'Wave: 1', pl: '22', no: '5521', bib: '676', name: 'Larson, Benjamin', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '22', return_val: '-' },
-  { category: 'MS2 Boys', wave: 'Wave: 1', pl: '23', no: '5508', bib: '677', name: 'Schloesser, Vincent', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '23', return_val: '-' },
-  { category: 'MS2 Boys', wave: 'Wave: 1', pl: '24', no: '5525', bib: '678', name: 'Davey, Gavin', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '24', return_val: '-' },
-  { category: 'MS2 Boys', wave: 'Wave: 1', pl: '25', no: '5515', bib: '679', name: 'Hansen, Lane', team: 'Holmen High School MTB Team', div: '2', wv: '1', wv_rank: '25', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 1', pl: '4', no: '9582', bib: '289', name: 'Hamilton, Kellen', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '4', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 1', pl: '6', no: '9567', bib: '291', name: 'Vanberg, Isaac', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '6', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 1', pl: '7', no: '9573', bib: '292', name: 'O\'Brien, Lennon', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '7', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 1', pl: '10', no: '9579', bib: '295', name: 'Sustar, Henry', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '10', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 1', pl: '23', no: '9571', bib: '308', name: 'Strassman, Oliver', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '23', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 1', pl: '36', no: '9522', bib: '321', name: 'Plopper, Henry', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '36', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 2', pl: '3', no: '9504', bib: '333', name: 'Klessig, Liam', team: 'La Crosse Composite', div: '2', wv: '2', wv_rank: '3', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 2', pl: '7', no: '9503', bib: '337', name: 'Andrjeski, Jace', team: 'La Crosse Composite', div: '2', wv: '2', wv_rank: '7', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 2', pl: '12', no: '9515', bib: '342', name: 'Kenowski, Eli', team: 'La Crosse Composite', div: '2', wv: '2', wv_rank: '12', return_val: '-' },
-  { category: 'Freshman Boys', wave: 'Wave: 2', pl: '21', no: '9569', bib: '371', name: 'Koepke, Rory', team: 'La Crosse Logan High School', div: '2', wv: '2', wv_rank: '21', return_val: '' },
-  { category: 'Freshman Boys', wave: 'Wave: 2', pl: '26', no: '9517', bib: '375', name: 'Maki, Quinn', team: 'La Crosse Composite', div: '2', wv: '2', wv_rank: '26', return_val: '' },
-  { category: 'Freshman Boys', wave: 'Wave: 2', pl: '27', no: '9520', bib: '368', name: 'Olson, Niels', team: 'La Crosse Logan High School', div: '2', wv: '2', wv_rank: '27', return_val: '' },
-  { category: 'Freshman Boys', wave: 'Wave: 2', pl: '42', no: '9507', bib: '356', name: 'Newman, Arlo', team: 'La Crescent High School', div: '2', wv: '2', wv_rank: '42', return_val: '' },
-  { category: '8th Grade Boys', wave: 'Wave: 1', pl: '2', no: '8550', bib: '206', name: 'Holzer, Kiran', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '2', return_val: '+' },
-  { category: '8th Grade Boys', wave: 'Wave: 1', pl: '3', no: '8519', bib: '207', name: 'Riese, Lukas', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '3', return_val: '+' },
-  { category: '8th Grade Boys', wave: 'Wave: 1', pl: '10', no: '8534', bib: '214', name: 'Cherney, Alexander', team: 'Holmen High School MTB Team', div: '2', wv: '1', wv_rank: '10', return_val: '+' },
-  { category: '8th Grade Boys', wave: 'Wave: 2', pl: '23', no: '8516', bib: '250', name: 'Severson, Abrahm', team: 'La Crosse Central High School', div: '2', wv: '2', wv_rank: '23', return_val: '' },
-  { category: '8th Grade Boys', wave: 'Wave: 2', pl: '26', no: '8517', bib: '253', name: 'Powell, Will', team: 'La Crosse Composite', div: '2', wv: '2', wv_rank: '26', return_val: '' },
-  { category: 'MS2 Girls', wave: 'Wave: 1', pl: '11', no: '5863', bib: '691', name: 'Hynek, Quinet', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '11', return_val: '-' },
-  { category: 'MS2 Girls', wave: 'Wave: 1', pl: '14', no: '5864', bib: '694', name: 'Wilde, Hadley', team: 'La Crescent High School', div: '2', wv: '1', wv_rank: '14', return_val: '-' },
-  { category: 'Freshman Girls', wave: 'Wave: 1', pl: '1', no: '9874', bib: '376', name: 'Olson, Maeven', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '1', return_val: '-' },
-  { category: 'Freshman Girls', wave: 'Wave: 1', pl: '2', no: '9877', bib: '377', name: 'Falkenberry, Clara', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '2', return_val: '-' },
-  { category: 'Freshman Girls', wave: 'Wave: 1', pl: '12', no: '9875', bib: '387', name: 'Sloan, Matilda', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '12', return_val: '-' },
-  { category: 'Freshman Girls', wave: 'Wave: 1', pl: '25', no: '9868', bib: '394', name: 'Kincaid, Stella', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '25', return_val: '' },
-  { category: 'JV II Girls', wave: 'Wave: 1', pl: '1', no: '2853', bib: '485', name: 'Jespersen, Gretchen', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '1', return_val: '+' },
-  { category: 'JV II Girls', wave: 'Wave: 1', pl: '21', no: '2872', bib: '499', name: 'Ashby, Noella', team: 'La Crosse Aquinas High School', div: '2', wv: '1', wv_rank: '21', return_val: '-' },
-  { category: 'JV II Girls', wave: 'Wave: 1', pl: '28', no: '2871', bib: '507', name: 'Passe, Pearl', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '28', return_val: '' },
-  { category: '8th Grade Girls', wave: 'Wave: 1', pl: '4', no: '8860', bib: '265', name: 'Miller, Bella', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '4', return_val: '+' },
-  { category: '8th Grade Girls', wave: 'Wave: 1', pl: '5', no: '8868', bib: '266', name: 'Hegland-Tarr, Adelyn', team: 'La Crescent High School', div: '2', wv: '1', wv_rank: '5', return_val: '+' },
-  { category: 'JV II Boys', wave: 'Wave: 1', pl: '10', no: '2535', bib: '418', name: 'Berendes, Eddie', team: 'La Crosse Aquinas High School', div: '2', wv: '1', wv_rank: '10', return_val: '+' },
-  { category: 'JV II Boys', wave: 'Wave: 1', pl: '11', no: '2545', bib: '419', name: 'Rybarik, Aaron', team: 'La Crescent High School', div: '2', wv: '1', wv_rank: '11', return_val: '+' },
-  { category: 'JV II Boys', wave: 'Wave: 1', pl: '17', no: '2568', bib: '436', name: 'Gaulke, Colten', team: 'Holmen High School MTB Team', div: '2', wv: '1', wv_rank: '17', return_val: '-' },
-  { category: 'JV II Boys', wave: 'Wave: 1', pl: '21', no: '2552', bib: '424', name: 'Gabriel, Asher', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '21', return_val: '-' },
-  { category: 'JV II Boys', wave: 'Wave: 1', pl: '27', no: '2534', bib: '454', name: 'Berendes, Benet', team: 'La Crosse Aquinas High School', div: '2', wv: '1', wv_rank: '27', return_val: '-' },
-  { category: 'JV II Boys', wave: 'Wave: 1', pl: '34', no: '2533', bib: '464', name: 'Aslesen, Maxwell', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '34', return_val: '-' },
-  { category: 'JV II Boys', wave: 'Wave: 2', pl: '13', no: '2551', bib: '446', name: 'Thrush, Lane', team: 'La Crosse Aquinas High School', div: '2', wv: '2', wv_rank: '13', return_val: '-' },
-  { category: 'JV II Boys', wave: 'Wave: 2', pl: '20', no: '2549', bib: '449', name: 'Moe, Casper', team: 'La Crosse Central High School', div: '2', wv: '2', wv_rank: '20', return_val: '-' },
-  { category: 'JV II Boys', wave: 'Wave: 2', pl: '22', no: '2544', bib: '484', name: 'Rybarik, David', team: 'La Crescent High School', div: '2', wv: '2', wv_rank: '22', return_val: '' },
-  { category: 'JV II Boys', wave: 'Wave: 2', pl: '29', no: '2532', bib: '473', name: 'Mueller, Sam', team: 'La Crosse Composite', div: '2', wv: '2', wv_rank: '29', return_val: '' },
-  { category: 'JV II Boys', wave: 'Wave: 2', pl: '33', no: '2543', bib: '482', name: 'Denny-Omdahl, Billy', team: 'La Crescent High School', div: '2', wv: '2', wv_rank: '33', return_val: '' },
-  { category: '7th Grade Boys', wave: 'Wave: 1', pl: '1', no: '7564', bib: '92', name: 'Aslesen, Levi', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '1', return_val: '+' },
-  { category: '7th Grade Boys', wave: 'Wave: 1', pl: '12', no: '7540', bib: '103', name: 'Elliott, Jade', team: 'Holmen High School MTB Team', div: '2', wv: '1', wv_rank: '12', return_val: '+' },
-  { category: '7th Grade Boys', wave: 'Wave: 1', pl: '13', no: '7533', bib: '104', name: 'Sloan, Aj', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '13', return_val: '+' },
-  { category: '7th Grade Boys', wave: 'Wave: 1', pl: '22', no: '7537', bib: '119', name: 'Foley, Nolan', team: 'La Crosse Aquinas High School', div: '2', wv: '1', wv_rank: '22', return_val: '+' },
-  { category: '7th Grade Boys', wave: 'Wave: 1', pl: '26', no: '7539', bib: '122', name: 'Ptacek, John', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '26', return_val: '+' },
-  { category: '7th Grade Boys', wave: 'Wave: 1', pl: '32', no: '7534', bib: '132', name: 'Plopper, Oliver', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '32', return_val: '+' },
-  { category: '7th Grade Boys', wave: 'Wave: 2', pl: '5', no: '7577', bib: '136', name: 'Smith, Harrison', team: 'Holmen High School MTB Team', div: '2', wv: '2', wv_rank: '5', return_val: '' },
-  { category: '7th Grade Boys', wave: 'Wave: 2', pl: '12', no: '7570', bib: '150', name: 'Kim, Austin', team: 'La Crosse Aquinas High School', div: '2', wv: '2', wv_rank: '12', return_val: '' },
-  { category: '7th Grade Boys', wave: 'Wave: 2', pl: '19', no: '7538', bib: '165', name: 'Ramsey, Soren', team: 'La Crosse Logan High School', div: '2', wv: '2', wv_rank: '19', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 1', pl: '5', no: '6543', bib: '8', name: 'Cherney, Eric', team: 'Holmen High School MTB Team', div: '2', wv: '1', wv_rank: '5', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 1', pl: '24', no: '6550', bib: '1', name: 'Newman, Henry', team: 'La Crescent High School', div: '2', wv: '1', wv_rank: '24', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 1', pl: '27', no: '6522', bib: '61', name: 'Wizner, Reece', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '27', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 2', pl: '1', no: '6521', bib: '18', name: 'Hamilton, Rowan', team: 'La Crosse Central High School', div: '2', wv: '2', wv_rank: '1', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 2', pl: '4', no: '6524', bib: '35', name: 'Sustar, Charlie', team: 'La Crosse Logan High School', div: '2', wv: '2', wv_rank: '4', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 2', pl: '8', no: '6546', bib: '21', name: 'Wills, Montgomery', team: 'La Crosse Logan High School', div: '2', wv: '2', wv_rank: '8', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 2', pl: '15', no: '6554', bib: '36', name: 'Lein, Eli', team: 'Holmen High School MTB Team', div: '2', wv: '2', wv_rank: '15', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 2', pl: '21', no: '6523', bib: '2', name: 'Drazkowski, Sebastian', team: 'La Crosse Composite', div: '2', wv: '2', wv_rank: '21', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 2', pl: '23', no: '6525', bib: '14', name: 'Staehly, Ethan', team: 'La Crosse Logan High School', div: '2', wv: '2', wv_rank: '23', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 2', pl: '28', no: '6551', bib: '63', name: 'Hegland-Tarr, Macsen', team: 'La Crescent High School', div: '2', wv: '2', wv_rank: '28', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 2', pl: '29', no: '6558', bib: '7', name: 'Nguyen, John', team: 'La Crosse Composite', div: '2', wv: '2', wv_rank: '29', return_val: '' },
-  { category: '6th Grade Boys', wave: 'Wave: 2', pl: '32', no: '6544', bib: '59', name: 'Kader, Kylan', team: 'La Crosse Central High School', div: '2', wv: '2', wv_rank: '32', return_val: '' },
-  { category: '7th Grade Girls', wave: 'Wave: 1', pl: '13', no: '7864', bib: '183', name: 'Zouski, Elle', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '13', return_val: '+' },
-  { category: '7th Grade Girls', wave: 'Wave: 1', pl: '18', no: '7863', bib: '203', name: 'Jostad, Nora', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '18', return_val: '' },
-  { category: '7th Grade Girls', wave: 'Wave: 1', pl: '22', no: '7881', bib: '188', name: 'Valencia, Vicenza', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '22', return_val: '' },
-  { category: '7th Grade Girls', wave: 'Wave: 1', pl: '23', no: '7868', bib: '190', name: 'Woolever, Maggie', team: 'La Crosse Aquinas High School', div: '2', wv: '1', wv_rank: '23', return_val: '' },
-  { category: '7th Grade Girls', wave: 'Wave: 1', pl: '26', no: '7869', bib: '184', name: 'Teska, Adelaide', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '26', return_val: '' },
-  { category: '6th Grade Girls', wave: 'Wave: 1', pl: '9', no: '6852', bib: '71', name: 'Stindt, Julianne', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '9', return_val: '' },
-  { category: '6th Grade Girls', wave: 'Wave: 1', pl: '12', no: '6870', bib: '78', name: 'Ronsman, Juniper', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '12', return_val: '' },
-  { category: '6th Grade Girls', wave: 'Wave: 1', pl: '18', no: '6853', bib: '73', name: 'Valencia, Esme', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '18', return_val: '' },
-  { category: '6th Grade Girls', wave: 'Wave: 1', pl: '20', no: '6851', bib: '69', name: 'Schwaller, Margot', team: 'La Crosse Logan High School', div: '2', wv: '1', wv_rank: '20', return_val: '' },
-  { category: '6th Grade Girls', wave: 'Wave: 1', pl: '25', no: '6871', bib: '84', name: 'Klessig, Adah', team: 'La Crosse Composite', div: '2', wv: '1', wv_rank: '25', return_val: '' },
-  { category: 'HS Open Boys', wave: 'Wave: 1', pl: '2', no: '1500', bib: '406', name: 'Wurzel, Rohan', team: 'La Crosse Central High School', div: '2', wv: '1', wv_rank: '2', return_val: '-' }
-]
+/**
+ * Metadata-driven field index resolver.
+ * Handles RACE RESULT column ordering where row[0]=ID, row[1]=Bib/Key, and fields follow.
+ */
+export interface ColumnIndexMap {
+  bib?: number
+  no?: number
+  name?: number
+  team?: number
+  category?: number
+  gender?: number
+  division?: number
+  waveOrField?: number
+  seedingRank?: number
+  seriesRank?: number
+  rank?: number
+  points?: number
+  laps?: number[]
+  lap1?: number
+  lap2?: number
+  lap3?: number
+  lap4?: number
+  penalty?: number
+  totalTime?: number
+  teamPlc?: number
+  teamPoints?: number
+  teamPenalty?: number
+}
 
+export function resolveColumnIndices(fields: any[], rowLength: number): ColumnIndexMap {
+  const map: ColumnIndexMap = {}
+  if (!Array.isArray(fields) || fields.length === 0) return map
+
+  // row[1] is always the Bib/Plate number or entity ID in RACE RESULT export
+  if (rowLength >= 2) {
+    map.bib = 1
+    map.no = 1
+  }
+
+  const lapIndices: number[] = []
+
+  // Check if Fields[0] is Bib (e.g. Team start lists) vs PL/PLC (e.g. Category lists / Results)
+  const firstFieldExpr = String(fields[0]?.Expression || '').toUpperCase()
+  const firstFieldLabel = String(fields[0]?.Label || '').toUpperCase()
+  const firstIsBib = firstFieldExpr === 'BIB' || firstFieldLabel === 'BIB' || firstFieldLabel === 'NO'
+
+  const secondFieldExpr = String(fields[1]?.Expression || '').toUpperCase()
+  const secondFieldLabel = String(fields[1]?.Label || '').toUpperCase()
+  const secondIsBib = secondFieldExpr === 'BIB' || secondFieldLabel === 'NO' || secondFieldLabel === 'BIB'
+
+  fields.forEach((f, idx) => {
+    let colIdx: number
+
+    if (firstIsBib) {
+      // e.g. Fields = [Bib, Name, Gender, Category, FLD]
+      // row = [ID, Bib, Name, Gender, Category, FLD]
+      colIdx = 1 + idx
+    } else if (secondIsBib) {
+      // e.g. Fields = [PL/PLC, NO, NAME, TEAM, FLD, ...]
+      // row = [ID, Bib, PL/PLC, NAME, TEAM, FLD, ...]
+      if (idx === 0) colIdx = 2 // PL / PLC
+      else if (idx === 1) colIdx = 1 // NO / BIB
+      else colIdx = 1 + idx // NAME at 3, TEAM at 4, etc.
+    } else {
+      // e.g. Fields = [PLC, TEAM, PENALTY PTS, PTS]
+      // row = [ID, Key, PLC, TEAM, PENALTY PTS, PTS]
+      colIdx = 2 + idx
+    }
+
+    const expr = String(f.Expression || '').trim()
+    const label = String(f.Label || '').trim().toUpperCase()
+
+    // BIB / NO
+    if (expr === 'BIB' || expr === 'DisplayBib' || expr === 'PLATE' || label === 'NO' || label === 'BIB' || label === 'PLATE') {
+      map.bib = colIdx
+      map.no = colIdx
+    }
+
+    // Name
+    if (
+      expr.includes('DisplayName') ||
+      expr.includes('LFNAME') ||
+      expr.includes('FIRSTNAME') ||
+      label === 'NAME'
+    ) {
+      if (map.name === undefined) map.name = colIdx
+    }
+
+    // Team / Club
+    if (expr === 'CLUB' || label === 'TEAM' || label === 'CLUB') {
+      if (map.team === undefined) map.team = colIdx
+    }
+
+    // Category
+    if (expr.includes('CONTEST.NAME') || expr.includes('CONTEST.Category') || label === 'CAT' || label === 'CATEGORY') {
+      if (map.category === undefined) map.category = colIdx
+    }
+
+    // Gender
+    if (expr.includes('SexMF') || expr.includes('SexBG') || expr === 'SEX' || label === 'GENDER' || label === 'SEX') {
+      if (map.gender === undefined) map.gender = colIdx
+    }
+
+    // Division / Grade
+    if (expr === 'Division' || expr === 'Grade' || label === 'DIVISION' || label === 'DIV' || label === 'GRD') {
+      if (map.division === undefined) map.division = colIdx
+    }
+
+    // Wave or Field
+    if (expr === 'SplitWave' || expr === 'SplitField' || label === 'WAV' || label === 'FLD' || label === 'WAVE' || label === 'FIELD') {
+      if (map.waveOrField === undefined) map.waveOrField = colIdx
+    }
+
+    // Seeding Rank
+    if (expr.includes('WaveRank_Seeding') || expr.includes('FieldRank_Seeding') || label === 'FLD RANK' || label === 'WAVE RANK') {
+      if (map.seedingRank === undefined) map.seedingRank = colIdx
+    }
+
+    // Series Rank / PL
+    if (expr.includes('SeriesRank_Seeding') || expr === 'SeriesRank' || (label === 'PL' && !expr.includes('RANK1'))) {
+      if (map.seriesRank === undefined) map.seriesRank = colIdx
+    }
+
+    // Finishing Rank / PLC
+    if (expr.includes('RANK1') || label === 'PLC' || label === 'PLACE' || label === 'RANK') {
+      if (map.rank === undefined) map.rank = colIdx
+    }
+
+    // Points
+    if (expr.includes('DisplayPoints') || expr.includes('Points_Series') || label === 'PTS' || label === 'IND PTS') {
+      if (map.points === undefined) map.points = colIdx
+    }
+
+    // Lap times
+    if (expr.includes('DisplayLapTime(1)') || label === 'LAP1') {
+      map.lap1 = colIdx
+      lapIndices[0] = colIdx
+    } else if (expr.includes('DisplayLapTime(2)') || label === 'LAP2') {
+      map.lap2 = colIdx
+      lapIndices[1] = colIdx
+    } else if (expr.includes('DisplayLapTime(3)') || label === 'LAP3') {
+      map.lap3 = colIdx
+      lapIndices[2] = colIdx
+    } else if (expr.includes('DisplayLapTime(4)') || label === 'LAP4') {
+      map.lap4 = colIdx
+      lapIndices[3] = colIdx
+    }
+
+    // Penalty
+    if (expr.includes('TIME20') || label === 'PEN' || label === 'PENALTY') {
+      map.penalty = colIdx
+    }
+
+    // Total Time / Status
+    if (expr === 'TimeOrStatus' || expr === 'TIME' || label === 'TIME' || label === 'TOTAL TIME') {
+      if (map.totalTime === undefined) map.totalTime = colIdx
+    }
+
+    // Team Standings
+    if (expr.includes('TS199.TIME1') || expr.includes('TS299.TIME1') || expr.includes('TS4.TIME1') || (label === 'PTS' && expr.includes('choose([Division]'))) {
+      map.teamPoints = colIdx
+    }
+    if (label === 'PENALTY PTS' || expr.includes('TS1.DECIMALTIME2')) {
+      map.teamPenalty = colIdx
+    }
+  })
+
+  if (lapIndices.length > 0) {
+    map.laps = lapIndices
+  }
+
+  return map
+}
+
+interface GroupContext {
+  category?: string
+  waveOrField?: string
+  waveOrFieldType?: 'wave' | 'field'
+  waveOrFieldNum?: string
+  team?: string
+  division?: string
+}
+
+function extractGroupContext(key: string, currentCtx: GroupContext): GroupContext {
+  const cleanKey = key.includes('_') ? key.split('_').slice(1).join('_') : key
+  const ctx: GroupContext = { ...currentCtx }
+
+  // Wave or Field header
+  if (cleanKey.match(/\bfield:\s*(\d+)/i) || cleanKey.match(/\bfield\s*(\d+)/i)) {
+    const m = cleanKey.match(/\bfield:?\s*(\d+)/i)
+    ctx.waveOrField = `Field: ${m ? m[1] : cleanKey}`
+    ctx.waveOrFieldType = 'field'
+    ctx.waveOrFieldNum = m ? m[1] : '1'
+  } else if (cleanKey.match(/\bwave:\s*(\d+)/i) || cleanKey.match(/\bwave\s*(\d+)/i)) {
+    const m = cleanKey.match(/\bwave:?\s*(\d+)/i)
+    ctx.waveOrField = `Wave: ${m ? m[1] : cleanKey}`
+    ctx.waveOrFieldType = 'wave'
+    ctx.waveOrFieldNum = m ? m[1] : '1'
+  }
+
+  // Category header
+  if (
+    categoryOrder.some(c => cleanKey.toLowerCase().includes(c.toLowerCase())) ||
+    cleanKey.includes('Boys') || cleanKey.includes('Girls') ||
+    cleanKey.includes('Open') || cleanKey.includes('Varsity') ||
+    cleanKey.includes('JV') || cleanKey.includes('Grade') ||
+    cleanKey.includes('MS')
+  ) {
+    ctx.category = normalizeCategoryName(cleanKey)
+  }
+
+  // Division header
+  const divMatch = cleanKey.match(/division\s*(\d+)/i)
+  if (divMatch) {
+    ctx.division = divMatch[1]
+  }
+
+  // Team header
+  if (
+    cleanKey.includes('School') || cleanKey.includes('Composite') ||
+    cleanKey.includes('Team') || cleanKey.includes('Cycling') ||
+    cleanKey.includes('Club') || cleanKey.includes('Spooner')
+  ) {
+    ctx.team = cleanKey.replace(/\s*\(Division\s*\d+\)/i, '').replace(/\s*-?\s*D\d+/i, '').trim()
+  }
+
+  return ctx
+}
+
+function calculateAverageLapTime(laps: string[]): string {
+  if (!laps || laps.length === 0) return ''
+  const toSec = (str: string) => {
+    if (!str) return 0
+    const clean = str.replace(/\*$/, '').trim()
+    const parts = clean.split(':').map(parseFloat)
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    if (parts.length === 2) return parts[0] * 60 + parts[1]
+    return parts[0] || 0
+  }
+  let validCount = 0
+  let totalSec = 0
+  laps.forEach(l => {
+    const s = toSec(l)
+    if (s > 0) {
+      totalSec += s
+      validCount++
+    }
+  })
+  if (validCount > 0) {
+    const avg = totalSec / validCount
+    const m = Math.floor(avg / 60)
+    const s = Math.round(avg % 60)
+    return `${m}:${String(s).padStart(2, '0')}`
+  }
+  return ''
+}
+
+/**
+ * Determine View Type from Report Metadata
+ */
+export function detectFeedViewType(
+  listObj?: { ID?: string; Name?: string; ListName?: string; Fields?: any[] },
+  page?: 'list' | 'results'
+): FeedViewType {
+  const name = String(listObj?.ListName || listObj?.Name || '').toLowerCase()
+  const fields = listObj?.Fields || []
+
+  if (name.includes('team results') && !name.includes('individual')) {
+    return 'team_standings'
+  }
+  if (page === 'results') {
+    if (name.includes('by team')) return 'individual_results_by_team'
+    return 'individual_results'
+  }
+  // page === 'list'
+  if (name.includes('by team') || name.includes('start by team')) {
+    return 'team_start_list'
+  }
+  return 'category_start_list'
+}
+
+/**
+ * Main Universal Data Parser.
+ * Processes any RACE RESULT JSON payload using list schema and grouping metadata.
+ */
 export function parseUniversalData(
   resultData: any,
   listId: string,
   page: 'list' | 'results'
-): Rider[] {
+): ParsedFeedResult {
   const rawData = resultData?.data
-  if (!rawData) return []
+  const fields = resultData?.list?.Fields || []
+  const listName = resultData?.list?.ListName || resultData?.list?.Name || ''
+  const viewType = detectFeedViewType({ ID: listId, Name: listName, ListName: listName, Fields: fields }, page)
 
-  const extracted: Rider[] = []
+  if (!rawData || (Array.isArray(rawData) && rawData.length === 0)) {
+    return {
+      viewType,
+      riders: [],
+      teamStandings: [],
+      isEmpty: true,
+      rawCount: 0,
+      feedTitle: listName
+    }
+  }
 
-  function traverse(node: any, context: Partial<Rider>) {
-    if (node && typeof node === 'object' && !Array.isArray(node)) {
-      for (const [key, val] of Object.entries(node)) {
-        const cleanKey = key.includes('_') ? key.split('_').slice(1).join('_') : key
-        const newCtx = { ...context }
+  const riders: Rider[] = []
+  const teamStandings: TeamStanding[] = []
+  let rawCount = 0
 
-        if (cleanKey.includes('Wave')) {
-          newCtx.wave = cleanKey
-        } else if (
-          categoryOrder.some(c => cleanKey.includes(c)) ||
-          cleanKey.includes('Boys') || cleanKey.includes('Girls') ||
-          cleanKey.includes('Open') || cleanKey.includes('Varsity') ||
-          cleanKey.includes('JV') || cleanKey.includes('Grade') ||
-          cleanKey.includes('MS')
-        ) {
-          newCtx.category = normalizeCategoryName(cleanKey)
-        } else if (
-          cleanKey.includes('School') || cleanKey.includes('Composite') ||
-          cleanKey.includes('Team') || cleanKey.includes('Cycling') ||
-          cleanKey.includes('Spooner')
-        ) {
-          newCtx.team = cleanKey.replace(/\s*\(Division\s*\d+\)/i, '').trim()
-        }
-        traverse(val, newCtx)
+  function processRow(row: any[], ctx: GroupContext) {
+    if (!Array.isArray(row) || row.length === 0) return
+    rawCount++
+
+    const map = resolveColumnIndices(fields, row.length)
+
+    if (viewType === 'team_standings') {
+      const team = String((map.team !== undefined ? row[map.team] : '') || ctx.team || '').trim()
+      const rank = String((map.rank !== undefined ? row[map.rank] : '') || (map.teamPlc !== undefined ? row[map.teamPlc] : '') || '').trim()
+      const points = String((map.teamPoints !== undefined ? row[map.teamPoints] : '') || (map.points !== undefined ? row[map.points] : '') || '0').trim()
+      const penaltyPoints = String((map.teamPenalty !== undefined ? row[map.teamPenalty] : '') || '').trim()
+      const division = String((map.division !== undefined ? row[map.division] : '') || ctx.division || '1').trim()
+
+      if (team) {
+        teamStandings.push({
+          rank: rank.replace(/[*#]/g, ''),
+          team,
+          division: division.replace(/^division\s*/i, ''),
+          points,
+          penaltyPoints
+        })
       }
-    } else if (Array.isArray(node)) {
-      node.forEach(row => {
-        if (Array.isArray(row) && row.length >= 4) {
-          const rider: Rider = {
-            no: String(row[0] || ''),
-            bib: String(row[1] || row[0] || ''),
-            pl: String(row[2] || ''),
-            name: String(page === 'list' && listId === '747B52' ? row[2] || '' : row[3] || ''),
-            team: String(page === 'list' && listId === '747B52' ? context.team || '' : row[4] || context.team || ''),
-            category: normalizeCategoryName(context.category || ''),
-            wave: context.wave || 'Wave: 1',
-            div: row[5] || '1',
-            wv: row[6] || '1',
-            wv_rank: row[2] || '',
-            return_val: row[7] || '+'
-          }
+      return
+    }
 
-          if (listId === '747B52') {
-            rider.gender = row[3] || ''
-            rider.category = normalizeCategoryName(row[4] || context.category || '')
-            rider.div = rider.team && rider.team.includes('Division 1') ? '1' : '2'
-            rider.laps = []
-            rider.lap1 = '-'
-            rider.lap2 = '-'
-            rider.lap3 = '-'
-            rider.lap4 = '-'
-            rider.totalTime = ''
-            rider.avgLap = ''
-          } else if (page === 'results') {
-            const rawLaps = [row[7], row[8], row[9], row[10]]
-              .map(l => String(l || '').trim())
-              .filter(l => l && l !== '-' && l !== '*' && l !== '0' && l !== '00:00')
-            rider.laps = rawLaps
-            rider.lap1 = (row[7] && row[7] !== '*' && row[7] !== '0') ? String(row[7]).trim() : '-'
-            rider.lap2 = (row[8] && row[8] !== '*' && row[8] !== '0') ? String(row[8]).trim() : '-'
-            rider.lap3 = (row[9] && row[9] !== '*' && row[9] !== '0') ? String(row[9]).trim() : '-'
-            rider.lap4 = (row[10] && row[10] !== '*' && row[10] !== '0') ? String(row[10]).trim() : '-'
+    // Rider fields
+    const bib = String((map.bib !== undefined ? row[map.bib] : '') || '').trim()
+    const no = String((map.no !== undefined ? row[map.no] : '') || bib).trim()
+    const name = String((map.name !== undefined ? row[map.name] : '') || '').trim()
+    const team = String((map.team !== undefined ? row[map.team] : '') || ctx.team || '').trim()
+    const category = normalizeCategoryName(
+      String((map.category !== undefined ? row[map.category] : '') || ctx.category || '').trim()
+    )
+    const gender = String((map.gender !== undefined ? row[map.gender] : '') || '').trim()
+    const div = String((map.division !== undefined ? row[map.division] : '') || ctx.division || '1').trim()
 
-            const rawPen = (row[11] && row[11] !== '*' && row[11] !== '0' && row[11] !== '00:00') ? String(row[11]).trim() : ''
-            rider.penalty = rawPen ? rawPen.replace(/^0(\d:)/, '$1') : ''
+    // Wave / Field
+    const rawWaveOrField = String((map.waveOrField !== undefined ? row[map.waveOrField] : '') || ctx.waveOrFieldNum || '').trim()
+    const waveOrFieldType: 'wave' | 'field' = ctx.waveOrFieldType || (fields.some(f => String(f.Expression).includes('SplitField')) ? 'field' : 'wave')
+    const waveOrFieldNum = rawWaveOrField || ctx.waveOrFieldNum || '1'
+    const waveOrField = ctx.waveOrField || `${waveOrFieldType === 'field' ? 'Field' : 'Wave'}: ${waveOrFieldNum}`
 
-            rider.totalTime = String(row[12] || rawLaps[rawLaps.length - 1] || '').trim()
+    // Seeding & Series Ranks
+    const seedingRank = String((map.seedingRank !== undefined ? row[map.seedingRank] : '') || '').trim()
+    const seriesRank = String((map.seriesRank !== undefined ? row[map.seriesRank] : '') || '').trim()
 
-            if (rawLaps.length > 0) {
-              const toSec = (str: string) => {
-                if (!str) return 0
-                const clean = str.replace(/\*$/, '').trim()
-                const parts = clean.split(':').map(parseFloat)
-                if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2]
-                if (parts.length === 2) return parts[0] * 60 + parts[1]
-                return parts[0] || 0
-              }
-              let validCount = 0
-              let totalSec = 0
-              rawLaps.forEach(l => {
-                const s = toSec(l)
-                if (s > 0) {
-                  totalSec += s
-                  validCount++
-                }
-              })
-              if (validCount > 0) {
-                const avg = totalSec / validCount
-                const m = Math.floor(avg / 60)
-                const s = Math.round(avg % 60)
-                rider.avgLap = `${m}:${String(s).padStart(2, '0')}`
-              }
-            }
-          }
+    // Results-specific fields
+    const rawRank = String((map.rank !== undefined ? row[map.rank] : '') || (map.seriesRank !== undefined ? row[map.seriesRank] : '') || '').trim()
+    const rawTime = String((map.totalTime !== undefined ? row[map.totalTime] : '') || '').trim()
+    const rawPen = String((map.penalty !== undefined ? row[map.penalty] : '') || '').trim().replace(/^0(\d:)/, '$1')
+    const points = String((map.points !== undefined ? row[map.points] : '') || '').trim()
 
-          if (rider.name && rider.team) {
-            extracted.push(rider)
-          }
-        } else if (typeof row === 'object') {
-          traverse(row, context)
+    // Lap times
+    const lap1 = map.lap1 !== undefined && row[map.lap1] ? String(row[map.lap1]).trim() : '-'
+    const lap2 = map.lap2 !== undefined && row[map.lap2] ? String(row[map.lap2]).trim() : '-'
+    const lap3 = map.lap3 !== undefined && row[map.lap3] ? String(row[map.lap3]).trim() : '-'
+    const lap4 = map.lap4 !== undefined && row[map.lap4] ? String(row[map.lap4]).trim() : '-'
+    const laps = [lap1, lap2, lap3, lap4].filter(l => l && l !== '-' && l !== '*' && l !== '0' && l !== '00:00')
+
+    // Determine DNF / DNS / DQ status
+    let status = 'OK'
+    const statusCandidate = (rawTime + ' ' + rawRank).toUpperCase()
+    if (statusCandidate.includes('DNF')) status = 'DNF'
+    else if (statusCandidate.includes('DNS')) status = 'DNS'
+    else if (statusCandidate.includes('DSQ') || statusCandidate.includes('DQ')) status = 'DQ'
+
+    const rider: Rider = {
+      bib,
+      no,
+      name,
+      team,
+      category,
+      gender,
+      div: div.replace(/^division\s*/i, ''),
+      wave: waveOrField,
+      waveOrField,
+      waveOrFieldType,
+      waveOrFieldNum,
+      seedingRank,
+      seriesRank,
+      wv: waveOrFieldNum,
+      wv_rank: seedingRank || rawRank,
+      pl: rawRank.replace(/[*]/g, ''),
+      totalTime: status !== 'OK' ? status : rawTime,
+      status,
+      points,
+      penalty: rawPen,
+      laps,
+      lap1: lap1 !== '*' && lap1 !== '0' ? lap1 : '-',
+      lap2: lap2 !== '*' && lap2 !== '0' ? lap2 : '-',
+      lap3: lap3 !== '*' && lap3 !== '0' ? lap3 : '-',
+      lap4: lap4 !== '*' && lap4 !== '0' ? lap4 : '-',
+      avgLap: calculateAverageLapTime(laps)
+    }
+
+    if (rider.name && (rider.team || rider.bib)) {
+      riders.push(rider)
+    }
+  }
+
+  function traverse(node: any, currentCtx: GroupContext) {
+    if (!node) return
+    if (Array.isArray(node)) {
+      node.forEach(item => {
+        if (Array.isArray(item)) {
+          processRow(item, currentCtx)
+        } else if (typeof item === 'object') {
+          traverse(item, currentCtx)
         }
       })
+    } else if (typeof node === 'object') {
+      for (const [key, val] of Object.entries(node)) {
+        const nextCtx = extractGroupContext(key, currentCtx)
+        traverse(val, nextCtx)
+      }
     }
   }
 
   traverse(rawData, {})
-  return extracted
+
+  return {
+    viewType,
+    riders,
+    teamStandings,
+    isEmpty: riders.length === 0 && teamStandings.length === 0,
+    rawCount,
+    feedTitle: listName
+  }
 }

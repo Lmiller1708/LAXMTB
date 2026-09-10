@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import type { Rider, ResultsSortOrder, ResultsGroupMode } from '../types/results'
+import type {
+  Rider,
+  ResultsSortOrder,
+  ResultsGroupMode,
+  TeamStanding,
+  FeedViewType
+} from '../types/results'
 import type { Race } from '~/modules/races/types/race'
 import {
   targetTeamKeywords,
@@ -15,6 +21,8 @@ import { useNotificationSubscriptions } from '~/modules/notifications/composable
 const props = defineProps<{
   race: Race
   riders: Rider[]
+  teamStandings?: TeamStanding[]
+  feedViewType?: FeedViewType
   currentTab: 'list' | 'results'
   listMode: ResultsGroupMode
   sortOrder: ResultsSortOrder
@@ -88,7 +96,27 @@ const getRiderKey = (r: Rider) => {
   return 'r_' + String(r.bib || r.no) + '_' + String(r.name || '').trim().replace(/\s+/g, '_')
 }
 
-// Grouped by Category & Wave
+// Grouped Team Standings
+const groupedTeamStandings = computed(() => {
+  const standings = props.teamStandings || []
+  const grouped: Record<string, TeamStanding[]> = {}
+  standings.forEach(s => {
+    const div = s.division ? `Division ${s.division}` : 'All Divisions'
+    if (!grouped[div]) grouped[div] = []
+    grouped[div].push(s)
+  })
+
+  return Object.keys(grouped).sort().map(div => ({
+    division: div,
+    standings: [...grouped[div]].sort((a, b) => {
+      const ra = parseInt(a.rank) || 999
+      const rb = parseInt(b.rank) || 999
+      return ra - rb
+    })
+  }))
+})
+
+// Grouped by Category & Wave / Field
 const groupedByCategory = computed(() => {
   const grouped: Record<string, Record<string, Rider[]>> = {}
   props.riders.forEach(r => {
@@ -118,8 +146,8 @@ const groupedByCategory = computed(() => {
       catStageTime,
       waves: sortedWaveKeys.map(wKey => {
         const ridersInWave = [...waves[wKey]].sort((a, b) => {
-          const pa = parseInt(a.pl || '') || parseInt(a.bib) || 0
-          const pb = parseInt(b.pl || '') || parseInt(b.bib) || 0
+          const pa = parseInt(a.seedingRank || a.pl || '') || parseInt(a.bib) || 0
+          const pb = parseInt(b.seedingRank || b.pl || '') || parseInt(b.bib) || 0
           return pa - pb
         })
         const waveRiderKeys = ridersInWave
@@ -167,7 +195,7 @@ const groupedByTeam = computed(() => {
       const ia = categoryOrder.indexOf(a.category)
       const ib = categoryOrder.indexOf(b.category)
       if (ia !== -1 && ib !== -1) return ia - ib
-      return (parseInt(a.pl || '') || parseInt(a.bib) || 0) - (parseInt(b.pl || '') || parseInt(b.bib) || 0)
+      return (parseInt(a.seedingRank || a.pl || '') || parseInt(a.bib) || 0) - (parseInt(b.seedingRank || b.pl || '') || parseInt(b.bib) || 0)
     })
   }))
 })
@@ -203,11 +231,62 @@ const groupedByTeam = computed(() => {
     </div>
 
     <!-- 2. No Results Matching Filter -->
-    <div v-else-if="riders.length === 0" class="no-results">
-      {{ currentTab === 'results' ? 'No race finishes recorded yet. Results stream live on race day.' : 'No riders matched your current search / filter.' }}
+    <div v-else-if="riders.length === 0 && (!teamStandings || teamStandings.length === 0)" class="no-results">
+      {{ currentTab === 'results' ? 'No results published yet. Timing data will stream live on race day.' : 'No riders matched your current search / filter.' }}
     </div>
 
-    <!-- 3. Grouped By Category & Wave -->
+    <!-- 3. Team Standings View -->
+    <div v-else-if="feedViewType === 'team_standings' || (teamStandings && teamStandings.length > 0 && riders.length === 0)">
+      <div
+        v-for="divGroup in groupedTeamStandings"
+        :key="divGroup.division"
+        class="table-card"
+        :data-card-key="`div:${divGroup.division}`"
+      >
+        <div class="category-header collapsible-header" @click="toggleCard(`div:${divGroup.division}`)">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;">
+            <span>🏆 {{ divGroup.division }}</span>
+            <span class="category-badge">{{ divGroup.standings.length }} TEAMS</span>
+          </div>
+          <span class="card-toggle-icon" :class="{ collapsed: isCardCollapsed(`div:${divGroup.division}`) }">▼</span>
+        </div>
+
+        <div v-show="!isCardCollapsed(`div:${divGroup.division}`)" class="collapsible-body">
+          <div class="table-responsive-wrapper">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th style="width:50px;text-align:center;">Rank</th>
+                  <th>Team / Club</th>
+                  <th style="width:100px;text-align:right;">Penalty Pts</th>
+                  <th style="width:100px;text-align:right;">Total Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="s in divGroup.standings"
+                  :key="s.team"
+                >
+                  <td style="text-align:center;font-weight:700;color:var(--text-muted);">{{ s.rank || '-' }}</td>
+                  <td>
+                    <span :class="isTargetTeam(s.team) ? 'team-name-lax' : 'team-name'">{{ s.team }}</span>
+                  </td>
+                  <td style="text-align:right;">
+                    <span v-if="s.penaltyPoints && s.penaltyPoints !== '0'" class="col-pen-val">+{{ s.penaltyPoints }}</span>
+                    <span v-else class="lap-empty">-</span>
+                  </td>
+                  <td style="text-align:right;font-weight:700;color:var(--accent-red);">
+                    {{ s.points }} pts
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Grouped By Category & Wave / Field -->
     <div v-else-if="listMode === 'WAVE'">
       <div
         v-for="catGroup in groupedByCategory"
@@ -255,10 +334,10 @@ const groupedByTeam = computed(() => {
 
         <div v-show="!isCardCollapsed(`cat:${catGroup.category}`)" class="collapsible-body">
           <div v-for="w in catGroup.waves" :key="w.waveKey">
-            <!-- Wave Header -->
+            <!-- Wave / Field Header -->
             <div class="wave-divider">
               <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
-                <span>🚩 {{ w.waveKey.includes('Wave') ? w.waveKey : `Wave: ${w.waveKey}` }}</span>
+                <span>🚩 {{ w.waveKey }}</span>
               </div>
               <div class="wave-schedule-wrap" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0;">
                 <div v-if="w.waveWarmupTime || w.stageTime || w.waveTime" class="wave-schedule-strip">
@@ -272,7 +351,7 @@ const groupedByTeam = computed(() => {
                     <span class="step-time">{{ w.stageTime }}</span>
                   </span>
                   <span v-if="w.stageTime && w.waveTime" class="wave-schedule-sep">›</span>
-                  <span v-if="w.waveTime" class="wave-schedule-step step-start" title="Official wave gun start">
+                  <span v-if="w.waveTime" class="wave-schedule-step step-start" title="Official gun start">
                     <span class="step-lbl">Start:</span>
                     <span class="step-time">{{ w.waveTime }}</span>
                   </span>
@@ -294,7 +373,7 @@ const groupedByTeam = computed(() => {
               <table class="results-table">
                 <thead>
                   <tr>
-                    <th style="width:40px;text-align:center;">Pos</th>
+                    <th style="width:40px;text-align:center;">{{ currentTab === 'results' ? 'Pos' : 'Seed' }}</th>
                     <th style="width:55px;text-align:center;">Plate #</th>
                     <th>Rider Name</th>
                     <template v-if="currentTab === 'results'">
@@ -324,7 +403,9 @@ const groupedByTeam = computed(() => {
                       :title="currentTab === 'results' ? 'Tap to toggle lap splits' : undefined"
                       @click="toggleRiderSelection(getRiderKey(r))"
                     >
-                      <td style="text-align:center;font-weight:700;color:var(--text-muted);">{{ r.pl || '-' }}</td>
+                      <td style="text-align:center;font-weight:700;color:var(--text-muted);">
+                        {{ currentTab === 'results' ? (r.pl || '-') : (r.seedingRank || r.pl || '-') }}
+                      </td>
                       <td style="text-align:center;"><span class="plate-number">#{{ r.no || r.bib }}</span></td>
                       <td><span class="rider-name">{{ r.name }}</span></td>
 
@@ -349,7 +430,8 @@ const groupedByTeam = computed(() => {
                           <span v-else class="lap-empty">-</span>
                         </td>
                         <td class="col-time" style="text-align:right;white-space:nowrap;">
-                          <span>{{ r.totalTime || r.return_val || '-' }}</span>
+                          <span v-if="r.status && r.status !== 'OK'" class="status-badge" :class="r.status.toLowerCase()">{{ r.status }}</span>
+                          <span v-else>{{ r.totalTime || r.return_val || '-' }}</span>
                           <span v-if="r.laps && r.laps.length > 0" class="rider-expand-icon">▼</span>
                         </td>
                       </template>
@@ -405,7 +487,7 @@ const groupedByTeam = computed(() => {
       </div>
     </div>
 
-    <!-- 4. Grouped By Team -->
+    <!-- 5. Grouped By Team -->
     <div v-else-if="listMode === 'TEAM'">
       <div
         v-for="teamGroup in groupedByTeam"
@@ -426,7 +508,7 @@ const groupedByTeam = computed(() => {
             <table class="results-table">
               <thead>
                 <tr>
-                  <th style="width:40px;text-align:center;">Pos</th>
+                  <th style="width:40px;text-align:center;">{{ currentTab === 'results' ? 'Pos' : 'Seed' }}</th>
                   <th style="width:55px;text-align:center;">Plate #</th>
                   <th>Rider Name</th>
                   <th>Category</th>
@@ -444,13 +526,16 @@ const groupedByTeam = computed(() => {
                     :title="currentTab === 'results' ? 'Tap to toggle lap splits' : undefined"
                     @click="currentTab === 'results' && toggleRiderSelection(getRiderKey(r))"
                   >
-                    <td style="text-align:center;font-weight:700;color:var(--text-muted);">{{ r.pl || '-' }}</td>
+                    <td style="text-align:center;font-weight:700;color:var(--text-muted);">
+                      {{ currentTab === 'results' ? (r.pl || '-') : (r.seedingRank || r.pl || '-') }}
+                    </td>
                     <td style="text-align:center;"><span class="plate-number">#{{ r.no || r.bib }}</span></td>
                     <td><span class="rider-name">{{ r.name }}</span></td>
                     <td><span class="category-pill">{{ r.category }}</span></td>
                     <td style="text-align:center;"><span class="div-tag">D{{ r.div || '1' }}</span></td>
                     <td v-if="currentTab === 'results'" class="col-time" style="text-align:right;white-space:nowrap;">
-                      <span>{{ r.totalTime || r.return_val || '-' }}</span>
+                      <span v-if="r.status && r.status !== 'OK'" class="status-badge" :class="r.status.toLowerCase()">{{ r.status }}</span>
+                      <span v-else>{{ r.totalTime || r.return_val || '-' }}</span>
                       <span v-if="r.laps && r.laps.length > 0" class="rider-expand-icon">▼</span>
                     </td>
                   </tr>

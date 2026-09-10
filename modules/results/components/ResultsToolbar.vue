@@ -5,6 +5,7 @@ const props = defineProps<{
   currentTab: 'list' | 'results'
   categories: string[]
   teams?: string[]
+  availableReports?: { ID: string; Name: string }[]
   isLive: boolean
   isCompleted?: boolean
   totalCount: number
@@ -12,7 +13,7 @@ const props = defineProps<{
 
 const searchQuery = defineModel<string>('searchQuery', { default: '' })
 const listMode = defineModel<ResultsGroupMode>('listMode', { default: 'WAVE' })
-const selectedListId = defineModel<string>('selectedListId', { default: 'A76F6B' })
+const selectedListId = defineModel<string>('selectedListId', { default: '' })
 const sortOrder = defineModel<ResultsSortOrder>('sortOrder', { default: 'TIME' })
 const selectedCategory = defineModel<string>('selectedCategory', { default: 'ALL' })
 const selectedTeamScope = defineModel<TeamScope>('selectedTeamScope', { default: 'DEFAULT_TEAMS' })
@@ -23,12 +24,15 @@ const emit = defineEmits<{
 
 const isFilterOpen = ref(false)
 
+const formatReportName = (name?: string) => {
+  if (!name) return 'Standard View'
+  return name
+    .replace(/^(\d+\s*-\s*[^|]+\|)/i, '')
+    .replace(/\s*-\s*Print$/i, '')
+    .trim()
+}
+
 const onListChange = () => {
-  if (selectedListId.value === '747B52' || selectedListId.value === 'E07F7C') {
-    listMode.value = 'TEAM'
-  } else {
-    listMode.value = 'WAVE'
-  }
   emit('refresh')
 }
 
@@ -52,7 +56,13 @@ const activeFilterChips = computed(() => {
   const chips: { label: string; strongText?: string; isLaxScope?: boolean; onRemove?: () => void }[] = []
 
   // View chip
-  if (selectedListId.value === '747B52' || selectedListId.value === 'E07F7C') {
+  if (selectedListId.value && props.availableReports && props.availableReports.length > 0) {
+    const rep = props.availableReports.find(r => r.ID === selectedListId.value)
+    chips.push({
+      label: 'View: ',
+      strongText: formatReportName(rep ? rep.Name : '')
+    })
+  } else if (listMode.value === 'TEAM') {
     chips.push({ label: 'View: ', strongText: 'By Team' })
   } else {
     chips.push({ label: 'View: ', strongText: 'Wave & Category' })
@@ -150,14 +160,20 @@ const activeFilterChips = computed(() => {
         <div class="filter-group">
           <label class="filter-label">Group By / View</label>
           <select v-model="selectedListId" id="listSelect" class="select-dropdown" @change="onListChange">
-            <template v-if="currentTab === 'list'">
-              <option value="A76F6B">Category & Wave</option>
-              <option value="747B52">By Team</option>
+            <template v-if="availableReports && availableReports.length > 0">
+              <option
+                v-for="rep in availableReports"
+                :key="rep.ID"
+                :value="rep.ID"
+              >
+                {{ formatReportName(rep.Name) }}
+              </option>
+            </template>
+            <template v-else-if="currentTab === 'list'">
+              <option value="">Category & Wave / Field</option>
             </template>
             <template v-else>
-              <option value="4C8C1F">Individual Results - ALL</option>
-              <option value="E07F7C">Individual Results - By Team</option>
-              <option value="674D5B">Team Results</option>
+              <option value="">Individual Results - ALL</option>
             </template>
           </select>
         </div>

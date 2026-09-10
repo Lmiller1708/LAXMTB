@@ -1,0 +1,350 @@
+{
+  "list": {
+    "ListName": "02 - Result Lists|Team Results",
+    "BottomPicture": "",
+    "BottomPictureShow": 0,
+    "ColumnHeadsFontName": "",
+    "ColumnHeadsFontSize": 12,
+    "ColumnHeadsFontBold": true,
+    "ColumnHeadsFontItalic": false,
+    "ColumnHeadsFontUnderlined": false,
+    "ColumnHeadsColor": "",
+    "ColumnHeadsShow": 2,
+    "Columns": 1,
+    "ColumnSpacing": 5,
+    "CoverSheet": "",
+    "BackSheet": "",
+    "Design": "",
+    "DesignShow": 2,
+    "EveryOtherLineGray": false,
+    "FontName": "Arial",
+    "FontSize": 10,
+    "FooterFontName": "",
+    "FooterFontSize": 10,
+    "FooterFontBold": false,
+    "FooterFontItalic": false,
+    "FooterFontUnderlined": false,
+    "FooterColor": "",
+    "GrayLine": true,
+    "HeadLine1": "Bluff Bash (North Conference)",
+    "HeadLine1FontName": "",
+    "HeadLine1FontSize": 16,
+    "HeadLine1FontBold": false,
+    "HeadLine1FontItalic": false,
+    "HeadLine1FontUnderlined": true,
+    "HeadLine2": "Team Results",
+    "HeadLine1Color": "",
+    "HeadLine1Show": 2,
+    "HeadLine2FontName": "",
+    "HeadLine2FontSize": 16,
+    "HeadLine2FontBold": true,
+    "HeadLine2FontItalic": false,
+    "HeadLine2FontUnderlined": false,
+    "HeadLine2Color": "",
+    "HeadLine2Show": 2,
+    "HeightBottomPicture": 40,
+    "LineColor": "",
+    "LineBackColor": "",
+    "LineDynamicFormat": "",
+    "LineSpacing": 1,
+    "MaxRecords": 0,
+    "MultiplierField": "",
+    "PageFormat": 0,
+    "PageMarginBottom": 10,
+    "PageMarginLeft": 10,
+    "PageMarginRight": 10,
+    "PageMarginTop": 10,
+    "PageSize": 5,
+    "PageHeight": 279,
+    "PageWidth": 216,
+    "SepLine": true,
+    "TopRightPicture": "",
+    "TopRightPictureShow": 0,
+    "ListHeaderText": "",
+    "ListFooterText": "",
+    "ListHeaderFooterFontName": "",
+    "ListHeaderFooterFontSize": 10,
+    "ListHeaderFooterFontBold": false,
+    "ListHeaderFooterFontItalic": false,
+    "ListHeaderFooterFontUnderlined": false,
+    "ListHeaderFooterAlignment": 1,
+    "Remarks": "",
+    "LastChange": "2024-08-28 11:33:32",
+    "FooterText1": "",
+    "FooterText2": "[DateTime]",
+    "FooterText3": "[page]",
+    "Orders": [
+      {
+        "Expression": "#Division [Division]",
+        "Descending": false,
+        "Grouping": 2,
+        "GroupFilterDefault": 0,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 2
+      },
+      {
+        "Expression": "choose([Division];[TS199.RANK];[TS299.RANK])",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 0
+      },
+      {
+        "Expression": "CLUB",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 2
+      }
+    ],
+    "Filters": [
+      {
+        "OrConjunction": false,
+        "Expression1": "[TS1.RANK]>0 AND [TS1.POSITION]=1",
+        "Operator": "=",
+        "Expression2": "1"
+      },
+      {
+        "OrConjunction": true,
+        "Expression1": "[TS2.RANK]>0 AND [TS2.POSITION]=1",
+        "Operator": "=",
+        "Expression2": "1"
+      }
+    ],
+    "Fields": [
+      {
+        "Expression": "switch([TS199.RANK]>0;[TS199.RANK];[TS299.RANK]>0;[TS299.RANK])",
+        "Label": "PLC",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "CLUB",
+        "Label": "TEAM",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "ifPositive(choose([Division];[TS1.DECIMALTIME2];[TS2.DECIMALTIME2]))",
+        "Label": "PENALTY PTS",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": true,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "#FF3300",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "choose([Division];[TS199.TIME1];[TS299.TIME1])",
+        "Label": "PTS",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      }
+    ],
+    "SelectorResults": []
+  },
+  "data": {
+    "#1_Division 1": [
+      [
+        "151",
+        "648",
+        "1",
+        "Hayward High School",
+        "",
+        "4037"
+      ],
+      [
+        "65",
+        "607",
+        "2",
+        "Marquette Senior High School",
+        "",
+        "3948"
+      ],
+      [
+        "71",
+        "587",
+        "3",
+        "Stevens Point Area Senior High",
+        "",
+        "3740"
+      ],
+      [
+        "163",
+        "631",
+        "4",
+        "Eau Claire Memorial High School",
+        "",
+        "3692"
+      ],
+      [
+        "3535",
+        "524",
+        "5",
+        "Green Bay Composite",
+        "",
+        "3398"
+      ]
+    ],
+    "#2_Division 2": [
+      [
+        "78",
+        "586",
+        "1",
+        "Marshfield High School",
+        "",
+        "1986"
+      ],
+      [
+        "3866",
+        "559",
+        "2",
+        "Duluth East High School",
+        "",
+        "1961"
+      ],
+      [
+        "168",
+        "654",
+        "3",
+        "Duluth Composite Team",
+        "",
+        "1895"
+      ],
+      [
+        "171",
+        "630",
+        "4",
+        "Negaunee High School",
+        "",
+        "1893"
+      ],
+      [
+        "74",
+        "584",
+        "5",
+        "La Crosse Central High School",
+        "",
+        "1885"
+      ]
+    ]
+  },
+  "DataFields": [
+    "BIB",
+    "ID",
+    "switch([TS199.RANK]>0;[TS199.RANK];[TS299.RANK]>0;[TS299.RANK])",
+    "CLUB",
+    "ifPositive(choose([Division];[TS1.DECIMALTIME2];[TS2.DECIMALTIME2]))",
+    "choose([Division];[TS199.TIME1];[TS299.TIME1])"
+  ],
+  "comments": {},
+  "mid": 85536,
+  "groupFilters": [
+    {
+      "Type": 0,
+      "Value": "",
+      "Values": [
+        "Division 1",
+        "Division 2"
+      ]
+    }
+  ],
+  "users": {
+    "546": {
+      "UserName": "JacobW10",
+      "DisplayName": "Jacob Wishart",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "552": {
+      "UserName": "LeoM",
+      "DisplayName": "Leo Madura",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "575": {
+      "UserName": "NoraS11",
+      "DisplayName": "Nora Schwanz",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "646": {
+      "UserName": "LeahR906",
+      "DisplayName": "Leah Robinson",
+      "PPV": 533870,
+      "ViewerFollowStatus": 0
+    }
+  },
+  "LiveUpdateInterval": 10,
+  "Favorites": null
+}
