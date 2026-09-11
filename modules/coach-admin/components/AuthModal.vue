@@ -41,29 +41,50 @@ const activeInviteCheck = computed(() => {
   return validateInviteCode(inviteCodeInput.value)
 })
 
+const hasValidInvite = computed(() => {
+  return !!activeInviteCheck.value.valid
+})
+
 const loadStoredInviteToken = () => {
-  if (props.initialInviteCode) {
-    inviteCodeInput.value = props.initialInviteCode
+  if (props.initialInviteCode && props.initialInviteCode.trim()) {
+    inviteCodeInput.value = props.initialInviteCode.trim()
     return
   }
   if (import.meta.client) {
-    const stored = localStorage.getItem('laxmtb_invite_token')
-    if (stored) {
-      inviteCodeInput.value = stored
+    const sessionToken = sessionStorage.getItem('laxmtb_invite_token')
+    if (sessionToken && sessionToken.trim()) {
+      inviteCodeInput.value = sessionToken.trim()
+      return
     }
   }
+  inviteCodeInput.value = ''
 }
 
-watch(() => props.isOpen, (open) => {
+watch([() => props.isOpen, () => props.initialInviteCode], ([open]) => {
   if (open) {
-    mode.value = props.initialMode || 'login'
+    loadStoredInviteToken()
+    fetchInviteSettings()
+
+    // STRICT INVITATION GATEKEEPING:
+    // If the visitor does not have a valid invite link, strictly lock to 'login' mode!
+    // They cannot view or use the Create Account form.
+    if (hasValidInvite.value && props.initialMode === 'signup') {
+      mode.value = 'signup'
+    } else {
+      mode.value = 'login'
+    }
+
     localError.value = ''
     resetSent.value = false
     passwordInput.value = ''
     confirmPasswordInput.value = ''
     authError.value = ''
-    loadStoredInviteToken()
-    fetchInviteSettings()
+  }
+})
+
+watch(mode, (newMode) => {
+  if (newMode === 'signup' && !hasValidInvite.value) {
+    mode.value = 'login'
   }
 })
 
@@ -171,16 +192,16 @@ const handleResetPassword = async () => {
       <!-- Modal Header -->
       <div class="modal-header">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:18px;">{{ mode === 'signup' ? '📝' : (mode === 'forgot' ? '🔑' : '🔐') }}</span>
+          <span style="font-size:18px;">{{ mode === 'signup' && hasValidInvite ? '📝' : (mode === 'forgot' ? '🔑' : '🔐') }}</span>
           <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--text-main);">
-            {{ mode === 'signup' ? 'Create Account' : (mode === 'forgot' ? 'Reset Password' : 'Sign In') }}
+            {{ mode === 'signup' && hasValidInvite ? 'Create Account' : (mode === 'forgot' ? 'Reset Password' : 'Sign In') }}
           </h3>
         </div>
         <button type="button" class="modal-close-btn" aria-label="Close modal" @click="handleClose">✕</button>
       </div>
 
-      <!-- Mode Switcher Tabs (Login vs Sign Up) -->
-      <div v-if="mode !== 'forgot'" class="auth-tabs">
+      <!-- Mode Switcher Tabs (Only shown if visitor has a valid team invite link) -->
+      <div v-if="mode !== 'forgot' && hasValidInvite" class="auth-tabs">
         <button
           type="button"
           class="auth-tab-btn"
@@ -256,12 +277,24 @@ const handleResetPassword = async () => {
             <span v-if="authLoading">Signing in...</span>
             <span v-else>Sign In</span>
           </button>
+
+          <!-- Prompt to switch to Create Account only if invite link is active -->
+          <div v-if="hasValidInvite" class="auth-footer-prompt" style="margin-top:12px;text-align:center;">
+            <span>Need an account?</span>
+            <button
+              type="button"
+              class="auth-text-link"
+              @click="mode = 'signup'; localError = ''"
+            >
+              Complete Registration
+            </button>
+          </div>
         </form>
 
-        <!-- 2. CREATE ACCOUNT FORM (INVITE ONLY) -->
-        <form v-else-if="mode === 'signup'" @submit.prevent="handleSignUp" class="auth-form">
-          <!-- Invite Verification Banner (If verified from link) -->
-          <div v-if="activeInviteCheck.valid" class="invite-status-card valid">
+        <!-- 2. CREATE ACCOUNT FORM (INVITE ONLY - Verified via link) -->
+        <form v-else-if="mode === 'signup' && hasValidInvite" @submit.prevent="handleSignUp" class="auth-form">
+          <!-- Invite Verification Banner -->
+          <div class="invite-status-card valid">
             <div style="display:flex;align-items:center;gap:8px;">
               <span style="font-size:16px;">🎟️</span>
               <div>
@@ -269,31 +302,6 @@ const handleResetPassword = async () => {
                 <div style="font-size:10.5px;color:var(--text-muted);">Access Token: <code>{{ inviteCodeInput }}</code></div>
               </div>
             </div>
-            <button
-              type="button"
-              class="invite-change-link"
-              @click="inviteCodeInput = ''"
-              title="Change invite code"
-            >
-              Change
-            </button>
-          </div>
-
-          <!-- Team Access Code Input (Required if not pre-verified) -->
-          <div v-else class="auth-field invite-required-box">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-              <label class="auth-label">Team Access Code <span style="color:var(--accent-red);">*</span></label>
-              <span class="invite-badge">Invite Required</span>
-            </div>
-            <input
-              v-model="inviteCodeInput"
-              type="text"
-              placeholder="e.g. lax-coach-2026"
-              required
-              class="auth-input"
-              autocomplete="off"
-            >
-            <small class="auth-hint">Enter the invite code from your head coach or open your team's invite link.</small>
           </div>
 
           <div class="auth-field">
@@ -428,8 +436,9 @@ const handleResetPassword = async () => {
       </div>
 
       <!-- Footer Note -->
-      <div class="modal-footer" style="justify-content:center;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);">
-        <span>Registration is invite-only for LAX MTB coaches and parents</span>
+      <div class="modal-footer" style="justify-content:center;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);text-align:center;padding:10px 16px;">
+        <span v-if="hasValidInvite">🎟️ Team invite verified. Complete your details above to activate your account.</span>
+        <span v-else>🔒 Account registration is invite-only for LAX MTB coaches and parents.</span>
       </div>
     </div>
   </div>

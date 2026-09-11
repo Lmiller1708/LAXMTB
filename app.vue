@@ -149,11 +149,24 @@ const syncFromRoute = () => {
     if (inviteParam) {
       const cleanInvite = inviteParam.trim()
       activeInviteCode.value = cleanInvite
-      localStorage.setItem('laxmtb_invite_token', cleanInvite)
+      if (import.meta.client) {
+        sessionStorage.setItem('laxmtb_invite_token', cleanInvite)
+        localStorage.removeItem('laxmtb_invite_token')
+      }
       if (!user.value) {
         initialAuthMode.value = 'signup'
         isAuthOpen.value = true
         showNotifToast('🎟️ Team Invite Accepted!', 'Please complete your registration below.')
+      }
+    } else {
+      if (import.meta.client) {
+        localStorage.removeItem('laxmtb_invite_token')
+        const sessionToken = sessionStorage.getItem('laxmtb_invite_token')
+        if (sessionToken && sessionToken.trim()) {
+          activeInviteCode.value = sessionToken.trim()
+        } else {
+          activeInviteCode.value = ''
+        }
       }
     }
 
@@ -427,7 +440,7 @@ const handlePrint = () => {
         :race="currentRace"
         :is-coach-auth="isCoachAuth"
         @edit="openAdminWithTab('coach')"
-        @open-auth="openAuthWithMode('signup')"
+        @open-auth="openAuthWithMode('login')"
       />
 
       <!-- Tab 3 & 4: Start Lists & Results -->

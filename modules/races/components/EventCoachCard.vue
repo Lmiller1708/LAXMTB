@@ -307,7 +307,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
           <span style="font-size:16px;">🔒</span>
           <div>
             <div class="locked-banner-title">Coach Sign-Up Locked</div>
-            <div class="locked-banner-desc">Sign in or create an account to claim ride leader/support slots or edit names.</div>
+            <div class="locked-banner-desc">Sign in to claim ride leader/support slots or edit names.</div>
           </div>
         </div>
         <button
@@ -315,7 +315,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
           class="coach-unlock-signin-btn"
           @click="emit('openAuth')"
         >
-          Sign In / Register
+          Sign In
         </button>
       </div>
 

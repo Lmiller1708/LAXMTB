@@ -208,8 +208,8 @@ onMounted(() => {
         <div class="mobile-menu-item-left">
           <span>🔑</span>
           <div>
-            <div class="mobile-menu-item-title">Sign In / Register</div>
-            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Sign up to claim coach slots</div>
+            <div class="mobile-menu-item-title">Sign In</div>
+            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Sign in to coach account</div>
           </div>
         </div>
         <span class="mobile-menu-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:#22c55e;">
