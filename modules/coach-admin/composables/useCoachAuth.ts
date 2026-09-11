@@ -118,17 +118,17 @@ export const useCoachAuth = () => {
     return false
   }
 
-  // Is the current user an admin (requires verified identity and admin/owner role in admins collection)
+  // Is the current user an admin (requires verified identity for founder/admins)
   const isAdminCoach = computed<boolean>(() => {
-    if (!user.value || !isVerifiedAuth(user.value)) return false
+    if (!user.value) return false
     const email = user.value.email?.toLowerCase().trim() || ''
-    if (DEFAULT_ADMINS.includes(email)) return true
+    if (DEFAULT_ADMINS.includes(email)) return isVerifiedAuth(user.value)
     return coachRole.value === 'admin' || coachRole.value === 'owner'
   })
 
   // Authenticated coaches and admins can edit coach sign-ups (requires authorized coach record in admins collection)
   const canEditCoachSignups = computed<boolean>(() => {
-    if (!user.value || !isVerifiedAuth(user.value)) return false
+    if (!user.value) return false
     return isAdminCoach.value || isAuthorizedCoach.value
   })
 
@@ -390,6 +390,21 @@ export const useCoachAuth = () => {
         isAuthorizedCoach.value = true
         return true
       } else {
+        // Fallback: check if user profile in users collection has coach/admin role
+        if (user.value?.uid) {
+          try {
+            const userRef = doc(db, 'users', user.value.uid)
+            const userSnap = await getDoc(userRef)
+            if (userSnap.exists()) {
+              const uData = userSnap.data()
+              if (uData.role === 'coach' || uData.role === 'admin') {
+                coachRole.value = uData.role === 'admin' ? 'admin' : 'coach'
+                isAuthorizedCoach.value = true
+                return true
+              }
+            }
+          } catch (err) {}
+        }
         coachRole.value = null
         isAuthorizedCoach.value = false
         return false
@@ -464,6 +479,18 @@ export const useCoachAuth = () => {
           role = 'owner'
         } else if (adminMap[email]?.role === 'admin' || adminMap[email]?.role === 'owner' || u.role === 'admin' || u.role === 'owner') {
           role = 'admin'
+        } else if (adminMap[email]?.role === 'coach' || u.role === 'coach') {
+          role = 'coach'
+          // Self-heal: ensure coach record exists in admins collection
+          if (!adminMap[email] && isAdminCoach.value) {
+            setDoc(doc(db, 'admins', email), {
+              email,
+              name: u.name || email.split('@')[0],
+              role: 'coach',
+              addedAt: u.createdAt || new Date().toISOString(),
+              addedBy: user.value?.email || 'admin'
+            }, { merge: true }).catch(() => {})
+          }
         } else if (u.role === 'guardian') {
           role = 'guardian'
         } else if (u.role === 'member') {
@@ -565,17 +592,32 @@ export const useCoachAuth = () => {
         if (uid) {
           await setDoc(doc(db, 'users', uid), { role: 'admin' }, { merge: true })
         }
-      } else {
-        // Demote from admin collection
-        try {
-          await deleteDoc(doc(db, 'admins', cleanEmail))
-        } catch (err) {
-          await setDoc(doc(db, 'admins', cleanEmail), { role: newRole }, { merge: true })
-        }
+      } else if (newRole === 'coach') {
+        await setDoc(doc(db, 'admins', cleanEmail), {
+          email: cleanEmail,
+          role: 'coach',
+          addedAt: new Date().toISOString(),
+          addedBy: user.value?.email || 'admin'
+        }, { merge: true })
         if (uid) {
-          await setDoc(doc(db, 'users', uid), { role: newRole }, { merge: true })
+          await setDoc(doc(db, 'users', uid), { role: 'coach' }, { merge: true })
+        }
+      } else {
+        // Demote to guardian: delete from admins collection
+        await deleteDoc(doc(db, 'admins', cleanEmail)).catch(() => {})
+        if (uid) {
+          await setDoc(doc(db, 'users', uid), { role: 'guardian' }, { merge: true })
         }
       }
+
+      // Optimistically update allUsersList
+      allUsersList.value = allUsersList.value.map(u => {
+        if (u.email.toLowerCase().trim() === cleanEmail || (uid && (u.uid === uid || u.id === uid))) {
+          return { ...u, role: newRole }
+        }
+        return u
+      })
+
       await fetchAdmins()
       await fetchAllUsers()
       return { success: true }
@@ -599,10 +641,30 @@ export const useCoachAuth = () => {
       return { success: false, error: 'You cannot remove your own access' }
     }
     try {
-      await deleteDoc(doc(db, 'admins', cleanEmail)).catch(() => {})
-      if (uid) {
-        await deleteDoc(doc(db, 'users', uid)).catch(() => {})
+      if (db) {
+        await deleteDoc(doc(db, 'admins', cleanEmail)).catch((err) => {
+          console.warn('[useCoachAuth] deleteDoc admins error:', err)
+        })
+        if (uid) {
+          await deleteDoc(doc(db, 'users', uid)).catch((err) => {
+            console.warn('[useCoachAuth] deleteDoc users error:', err)
+          })
+        }
+        // Also look for any user doc with matching email in case uid was different
+        try {
+          const snap = await getDocs(collection(db, 'users'))
+          for (const d of snap.docs) {
+            if (d.data().email?.toLowerCase().trim() === cleanEmail) {
+              await deleteDoc(doc(db, 'users', d.id)).catch(() => {})
+            }
+          }
+        } catch (e) {}
       }
+
+      // Optimistically remove from state immediately
+      allUsersList.value = allUsersList.value.filter(u => u.email.toLowerCase().trim() !== cleanEmail && (!uid || (u.uid !== uid && u.id !== uid)))
+      adminsList.value = adminsList.value.filter(a => a.email.toLowerCase().trim() !== cleanEmail)
+
       await fetchAdmins()
       await fetchAllUsers()
       return { success: true }

@@ -25,10 +25,10 @@ service cloud.firestore {
       );
     }
 
-    // Helper: Authorized coach check — requires verified email AND registered membership in admins collection
+    // Helper: Authorized coach check — requires authenticated user AND registered membership in admins collection
     function isAuthorizedCoach() {
       return isOwner() || (
-        isVerified() &&
+        request.auth != null &&
         request.auth.token.email != null &&
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) &&
         get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())).data.role in ['coach', 'admin', 'owner']
@@ -66,17 +66,18 @@ service cloud.firestore {
 
     // Users collection:
     // - Authenticated users can view teammate names and profile photos
-    // - Users can only write/edit their own profile
-    // - Non-admins cannot set or elevate their own role
+    // - Users can write/edit their own profile (cannot escalate role unless admin)
+    // - Admins can manage, update, and remove user profiles
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == userId && (
         !('role' in request.resource.data) || request.resource.data.role == 'guardian' || isAdmin()
       );
-      allow update: if request.auth != null && request.auth.uid == userId && (
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || isAdmin()
+      allow update: if request.auth != null && (
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])) ||
+        isAdmin()
       );
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && (request.auth.uid == userId || isAdmin());
     }
 
     // Settings collection (e.g. invite codes):
