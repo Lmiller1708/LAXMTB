@@ -20,6 +20,8 @@ scratch_*
 .env.*
 *.key
 *.pem
+events.json
+events.local.json
 
 # Nuxt & Node
 node_modules/
