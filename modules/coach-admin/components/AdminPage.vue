@@ -226,6 +226,16 @@ function syncFormFromRace(raceData: Race | null) {
   if (!form.value.guidelines) {
     form.value.guidelines = []
   }
+  if (!form.value.coachSignups) {
+    form.value.coachSignups = {
+      policy: 'Ride Leader must hold NICA Level 2+ and is responsible for participants. Multiple coaches can sign up for each spot.',
+      preRides: [],
+      warmups: []
+    }
+  }
+  if (!form.value.coachSignups.preRides) {
+    form.value.coachSignups.preRides = []
+  }
   updateDateRangeFromForm()
   initWarmupGroups()
 }
@@ -474,10 +484,13 @@ const handleUnlockAdmin = () => {
 }
 
 const handleSave = () => {
+  if (!form.value.coachSignups) {
+    form.value.coachSignups = { policy: '', preRides: [], warmups: [] }
+  }
+  if (!form.value.coachSignups.preRides) {
+    form.value.coachSignups.preRides = []
+  }
   if (form.value.warmupGroups) {
-    if (!form.value.coachSignups) {
-      form.value.coachSignups = { policy: '', preRides: [], warmups: [] }
-    }
     form.value.coachSignups.warmups = form.value.warmupGroups.map(wg => ({
       id: wg.id,
       name: wg.name,
@@ -925,83 +938,103 @@ const onWarmupDragEnd = () => {
   warmupDragOverIdx.value = null
 }
 
-// Pre-ride wave helpers
-const newPreRideSlot = ref<CoachSlot>({
-  id: '',
-  name: '',
-  meetingTime: '2:00 PM - 3:00 PM',
-  ridersAllowed: '',
-  duration: '60 min',
-  day: 'Saturday',
-  date: 'Sept 5',
-  subtitle: 'North Conference',
-  tag: 'Open Pre-Ride',
-  tagClass: 'tag-preride',
-  leaders: [],
-  support: []
-})
+// Coach Sign-Ups & Pre-Rides Admin State & Methods
+const activeCoachAdminTab = ref<'wu' | 'pr' | 'waves'>('wu')
+const DAY_OPTIONS = ['Friday', 'Saturday', 'Sunday', 'Monday']
 
-const addPreRideSlot = () => {
-  if (!newPreRideSlot.value.name) return
+const initCoachSignups = () => {
   if (!form.value.coachSignups) {
-    form.value.coachSignups = { policy: '', preRides: [], warmups: [] }
-  }
-  if (!form.value.coachSignups.preRides) {
-    form.value.coachSignups.preRides = []
-  }
-  form.value.coachSignups.preRides.push({
-    ...newPreRideSlot.value,
-    id: `pr-${Date.now()}`
-  })
-  newPreRideSlot.value = {
-    id: '',
-    name: '',
-    meetingTime: '2:00 PM - 3:00 PM',
-    ridersAllowed: '',
-    duration: '60 min',
-    day: 'Saturday',
-    date: 'Sept 5',
-    subtitle: 'North Conference',
-    tag: 'Open Pre-Ride',
-    tagClass: 'tag-preride',
-    leaders: [],
-    support: []
-  }
-}
-
-const removePreRideSlot = (idx: number) => {
-  form.value.coachSignups?.preRides?.splice(idx, 1)
-}
-
-// Drag reordering for Pre-Rides
-const draggedPreRideIdx = ref<number | null>(null)
-const preRideDragOverIdx = ref<number | null>(null)
-const onPreRideDragStart = (idx: number, e: DragEvent) => {
-  draggedPreRideIdx.value = idx
-  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
-}
-const onPreRideDragOver = (idx: number, e: DragEvent) => {
-  e.preventDefault()
-  if (draggedPreRideIdx.value === null || draggedPreRideIdx.value === idx) return
-  preRideDragOverIdx.value = idx
-}
-const onPreRideDrop = (idx: number, e: DragEvent) => {
-  e.preventDefault()
-  const from = draggedPreRideIdx.value
-  const to = idx
-  if (draggedPreRideIdx.value === null || !form.value.coachSignups?.preRides) return
-  if (from !== null && to !== null) {
-    if (from !== to && form.value.coachSignups.preRides[from] !== undefined) {
-      const item = form.value.coachSignups.preRides.splice(from, 1)[0]
-      form.value.coachSignups.preRides.splice(to, 0, item)
+    form.value.coachSignups = {
+      policy: 'Ride Leader must hold NICA Level 2+ and is responsible for participants. Multiple coaches can sign up for each spot.',
+      preRides: [],
+      warmups: []
     }
   }
-  draggedPreRideIdx.value = null
-  preRideDragOverIdx.value = null
+  if (!form.value.coachSignups.preRides) form.value.coachSignups.preRides = []
+  if (!form.value.coachSignups.warmups) form.value.coachSignups.warmups = []
 }
-const onPreRideDragEnd = () => {
-  draggedPreRideIdx.value = null
-  preRideDragOverIdx.value = null
+
+const addCoachSlot = (type: 'pr' | 'wu') => {
+  initCoachSignups()
+  const list = type === 'pr' ? form.value.coachSignups!.preRides! : form.value.coachSignups!.warmups!
+  const newId = `${type}-${Date.now()}`
+  if (type === 'pr') {
+    const waveNum = list.length + 1
+    list.push({
+      id: newId,
+      name: `Pre-Ride - Wave ${waveNum}`,
+      meetingTime: '2:00 PM - 3:00 PM',
+      ridersAllowed: 'Registered Riders & Coaches',
+      day: 'Saturday',
+      subtitle: 'South Conference',
+      tag: 'Pre-Ride',
+      tagClass: 'tag-preride',
+      leaders: [],
+      support: []
+    })
+  } else {
+    list.push({
+      id: newId,
+      name: 'New Warm-up Session',
+      meetingTime: '8:45 AM',
+      stagingTime: '9:45 AM',
+      startTime: '',
+      ridersAllowed: 'Wave Participants',
+      day: 'Sunday',
+      subtitle: 'North Conference • Race Day',
+      tag: 'Warm-up',
+      tagClass: 'tag-special',
+      leaders: [],
+      support: []
+    })
+  }
+}
+
+const removeCoachSlot = (type: 'pr' | 'wu', idx: number) => {
+  if (type === 'pr') {
+    form.value.coachSignups?.preRides?.splice(idx, 1)
+  } else {
+    form.value.coachSignups?.warmups?.splice(idx, 1)
+  }
+}
+
+// Drag & drop for coach slots
+const draggedCoachSlotIdx = ref<number | null>(null)
+const coachSlotDragOverIdx = ref<number | null>(null)
+
+const onCoachSlotDragStart = (idx: number, e: DragEvent) => {
+  draggedCoachSlotIdx.value = idx
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(idx))
+  }
+}
+
+const onCoachSlotDragOver = (idx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedCoachSlotIdx.value !== null && draggedCoachSlotIdx.value !== idx) {
+    coachSlotDragOverIdx.value = idx
+  }
+}
+
+const onCoachSlotDrop = (targetIdx: number, type: 'pr' | 'wu', e: DragEvent) => {
+  e.preventDefault()
+  if (draggedCoachSlotIdx.value === null) return
+  const list = type === 'pr' ? form.value.coachSignups?.preRides : form.value.coachSignups?.warmups
+  if (!list) return
+  const from = draggedCoachSlotIdx.value
+  const to = targetIdx
+  if (from !== to && list[from] !== undefined) {
+    const item = list.splice(from, 1)[0]
+    list.splice(to, 0, item)
+  }
+  draggedCoachSlotIdx.value = null
+  coachSlotDragOverIdx.value = null
+}
+
+const onCoachSlotDragEnd = () => {
+  draggedCoachSlotIdx.value = null
+  coachSlotDragOverIdx.value = null
 }
 
 const TIME_OPTIONS = [
@@ -1020,28 +1053,30 @@ const TIME_OPTIONS = [
   '7:00 PM'
 ]
 
-const getSlotStart = (meetingTime?: string) => {
-  if (!meetingTime) return ''
-  const parts = meetingTime.split(/\s*[-–—]\s*|\s+to\s+/i)
+const getSlotStart = (timeStr?: string) => {
+  const str = String(timeStr || '').trim()
+  if (!str || str.toUpperCase() === 'TBD') return ''
+  const parts = str.split(/\s*[-–—]\s*|\s+to\s+/i)
   return parts[0]?.trim() || ''
 }
 
-const getSlotEnd = (meetingTime?: string) => {
-  if (!meetingTime) return ''
-  const parts = meetingTime.split(/\s*[-–—]\s*|\s+to\s+/i)
+const getSlotEnd = (timeStr?: string) => {
+  const str = String(timeStr || '').trim()
+  if (!str || str.toUpperCase() === 'TBD') return ''
+  const parts = str.split(/\s*[-–—]\s*|\s+to\s+/i)
   return parts.length >= 2 ? parts[1]?.trim() || '' : ''
 }
 
-const setSlotStart = (slot: CoachSlot, newStart: string) => {
+const onSlotStartChange = (slot: CoachSlot, newStart: string) => {
   const end = getSlotEnd(slot.meetingTime)
-  if (end) {
+  if (newStart && end) {
     slot.meetingTime = `${newStart} - ${end}`
   } else {
     slot.meetingTime = newStart || end || '8:00 AM'
   }
 }
 
-const setSlotEnd = (slot: CoachSlot, newEnd: string) => {
+const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
   const start = getSlotStart(slot.meetingTime) || '8:00 AM'
   if (newEnd) {
     slot.meetingTime = `${start} - ${newEnd}`
@@ -1049,6 +1084,7 @@ const setSlotEnd = (slot: CoachSlot, newEnd: string) => {
     slot.meetingTime = start
   }
 }
+
 
 // Photos tab helper
 const newPhotoUrl = ref('')
@@ -1538,220 +1574,439 @@ const removePhoto = (idx: number) => {
 
           <!-- 3. Waves & Warm-ups Tab -->
           <div v-else-if="activeTab === 'waves' || activeTab === 'coach'" class="admin-section-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-              <div>
-                <h3 class="admin-card-title" style="margin:0;">🔥 Race-Day Warm-up Groups & Waves</h3>
-                <div style="font-size:11.5px;color:var(--text-muted);">Assign categories to unified warm-up groups. Staging and gun start times are calculated automatically.</div>
-              </div>
-              <div style="display:flex;gap:6px;align-items:center;">
-                <button type="button" class="action-mini-btn" style="padding:6px 12px;font-size:12px;font-weight:700;" @click="autoConfigureAllGroups">
-                  ⚡ Auto-Calculate Times
-                </button>
-              </div>
-            </div>
-
-            <!-- Global Staging & Warm-up Schedule Lead Times -->
-            <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.22);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <span style="font-size:16px;">⏱️</span>
-                  <strong style="font-size:13px;color:var(--text-main);letter-spacing:0.3px;">SCHEDULE LEAD TIMES</strong>
-                  <span style="font-size:10px;color:var(--accent-red);background:rgba(239,68,68,0.12);padding:1px 6px;border-radius:4px;font-weight:700;">Admin Calculation</span>
-                </div>
-                <div style="font-size:11px;color:var(--text-muted);">
-                  Staging: <strong style="color:var(--accent-red);">{{ form.stagingOffsetMinutes || 15 }}m</strong> before start • Warm-up: <strong style="color:#f59e0b;">{{ form.warmupOffsetMinutes || 45 }}m</strong> before staging
-                </div>
-              </div>
-
-              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(270px, 1fr));gap:16px;">
-                <!-- 1. Staging Schedule (Before Gun Start) -->
-                <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;">
-                  <label class="modal-label" style="font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:8px;letter-spacing:0.4px;">
-                    <span>🚩</span>
-                    <span>STAGING SCHEDULE (BEFORE START)</span>
-                  </label>
-                  <div class="lead-time-buttons" style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button
-                      type="button"
-                      class="lead-time-btn"
-                      :class="{ active: (form.stagingOffsetMinutes || 15) === 15 }"
-                      @click="setStagingOffset(15)"
-                    >15 mins</button>
-                    <button
-                      type="button"
-                      class="lead-time-btn"
-                      :class="{ active: form.stagingOffsetMinutes === 20 }"
-                      @click="setStagingOffset(20)"
-                    >20 mins</button>
-                    <button
-                      type="button"
-                      class="lead-time-btn"
-                      :class="{ active: form.stagingOffsetMinutes === 30 }"
-                      @click="setStagingOffset(30)"
-                    >30 mins</button>
-                    <button
-                      type="button"
-                      class="lead-time-btn"
-                      :class="{ active: ![15, 20, 30].includes(form.stagingOffsetMinutes || 15) }"
-                      @click="setStagingOffset('custom')"
-                    >Custom</button>
-                  </div>
-                  <div v-show="![15, 20, 30].includes(form.stagingOffsetMinutes || 15)" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
-                    <input
-                      v-model.number="form.stagingOffsetMinutes"
-                      type="number"
-                      min="5"
-                      max="60"
-                      placeholder="Minutes"
-                      class="custom-minutes-input"
-                      style="width:75px;text-align:center;font-weight:700;"
-                      @change="autoConfigureAllGroups"
-                    >
-                    <span style="font-size:12px;color:var(--text-muted);">mins before start</span>
-                  </div>
-                  <div style="margin-top:6px;font-size:11px;color:var(--text-muted);line-height:1.35;">
-                    Automatically schedules call-up staging time relative to gun start (default 15 mins).
-                  </div>
-                </div>
-
-                <!-- 2. Warm-up Schedule (Before Staging) -->
-                <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;">
-                  <label class="modal-label" style="font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:8px;letter-spacing:0.4px;">
-                    <span>🔥</span>
-                    <span>WARM-UP SCHEDULE (BEFORE STAGING)</span>
-                  </label>
-                  <div class="lead-time-buttons" style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button
-                      type="button"
-                      class="lead-time-btn"
-                      :class="{ active: (form.warmupOffsetMinutes || 45) === 60 }"
-                      @click="setWarmupOffset(60)"
-                    >60 mins</button>
-                    <button
-                      type="button"
-                      class="lead-time-btn"
-                      :class="{ active: (form.warmupOffsetMinutes || 45) === 45 }"
-                      @click="setWarmupOffset(45)"
-                    >45 mins</button>
-                    <button
-                      type="button"
-                      class="lead-time-btn"
-                      :class="{ active: (form.warmupOffsetMinutes || 45) === 30 }"
-                      @click="setWarmupOffset(30)"
-                    >30 mins</button>
-                    <button
-                      type="button"
-                      class="lead-time-btn"
-                      :class="{ active: ![60, 45, 30].includes(form.warmupOffsetMinutes || 45) }"
-                      @click="setWarmupOffset('custom')"
-                    >Custom</button>
-                  </div>
-                  <div v-show="![60, 45, 30].includes(form.warmupOffsetMinutes || 45)" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
-                    <input
-                      v-model.number="form.warmupOffsetMinutes"
-                      type="number"
-                      min="15"
-                      max="120"
-                      placeholder="Minutes"
-                      class="custom-minutes-input"
-                      style="width:75px;text-align:center;font-weight:700;"
-                      @change="autoConfigureAllGroups"
-                    >
-                    <span style="font-size:12px;color:var(--text-muted);">mins before staging</span>
-                  </div>
-                  <div style="margin-top:6px;font-size:11px;color:var(--text-muted);line-height:1.35;">
-                    Automatically schedules rider warm-up for every race & category relative to staging time.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <div
-                v-for="(grp, grpIdx) in form.warmupGroups"
-                :key="grp.id"
-                class="drag-row"
-                style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;"
-                draggable="true"
-                @dragstart="onWarmupDragStart(grpIdx, $event)"
-                @dragover="onWarmupDragOver(grpIdx, $event)"
-                @dragleave="warmupDragOverIdx = null"
-                @drop="onWarmupDrop(grpIdx, $event)"
-                @dragend="onWarmupDragEnd"
+            <!-- Sub-Tabs: Warm-ups, Pre-Rides, Category Wave Schedule -->
+            <div class="signup-tabs" style="margin-bottom: 16px; display: flex; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 10px; flex-wrap: wrap;">
+              <button
+                type="button"
+                class="signup-tab-pill"
+                :class="{ active: activeCoachAdminTab === 'wu' }"
+                @click="activeCoachAdminTab = 'wu'"
               >
-                <!-- Group Top Row -->
-                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
-                  <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;flex-wrap:wrap;">
-                    <span class="drag-handle" title="Drag to reorder">⠿</span>
-                    <input v-model="grp.name" type="text" placeholder="Group Name" class="custom-minutes-input" style="flex:2;min-width:140px;max-width:100%;font-weight:700;" draggable="false" @dragstart.stop>
+                <span>🔥</span> Warm-up Groups ({{ (form.warmupGroups || form.coachSignups?.warmups || []).length }})
+              </button>
+              <button
+                type="button"
+                class="signup-tab-pill"
+                :class="{ active: activeCoachAdminTab === 'pr' }"
+                @click="activeCoachAdminTab = 'pr'"
+              >
+                <span>🚵</span> Pre-Rides ({{ (form.coachSignups?.preRides || []).length }})
+              </button>
+              <button
+                type="button"
+                class="signup-tab-pill pill-league"
+                :class="{ active: activeCoachAdminTab === 'waves' }"
+                @click="activeCoachAdminTab = 'waves'"
+              >
+                <span>🏁</span> Category Wave Schedule
+              </button>
+            </div>
+
+            <!-- SUB-PANEL 1: WARM-UP GROUPS -->
+            <div v-if="activeCoachAdminTab === 'wu'">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h3 class="admin-card-title" style="margin:0;">🔥 Race-Day Warm-up Groups & Waves</h3>
+                  <div style="font-size:11.5px;color:var(--text-muted);">Assign categories to unified warm-up groups. Staging and gun start times are calculated automatically.</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <button type="button" class="action-mini-btn" style="padding:6px 12px;font-size:12px;font-weight:700;" @click="autoConfigureAllGroups">
+                    ⚡ Auto-Calculate Times
+                  </button>
+                </div>
+              </div>
+
+              <!-- Global Staging & Warm-up Schedule Lead Times -->
+              <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.22);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:16px;">⏱️</span>
+                    <strong style="font-size:13px;color:var(--text-main);letter-spacing:0.3px;">SCHEDULE LEAD TIMES</strong>
+                    <span style="font-size:10px;color:var(--accent-red);background:rgba(239,68,68,0.12);padding:1px 6px;border-radius:4px;font-weight:700;">Admin Calculation</span>
                   </div>
-                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;" draggable="false" @dragstart.stop>
-                    <div style="display:flex;align-items:center;gap:4px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);padding:2px 6px;border-radius:6px;flex-wrap:wrap;">
-                      <span style="font-size:11px;font-weight:700;color:#f59e0b;">🔥 Warm-up Time:</span>
-                      <select v-model="grp.meetingTime" class="custom-minutes-input" style="font-size:11px;height:26px;padding:1px 4px;font-weight:700;color:#f59e0b;">
-                        <option v-for="t in getWarmupTimeOptions(grp)" :key="t" :value="t">{{ t }}</option>
-                      </select>
-                      <button v-if="getAutoWarmupTime(grp)" type="button" class="action-mini-btn" style="font-size:10px;padding:1px 5px;height:22px;" @click="applyAutoWarmupTime(grp)">
-                        ⚡ Auto ({{ getAutoWarmupTime(grp) }})
+                  <div style="font-size:11px;color:var(--text-muted);">
+                    Staging: <strong style="color:var(--accent-red);">{{ form.stagingOffsetMinutes || 15 }}m</strong> before start • Warm-up: <strong style="color:#f59e0b;">{{ form.warmupOffsetMinutes || 45 }}m</strong> before staging
+                  </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(270px, 1fr));gap:16px;">
+                  <!-- 1. Staging Schedule (Before Gun Start) -->
+                  <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;">
+                    <label class="modal-label" style="font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:8px;letter-spacing:0.4px;">
+                      <span>🚩</span>
+                      <span>STAGING SCHEDULE (BEFORE START)</span>
+                    </label>
+                    <div class="lead-time-buttons" style="display:flex;gap:6px;flex-wrap:wrap;">
+                      <button
+                        type="button"
+                        class="lead-time-btn"
+                        :class="{ active: (form.stagingOffsetMinutes || 15) === 15 }"
+                        @click="setStagingOffset(15)"
+                      >15 mins</button>
+                      <button
+                        type="button"
+                        class="lead-time-btn"
+                        :class="{ active: form.stagingOffsetMinutes === 20 }"
+                        @click="setStagingOffset(20)"
+                      >20 mins</button>
+                      <button
+                        type="button"
+                        class="lead-time-btn"
+                        :class="{ active: form.stagingOffsetMinutes === 30 }"
+                        @click="setStagingOffset(30)"
+                      >30 mins</button>
+                      <button
+                        type="button"
+                        class="lead-time-btn"
+                        :class="{ active: ![15, 20, 30].includes(form.stagingOffsetMinutes || 15) }"
+                        @click="setStagingOffset('custom')"
+                      >Custom</button>
+                    </div>
+                    <div v-show="![15, 20, 30].includes(form.stagingOffsetMinutes || 15)" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+                      <input
+                        v-model.number="form.stagingOffsetMinutes"
+                        type="number"
+                        min="5"
+                        max="60"
+                        placeholder="Minutes"
+                        class="custom-minutes-input"
+                        style="width:75px;text-align:center;font-weight:700;"
+                        @change="autoConfigureAllGroups"
+                      >
+                      <span style="font-size:12px;color:var(--text-muted);">mins before start</span>
+                    </div>
+                    <div style="margin-top:6px;font-size:11px;color:var(--text-muted);line-height:1.35;">
+                      Automatically schedules call-up staging time relative to gun start (default 15 mins).
+                    </div>
+                  </div>
+
+                  <!-- 2. Warm-up Schedule (Before Staging) -->
+                  <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;">
+                    <label class="modal-label" style="font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:8px;letter-spacing:0.4px;">
+                      <span>🔥</span>
+                      <span>WARM-UP SCHEDULE (BEFORE STAGING)</span>
+                    </label>
+                    <div class="lead-time-buttons" style="display:flex;gap:6px;flex-wrap:wrap;">
+                      <button
+                        type="button"
+                        class="lead-time-btn"
+                        :class="{ active: (form.warmupOffsetMinutes || 45) === 60 }"
+                        @click="setWarmupOffset(60)"
+                      >60 mins</button>
+                      <button
+                        type="button"
+                        class="lead-time-btn"
+                        :class="{ active: (form.warmupOffsetMinutes || 45) === 45 }"
+                        @click="setWarmupOffset(45)"
+                      >45 mins</button>
+                      <button
+                        type="button"
+                        class="lead-time-btn"
+                        :class="{ active: (form.warmupOffsetMinutes || 45) === 30 }"
+                        @click="setWarmupOffset(30)"
+                      >30 mins</button>
+                      <button
+                        type="button"
+                        class="lead-time-btn"
+                        :class="{ active: ![60, 45, 30].includes(form.warmupOffsetMinutes || 45) }"
+                        @click="setWarmupOffset('custom')"
+                      >Custom</button>
+                    </div>
+                    <div v-show="![60, 45, 30].includes(form.warmupOffsetMinutes || 45)" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+                      <input
+                        v-model.number="form.warmupOffsetMinutes"
+                        type="number"
+                        min="15"
+                        max="120"
+                        placeholder="Minutes"
+                        class="custom-minutes-input"
+                        style="width:75px;text-align:center;font-weight:700;"
+                        @change="autoConfigureAllGroups"
+                      >
+                      <span style="font-size:12px;color:var(--text-muted);">mins before staging</span>
+                    </div>
+                    <div style="margin-top:6px;font-size:11px;color:var(--text-muted);line-height:1.35;">
+                      Automatically schedules rider warm-up for every race & category relative to staging time.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div
+                  v-for="(grp, grpIdx) in form.warmupGroups"
+                  :key="grp.id"
+                  class="drag-row"
+                  style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:10px;"
+                  draggable="true"
+                  @dragstart="onWarmupDragStart(grpIdx, $event)"
+                  @dragover="onWarmupDragOver(grpIdx, $event)"
+                  @dragleave="warmupDragOverIdx = null"
+                  @drop="onWarmupDrop(grpIdx, $event)"
+                  @dragend="onWarmupDragEnd"
+                >
+                  <!-- Group Top Row -->
+                  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;flex-wrap:wrap;">
+                      <span class="drag-handle" title="Drag to reorder">⠿</span>
+                      <input v-model="grp.name" type="text" placeholder="Group Name" class="custom-minutes-input" style="flex:2;min-width:140px;max-width:100%;font-weight:700;" draggable="false" @dragstart.stop>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;" draggable="false" @dragstart.stop>
+                      <div style="display:flex;align-items:center;gap:4px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);padding:2px 6px;border-radius:6px;flex-wrap:wrap;">
+                        <span style="font-size:11px;font-weight:700;color:#f59e0b;">🔥 Warm-up Time:</span>
+                        <select v-model="grp.meetingTime" class="custom-minutes-input" style="font-size:11px;height:26px;padding:1px 4px;font-weight:700;color:#f59e0b;">
+                          <option v-for="t in getWarmupTimeOptions(grp)" :key="t" :value="t">{{ t }}</option>
+                        </select>
+                        <button v-if="getAutoWarmupTime(grp)" type="button" class="action-mini-btn" style="font-size:10px;padding:1px 5px;height:22px;" @click="applyAutoWarmupTime(grp)">
+                          ⚡ Auto ({{ getAutoWarmupTime(grp) }})
+                        </button>
+                      </div>
+                      <button type="button" class="search-clear-btn" style="position:static;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);" @click="removeWarmupGroup(grpIdx)">
+                        ✕ Delete
                       </button>
                     </div>
-                    <button type="button" class="search-clear-btn" style="position:static;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);" @click="removeWarmupGroup(grpIdx)">
-                      ✕ Delete
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Assigned Categories Selection -->
-                <div draggable="false" @dragstart.stop>
-                  <label class="modal-label" style="font-size:11px;margin-bottom:6px;display:block;">Assigned Categories (Click to add / remove):</label>
-                  <div style="display:flex;flex-wrap:wrap;gap:5px;">
-                    <span
-                      v-for="cat in ALL_CATEGORIES"
-                      :key="cat"
-                      style="font-size:11px;padding:3px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;user-select:none;transition:all 0.15s ease;"
-                      :style="getCategoryPillStyle(grp, cat)"
-                      :title="getCategoryPillTitle(grp, cat)"
-                      @click="toggleCategoryInWarmupGroup(grp, cat)"
-                    >
-                      <span>{{ isCategoryInWarmupGroup(grp, cat) ? '✓' : isCategoryInOtherWarmupGroup(grp, cat) ? '🔒' : '+' }}</span>
-                      <span>{{ cat }}</span>
-                    </span>
                   </div>
 
-                  <!-- Category Staging & Gun Start Breakdown -->
-                  <div v-if="grp.categories && grp.categories.length > 0" style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-top:8px;">
-                    <div style="font-size:10.5px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">
-                      Assigned Waves Schedule
-                    </div>
-                    <div style="display:flex;flex-direction:column;gap:4px;">
-                      <div
-                        v-for="cName in grp.categories"
-                        :key="cName"
-                        style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:2px 0;border-bottom:1px dashed var(--border);flex-wrap:wrap;gap:4px;"
+                  <!-- Assigned Categories Selection -->
+                  <div draggable="false" @dragstart.stop>
+                    <label class="modal-label" style="font-size:11px;margin-bottom:6px;display:block;">Assigned Categories (Click to add / remove):</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:5px;">
+                      <span
+                        v-for="cat in ALL_CATEGORIES"
+                        :key="cat"
+                        style="font-size:11px;padding:3px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;user-select:none;transition:all 0.15s ease;"
+                        :style="getCategoryPillStyle(grp, cat)"
+                        :title="getCategoryPillTitle(grp, cat)"
+                        @click="toggleCategoryInWarmupGroup(grp, cat)"
                       >
-                        <span style="font-weight:700;color:var(--text-main);">🚩 {{ cName }}</span>
-                        <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
-                          <span style="color:#f87171;font-weight:600;">Stage: {{ getCatStage(cName) || 'TBD' }} (-{{ form.stagingOffsetMinutes || 15 }}m)</span>
-                          <span style="color:var(--text-muted);">•</span>
-                          <span style="color:var(--text-main);font-weight:700;">Start: {{ getCatStart(cName) || 'TBD' }}</span>
+                        <span>{{ isCategoryInWarmupGroup(grp, cat) ? '✓' : isCategoryInOtherWarmupGroup(grp, cat) ? '🔒' : '+' }}</span>
+                        <span>{{ cat }}</span>
+                      </span>
+                    </div>
+
+                    <!-- Category Staging & Gun Start Breakdown -->
+                    <div v-if="grp.categories && grp.categories.length > 0" style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-top:8px;">
+                      <div style="font-size:10.5px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">
+                        Assigned Waves Schedule
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:4px;">
+                        <div
+                          v-for="cName in grp.categories"
+                          :key="cName"
+                          style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:2px 0;border-bottom:1px dashed var(--border);flex-wrap:wrap;gap:4px;"
+                        >
+                          <span style="font-weight:700;color:var(--text-main);">🚩 {{ cName }}</span>
+                          <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+                            <span style="color:#f87171;font-weight:600;">Stage: {{ getCatStage(cName) || 'TBD' }} (-{{ form.stagingOffsetMinutes || 15 }}m)</span>
+                            <span style="color:var(--text-muted);">•</span>
+                            <span style="color:var(--text-main);font-weight:700;">Start: {{ getCatStart(cName) || 'TBD' }}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Bottom Add Warm-Up Group Button -->
-              <div style="display:flex;justify-content:center;margin-top:4px;">
+                <!-- Bottom Add Warm-Up Group Button -->
+                <div style="display:flex;justify-content:center;margin-top:4px;">
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="width:100%;padding:10px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                    @click="addWarmupGroup"
+                  >
+                    <span style="font-size:14px;">➕</span>
+                    <span>Add Warm-Up Group</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-PANEL 2: PRE-RIDES -->
+            <div v-else-if="activeCoachAdminTab === 'pr'" style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h3 class="admin-card-title" style="margin:0;">🚵 Weekend Pre-Ride Waves</h3>
+                  <div style="font-size:11.5px;color:var(--text-muted);">Manage weekend pre-ride waves, meeting times, and coach leader/support slots.</div>
+                </div>
                 <button
                   type="button"
                   class="action-mini-btn"
-                  style="width:100%;padding:10px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
-                  @click="addWarmupGroup"
+                  style="padding:6px 12px;font-size:12px;font-weight:700;"
+                  @click="addCoachSlot('pr')"
                 >
-                  <span style="font-size:14px;">➕</span>
-                  <span>Add Warm-Up Group</span>
+                  ➕ Add Pre-Ride Wave
                 </button>
+              </div>
+
+              <div
+                v-if="!form.coachSignups?.preRides || form.coachSignups.preRides.length === 0"
+                class="no-results"
+                style="padding:16px;"
+              >
+                No pre-ride sessions configured yet. Click "+ Add Pre-Ride Wave" above.
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div
+                  v-for="(slot, slotIdx) in form.coachSignups?.preRides"
+                  :key="slot.id || slotIdx"
+                  draggable="true"
+                  class="drag-row"
+                  :style="{
+                    background: 'var(--bg-subtle)',
+                    border: coachSlotDragOverIdx === slotIdx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    opacity: draggedCoachSlotIdx === slotIdx ? '0.4' : '1',
+                    transition: 'all 0.15s ease'
+                  }"
+                  @dragstart="onCoachSlotDragStart(slotIdx, $event)"
+                  @dragover="onCoachSlotDragOver(slotIdx, $event)"
+                  @dragleave="coachSlotDragOverIdx = null"
+                  @drop="onCoachSlotDrop(slotIdx, 'pr', $event)"
+                  @dragend="onCoachSlotDragEnd"
+                >
+                  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:240px;">
+                      <span
+                        class="drag-handle"
+                        title="Drag slot to reorder"
+                        style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 4px;"
+                      >
+                        ⠿
+                      </span>
+                      <input
+                        v-model="slot.name"
+                        type="text"
+                        placeholder="Session Name (e.g. Saturday Coaches Pre-Ride)"
+                        class="custom-minutes-input"
+                        style="flex:2;min-width:160px;font-weight:700;"
+                        draggable="false"
+                        @dragstart.stop
+                      >
+                      <input
+                        v-model="slot.tag"
+                        type="text"
+                        placeholder="Tag (e.g. Pre-Ride)"
+                        class="custom-minutes-input"
+                        style="width:95px;"
+                        draggable="false"
+                        @dragstart.stop
+                      >
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <button
+                        type="button"
+                        class="search-clear-btn"
+                        style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
+                        title="Delete this slot"
+                        @click="removeCoachSlot('pr', slotIdx)"
+                      >
+                        ✕ Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Day & Time -->
+                  <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;" draggable="false" @dragstart.stop>
+                    <div style="min-width:120px;">
+                      <label class="modal-label" style="font-size:10.5px;">Day</label>
+                      <select
+                        v-model="slot.day"
+                        class="custom-minutes-input"
+                        style="width:100%;font-size:11.5px;height:30px;padding:2px 6px;"
+                      >
+                        <option v-for="d in DAY_OPTIONS" :key="d" :value="d">{{ d }}</option>
+                      </select>
+                    </div>
+
+                    <div style="flex:1;min-width:210px;">
+                      <label class="modal-label" style="font-size:10.5px;">Meeting Time</label>
+                      <div style="display:flex;align-items:center;gap:4px;">
+                        <select
+                          :value="getSlotStart(slot.meetingTime)"
+                          class="custom-minutes-input"
+                          style="flex:1;font-size:11px;height:30px;padding:2px 4px;"
+                          @change="onSlotStartChange(slot, ($event.target as HTMLSelectElement).value)"
+                        >
+                          <option v-if="getSlotStart(slot.meetingTime) && !TIME_OPTIONS.includes(getSlotStart(slot.meetingTime))" :value="getSlotStart(slot.meetingTime)">
+                            {{ getSlotStart(slot.meetingTime) }}
+                          </option>
+                          <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                        </select>
+                        <span style="font-size:10.5px;color:var(--text-muted);">to</span>
+                        <select
+                          :value="getSlotEnd(slot.meetingTime)"
+                          class="custom-minutes-input"
+                          style="flex:1;font-size:11px;height:30px;padding:2px 4px;"
+                          @change="onSlotEndChange(slot, ($event.target as HTMLSelectElement).value)"
+                        >
+                          <option value="">-- Single Time --</option>
+                          <option v-if="getSlotEnd(slot.meetingTime) && !TIME_OPTIONS.includes(getSlotEnd(slot.meetingTime))" :value="getSlotEnd(slot.meetingTime)">
+                            {{ getSlotEnd(slot.meetingTime) }}
+                          </option>
+                          <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Description -->
+                  <div draggable="false" @dragstart.stop>
+                    <label class="modal-label" style="font-size:10.5px;">Riders Allowed / Description</label>
+                    <input
+                      v-model="slot.ridersAllowed"
+                      type="text"
+                      placeholder="e.g. Registered Riders & Coaches"
+                      class="custom-minutes-input"
+                      style="width:100%;font-size:11.5px;"
+                    >
+                  </div>
+                </div>
+
+                <!-- Bottom Add Pre-Ride Wave Button -->
+                <div style="display:flex;justify-content:center;margin-top:4px;">
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="width:100%;padding:10px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                    @click="addCoachSlot('pr')"
+                  >
+                    <span style="font-size:14px;">➕</span>
+                    <span>Add Pre-Ride Wave</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-PANEL 3: CATEGORY WAVE SCHEDULE OVERVIEW -->
+            <div v-else-if="activeCoachAdminTab === 'waves'" style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <h4 style="margin:0;font-size:13.5px;font-weight:700;color:var(--text-main);">🏁 Official 2026 Category Wave Times</h4>
+                <span style="font-size:11px;color:var(--text-muted);">Staging lead time: <strong>{{ form.stagingOffsetMinutes || 15 }}m</strong></span>
+              </div>
+              <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                <table class="results-table" style="font-size:11.5px;">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th style="width:110px;text-align:center;">Gun Start</th>
+                      <th style="width:120px;text-align:center;color:#f87171;">Staging Call-Up</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="cat in ALL_CATEGORIES" :key="cat">
+                      <td style="font-weight:700;color:var(--text-main);">{{ cat }}</td>
+                      <td style="text-align:center;font-weight:700;">{{ getCatStart(cat) || 'TBD' }}</td>
+                      <td style="text-align:center;color:#f87171;font-weight:700;">{{ getCatStage(cat) || 'TBD' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -2321,19 +2576,20 @@ const removePhoto = (idx: number) => {
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
   width: 100%;
   max-width: 100vw;
-  overflow: hidden;
   box-sizing: border-box;
+  display: flex;
+  justify-content: center;
 }
 
 .admin-tabs-scroller {
-  max-width: 100%;
-  margin: 0 auto;
   display: flex;
   gap: 4px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   padding: 6px 16px;
   scrollbar-width: none;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .admin-tabs-scroller::-webkit-scrollbar {
   display: none;

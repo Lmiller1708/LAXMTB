@@ -61,3 +61,37 @@ const emit = defineEmits<{
     </div>
   </nav>
 </template>
+
+<style scoped>
+.sub-nav-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--subnav-height, 48px);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.sub-nav-row::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 520px) {
+  .nav-tabs {
+    gap: 12px;
+  }
+}
+@media (max-width: 380px) {
+  .nav-tabs {
+    gap: 8px;
+  }
+}
+</style>
