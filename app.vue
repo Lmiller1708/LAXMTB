@@ -3,6 +3,7 @@ import type { TabType } from '~/modules/core/components/NavigationTabs.vue'
 import type { Race } from '~/modules/races/types/race'
 import { isRaceCompleted, slugifyRaceId } from '~/modules/races/composables/useCurrentRace'
 import EventCoachCard from '~/modules/races/components/EventCoachCard.vue'
+import PwaUpdateBanner from '~/modules/core/components/PwaUpdateBanner.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -363,6 +364,9 @@ const handlePrint = () => {
   <div>
     <!-- Toast Notification Container -->
     <div class="notif-toast-container" id="notifToastContainer"></div>
+
+    <!-- PWA Service Worker Update Banner -->
+    <PwaUpdateBanner />
 
     <!-- DEDICATED COACH ADMIN PAGE -->
     <AdminPage
