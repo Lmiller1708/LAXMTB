@@ -46,58 +46,84 @@ const copyLink = () => {
 const photos = ref<PhotoItem[]>([])
 const photosPageLimit = ref(24)
 const currentLightboxIdx = ref(-1)
-let unsubscribePhotos: (() => void) | null = null
+const isLoadingPhotos = ref(false)
 
 const visiblePhotos = computed(() => photos.value.slice(0, photosPageLimit.value))
 const hasMore = computed(() => photos.value.length > photosPageLimit.value)
 
-const loadPhotos = () => {
+const extractPhotosFromHtml = (html: string): PhotoItem[] => {
+  const matches = html.match(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_\-]+/g) || []
+  const unique = Array.from(new Set(matches))
+  return unique.map(url => ({
+    url,
+    w: 1920,
+    h: 1080
+  }))
+}
+
+const loadPhotos = async () => {
   if (!import.meta.client) return
 
-  // 1. If race object already contains photos array
-  if (Array.isArray(props.race?.photos) && props.race.photos.length > 0) {
-    photos.value = props.race.photos
+  const targetUrl = albumUrl.value
+  if (!targetUrl) {
+    photos.value = []
     return
   }
 
-  // 2. Check offline guard: If offline, do not attempt network fetch
+  // 1. If offline, do NOT attempt network fetch
   if (!navigator.onLine || !isOnline.value) {
     console.info('[PhotosGallery] Device is offline — skipping live photos fetch')
     return
   }
 
-  // 3. Connect to live Firestore photos collection
-  if (db && props.race?.id) {
-    if (unsubscribePhotos) {
-      unsubscribePhotos()
-      unsubscribePhotos = null
+  // 2. Fast in-memory / sessionStorage cache
+  const cacheKey = `laxmtb_live_photos_${props.race?.id || 'race'}`
+  try {
+    const cached = sessionStorage.getItem(cacheKey)
+    if (cached) {
+      const parsed = JSON.parse(cached)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        photos.value = parsed
+      }
     }
+  } catch (e) {}
 
-    try {
-      const docRef = doc(db, 'photos', props.race.id)
-      unsubscribePhotos = onSnapshot(
-        docRef,
-        (docSnap) => {
-          if (docSnap.exists()) {
-            const data = docSnap.data()
-            if (Array.isArray(data?.items)) {
-              photos.value = data.items
-              return
-            }
-          }
-          if (Array.isArray(props.race?.photos)) {
-            photos.value = props.race.photos
-          } else {
-            photos.value = []
-          }
-        },
-        (err) => {
-          console.warn('[PhotosGallery] Firestore live photos error:', err)
-        }
-      )
-    } catch (err) {
-      console.warn('[PhotosGallery] Could not attach Firestore photos listener:', err)
+  isLoadingPhotos.value = true
+
+  try {
+    // Try local Nitro server API
+    const res = await fetch(`/api/photos?url=${encodeURIComponent(targetUrl)}`)
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data?.photos) && data.photos.length > 0) {
+        photos.value = data.photos
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(data.photos)) } catch (e) {}
+        isLoadingPhotos.value = false
+        return
+      }
     }
+  } catch (e) {
+    // Falling back to proxy if on static environment
+  }
+
+  try {
+    // Fallback for static SPA hosting
+    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`
+    const res = await fetch(proxyUrl)
+    if (res.ok) {
+      const html = await res.text()
+      const extracted = extractPhotosFromHtml(html)
+      if (extracted.length > 0) {
+        photos.value = extracted
+        try { sessionStorage.setItem(cacheKey, JSON.stringify(extracted)) } catch (e) {}
+        isLoadingPhotos.value = false
+        return
+      }
+    }
+  } catch (err) {
+    console.warn('[PhotosGallery] Could not fetch live photos from Google Photos:', err)
+  } finally {
+    isLoadingPhotos.value = false
   }
 }
 
@@ -105,14 +131,7 @@ onMounted(() => {
   loadPhotos()
 })
 
-onUnmounted(() => {
-  if (unsubscribePhotos) {
-    unsubscribePhotos()
-    unsubscribePhotos = null
-  }
-})
-
-watch(() => props.race?.id, () => {
+watch(() => [props.race?.id, albumUrl.value], () => {
   photosPageLimit.value = 24
   currentLightboxIdx.value = -1
   loadPhotos()
@@ -269,6 +288,17 @@ onMounted(() => {
           </button>
         </div>
       </template>
+
+      <!-- Loading State -->
+      <div v-else-if="isLoadingPhotos" style="text-align:center;padding:48px 20px;background:var(--bg-subtle);border-radius:12px;margin-top:16px;border:1px solid var(--border);">
+        <div style="font-size:36px;margin-bottom:12px;display:inline-block;">🔄</div>
+        <h4 style="font-size:16px;font-weight:700;margin-bottom:6px;color:var(--text-main);">
+          Loading Live Photos...
+        </h4>
+        <p style="font-size:13px;color:var(--text-muted);margin:0;">
+          Connecting to shared Google Photos album for {{ race.name }}.
+        </p>
+      </div>
 
       <!-- Empty / Fallback Album Card -->
       <div v-else style="text-align:center;padding:42px 20px;background:var(--bg-subtle);border-radius:12px;margin-top:16px;border:1px solid var(--border);">
