@@ -29,9 +29,9 @@ service cloud.firestore {
     }
 
     // Users collection:
-    // Users can read/write their own profile doc
+    // Users can only read/write their own profile doc (Admins can read for team coordination)
     match /users/{userId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
       allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
