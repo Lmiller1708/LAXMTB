@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { parseTimeStrToMinutes, formatMinutesToTimeStr } from '~/modules/results/services/raceresultService'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { parseTimeStrToMinutes } from '~/modules/results/services/raceresultService'
 
 const props = withDefaults(
   defineProps<{
@@ -110,6 +110,7 @@ const openModal = () => {
   if (props.disabled) return
   parseValue(props.modelValue)
   activeView.value = 'hour'
+  inputMode.value = 'dial'
   isOpen.value = true
 }
 
@@ -139,29 +140,30 @@ const handleCancel = () => {
   closeModal()
 }
 
-// Dial Needle Angle calculations
+// Needle Angle: 12 o'clock is 0deg (straight UP)
 const needleAngle = computed(() => {
   if (activeView.value === 'hour') {
     const h = selectedHour.value % 12
-    return h * 30 // 30 degrees per hour
+    return h * 30 // 30 degrees per hour (12 = 0deg, 1 = 30deg, 8 = 240deg)
   } else {
-    return selectedMinute.value * 6 // 6 degrees per minute
+    return selectedMinute.value * 6 // 6 degrees per minute (0 = 0deg, 15 = 90deg)
   }
 })
 
 // Calculate number positions around clock face (diameter = 256px, radius = 128px, num radius = 96px)
 const getNumberPosition = (index: number, total: number) => {
+  // index 0 is 12 o'clock (-90 deg from standard 0-deg East)
   const angle = (index * (360 / total) - 90) * (Math.PI / 180)
-  const r = 96 // distance from center
+  const r = 96
   const x = 128 + r * Math.cos(angle)
   const y = 128 + r * Math.sin(angle)
-  return { left: `${x}px`, top: `${y}px` }
+  return { left: `${Math.round(x)}px`, top: `${Math.round(y)}px` }
 }
 
 const hoursList = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
 
-// Dial drag and click interaction
+// Pointer to angle calculation
 const calculateValueFromPointer = (e: MouseEvent | TouchEvent) => {
   if (!clockDialRef.value) return
   const rect = clockDialRef.value.getBoundingClientRect()
@@ -181,6 +183,7 @@ const calculateValueFromPointer = (e: MouseEvent | TouchEvent) => {
   const dx = clientX - centerX
   const dy = clientY - centerY
 
+  // Angle from center where straight UP (12 o'clock) is 0 deg
   let angleDeg = (Math.atan2(dy, dx) * (180 / Math.PI)) + 90
   if (angleDeg < 0) angleDeg += 360
 
@@ -218,12 +221,25 @@ const onDialPointerUp = () => {
   window.removeEventListener('touchmove', onDialPointerMove)
   window.removeEventListener('touchend', onDialPointerUp)
 
-  // Auto-advance from hour to minute view once selected (Material Design standard)
+  // Auto-advance from hour to minute view once an hour is selected
   if (activeView.value === 'hour') {
     setTimeout(() => {
       activeView.value = 'minute'
     }, 220)
   }
+}
+
+const selectHourDirect = (h: number) => {
+  selectedHour.value = h
+  syncKeyboardInputs()
+  setTimeout(() => {
+    activeView.value = 'minute'
+  }, 220)
+}
+
+const selectMinuteDirect = (m: number) => {
+  selectedMinute.value = m
+  syncKeyboardInputs()
 }
 
 const nudgeMinutes = (delta: number) => {
@@ -311,15 +327,16 @@ onBeforeUnmount(() => {
             <!-- Main Time Display Section -->
             <div class="m2-time-display-row">
               <div class="m2-time-inputs-group">
-                <!-- Hour Display / Input -->
+                <!-- Hour Box -->
                 <button
                   v-if="inputMode === 'dial'"
                   type="button"
                   class="m2-time-box"
                   :class="{ active: activeView === 'hour' }"
+                  title="Select hour"
                   @click="activeView = 'hour'"
                 >
-                  {{ selectedHour }}
+                  {{ displayHourStr }}
                 </button>
                 <input
                   v-else
@@ -332,12 +349,13 @@ onBeforeUnmount(() => {
 
                 <span class="m2-time-colon">:</span>
 
-                <!-- Minute Display / Input -->
+                <!-- Minute Box -->
                 <button
                   v-if="inputMode === 'dial'"
                   type="button"
                   class="m2-time-box"
                   :class="{ active: activeView === 'minute' }"
+                  title="Select minute"
                   @click="activeView = 'minute'"
                 >
                   {{ displayMinuteStr }}
@@ -384,15 +402,19 @@ onBeforeUnmount(() => {
                 <!-- Central Pin -->
                 <div class="m2-dial-center-pin"></div>
 
-                <!-- Hand / Needle extending from center to number -->
+                <!-- Needle pointing from center (pivoted around bottom center) -->
                 <div
                   class="m2-dial-needle"
-                  :style="{ transform: `rotate(${needleAngle}deg)` }"
+                  :style="{
+                    transform: `rotate(${needleAngle}deg)`,
+                    transition: isDragging ? 'none' : 'transform 0.15s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }"
                 >
+                  <!-- Red Selector Circle at tip of needle -->
                   <div class="m2-dial-selector-dot"></div>
                 </div>
 
-                <!-- Clock Numbers -->
+                <!-- Clock Numbers (Hours) -->
                 <template v-if="activeView === 'hour'">
                   <div
                     v-for="(h, idx) in hoursList"
@@ -400,11 +422,13 @@ onBeforeUnmount(() => {
                     class="m2-dial-number"
                     :class="{ selected: selectedHour === h }"
                     :style="getNumberPosition(idx, 12)"
+                    @click.stop="selectHourDirect(h)"
                   >
                     {{ h }}
                   </div>
                 </template>
 
+                <!-- Clock Numbers (Minutes) -->
                 <template v-else>
                   <div
                     v-for="(m, idx) in minutesList"
@@ -412,6 +436,7 @@ onBeforeUnmount(() => {
                     class="m2-dial-number"
                     :class="{ selected: selectedMinute === m }"
                     :style="getNumberPosition(idx, 12)"
+                    @click.stop="selectMinuteDirect(m)"
                   >
                     {{ m === 0 ? '00' : (m < 10 ? `0${m}` : m) }}
                   </div>
@@ -434,7 +459,7 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="m2-mode-icon-btn"
-                :title="inputMode === 'dial' ? 'Switch to text input' : 'Switch to dial picker'"
+                :title="inputMode === 'dial' ? 'Switch to keyboard input' : 'Switch to dial clock'"
                 @click="inputMode = inputMode === 'dial' ? 'keyboard' : 'dial'"
               >
                 <svg v-if="inputMode === 'dial'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -755,7 +780,7 @@ onBeforeUnmount(() => {
   z-index: 5;
 }
 
-/* Dial Needle */
+/* Dial Needle: Extends UPWARDS from center (50%, 50%) */
 .m2-dial-needle {
   position: absolute;
   top: 50%;
@@ -763,16 +788,17 @@ onBeforeUnmount(() => {
   width: 2px;
   height: 96px;
   background: #ef4444;
-  transform-origin: top center;
+  transform-origin: 50% 100%;
+  margin-top: -96px;
+  margin-left: -1px;
   z-index: 4;
   pointer-events: none;
-  transition: transform 0.08s ease-out;
 }
 
-/* Selector Bubble at the end of needle */
+/* Selector Bubble at the tip of needle */
 .m2-dial-selector-dot {
   position: absolute;
-  bottom: -18px;
+  top: -17px;
   left: -17px;
   width: 36px;
   height: 36px;
@@ -794,7 +820,7 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: 500;
   color: #e4e4e7;
-  pointer-events: none;
+  cursor: pointer;
   z-index: 6;
   transition: color 0.1s ease;
 }
