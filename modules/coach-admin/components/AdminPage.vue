@@ -14,6 +14,7 @@ import {
   MONTH_MAP
 } from '~/modules/results/services/raceresultService'
 import { type TeamUserItem } from '~/modules/coach-admin/composables/useCoachAuth'
+import CustomDatePicker from './CustomDatePicker.vue'
 
 const props = defineProps<{
   initialTab?: string
@@ -65,6 +66,14 @@ const form = ref<Race>({ ...currentRace.value })
 // Date Range Picker State
 const dateRangeStart = ref('')
 const dateRangeEnd = ref('')
+
+const eventYear = computed(() => {
+  if (dateRangeStart.value) {
+    const y = parseInt(dateRangeStart.value.split('-')[0], 10)
+    if (!isNaN(y)) return y
+  }
+  return new Date().getFullYear()
+})
 
 function updateDateRangeFromForm() {
   const { start, end } = parseDateRange(form.value.dateStr || '')
@@ -1150,24 +1159,26 @@ const removePhoto = (idx: number) => {
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
                   <div style="display:flex;flex-direction:column;gap:4px;">
                     <span style="font-size:11px;font-weight:700;color:var(--text-muted);">Start Date:</span>
-                    <input
+                    <CustomDatePicker
+                      mode="single"
                       v-model="dateRangeStart"
-                      type="date"
-                      class="custom-minutes-input"
-                      style="width:100%;height:32px;font-size:12px;padding:4px 8px;"
+                      :full-width="true"
+                      :default-year="eventYear"
+                      placeholder="Select Start Date"
                       @change="onDateRangeChange"
-                    >
+                    />
                   </div>
                   <div style="display:flex;flex-direction:column;gap:4px;">
                     <span style="font-size:11px;font-weight:700;color:var(--text-muted);">End Date:</span>
-                    <input
+                    <CustomDatePicker
+                      mode="single"
                       v-model="dateRangeEnd"
-                      type="date"
-                      :min="dateRangeStart"
-                      class="custom-minutes-input"
-                      style="width:100%;height:32px;font-size:12px;padding:4px 8px;"
+                      :min-date="dateRangeStart"
+                      :full-width="true"
+                      :default-year="eventYear"
+                      placeholder="Select End Date"
                       @change="onDateRangeChange"
-                    >
+                    />
                   </div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -1256,33 +1267,14 @@ const removePhoto = (idx: number) => {
                     >
                       ⠿
                     </span>
-                    <span style="font-weight:800;font-size:13px;color:var(--text-main);">Day {{ dayIdx + 1 }}:</span>
-                    <input
-                      v-model="day.day"
-                      type="text"
-                      placeholder="e.g. Friday / Saturday / Sunday"
-                      class="custom-minutes-input"
-                      style="width:125px;font-weight:700;"
-                      draggable="false"
-                      @dragstart.stop
-                    >
-                    <div style="display:flex;align-items:center;gap:3px;" draggable="false" @dragstart.stop>
-                      <input
-                        v-model="day.date"
-                        type="text"
-                        placeholder="e.g. Sept 13"
-                        class="custom-minutes-input"
-                        style="width:80px;"
-                      >
-                      <input
-                        type="date"
-                        :value="getDayIso(day.date)"
-                        class="custom-minutes-input"
-                        style="width:34px;padding:2px 2px;cursor:pointer;background:var(--bg-subtle);"
-                        title="Choose date from calendar"
-                        @change="onScheduleDayDateChange(day, ($event.target as HTMLInputElement).value)"
-                      >
-                    </div>
+                    <span style="font-weight:800;font-size:13px;color:var(--text-main);white-space:nowrap;">Day {{ dayIdx + 1 }}:</span>
+                    <CustomDatePicker
+                      mode="scheduleDay"
+                      :day="day"
+                      :default-year="eventYear"
+                      placeholder="Select Day & Date"
+                      @update:day="(newVal) => Object.assign(day, newVal)"
+                    />
                     <input
                       v-model="day.subtitle"
                       type="text"
