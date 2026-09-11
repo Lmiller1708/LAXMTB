@@ -32,6 +32,7 @@ export interface CoachSlot {
   name: string;
   meetingTime: string;
   stagingTime?: string;
+  startTime?: string;
   ridersAllowed?: string;
   duration?: string;
   day?: string;
@@ -54,6 +55,7 @@ export interface WarmupGroup {
   name: string;
   meetingTime: string;
   stagingTime?: string;
+  startTime?: string;
   day?: string;
   date?: string;
   subtitle?: string;

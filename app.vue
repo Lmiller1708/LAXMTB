@@ -11,10 +11,20 @@ const currentTab = ref<TabType>('details')
 const isWhatsNewOpen = ref(false)
 const isNotifOpen = ref(false)
 const isAdminOpen = ref(false)
+const isAuthOpen = ref(false)
+const isProfileOpen = ref(false)
+const initialAuthMode = ref<'login' | 'signup'>('login')
+const activeInviteCode = ref('')
 const adminInitialTab = ref('venue')
+const isAdminRoute = ref(false)
 
 const { currentRace, currentRaceSlug, races, currentRaceIndex, selectRace, selectRaceBySlug, updateRace } = useCurrentRace()
-const { isCoachAuth } = useCoachAuth()
+const { user, isCoachAuth } = useCoachAuth()
+
+const openAuthWithMode = (mode: 'login' | 'signup' = 'login') => {
+  initialAuthMode.value = mode
+  isAuthOpen.value = true
+}
 
 const {
   riders,
@@ -44,17 +54,36 @@ const showNotifToast = (msg: string, body?: string) => {
   if (!import.meta.client) return
   const container = document.getElementById('notifToastContainer')
   if (!container) return
+
   const toast = document.createElement('div')
   toast.className = 'notif-toast'
-  toast.innerHTML = `
-    <div class="notif-toast-content">
-      <div class="notif-toast-title">${msg}</div>
-      ${body ? `<div class="notif-toast-msg">${body}</div>` : ''}
-    </div>
-    <button type="button" class="notif-toast-close" aria-label="Dismiss">✕</button>
-  `
-  toast.querySelector('.notif-toast-close')?.addEventListener('click', () => toast.remove())
+
+  const content = document.createElement('div')
+  content.className = 'notif-toast-content'
+
+  const titleEl = document.createElement('div')
+  titleEl.className = 'notif-toast-title'
+  titleEl.textContent = msg
+  content.appendChild(titleEl)
+
+  if (body) {
+    const msgEl = document.createElement('div')
+    msgEl.className = 'notif-toast-msg'
+    msgEl.textContent = body
+    content.appendChild(msgEl)
+  }
+
+  const closeBtn = document.createElement('button')
+  closeBtn.type = 'button'
+  closeBtn.className = 'notif-toast-close'
+  closeBtn.setAttribute('aria-label', 'Dismiss')
+  closeBtn.textContent = '✕'
+  closeBtn.addEventListener('click', () => toast.remove())
+
+  toast.appendChild(content)
+  toast.appendChild(closeBtn)
   container.appendChild(toast)
+
   setTimeout(() => {
     toast.remove()
   }, body ? 6500 : 3500)
@@ -93,10 +122,6 @@ const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
 }
 
 const setTab = (tab: TabType, pushToHistory = true) => {
-  // Guard: Coach Sign-Ups tab is restricted to authorized coaches only
-  if (tab === 'coach' && !isCoachAuth.value) {
-    tab = 'details'
-  }
   currentTab.value = tab
   if (tab === 'list' || tab === 'results') {
     if (currentRace.value?.isPublished && currentRace.value?.eventId) {
@@ -130,14 +155,58 @@ const syncFromRoute = () => {
   try {
     let path = window.location.pathname || route.path
 
-    // Handle GitHub Pages hash redirect (e.g. /#/race/bluffbash/details)
-    if (window.location.hash && window.location.hash.startsWith('#/')) {
-      path = window.location.hash.substring(1)
+    // Handle GitHub Pages hash redirect (e.g. /#/race/bluffbash/details or #admin)
+    if (window.location.hash && (window.location.hash.startsWith('#/') || window.location.hash === '#admin')) {
+      if (window.location.hash === '#admin' || window.location.hash.startsWith('#/admin')) {
+        path = '/admin'
+      } else {
+        path = window.location.hash.substring(1)
+      }
       window.history.replaceState(null, '', path)
+    }
+
+    // Check if on /admin route
+    if (path === '/admin' || path.startsWith('/admin') || route.path === '/admin' || route.path.startsWith('/admin')) {
+      isAdminRoute.value = true
+      const params = new URLSearchParams(window.location.search)
+      const adminTabParam = params.get('tab')
+      if (adminTabParam) {
+        adminInitialTab.value = adminTabParam
+      }
+      return
+    } else {
+      isAdminRoute.value = false
     }
 
     // Check URL query/hash legacy parameters
     const params = new URLSearchParams(window.location.search)
+
+    // Check for invite parameter (?invite=<code> or ?join=<code>)
+    const inviteParam = params.get('invite') || params.get('join') || params.get('code')
+    if (inviteParam) {
+      const cleanInvite = inviteParam.trim()
+      activeInviteCode.value = cleanInvite
+      if (import.meta.client) {
+        sessionStorage.setItem('laxmtb_invite_token', cleanInvite)
+        localStorage.removeItem('laxmtb_invite_token')
+      }
+      if (!user.value) {
+        initialAuthMode.value = 'signup'
+        isAuthOpen.value = true
+        showNotifToast('🎟️ Team Invite Accepted!', 'Please complete your registration below.')
+      }
+    } else {
+      if (import.meta.client) {
+        localStorage.removeItem('laxmtb_invite_token')
+        const sessionToken = sessionStorage.getItem('laxmtb_invite_token')
+        if (sessionToken && sessionToken.trim()) {
+          activeInviteCode.value = sessionToken.trim()
+        } else {
+          activeInviteCode.value = ''
+        }
+      }
+    }
+
     const tabParam = params.get('tab') || window.location.hash.replace(/^#/, '')
     if (tabParam && !tabParam.startsWith('/')) {
       const slug = tabParam.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -242,7 +311,21 @@ onUnmounted(() => {
 
 const openAdminWithTab = (tab: string) => {
   adminInitialTab.value = tab
-  isAdminOpen.value = true
+  isAdminRoute.value = true
+  if (import.meta.client) {
+    const target = `/admin?tab=${encodeURIComponent(tab)}`
+    window.history.pushState({ admin: true, tab }, '', target)
+    router.push(target).catch(() => {})
+  }
+}
+
+const navigateBackFromAdmin = () => {
+  isAdminRoute.value = false
+  if (import.meta.client) {
+    const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
+    const slug = slugifyRaceId(race?.id || 'race')
+    updateUrl(slug, currentTab.value, true)
+  }
 }
 
 const handleSaveRace = (updated: Race) => {
@@ -257,9 +340,9 @@ const handleSyncData = () => {
   }, 1000)
 }
 
-watch([isWhatsNewOpen, isNotifOpen, isAdminOpen], ([wn, notif, admin]) => {
+watch([isWhatsNewOpen, isNotifOpen, isAuthOpen, isProfileOpen], ([wn, notif, auth, prof]) => {
   if (import.meta.client) {
-    document.body.classList.toggle('modal-open', Boolean(wn || notif || admin))
+    document.body.classList.toggle('modal-open', Boolean(wn || notif || auth || prof))
   }
 })
 
@@ -275,41 +358,60 @@ const handlePrint = () => {
     <!-- Toast Notification Container -->
     <div class="notif-toast-container" id="notifToastContainer"></div>
 
-    <!-- Site Header -->
-    <header class="site-header">
-      <!-- 1. Fixed Brand Header & Controls -->
-      <AppHeader
-        @open-whats-new="isWhatsNewOpen = true"
+    <!-- DEDICATED COACH ADMIN PAGE -->
+    <AdminPage
+      v-if="isAdminRoute"
+      :initial-tab="adminInitialTab"
+      @back="navigateBackFromAdmin"
+      @save="handleSaveRace"
+      @toast="showNotifToast"
+    />
+
+    <!-- PUBLIC RACE CENTRAL VIEW -->
+    <div v-else>
+      <!-- Site Header -->
+      <header class="site-header">
+        <!-- 1. Fixed Brand Header & Controls -->
+        <AppHeader
+          @open-whats-new="isWhatsNewOpen = true"
+          @open-notifications="isNotifOpen = true"
+          @open-admin="openAdminWithTab('venue')"
+          @open-auth="openAuthWithMode('login')"
+          @open-profile="isProfileOpen = true"
+          @sync-data="handleSyncData"
+          @toast="showNotifToast"
+        />
+
+        <!-- 2. Season Race Switcher Bar -->
+        <RaceSwitcherBar @select-race="setRace" />
+
+        <!-- 3. Navigation Tabs -->
+        <NavigationTabs :current-tab="currentTab" :is-coach-auth="isCoachAuth" @change-tab="setTab" />
+      </header>
+
+      <!-- Modals -->
+      <WhatsNewModal
+        :is-open="isWhatsNewOpen"
+        @close="isWhatsNewOpen = false"
         @open-notifications="isNotifOpen = true"
-        @open-admin="openAdminWithTab('venue')"
-        @sync-data="handleSyncData"
-        @toast="showNotifToast"
       />
 
-      <!-- 2. Season Race Switcher Bar -->
-      <RaceSwitcherBar @select-race="setRace" />
+      <NotificationModal
+        :is-open="isNotifOpen"
+        @close="isNotifOpen = false"
+      />
 
-      <!-- 3. Navigation Tabs -->
-      <NavigationTabs :current-tab="currentTab" :is-coach-auth="isCoachAuth" @change-tab="setTab" />
-    </header>
-
-    <!-- Modals -->
-    <WhatsNewModal
-      :is-open="isWhatsNewOpen"
-      @close="isWhatsNewOpen = false"
-      @open-notifications="isNotifOpen = true"
+      <AuthModal
+      :is-open="isAuthOpen"
+      :initial-mode="initialAuthMode"
+      :initial-invite-code="activeInviteCode"
+      @close="isAuthOpen = false"
+      @toast="showNotifToast"
     />
 
-    <NotificationModal
-      :is-open="isNotifOpen"
-      @close="isNotifOpen = false"
-    />
-
-    <AdminModal
-      :is-open="isAdminOpen"
-      :initial-tab="adminInitialTab"
-      @close="isAdminOpen = false"
-      @save="handleSaveRace"
+    <UserProfileModal
+      :is-open="isProfileOpen"
+      @close="isProfileOpen = false"
       @toast="showNotifToast"
     />
 
@@ -392,6 +494,7 @@ const handlePrint = () => {
         :race="currentRace"
         :is-coach-auth="isCoachAuth"
         @edit="openAdminWithTab('coach')"
+        @open-auth="openAuthWithMode('login')"
       />
 
       <!-- Tab 3 & 4: Start Lists & Results -->
@@ -419,5 +522,6 @@ const handlePrint = () => {
         @edit="openAdminWithTab('photos')"
       />
     </main>
+    </div>
   </div>
 </template>

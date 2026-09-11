@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import type { Race, ScheduleEvent, CoachSlot, WarmupGroup } from '~/modules/races/types/race'
+import type { Race, ScheduleDay, ScheduleEvent, CoachSlot, WarmupGroup } from '~/modules/races/types/race'
 import {
   categoryOrder,
   getCategoryStartTime,
   getCategoryStageTime,
   calculateDefaultGroupWarmupTime,
+  formatWarmupGroupTitle,
   parseTimeStrToMinutes,
-  formatMinutesToTimeStr
+  formatMinutesToTimeStr,
+  parseDateRange,
+  formatDateRange,
+  MONTHS_SHORT,
+  MONTH_MAP
 } from '~/modules/results/services/raceresultService'
+
+import { type TeamUserItem } from '~/modules/coach-admin/composables/useCoachAuth'
+import CustomDatePicker from './CustomDatePicker.vue'
 
 const props = defineProps<{
   isOpen: boolean
@@ -25,14 +33,22 @@ const {
   user,
   isCoachAuth,
   isAuthorizedCoach,
+  isAdminCoach,
   isAdminUnlocked,
   authError,
   authLoading,
   adminsList,
   adminsLoading,
+  allUsersList,
+  allUsersLoading,
   fetchAdmins,
+  fetchAllUsers,
+  inviteSettings,
+  fetchInviteSettings,
+  updateInviteCodes,
   addCoachAdmin,
   updateCoachRole,
+  updateUserRole,
   removeCoachAdmin,
   signInWithGoogle,
   signOut,
@@ -49,49 +65,285 @@ watch(() => props.initialTab, (newTab) => {
 // Local editable copy of current race
 const form = ref<Race>({ ...currentRace.value })
 
+// Date Range Picker State
+const dateRangeStart = ref('')
+const dateRangeEnd = ref('')
+
+const eventYear = computed(() => {
+  if (dateRangeStart.value) {
+    const y = parseInt(dateRangeStart.value.split('-')[0], 10)
+    if (!isNaN(y)) return y
+  }
+  return new Date().getFullYear()
+})
+
+function updateDateRangeFromForm() {
+  const { start, end } = parseDateRange(form.value.dateStr || '')
+  dateRangeStart.value = start
+  dateRangeEnd.value = end
+}
+
+const onDateRangeChange = () => {
+  if (dateRangeStart.value) {
+    if (dateRangeEnd.value && dateRangeEnd.value < dateRangeStart.value) {
+      dateRangeEnd.value = dateRangeStart.value
+    }
+    form.value.dateStr = formatDateRange(dateRangeStart.value, dateRangeEnd.value || dateRangeStart.value)
+  }
+}
+
+const onDateStrManualInput = () => {
+  const { start, end } = parseDateRange(form.value.dateStr || '')
+  if (start) dateRangeStart.value = start
+  if (end) dateRangeEnd.value = end
+}
+
+const syncScheduleDaysFromDateRange = () => {
+  if (!dateRangeStart.value) return
+  const endVal = dateRangeEnd.value || dateRangeStart.value
+  const [y1, m1, d1] = dateRangeStart.value.split('-').map(Number)
+  const [y2, m2, d2] = endVal.split('-').map(Number)
+
+  const startDt = new Date(y1, m1 - 1, d1)
+  const endDt = new Date(y2, m2 - 1, d2)
+
+  const days: { day: string, date: string, isRaceDay: boolean }[] = []
+  const cur = new Date(startDt)
+  while (cur <= endDt) {
+    const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][cur.getDay()]
+    const monName = MONTHS_SHORT[cur.getMonth()]
+    const isRaceDay = cur.getTime() === endDt.getTime() || dayName === 'Sunday'
+    days.push({
+      day: dayName,
+      date: `${monName} ${cur.getDate()}`,
+      isRaceDay
+    })
+    cur.setDate(cur.getDate() + 1)
+  }
+
+  if (!form.value.schedule) form.value.schedule = []
+
+  days.forEach((newD, i) => {
+    if (form.value.schedule[i]) {
+      form.value.schedule[i].day = newD.day
+      form.value.schedule[i].date = newD.date
+      if (newD.isRaceDay) form.value.schedule[i].isRaceDay = true
+    } else {
+      form.value.schedule.push({
+        day: newD.day,
+        date: newD.date,
+        subtitle: newD.isRaceDay ? 'Race Day' : '',
+        isRaceDay: newD.isRaceDay,
+        events: []
+      })
+    }
+  })
+}
+
+const getDayIso = (dateStr?: string): string => {
+  if (!dateStr) return ''
+  const m = dateStr.trim().match(/^([A-Za-z]+)\s+(\d{1,2})$/)
+  if (m) {
+    const mon = MONTH_MAP[m[1].toLowerCase()]
+    if (mon !== undefined) {
+      const d = parseInt(m[2], 10)
+      const yr = dateRangeStart.value ? parseInt(dateRangeStart.value.split('-')[0], 10) : new Date().getFullYear()
+      return `${yr}-${String(mon + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    }
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
+  return ''
+}
+
+const onScheduleDayDateChange = (day: ScheduleDay, isoDate: string) => {
+  if (!isoDate) return
+  const [y, m, d] = isoDate.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  day.day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dt.getDay()]
+  day.date = `${MONTHS_SHORT[m - 1]} ${d}`
+}
+
+updateDateRangeFromForm()
+
 watch(currentRace, (newRace) => {
   form.value = JSON.parse(JSON.stringify(newRace))
+  updateDateRangeFromForm()
 }, { deep: true })
 
-// State for adding new coach
+// State for adding new coach administrator
 const newCoachEmail = ref('')
 const newCoachName = ref('')
-const newCoachRole = ref<'admin' | 'coach'>('coach')
 const isAddingCoach = ref(false)
 
 const handleAddCoach = async () => {
   if (!newCoachEmail.value) return
   isAddingCoach.value = true
-  const res = await addCoachAdmin(newCoachEmail.value, newCoachName.value, newCoachRole.value)
+  const res = await addCoachAdmin(newCoachEmail.value, newCoachName.value)
   isAddingCoach.value = false
   if (res.success) {
-    const roleLabel = newCoachRole.value === 'admin' ? 'Coach Admin' : 'Coach'
-    emit('toast', `✅ Added ${newCoachEmail.value} as ${roleLabel}!`)
+    emit('toast', `✅ Added ${newCoachEmail.value} as Coach Administrator!`)
     newCoachEmail.value = ''
     newCoachName.value = ''
-    newCoachRole.value = 'coach'
   } else {
-    emit('toast', `⛔ ${res.error || 'Failed to add coach'}`)
+    emit('toast', `⛔ ${res.error || 'Failed to add administrator'}`)
   }
 }
 
-const handleUpdateRole = async (email: string, role: 'admin' | 'coach') => {
-  const res = await updateCoachRole(email, role)
-  if (res.success) {
-    emit('toast', `🔄 Updated ${email} to ${role === 'admin' ? 'Coach Admin' : 'Coach'}`)
+// User Directory State (Search, Role Filter, Column Sorting)
+const userSearchQuery = ref('')
+const userRoleFilter = ref<'all' | 'admin' | 'coach' | 'guardian'>('all')
+const userSortField = ref<'name' | 'email' | 'role' | 'date'>('name')
+const userSortOrder = ref<'asc' | 'desc'>('asc')
+
+const toggleUserSort = (field: 'name' | 'email' | 'role' | 'date') => {
+  if (userSortField.value === field) {
+    userSortOrder.value = userSortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
-    emit('toast', `⛔ ${res.error || 'Failed to update role'}`)
+    userSortField.value = field
+    userSortOrder.value = 'asc'
   }
 }
 
-const handleRemoveCoach = async (email: string) => {
-  if (confirm(`Are you sure you want to remove access for ${email}?`)) {
-    const res = await removeCoachAdmin(email)
-    if (res.success) {
-      emit('toast', `🗑️ Removed ${email}`)
-    } else {
-      emit('toast', `⛔ ${res.error || 'Failed to remove coach'}`)
+const filteredUsers = computed(() => {
+  let list = [...allUsersList.value]
+
+  // Search filter (name, email, phone)
+  if (userSearchQuery.value.trim()) {
+    const q = userSearchQuery.value.toLowerCase().trim()
+    list = list.filter(u =>
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.phone && u.phone.includes(q))
+    )
+  }
+
+  // Role filter
+  if (userRoleFilter.value !== 'all') {
+    list = list.filter(u => {
+      if (userRoleFilter.value === 'admin') return u.role === 'admin' || u.role === 'owner'
+      return u.role === userRoleFilter.value
+    })
+  }
+
+  // Sorting
+  list.sort((a, b) => {
+    let comparison = 0
+    if (userSortField.value === 'name') {
+      comparison = (a.name || '').localeCompare(b.name || '')
+    } else if (userSortField.value === 'email') {
+      comparison = (a.email || '').localeCompare(b.email || '')
+    } else if (userSortField.value === 'role') {
+      const roleWeight = (r: string) => r === 'owner' ? 4 : (r === 'admin' ? 3 : (r === 'coach' ? 2 : 1))
+      comparison = roleWeight(b.role) - roleWeight(a.role)
+    } else if (userSortField.value === 'date') {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      comparison = dateB - dateA
     }
+    return userSortOrder.value === 'asc' ? comparison : -comparison
+  })
+
+  return list
+})
+
+const handleUpdateUserRole = async (userItem: TeamUserItem, newRole: 'admin' | 'coach' | 'guardian') => {
+  const res = await updateUserRole(userItem.email, newRole, userItem.uid)
+  if (res.success) {
+    const roleLabel = newRole === 'admin' ? 'Coach Admin' : (newRole === 'guardian' ? 'Guardian' : 'Coach')
+    emit('toast', `🔄 Updated ${userItem.name || userItem.email} to ${roleLabel}`)
+  } else {
+    emit('toast', `⛔ ${res.error || 'Failed to update access'}`)
+  }
+}
+
+const handleRemoveUser = async (userItem: TeamUserItem) => {
+  if (confirm(`Are you sure you want to remove access for ${userItem.name || userItem.email}?`)) {
+    const res = await removeCoachAdmin(userItem.email, userItem.uid)
+    if (res.success) {
+      emit('toast', `🗑️ Removed ${userItem.name || userItem.email}`)
+    } else {
+      emit('toast', `⛔ ${res.error || 'Failed to remove user'}`)
+    }
+  }
+}
+
+// State for invite codes & shareable links
+const coachCodeInput = ref('')
+const guardianCodeInput = ref('')
+const isSavingInvites = ref(false)
+const copiedCoach = ref(false)
+const copiedGuardian = ref(false)
+
+const originUrl = computed(() => {
+  if (import.meta.client && typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin
+  }
+  return 'https://laxmtb.org'
+})
+
+const coachInviteUrl = computed(() => {
+  const code = coachCodeInput.value.trim() || inviteSettings.value.coachCode || 'lax-coach-2026'
+  return `${originUrl.value}/?invite=${encodeURIComponent(code)}`
+})
+
+const guardianInviteUrl = computed(() => {
+  const code = guardianCodeInput.value.trim() || inviteSettings.value.guardianCode || 'lax-guardian-2026'
+  return `${originUrl.value}/?invite=${encodeURIComponent(code)}`
+})
+
+watch(inviteSettings, (val) => {
+  if (val) {
+    coachCodeInput.value = val.coachCode || 'lax-coach-2026'
+    guardianCodeInput.value = val.guardianCode || 'lax-guardian-2026'
+  }
+}, { immediate: true })
+
+watch(() => props.isOpen, (open) => {
+  if (open) {
+    fetchInviteSettings()
+    fetchAdmins()
+    fetchAllUsers()
+  }
+})
+
+onMounted(() => {
+  fetchInviteSettings()
+  fetchAllUsers()
+})
+
+const copyCoachLink = async () => {
+  try {
+    await navigator.clipboard.writeText(coachInviteUrl.value)
+    copiedCoach.value = true
+    emit('toast', '📋 Coach invite link copied to clipboard!')
+    setTimeout(() => { copiedCoach.value = false }, 2500)
+  } catch {
+    emit('toast', 'Could not copy link automatically. Please select and copy manually.')
+  }
+}
+
+const copyGuardianLink = async () => {
+  try {
+    await navigator.clipboard.writeText(guardianInviteUrl.value)
+    copiedGuardian.value = true
+    emit('toast', '📋 Guardian invite link copied to clipboard!')
+    setTimeout(() => { copiedGuardian.value = false }, 2500)
+  } catch {
+    emit('toast', 'Could not copy link automatically. Please select and copy manually.')
+  }
+}
+
+const handleSaveInviteCodes = async () => {
+  isSavingInvites.value = true
+  const res = await updateInviteCodes({
+    coachCode: coachCodeInput.value,
+    guardianCode: guardianCodeInput.value
+  })
+  isSavingInvites.value = false
+  if (res.success) {
+    emit('toast', '💾 Invite links & access codes updated!')
+  } else {
+    emit('toast', `⛔ ${res.error || 'Failed to update invite codes'}`)
   }
 }
 
@@ -138,6 +390,7 @@ const handleSave = () => {
       name: wg.name,
       meetingTime: wg.meetingTime,
       stagingTime: wg.stagingTime || '',
+      startTime: wg.startTime || '',
       day: wg.day,
       date: wg.date,
       subtitle: wg.subtitle,
@@ -428,6 +681,7 @@ const initWarmupGroups = () => {
           name: w.name || 'Warm-up Group',
           meetingTime: w.meetingTime || '7:00 AM',
           stagingTime: w.stagingTime || '',
+          startTime: w.startTime || '',
           day: w.day || 'Sunday',
           date: w.date || '',
           subtitle: w.subtitle || '',
@@ -480,7 +734,7 @@ const getCategoryPillTitle = (grp: WarmupGroup, catName: string) => {
   }
   if (isCategoryInOtherWarmupGroup(grp, catName)) {
     const other = getCategoryAssignedGroup(catName)
-    return `🔒 ${catName} is already assigned to "${other?.name || 'another group'}"`
+    return `🔒 ${catName} is locked to "${other?.name || 'another group'}". Unclick it in "${other?.name || 'that group'}" first to move it.`
   }
   return `Click to add ${catName} to this warm-up group`
 }
@@ -521,6 +775,7 @@ const addWarmupGroup = () => {
     name: defaultCats.length > 0 ? defaultCats.join(', ') : 'New Warm-up Group',
     meetingTime: autoMeeting,
     stagingTime: '',
+    startTime: '',
     day: 'Sunday',
     date: 'Sept 6',
     subtitle: 'North Conference • Race Day',
@@ -553,16 +808,26 @@ const toggleCategoryInWarmupGroup = (grp: WarmupGroup, catName: string) => {
   }
 
   // Automatically update group name to reflect categories
-  if (grp.categories.length > 0) {
-    grp.name = grp.categories.join(', ')
-    // Automatically recalculate and set warm-up time if not overridden
-    const autoTime = calculateDefaultGroupWarmupTime(form.value, grp.categories)
-    if (autoTime) {
-      grp.meetingTime = autoTime
-    }
-  } else {
-    grp.name = 'Empty Warm-up Group'
+  grp.name = formatWarmupGroupTitle(grp.categories)
+
+  // Automatically recalculate and set warm-up time
+  const autoTime = calculateDefaultGroupWarmupTime(form.value, grp.categories)
+  if (autoTime) {
+    grp.meetingTime = autoTime
   }
+}
+
+const getWarmupTimeOptions = (grp: WarmupGroup) => {
+  const options = new Set<string>(TIME_OPTIONS)
+  const autoTime = getAutoWarmupTime(grp)
+  if (autoTime) options.add(autoTime)
+  if (grp.meetingTime) options.add(grp.meetingTime)
+
+  return Array.from(options).sort((a, b) => {
+    const minA = parseTimeStrToMinutes(a) ?? 0
+    const minB = parseTimeStrToMinutes(b) ?? 0
+    return minA - minB
+  })
 }
 
 // Drag & drop for warmup groups
@@ -880,15 +1145,61 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
               <label class="modal-label">Camping Theme</label>
               <input v-model="form.theme" type="text" placeholder="Camping Theme" class="custom-minutes-input" style="width:100%;">
             </div>
-            <div style="grid-template-columns:1fr 1fr;display:grid;gap:10px;">
-              <div>
-                <label class="modal-label">Date String</label>
-                <input v-model="form.dateStr" type="text" class="custom-minutes-input" style="width:100%;">
+            <!-- Event Date Range Picker -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;">
+              <label class="modal-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <span>📅 Event Date Range</span>
+                <span v-if="form.dateStr" style="color:var(--accent-red);font-weight:700;font-size:12px;">{{ form.dateStr }}</span>
+              </label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <span style="font-size:11px;font-weight:700;color:var(--text-muted);">Start Date:</span>
+                  <CustomDatePicker
+                    mode="single"
+                    v-model="dateRangeStart"
+                    :full-width="true"
+                    :default-year="eventYear"
+                    placeholder="Select Start Date"
+                    @change="onDateRangeChange"
+                  />
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <span style="font-size:11px;font-weight:700;color:var(--text-muted);">End Date:</span>
+                  <CustomDatePicker
+                    mode="single"
+                    v-model="dateRangeEnd"
+                    :min-date="dateRangeStart"
+                    :full-width="true"
+                    :default-year="eventYear"
+                    placeholder="Select End Date"
+                    @change="onDateRangeChange"
+                  />
+                </div>
               </div>
-              <div>
-                <label class="modal-label">Conference</label>
-                <input v-model="form.conference" type="text" class="custom-minutes-input" style="width:100%;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <input
+                  v-model="form.dateStr"
+                  type="text"
+                  placeholder="e.g. 11 - 13 Sept 2026"
+                  class="custom-minutes-input"
+                  style="flex:1;min-width:160px;font-size:12px;font-weight:600;"
+                  @input="onDateStrManualInput"
+                >
+                <button
+                  type="button"
+                  class="action-mini-btn"
+                  style="font-size:11px;padding:6px 12px;white-space:nowrap;font-weight:700;"
+                  title="Populate or sync schedule days from this date range"
+                  @click="syncScheduleDaysFromDateRange"
+                >
+                  🔄 Sync Schedule Days
+                </button>
               </div>
+            </div>
+
+            <div>
+              <label class="modal-label">Conference</label>
+              <input v-model="form.conference" type="text" class="custom-minutes-input" style="width:100%;">
             </div>
             <div>
               <label class="modal-label">Trailhead / Venue Name</label>
@@ -957,25 +1268,14 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                   >
                     ⠿
                   </span>
-                  <span style="font-weight:800;font-size:13px;color:var(--text-main);">Day {{ dayIdx + 1 }}:</span>
-                  <input
-                    v-model="day.day"
-                    type="text"
-                    placeholder="e.g. Friday / Saturday / Sunday"
-                    class="custom-minutes-input"
-                    style="width:130px;font-weight:700;"
-                    draggable="false"
-                    @dragstart.stop
-                  >
-                  <input
-                    v-model="day.date"
-                    type="text"
-                    placeholder="e.g. Sept 5"
-                    class="custom-minutes-input"
-                    style="width:100px;"
-                    draggable="false"
-                    @dragstart.stop
-                  >
+                  <span style="font-weight:800;font-size:13px;color:var(--text-main);white-space:nowrap;">Day {{ dayIdx + 1 }}:</span>
+                  <CustomDatePicker
+                    mode="scheduleDay"
+                    :day="day"
+                    :default-year="eventYear"
+                    placeholder="Select Day & Date"
+                    @update:day="(newVal) => Object.assign(day, newVal)"
+                  />
                   <input
                     v-model="day.subtitle"
                     type="text"
@@ -1007,7 +1307,6 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
               <div style="display:flex;flex-direction:column;gap:6px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                   <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Events ({{ day.events?.length || 0 }})</span>
-                  <button type="button" class="action-mini-btn" style="font-size:10.5px;padding:2px 8px;" @click="addScheduleEvent(dayIdx)">+ Add Event</button>
                 </div>
 
                 <div
@@ -1122,7 +1421,33 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                     ✕
                   </button>
                 </div>
+
+                <!-- Bottom Add Event Button -->
+                <div style="display:flex;justify-content:center;margin-top:2px;">
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="width:100%;padding:8px;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:6px;cursor:pointer;transition:all 0.15s ease;"
+                    @click="addScheduleEvent(dayIdx)"
+                  >
+                    <span style="font-size:13px;">➕</span>
+                    <span>Add Event</span>
+                  </button>
+                </div>
               </div>
+            </div>
+
+            <!-- Bottom Add Schedule Day Button -->
+            <div style="display:flex;justify-content:center;margin-top:4px;">
+              <button
+                type="button"
+                class="action-mini-btn"
+                style="width:100%;padding:9px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                @click="addScheduleDay"
+              >
+                <span style="font-size:14px;">➕</span>
+                <span>Add Schedule Day</span>
+              </button>
             </div>
           </div>
 
@@ -1290,7 +1615,7 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                         class="custom-minutes-input"
                         style="font-size:11px;height:26px;padding:1px 4px;font-weight:700;color:#f59e0b;"
                       >
-                        <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                        <option v-for="t in getWarmupTimeOptions(grp)" :key="t" :value="t">{{ t }}</option>
                       </select>
                       <button
                         v-if="getAutoWarmupTime(grp)"
@@ -1589,10 +1914,9 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
           </div>
 
           <!-- Guidelines -->
-          <div v-else-if="activeTab === 'announcements'" style="display:flex;flex-direction:column;gap:12px;">
+          <div v-else-if="activeTab === 'announcements'" style="display:flex;flex-direction:column;gap:10px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <label class="modal-label" style="margin:0;">Venue Guidelines & Spectator Rules</label>
-              <button type="button" class="action-mini-btn" @click="addGuideline">+ Add Item</button>
             </div>
             <div
               v-for="(g, idx) in form.guidelines"
@@ -1607,8 +1931,8 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                 borderRadius: '6px',
                 transition: 'all 0.15s ease',
                 opacity: draggedGuidelineIdx === idx ? '0.4' : '1',
-                border: guidelineDragOverIdx === idx ? '2px dashed #6366f1' : '1px solid transparent',
-                background: guidelineDragOverIdx === idx ? 'rgba(99, 102, 241, 0.08)' : 'transparent'
+                border: guidelineDragOverIdx === idx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                background: guidelineDragOverIdx === idx ? 'rgba(99, 102, 241, 0.08)' : 'var(--bg-subtle)'
               }"
               @dragstart="onGuidelineDragStart(idx, $event)"
               @dragover="onGuidelineDragOver(idx, $event)"
@@ -1634,45 +1958,152 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
               <button
                 type="button"
                 class="search-clear-btn"
-                style="position:static;display:block;"
+                style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid rgba(239,68,68,0.2);background:rgba(239,68,68,0.06);cursor:pointer;"
                 title="Delete rule"
                 @click="removeGuideline(idx)"
               >
                 ✕
               </button>
             </div>
+
+            <!-- Bottom Add Guideline Button -->
+            <div style="display:flex;justify-content:center;margin-top:4px;">
+              <button
+                type="button"
+                class="action-mini-btn"
+                style="width:100%;padding:9px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                @click="addGuideline"
+              >
+                <span style="font-size:14px;">➕</span>
+                <span>Add Guideline</span>
+              </button>
+            </div>
           </div>
 
           <!-- Manage Coaches & Admins -->
           <div v-else-if="activeTab === 'coaches'" style="display:flex;flex-direction:column;gap:14px;">
+            <!-- Shareable Registration Links & Access Codes -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+                <div>
+                  <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);display:flex;align-items:center;gap:6px;">
+                    <span>🔗</span>
+                    <span>Shareable Team Registration Links</span>
+                  </h4>
+                  <p style="margin:0;font-size:11.5px;color:var(--text-muted);line-height:1.4;">
+                    Registration is invite-only. Anyone visiting directly without a valid invite code or link cannot create an account. Share the appropriate link below.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="done-modal-btn admin-save-btn"
+                  style="padding:6px 14px;font-size:11.5px;white-space:nowrap;"
+                  :disabled="isSavingInvites"
+                  @click="handleSaveInviteCodes"
+                >
+                  {{ isSavingInvites ? 'Saving...' : '💾 Save Invite Codes' }}
+                </button>
+              </div>
+
+              <!-- Coach Invite Link Card -->
+              <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:16px;">🚵</span>
+                    <span style="font-size:13px;font-weight:700;color:#60a5fa;">Coach Invite Link</span>
+                    <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);">Active for Sharing</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="padding:4px 10px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;background:#2563eb;color:#ffffff;border:none;border-radius:6px;cursor:pointer;"
+                    @click="copyCoachLink"
+                  >
+                    <span>{{ copiedCoach ? '✓ Copied!' : '📋 Copy Coach Link' }}</span>
+                  </button>
+                </div>
+
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:220px;display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:monospace;font-size:11.5px;color:var(--text-main);overflow-x:auto;white-space:nowrap;">
+                    {{ coachInviteUrl }}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;">Code:</span>
+                    <input
+                      v-model="coachCodeInput"
+                      type="text"
+                      class="custom-minutes-input"
+                      placeholder="lax-coach-2026"
+                      style="width:140px;height:32px;font-family:monospace;font-size:12px;"
+                    />
+                  </div>
+                </div>
+
+                <p style="margin:0;font-size:11px;color:var(--text-muted);line-height:1.4;">
+                  Grants the <strong>Coach</strong> role upon registration. Allows coaches to sign up for ride leader and support slots.
+                </p>
+              </div>
+
+              <!-- Guardian / Parent Invite Link Card -->
+              <div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.25);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:16px;">👪</span>
+                    <span style="font-size:13px;font-weight:700;color:#c084fc;">Guardian / Parent Invite Link</span>
+                    <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(234,179,8,0.15);color:#eab308;border:1px solid rgba(234,179,8,0.3);">🔒 Staged for Future (Do Not Share Yet)</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="padding:4px 10px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;background:rgba(168,85,247,0.2);color:#c084fc;border:1px solid rgba(168,85,247,0.4);border-radius:6px;cursor:pointer;"
+                    @click="copyGuardianLink"
+                  >
+                    <span>{{ copiedGuardian ? '✓ Copied!' : '📋 Copy Guardian Link' }}</span>
+                  </button>
+                </div>
+
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:220px;display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:monospace;font-size:11.5px;color:var(--text-main);overflow-x:auto;white-space:nowrap;">
+                    {{ guardianInviteUrl }}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;">Code:</span>
+                    <input
+                      v-model="guardianCodeInput"
+                      type="text"
+                      class="custom-minutes-input"
+                      placeholder="lax-guardian-2026"
+                      style="width:140px;height:32px;font-family:monospace;font-size:12px;"
+                    />
+                  </div>
+                </div>
+
+                <p style="margin:0;font-size:11px;color:var(--text-muted);line-height:1.4;">
+                  Grants the <strong>Guardian / Parent</strong> role. Parent accounts <em>cannot</em> claim or edit coach ride slots. Keep this code internal until parent portal features launch.
+                </p>
+              </div>
+            </div>
+
             <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:14px;">
-              <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);">Add Team Coach / Admin</h4>
+              <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);">Add Team Administrator</h4>
               <p style="margin:0 0 10px;font-size:11.5px;color:var(--text-muted);line-height:1.4;">
-                Grant team access to coaches. <strong>Coach:</strong> Signs in to claim ride leader/support slots on race sign-ups. <strong>Coach Admin:</strong> Full race editing and settings control.
+                Users added here as <strong>Coach Admin</strong> receive full race configuration, schedule editing, and settings control. Coaches and guardians register themselves directly using the team invite links above.
               </p>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                 <input
                   v-model="newCoachEmail"
                   type="email"
-                  placeholder="coach.email@gmail.com"
+                  placeholder="admin.email@gmail.com"
                   class="custom-minutes-input"
                   style="flex:2;min-width:180px;"
                 >
                 <input
                   v-model="newCoachName"
                   type="text"
-                  placeholder="Coach Name (Optional)"
+                  placeholder="Admin Name (Optional)"
                   class="custom-minutes-input"
                   style="flex:1.5;min-width:130px;"
                 >
-                <select
-                  v-model="newCoachRole"
-                  class="custom-minutes-input"
-                  style="min-width:125px;height:34px;font-size:12px;padding:2px 6px;"
-                >
-                  <option value="coach">🚵 Coach</option>
-                  <option value="admin">🛡️ Coach Admin</option>
-                </select>
                 <button
                   type="button"
                   class="done-modal-btn admin-save-btn"
@@ -1680,66 +2111,181 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                   :disabled="isAddingCoach"
                   @click="handleAddCoach"
                 >
-                  <span>{{ isAddingCoach ? 'Adding...' : '+ Add Coach' }}</span>
+                  <span>{{ isAddingCoach ? 'Adding...' : '+ Add Administrator' }}</span>
                 </button>
               </div>
             </div>
 
             <div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <label class="modal-label" style="margin:0;">Active Team Coaches & Admins ({{ adminsList.length }})</label>
-                <button type="button" class="action-mini-btn" @click="fetchAdmins">🔄 Refresh</button>
+              <!-- User Directory Header -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h4 style="margin:0;font-size:14px;font-weight:700;color:var(--text-main);">Registered Team Users & Admins ({{ allUsersList.length }})</h4>
+                  <div style="font-size:11px;color:var(--text-muted);">View all accounts, search by name/email, and manage administrator privileges.</div>
+                </div>
+                <button type="button" class="action-mini-btn" @click="fetchAllUsers" :disabled="allUsersLoading">
+                  <span>{{ allUsersLoading ? '⏳ Loading...' : '🔄 Refresh' }}</span>
+                </button>
               </div>
 
-              <div v-if="adminsLoading" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">
-                Loading authorized coaches...
+              <!-- Search Bar & Role Filter Chips -->
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+                <div style="position:relative;flex:1;min-width:200px;">
+                  <input
+                    v-model="userSearchQuery"
+                    type="text"
+                    placeholder="🔍 Search users by name, email, or phone..."
+                    class="custom-minutes-input"
+                    style="width:100%;padding-left:10px;height:34px;font-size:12px;"
+                  />
+                  <button
+                    v-if="userSearchQuery"
+                    type="button"
+                    class="search-clear-btn"
+                    style="right:8px;top:50%;transform:translateY(-50%);"
+                    @click="userSearchQuery = ''"
+                  >✕</button>
+                </div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    :class="{ active: userRoleFilter === 'all' }"
+                    style="font-size:11px;padding:4px 8px;"
+                    @click="userRoleFilter = 'all'"
+                  >All ({{ allUsersList.length }})</button>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    :class="{ active: userRoleFilter === 'admin' }"
+                    style="font-size:11px;padding:4px 8px;"
+                    @click="userRoleFilter = 'admin'"
+                  >🛡️ Admins ({{ allUsersList.filter(u => u.role === 'admin' || u.role === 'owner').length }})</button>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    :class="{ active: userRoleFilter === 'coach' }"
+                    style="font-size:11px;padding:4px 8px;"
+                    @click="userRoleFilter = 'coach'"
+                  >🚵 Coaches ({{ allUsersList.filter(u => u.role === 'coach').length }})</button>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    :class="{ active: userRoleFilter === 'guardian' }"
+                    style="font-size:11px;padding:4px 8px;"
+                    @click="userRoleFilter = 'guardian'"
+                  >👨‍👩‍👧 Guardians ({{ allUsersList.filter(u => u.role === 'guardian').length }})</button>
+                </div>
+              </div>
+
+              <!-- Sort Column Headers -->
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">
+                <div style="display:flex;align-items:center;gap:12px;flex:1;">
+                  <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;" @click="toggleUserSort('name')">
+                    User {{ userSortField === 'name' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                  </span>
+                  <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;" @click="toggleUserSort('email')">
+                    Email {{ userSortField === 'email' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                  </span>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;">
+                  <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;" @click="toggleUserSort('role')">
+                    Role / Access {{ userSortField === 'role' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                  </span>
+                  <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;" @click="toggleUserSort('date')">
+                    Joined {{ userSortField === 'date' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                  </span>
+                  <span style="width:75px;text-align:right;">Actions</span>
+                </div>
+              </div>
+
+              <!-- User List Content -->
+              <div v-if="allUsersLoading" style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px;">
+                Loading team users...
+              </div>
+              <div v-else-if="filteredUsers.length === 0" style="text-align:center;padding:24px;background:var(--bg-subtle);border:1px dashed var(--border);border-radius:8px;color:var(--text-muted);font-size:12px;">
+                No users found matching your search or filter.
               </div>
               <div v-else style="display:flex;flex-direction:column;gap:6px;">
                 <div
-                  v-for="admin in adminsList"
-                  :key="admin.email"
-                  style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;gap:8px;flex-wrap:wrap;"
+                  v-for="u in filteredUsers"
+                  :key="u.id || u.email"
+                  style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;gap:10px;flex-wrap:wrap;transition:all 0.15s ease;"
                 >
-                  <div style="display:flex;align-items:center;gap:10px;min-width:200px;">
-                    <span style="font-size:18px;">{{ admin.role === 'coach' ? '🚵' : '🛡️' }}</span>
-                    <div>
+                  <!-- Left: Avatar + Name + Email + Badges -->
+                  <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:220px;">
+                    <img
+                      v-if="u.photoURL"
+                      :src="u.photoURL"
+                      alt="Avatar"
+                      referrerpolicy="no-referrer"
+                      style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,0.15);flex-shrink:0;"
+                    />
+                    <div
+                      v-else
+                      style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--text-main);flex-shrink:0;"
+                    >
+                      {{ (u.name || u.email).slice(0, 2).toUpperCase() }}
+                    </div>
+
+                    <div style="min-width:0;">
                       <div style="font-weight:700;font-size:13px;color:var(--text-main);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                        <span>{{ admin.name || admin.email.split('@')[0] }}</span>
+                        <span>{{ u.name }}</span>
                         <span
                           class="category-badge"
-                          :style="admin.role === 'coach' ? 'background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:#60a5fa;' : 'background:rgba(220,38,38,0.12);border-color:rgba(220,38,38,0.3);color:var(--accent-red);'"
+                          :style="u.role === 'owner' ? 'background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.35);color:#c084fc;' :
+                                 u.role === 'admin' ? 'background:rgba(220,38,38,0.15);border-color:rgba(220,38,38,0.35);color:var(--accent-red);' :
+                                 u.role === 'guardian' ? 'background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.35);color:#4ade80;' :
+                                 'background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:#60a5fa;'"
                         >
-                          {{ admin.role === 'coach' ? 'Coach' : (admin.role === 'owner' ? 'Owner / Head Coach' : 'Admin') }}
+                          {{ u.role === 'owner' ? 'Owner' : (u.role === 'admin' ? 'Admin' : (u.role === 'guardian' ? 'Guardian' : 'Coach')) }}
                         </span>
                         <span
-                          v-if="admin.email.toLowerCase() === user?.email?.toLowerCase()"
+                          v-if="u.email.toLowerCase() === user?.email?.toLowerCase()"
                           style="font-size:10px;color:#22c55e;background:rgba(34,197,94,0.15);padding:1px 5px;border-radius:4px;font-weight:600;"
                         >You</span>
+                        <span
+                          v-if="u.isPendingAdmin"
+                          style="font-size:10px;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);padding:1px 5px;border-radius:4px;font-weight:600;"
+                          title="Administrator added in database, awaiting account registration"
+                        >Invited Admin</span>
                       </div>
-                      <div style="font-size:11px;color:var(--text-muted);">{{ admin.email }}</div>
+                      <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:8px;margin-top:2px;">
+                        <span>{{ u.email }}</span>
+                        <span v-if="u.phone" style="opacity:0.8;">• 📞 {{ u.phone }}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-                    <!-- Role selector (if not owner/self) -->
+                  <!-- Right: Role dropdown + Remove action -->
+                  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+                    <!-- Interactive Role Selector Dropdown -->
                     <select
-                      v-if="admin.role !== 'owner' && admin.email.toLowerCase() !== user?.email?.toLowerCase()"
-                      :value="admin.role === 'coach' ? 'coach' : 'admin'"
+                      v-if="u.role !== 'owner' && u.email.toLowerCase() !== user?.email?.toLowerCase()"
+                      :value="u.role === 'admin' ? 'admin' : (u.role === 'guardian' ? 'guardian' : 'coach')"
                       class="custom-minutes-input"
-                      style="font-size:11px;height:28px;padding:2px 4px;width:115px;"
-                      @change="handleUpdateRole(admin.email, ($event.target as HTMLSelectElement).value as 'admin' | 'coach')"
+                      style="font-size:11.5px;height:30px;padding:2px 8px;font-weight:600;min-width:130px;"
+                      @change="handleUpdateUserRole(u, ($event.target as HTMLSelectElement).value as 'admin' | 'coach' | 'guardian')"
                     >
-                      <option value="coach">🚵 Coach</option>
                       <option value="admin">🛡️ Admin</option>
+                      <option value="coach">🚵 Coach</option>
+                      <option value="guardian">👨‍👩‍👧 Guardian</option>
                     </select>
+                    <span
+                      v-else
+                      style="font-size:11px;color:var(--text-muted);padding:4px 8px;font-style:italic;"
+                    >
+                      {{ u.role === 'owner' ? '🔒 Founder' : '🔒 Active Session' }}
+                    </span>
 
+                    <!-- Remove Action -->
                     <button
-                      v-if="admin.role !== 'owner' && admin.email.toLowerCase() !== user?.email?.toLowerCase()"
+                      v-if="u.role !== 'owner' && u.email.toLowerCase() !== user?.email?.toLowerCase()"
                       type="button"
                       class="search-clear-btn"
-                      style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
-                      title="Remove coach access"
-                      @click="handleRemoveCoach(admin.email)"
+                      style="position:static;display:inline-flex;align-items:center;color:#ef4444;font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
+                      title="Remove user or revoke admin access"
+                      @click="handleRemoveUser(u)"
                     >
                       ✕ Remove
                     </button>

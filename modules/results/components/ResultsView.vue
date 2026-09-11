@@ -311,14 +311,6 @@ function formatWaveLabel(wKey?: string): string {
             <span>{{ catGroup.category }}</span>
             <span class="category-badge">{{ catGroup.totalInCat }} RIDERS</span>
             <span
-              v-if="catGroup.warmupGroup"
-              class="category-time-badge"
-              style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#f59e0b;"
-              :title="`Group Warm-up (${catGroup.warmupGroup.name}): ${catGroup.warmupGroup.meetingTime}`"
-            >
-              🔥 Warm-up: {{ catGroup.warmupGroup.meetingTime }}
-            </span>
-            <span
               v-if="catGroup.catStartTime"
               class="category-time-badge"
               :title="`Category Start: ${catGroup.catStartTime}${catGroup.catStageTime ? ` | Stage: ${catGroup.catStageTime}` : ''}`"

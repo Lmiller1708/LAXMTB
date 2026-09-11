@@ -2,16 +2,52 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: check if the authenticated user is in the admins collection
-    function isAdmin() {
-      return request.auth != null &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+    // Helper: Verify user has verified email or authenticated via trusted Google OAuth
+    function isVerified() {
+      return request.auth != null && (
+        request.auth.token.email_verified == true ||
+        request.auth.token.firebase.sign_in_provider == 'google.com'
+      );
     }
 
-    // Race data — anyone can read (public app), only admins can write
+    // Helper: Head Coach / Founder bootstrap owner check
+    function isOwner() {
+      return isVerified() &&
+        request.auth.token.email.lower() == 'lmiller1708@gmail.com';
+    }
+
+    // Helper: Administrator check — requires verified account AND 'admin' or 'owner' role in admins collection
+    function isAdmin() {
+      return isOwner() || (
+        isVerified() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())).data.role in ['admin', 'owner']
+      );
+    }
+
+    // Helper: Authorized coach check — requires verified email AND registered membership in admins collection
+    function isAuthorizedCoach() {
+      return isOwner() || (
+        isVerified() &&
+        request.auth.token.email != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())).data.role in ['coach', 'admin', 'owner']
+      );
+    }
+
+    // Race data:
+    // - Public read for race participants, parents, and coaches
+    // - Admins can create, delete, and modify all race fields
+    // - Ordinary coaches can ONLY update coachSignups (and cannot modify signup policy)
+    // - Race metadata, warmupGroups, schedule, and guidelines are reserved for admins
     match /races/{raceId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isAuthorizedCoach() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coachSignups']) &&
+        (!('policy' in resource.data.coachSignups) || request.resource.data.coachSignups.policy == resource.data.coachSignups.policy)
+      );
     }
 
     // Photo gallery collection — public read, admin write
@@ -21,10 +57,32 @@ service cloud.firestore {
     }
 
     // Admins collection:
-    // Any authorized admin can list/read/write the admins list (to manage coaches)
-    // A signed-in user checking their own status can read their own email doc
+    // - Authenticated users can read the coaches/admins roster
+    // - ONLY verified admins/owners can add, edit, or remove administrator/coach records
     match /admins/{email} {
-      allow read: if request.auth != null && (isAdmin() || request.auth.token.email.lower() == email);
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Users collection:
+    // - Authenticated users can view teammate names and profile photos
+    // - Users can only write/edit their own profile
+    // - Non-admins cannot set or elevate their own role
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId && (
+        !('role' in request.resource.data) || request.resource.data.role == 'guardian' || isAdmin()
+      );
+      allow update: if request.auth != null && request.auth.uid == userId && (
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || isAdmin()
+      );
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Settings collection (e.g. invite codes):
+    // Public read so registration can validate invite codes; only admins can write
+    match /settings/{settingId} {
+      allow read: if true;
       allow write: if isAdmin();
     }
   }

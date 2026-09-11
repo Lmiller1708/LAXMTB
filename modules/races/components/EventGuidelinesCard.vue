@@ -39,8 +39,9 @@ const isOpen = ref(true)
           v-for="(g, idx) in guidelines"
           :key="idx"
           class="guideline-item"
-          v-html="'• ' + g"
-        />
+        >
+          • {{ g }}
+        </p>
       </div>
     </div>
   </div>

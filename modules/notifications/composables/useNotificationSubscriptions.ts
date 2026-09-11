@@ -18,6 +18,7 @@ export interface SubscribedRideGroup {
   sessionType: 'wu' | 'pr'
   meetingTime: string
   stagingTime?: string
+  startTime?: string
   day?: string
   date?: string
   categories?: string[]
@@ -127,15 +128,33 @@ export const useNotificationSubscriptions = () => {
 
     const toast = document.createElement('div')
     toast.className = 'notif-toast'
-    toast.innerHTML = `
-      <div class="notif-toast-content">
-        <div class="notif-toast-title">${title}</div>
-        ${body ? `<div class="notif-toast-msg">${body}</div>` : ''}
-      </div>
-      <button type="button" class="notif-toast-close" aria-label="Dismiss">✕</button>
-    `
-    toast.querySelector('.notif-toast-close')?.addEventListener('click', () => toast.remove())
+
+    const content = document.createElement('div')
+    content.className = 'notif-toast-content'
+
+    const titleEl = document.createElement('div')
+    titleEl.className = 'notif-toast-title'
+    titleEl.textContent = title
+    content.appendChild(titleEl)
+
+    if (body) {
+      const msgEl = document.createElement('div')
+      msgEl.className = 'notif-toast-msg'
+      msgEl.textContent = body
+      content.appendChild(msgEl)
+    }
+
+    const closeBtn = document.createElement('button')
+    closeBtn.type = 'button'
+    closeBtn.className = 'notif-toast-close'
+    closeBtn.setAttribute('aria-label', 'Dismiss')
+    closeBtn.textContent = '✕'
+    closeBtn.addEventListener('click', () => toast.remove())
+
+    toast.appendChild(content)
+    toast.appendChild(closeBtn)
     container.appendChild(toast)
+
     setTimeout(() => {
       toast.remove()
     }, body ? 6500 : 3500)

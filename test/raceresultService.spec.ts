@@ -17,7 +17,10 @@ import {
   getCategoryStartTime,
   getCategoryStageTime,
   getWaveWarmupTime,
-  calculateDefaultGroupWarmupTime
+  calculateDefaultGroupWarmupTime,
+  formatWarmupGroupTitle,
+  parseDateRange,
+  formatDateRange
 } from '../modules/results/services/raceresultService'
 
 describe('RACE RESULT Metadata-Aware Parsing', () => {
@@ -349,6 +352,43 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
       // MS2 Boys (stage 10:33 AM), Freshman Boys (stage 11:15 AM) -> 45 min before 10:33 AM = 9:48 AM
       const msWarmup = calculateDefaultGroupWarmupTime(race, ['MS2 Boys', 'Freshman Boys'])
       expect(msWarmup).toBe('9:48 AM')
+    })
+
+    it('formats warm-up group title dynamically based on assigned categories', () => {
+      // 2 boys categories
+      expect(formatWarmupGroupTitle(['Varsity Boys', 'JV III Boys'])).toBe('Varsity, JV3 Boys')
+
+      // Adding a girls category
+      expect(formatWarmupGroupTitle(['Varsity Boys', 'JV III Boys', 'Varsity Girls'])).toBe('Varsity, JV3 Boys, Varsity Girls')
+
+      // Middle school grade boys
+      expect(formatWarmupGroupTitle(['8th Grade Boys', '7th Grade Boys', '6th Grade Boys'])).toBe('8th, 7th, 6th Grade Boys')
+
+      // Girls group
+      expect(formatWarmupGroupTitle(['MS2 Girls', 'Freshman Girls', 'JV II Girls'])).toBe('MS2, Freshman, JV2 Girls')
+
+      // Empty categories
+      expect(formatWarmupGroupTitle([])).toBe('Warm-up Group')
+    })
+
+    it('parses and formats date ranges correctly', () => {
+      // Standard format: "11 - 13 Sept 2026"
+      const parsed1 = parseDateRange('11 - 13 Sept 2026')
+      expect(parsed1.start).toBe('2026-09-11')
+      expect(parsed1.end).toBe('2026-09-13')
+      expect(formatDateRange(parsed1.start, parsed1.end)).toBe('11 - 13 Sept 2026')
+
+      // Across months: "30 Aug - 02 Sept 2026"
+      const parsed2 = parseDateRange('30 Aug - 02 Sept 2026')
+      expect(parsed2.start).toBe('2026-08-30')
+      expect(parsed2.end).toBe('2026-09-02')
+      expect(formatDateRange(parsed2.start, parsed2.end)).toBe('30 Aug - 02 Sept 2026')
+
+      // Single day
+      const parsed3 = parseDateRange('13 Sept 2026')
+      expect(parsed3.start).toBe('2026-09-13')
+      expect(parsed3.end).toBe('2026-09-13')
+      expect(formatDateRange(parsed3.start, parsed3.end)).toBe('13 Sept 2026')
     })
   })
 })
