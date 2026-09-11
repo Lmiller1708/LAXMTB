@@ -11,10 +11,13 @@ import {
   parseDateRange,
   formatDateRange,
   MONTHS_SHORT,
-  MONTH_MAP
+  MONTH_MAP,
+  defaultWaveSchedule,
+  getCategoryWaves
 } from '~/modules/results/services/raceresultService'
 import { type TeamUserItem } from '~/modules/coach-admin/composables/useCoachAuth'
 import CustomDatePicker from './CustomDatePicker.vue'
+import CustomTimePicker from './CustomTimePicker.vue'
 
 const props = defineProps<{
   initialTab?: string
@@ -235,6 +238,9 @@ function syncFormFromRace(raceData: Race | null) {
   }
   if (!form.value.coachSignups.preRides) {
     form.value.coachSignups.preRides = []
+  }
+  if (!form.value.waveSchedule || Object.keys(form.value.waveSchedule).length === 0) {
+    form.value.waveSchedule = JSON.parse(JSON.stringify(defaultWaveSchedule))
   }
   updateDateRangeFromForm()
   initWarmupGroups()
@@ -724,6 +730,89 @@ const onDayDragEnd = () => {
 const ALL_CATEGORIES = categoryOrder
 const getCatStart = (cat: string) => getCategoryStartTime(form.value, cat)
 const getCatStage = (cat: string) => getCategoryStageTime(form.value, cat)
+
+const getWavesForCategory = (cat: string): Record<string, { start: string; stage?: string }> => {
+  if (!form.value.waveSchedule) {
+    form.value.waveSchedule = JSON.parse(JSON.stringify(defaultWaveSchedule))
+  }
+  if (!form.value.waveSchedule[cat]) {
+    const def = defaultWaveSchedule[cat]
+    if (def) {
+      form.value.waveSchedule[cat] = JSON.parse(JSON.stringify(def))
+    } else {
+      form.value.waveSchedule[cat] = { '1': { start: '8:00 AM', stage: '7:45 AM' } }
+    }
+  }
+  return form.value.waveSchedule[cat] as Record<string, { start: string; stage?: string }>
+}
+
+const getSortedWaveKeys = (cat: string): string[] => {
+  const wavesObj = getWavesForCategory(cat)
+  return Object.keys(wavesObj).sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, ''), 10) || 0
+    const numB = parseInt(b.replace(/\D/g, ''), 10) || 0
+    return numA - numB
+  })
+}
+
+const onWaveStartChange = (cat: string, waveKey: string, newTime?: string) => {
+  form.value.hasCustomWaveSchedule = true
+  const wavesObj = getWavesForCategory(cat)
+  if (wavesObj[waveKey]) {
+    if (newTime) {
+      wavesObj[waveKey].start = newTime
+    }
+    const stagingOffset = form.value.stagingOffsetMinutes || 15
+    const parsedMins = parseTimeStrToMinutes(wavesObj[waveKey].start)
+    if (parsedMins !== null) {
+      wavesObj[waveKey].stage = formatMinutesToTimeStr(parsedMins - stagingOffset)
+    }
+  }
+}
+
+const addWaveToCategory = (cat: string) => {
+  form.value.hasCustomWaveSchedule = true
+  const wavesObj = getWavesForCategory(cat)
+  const keys = getSortedWaveKeys(cat)
+  const lastKey = keys[keys.length - 1] || '0'
+  const lastNum = parseInt(lastKey.replace(/\D/g, ''), 10) || 0
+  const nextNum = lastNum + 1
+
+  let newStart = '10:55 AM'
+  if (lastKey && wavesObj[lastKey]?.start) {
+    const prevMins = parseTimeStrToMinutes(wavesObj[lastKey].start)
+    if (prevMins !== null) {
+      newStart = formatMinutesToTimeStr(prevMins + 2)
+    }
+  }
+  const stagingOffset = form.value.stagingOffsetMinutes || 15
+  const startMins = parseTimeStrToMinutes(newStart)
+  const newStage = startMins !== null ? formatMinutesToTimeStr(startMins - stagingOffset) : ''
+
+  wavesObj[String(nextNum)] = {
+    start: newStart,
+    stage: newStage
+  }
+}
+
+const removeWaveFromCategory = (cat: string, waveKey: string) => {
+  form.value.hasCustomWaveSchedule = true
+  const wavesObj = getWavesForCategory(cat)
+  const keys = getSortedWaveKeys(cat)
+  if (keys.length <= 1) {
+    alert('Each category must have at least 1 wave.')
+    return
+  }
+  delete wavesObj[waveKey]
+}
+
+const resetWaveScheduleToDefaults = () => {
+  if (confirm('Reset all category wave times back to official Wisconsin League 2026 default schedule?')) {
+    form.value.waveSchedule = JSON.parse(JSON.stringify(defaultWaveSchedule))
+    form.value.hasCustomWaveSchedule = false
+    emit('toast', 'Wave schedule reset to official defaults!')
+  }
+}
 
 function initWarmupGroups() {
   if (!form.value) return
@@ -1607,7 +1696,7 @@ const removePhoto = (idx: number) => {
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
                 <div>
                   <h3 class="admin-card-title" style="margin:0;">🔥 Race-Day Warm-up Groups & Waves</h3>
-                  <div style="font-size:11.5px;color:var(--text-muted);">Assign categories to unified warm-up groups. Staging and gun start times are calculated automatically.</div>
+                  <div style="font-size:11.5px;color:var(--text-muted);">Assign categories to unified warm-up groups. Staging and start times are calculated automatically.</div>
                 </div>
                 <div style="display:flex;gap:6px;align-items:center;">
                   <button type="button" class="action-mini-btn" style="padding:6px 12px;font-size:12px;font-weight:700;" @click="autoConfigureAllGroups">
@@ -1676,7 +1765,7 @@ const removePhoto = (idx: number) => {
                       <span style="font-size:12px;color:var(--text-muted);">mins before start</span>
                     </div>
                     <div style="margin-top:6px;font-size:11px;color:var(--text-muted);line-height:1.35;">
-                      Automatically schedules call-up staging time relative to gun start (default 15 mins).
+                      Automatically schedules call-up staging time relative to start (default 15 mins).
                     </div>
                   </div>
 
@@ -1984,27 +2073,118 @@ const removePhoto = (idx: number) => {
               </div>
             </div>
 
-            <!-- SUB-PANEL 3: CATEGORY WAVE SCHEDULE OVERVIEW -->
-            <div v-else-if="activeCoachAdminTab === 'waves'" style="display:flex;flex-direction:column;gap:10px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <h4 style="margin:0;font-size:13.5px;font-weight:700;color:var(--text-main);">🏁 Official 2026 Category Wave Times</h4>
-                <span style="font-size:11px;color:var(--text-muted);">Staging lead time: <strong>{{ form.stagingOffsetMinutes || 15 }}m</strong></span>
+            <!-- SUB-PANEL 3: CATEGORY WAVE SCHEDULE OVERVIEW & EDITOR -->
+            <div v-else-if="activeCoachAdminTab === 'waves'" style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h4 style="margin:0;font-size:14px;font-weight:700;color:var(--text-main);display:flex;align-items:center;gap:6px;">
+                    <span>🏁</span> Category Wave Schedule
+                    <span
+                      v-if="form.hasCustomWaveSchedule"
+                      style="font-size:10px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:2px 8px;border-radius:999px;font-weight:700;"
+                    >
+                      Customized
+                    </span>
+                    <span
+                      v-else
+                      style="font-size:10px;background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25);padding:2px 8px;border-radius:999px;font-weight:700;"
+                    >
+                      Official 2026 Defaults
+                    </span>
+                  </h4>
+                  <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
+                    Edit wave start times or add waves (e.g. Freshman Boys have 2 waves). Staging call-up is auto-calculated with {{ form.stagingOffsetMinutes || 15 }}m lead time.
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="padding:5px 10px;font-size:11.5px;font-weight:600;"
+                    title="Reset to official 2026 schedule"
+                    @click="resetWaveScheduleToDefaults"
+                  >
+                    🔄 Reset to Defaults
+                  </button>
+                </div>
               </div>
-              <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-                <table class="results-table" style="font-size:11.5px;">
+
+              <!-- Wave Schedule Table -->
+              <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;">
+                <table class="results-table" style="font-size:12px;width:100%;min-width:540px;border-collapse:collapse;">
                   <thead>
                     <tr>
-                      <th>Category</th>
-                      <th style="width:110px;text-align:center;">Gun Start</th>
-                      <th style="width:120px;text-align:center;color:#f87171;">Staging Call-Up</th>
+                      <th style="text-align:left;padding:8px 12px;min-width:140px;">Category</th>
+                      <th style="width:75px;text-align:center;padding:8px 6px;">Wave</th>
+                      <th style="width:130px;text-align:center;padding:8px 6px;">Start Time</th>
+                      <th style="width:125px;text-align:center;color:#f87171;padding:8px 6px;">Staging Call-Up</th>
+                      <th style="width:110px;text-align:center;padding:8px 6px;">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="cat in ALL_CATEGORIES" :key="cat">
-                      <td style="font-weight:700;color:var(--text-main);">{{ cat }}</td>
-                      <td style="text-align:center;font-weight:700;">{{ getCatStart(cat) || 'TBD' }}</td>
-                      <td style="text-align:center;color:#f87171;font-weight:700;">{{ getCatStage(cat) || 'TBD' }}</td>
-                    </tr>
+                    <template v-for="cat in ALL_CATEGORIES" :key="cat">
+                      <tr
+                        v-for="(wKey, wIdx) in getSortedWaveKeys(cat)"
+                        :key="cat + '-' + wKey"
+                        :style="{ borderBottom: wIdx === getSortedWaveKeys(cat).length - 1 ? '1px solid var(--border)' : '1px dashed rgba(255,255,255,0.06)' }"
+                      >
+                        <!-- Category name (rendered on first wave of category) -->
+                        <td
+                          v-if="wIdx === 0"
+                          :rowspan="getSortedWaveKeys(cat).length"
+                          style="font-weight:700;color:var(--text-main);padding:8px 12px;vertical-align:top;border-right:1px solid var(--border);"
+                        >
+                          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                            <span>{{ cat }}</span>
+                            <span style="font-size:10px;color:var(--text-muted);font-weight:600;">
+                              ({{ getSortedWaveKeys(cat).length }} {{ getSortedWaveKeys(cat).length === 1 ? 'wave' : 'waves' }})
+                            </span>
+                          </div>
+                        </td>
+
+                        <!-- Wave label -->
+                        <td style="text-align:center;padding:6px;vertical-align:middle;">
+                          <span class="schedule-tag" style="font-size:10px;padding:2px 8px;font-weight:700;border-radius:6px;background:rgba(255,255,255,0.08);color:var(--text-main);">
+                            Wave {{ wKey }}
+                          </span>
+                        </td>
+
+                        <!-- Start time input -->
+                        <td style="text-align:center;padding:6px;vertical-align:middle;">
+                          <CustomTimePicker
+                            v-model="getWavesForCategory(cat)[wKey].start"
+                            @change="onWaveStartChange(cat, wKey, $event)"
+                          />
+                        </td>
+
+                        <!-- Staging Call-Up -->
+                        <td style="text-align:center;color:#f87171;font-weight:700;padding:6px;vertical-align:middle;">
+                          <span>{{ getWavesForCategory(cat)[wKey].stage || 'TBD' }}</span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td style="text-align:center;padding:6px;vertical-align:middle;">
+                          <button
+                            v-if="wIdx === 0"
+                            type="button"
+                            class="wave-add-btn"
+                            title="Add another wave to this category"
+                            @click="addWaveToCategory(cat)"
+                          >
+                            + Add Wave
+                          </button>
+                          <button
+                            v-else
+                            type="button"
+                            class="wave-del-btn"
+                            title="Delete this wave"
+                            @click="removeWaveFromCategory(cat, wKey)"
+                          >
+                            ✕ Remove
+                          </button>
+                        </td>
+                      </tr>
+                    </template>
                   </tbody>
                 </table>
               </div>
@@ -2738,11 +2918,120 @@ const removePhoto = (idx: number) => {
     grid-template-columns: 1fr !important;
   }
   /* Prevent inputs and cards from pushing past mobile viewport */
-  .admin-section-card input,
+  .admin-section-card input:not(.wave-time-input),
   .admin-section-card select,
   .admin-section-card textarea {
     max-width: 100%;
     box-sizing: border-box;
   }
+}
+
+.wave-time-input {
+  width: 108px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 6px;
+  text-align: center;
+  color-scheme: dark;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.wave-time-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.8;
+  filter: invert(0.8);
+}
+:root.theme-light .wave-time-input,
+.theme-light .wave-time-input,
+:root[data-theme="light"] .wave-time-input {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  color-scheme: light;
+}
+:root.theme-light .wave-time-input::-webkit-calendar-picker-indicator,
+.theme-light .wave-time-input::-webkit-calendar-picker-indicator,
+:root[data-theme="light"] .wave-time-input::-webkit-calendar-picker-indicator {
+  filter: none;
+}
+.wave-time-input:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.wave-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.wave-add-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+:root.theme-light .wave-add-btn,
+.theme-light .wave-add-btn,
+:root[data-theme="light"] .wave-add-btn {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+:root.theme-light .wave-add-btn:hover,
+.theme-light .wave-add-btn:hover,
+:root[data-theme="light"] .wave-add-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.wave-del-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.wave-del-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+:root.theme-light .wave-del-btn,
+.theme-light .wave-del-btn,
+:root[data-theme="light"] .wave-del-btn {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #dc2626;
+}
+:root.theme-light .wave-del-btn:hover,
+.theme-light .wave-del-btn:hover,
+:root[data-theme="light"] .wave-del-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
 }
 </style>

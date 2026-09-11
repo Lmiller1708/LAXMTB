@@ -20,7 +20,8 @@ import {
   calculateDefaultGroupWarmupTime,
   formatWarmupGroupTitle,
   parseDateRange,
-  formatDateRange
+  formatDateRange,
+  getCategoryWaves
 } from '../modules/results/services/raceresultService'
 
 describe('RACE RESULT Metadata-Aware Parsing', () => {
@@ -389,6 +390,36 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
       expect(parsed3.start).toBe('2026-09-13')
       expect(parsed3.end).toBe('2026-09-13')
       expect(formatDateRange(parsed3.start, parsed3.end)).toBe('13 Sept 2026')
+    })
+
+    it('defaults Freshman Boys to 2 waves and supports getCategoryWaves', () => {
+      const waves = getCategoryWaves(null, 'Freshman Boys')
+      expect(waves.length).toBe(2)
+      expect(waves[0]).toEqual({ wave: '1', start: '10:53 AM', stage: '10:38 AM' })
+      expect(waves[1]).toEqual({ wave: '2', start: '10:55 AM', stage: '10:40 AM' })
+    })
+
+    it('prioritizes custom waveSchedule when hasCustomWaveSchedule is true', () => {
+      const customRace = {
+        id: 'custom-waves',
+        hasCustomWaveSchedule: true,
+        stagingOffsetMinutes: 15,
+        waveSchedule: {
+          'Freshman Boys': {
+            '1': { start: '10:50 AM', stage: '10:35 AM' },
+            '2': { start: '10:52 AM', stage: '10:37 AM' },
+            '3': { start: '10:54 AM', stage: '10:39 AM' }
+          }
+        }
+      }
+
+      const waves = getCategoryWaves(customRace, 'Freshman Boys')
+      expect(waves.length).toBe(3)
+      expect(waves[0].start).toBe('10:50 AM')
+      expect(waves[2].start).toBe('10:54 AM')
+
+      const entry = getWaveScheduleEntry(customRace, 'Freshman Boys', '2')
+      expect(entry?.start).toBe('10:52 AM')
     })
   })
 })

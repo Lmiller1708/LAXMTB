@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import type { Race, CoachSlot, WarmupGroup } from '../types/race'
 import { useCurrentRace, isRaceCompleted } from '../composables/useCurrentRace'
 import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
@@ -17,11 +17,13 @@ type SessionKey = 'pr' | 'wu'
 const props = defineProps<{
   race: Race
   isCoachAuth?: boolean
+  initialSession?: 'pr' | 'wu'
 }>()
 
 const emit = defineEmits<{
   (e: 'edit'): void
   (e: 'openAuth'): void
+  (e: 'changeSession', session: 'pr' | 'wu'): void
 }>()
 
 const { updateRace, updateCoachSignups } = useCurrentRace()
@@ -50,7 +52,18 @@ const {
 } = useNotificationSubscriptions()
 
 const isOpen = ref(true)
-const activeSession = ref<SessionKey>('pr')
+const activeSession = ref<SessionKey>(props.initialSession || 'pr')
+
+watch(() => props.initialSession, (newVal) => {
+  if (newVal && (newVal === 'pr' || newVal === 'wu')) {
+    activeSession.value = newVal
+  }
+})
+
+const selectSession = (sess: SessionKey) => {
+  activeSession.value = sess
+  emit('changeSession', sess)
+}
 
 // Inline input state
 const activeInputSlotId = ref<string | null>(null)
@@ -175,7 +188,13 @@ const startInlineInput = (slotId: string, role: 'leader' | 'support') => {
   activeInputRole.value = role
   inlineNameInput.value = ''
   nextTick(() => {
-    inlineInputRef.value?.focus()
+    const inputEl = (document.querySelector(`.inline-field-${slotId}-${role}`) as HTMLInputElement)
+      || inlineInputRef.value
+      || (document.querySelector('.inline-name-field') as HTMLInputElement)
+    if (inputEl) {
+      inputEl.focus()
+      inputEl.select()
+    }
   })
 }
 
@@ -455,7 +474,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
             type="button"
             class="signup-tab-pill"
             :class="{ active: activeSession === 'pr' }"
-            @click="activeSession = 'pr'"
+            @click="selectSession('pr')"
           >
             <span>🚵</span> Pre-Rides
           </button>
@@ -463,7 +482,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
             type="button"
             class="signup-tab-pill pill-league"
             :class="{ active: activeSession === 'wu' }"
-            @click="activeSession = 'wu'"
+            @click="selectSession('wu')"
           >
             <span>🔥</span> Warm-ups
           </button>
@@ -636,37 +655,15 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                         {{ isSignupsClosed ? 'No coaches signed up' : 'Open slot (Sign in to claim)' }}
                       </span>
 
-                      <!-- Add Leader Buttons -->
+                      <!-- Add Leader Button -->
                       <template v-if="canEditSignupsActive && !(activeInputSlotId === slot.id && activeInputRole === 'leader')">
-                        <!-- Quick 1-click Add Me button with photo and name -->
-                        <button
-                          v-if="user && !isMeSignedUp(slot, 'leader')"
-                          type="button"
-                          class="coach-add-btn coach-add-me-btn"
-                          title="Claim this leader slot"
-                          @click="addMeQuick(slot, 'leader')"
-                        >
-                          <img
-                            v-if="userPhoto"
-                            :src="userPhoto"
-                            class="coach-btn-avatar img"
-                            alt=""
-                            referrerpolicy="no-referrer"
-                          />
-                          <span v-else class="coach-btn-avatar initials">{{ userInitials }}</span>
-                          <span>+ Add {{ getMyName }}</span>
-                        </button>
-
-                        <!-- Add Other Coach button -->
                         <button
                           type="button"
                           class="coach-add-btn"
-                          :class="{ 'coach-add-other-btn': user && !isMeSignedUp(slot, 'leader') }"
-                          title="Add another coach by name"
+                          title="Add a coach leader"
                           @click="startInlineInput(slot.id, 'leader')"
                         >
-                          <span v-if="user && !isMeSignedUp(slot, 'leader')">+ Other</span>
-                          <span v-else>+ {{ (slot.leaders && slot.leaders.length > 0) ? 'Add' : 'Add Leader' }}</span>
+                          + Add
                         </button>
                       </template>
 
@@ -677,10 +674,11 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                       >
                         <input
                           ref="inlineInputRef"
+                          :class="['custom-minutes-input inline-name-field', `inline-field-${slot.id}-leader`]"
                           v-model="inlineNameInput"
                           type="text"
                           placeholder="Coach name..."
-                          class="custom-minutes-input inline-name-field"
+                          autofocus
                           @keydown.enter="submitInlineName(slot, 'leader')"
                           @keydown.esc="cancelInlineInput"
                         >
@@ -756,37 +754,15 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                         {{ isSignupsClosed ? 'No coaches signed up' : 'Open slot (Sign in to claim)' }}
                       </span>
 
-                      <!-- Add Support Buttons -->
+                      <!-- Add Support Button -->
                       <template v-if="canEditSignupsActive && !(activeInputSlotId === slot.id && activeInputRole === 'support')">
-                        <!-- Quick 1-click Add Me button with photo and name -->
-                        <button
-                          v-if="user && !isMeSignedUp(slot, 'support')"
-                          type="button"
-                          class="coach-add-btn btn-support coach-add-me-btn"
-                          title="Claim this support slot"
-                          @click="addMeQuick(slot, 'support')"
-                        >
-                          <img
-                            v-if="userPhoto"
-                            :src="userPhoto"
-                            class="coach-btn-avatar img"
-                            alt=""
-                            referrerpolicy="no-referrer"
-                          />
-                          <span v-else class="coach-btn-avatar initials">{{ userInitials }}</span>
-                          <span>+ Add {{ getMyName }}</span>
-                        </button>
-
-                        <!-- Add Other Support button -->
                         <button
                           type="button"
                           class="coach-add-btn btn-support"
-                          :class="{ 'coach-add-other-btn': user && !isMeSignedUp(slot, 'support') }"
-                          title="Add another coach by name"
+                          title="Add ride support"
                           @click="startInlineInput(slot.id, 'support')"
                         >
-                          <span v-if="user && !isMeSignedUp(slot, 'support')">+ Other</span>
-                          <span v-else>+ {{ (slot.support && slot.support.length > 0) ? 'Add' : 'Add Support' }}</span>
+                          + Add
                         </button>
                       </template>
 
@@ -797,10 +773,11 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                       >
                         <input
                           ref="inlineInputRef"
+                          :class="['custom-minutes-input inline-name-field', `inline-field-${slot.id}-support`]"
                           v-model="inlineNameInput"
                           type="text"
                           placeholder="Coach name..."
-                          class="custom-minutes-input inline-name-field"
+                          autofocus
                           @keydown.enter="submitInlineName(slot, 'support')"
                           @keydown.esc="cancelInlineInput"
                         >

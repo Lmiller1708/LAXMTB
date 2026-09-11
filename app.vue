@@ -100,6 +100,16 @@ const refreshData = () => {
 }
 
 let isSyncingRoute = false
+const coachSession = ref<'pr' | 'wu'>('pr')
+
+const handleCoachSessionChange = (sess: 'pr' | 'wu') => {
+  coachSession.value = sess
+  if (import.meta.client && !isSyncingRoute && currentTab.value === 'coach') {
+    const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
+    const slug = slugifyRaceId(race?.id || 'race')
+    updateUrl(slug, `coach/${sess === 'wu' ? 'warm-ups' : 'pre-ride'}`, true)
+  }
+}
 
 /**
  * 100% Guaranteed URL Update
@@ -109,7 +119,10 @@ let isSyncingRoute = false
 const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
   if (!import.meta.client) return
   const cleanSlug = raceSlug.toLowerCase().replace(/-/g, '')
-  const cleanTab = (tab || 'details').toLowerCase()
+  let cleanTab = (tab || 'details').toLowerCase()
+  if (cleanTab === 'coach') {
+    cleanTab = `coach/${coachSession.value === 'wu' ? 'warm-ups' : 'pre-ride'}`
+  }
   const target = `/race/${cleanSlug}/${cleanTab}`
 
   if (window.location.pathname !== target) {
@@ -134,7 +147,8 @@ const setTab = (tab: TabType, pushToHistory = true) => {
   if (import.meta.client && !isSyncingRoute) {
     const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
     const slug = slugifyRaceId(race?.id || 'race')
-    updateUrl(slug, tab, pushToHistory)
+    const tabUrl = tab === 'coach' ? `coach/${coachSession.value === 'wu' ? 'warm-ups' : 'pre-ride'}` : tab
+    updateUrl(slug, tabUrl, pushToHistory)
   }
 }
 
@@ -220,16 +234,34 @@ const syncFromRoute = () => {
       if (slug.includes('list') || slug.includes('start')) setTab('list', false)
       else if (slug.includes('result')) setTab('results', false)
       else if (slug.includes('photo')) setTab('photos', false)
-      else if (slug.includes('coach')) setTab('coach', false)
+      else if (slug.includes('coach')) {
+        if (slug.includes('warm')) coachSession.value = 'wu'
+        else coachSession.value = 'pr'
+        setTab('coach', false)
+      }
       else if (slug.includes('detail')) setTab('details', false)
       return
     }
 
-    // Parse path: /race/:slug/:tab
-    const match = path.match(/\/race\/([^\/]+)(?:\/([^\/]+))?/)
+    // Direct /coach, /coach/pre-ride, or /coach/warm-ups
+    const directCoachMatch = path.match(/^\/coach(?:\/([^\/]+))?/i)
+    if (directCoachMatch) {
+      currentTab.value = 'coach'
+      const sub = (directCoachMatch[1] || '').toLowerCase()
+      if (sub.includes('warm')) coachSession.value = 'wu'
+      else coachSession.value = 'pr'
+      const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
+      const raceSlug = slugifyRaceId(race?.id || 'race')
+      updateUrl(raceSlug, `coach/${coachSession.value === 'wu' ? 'warm-ups' : 'pre-ride'}`, false)
+      return
+    }
+
+    // Parse path: /race/:slug/:tab (and optional sub-tab: /race/:slug/coach/pre-ride or /race/:slug/coach/warm-ups)
+    const match = path.match(/\/race\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/)
     if (match) {
       const raceSlug = match[1]
       const tabSlug = match[2]
+      const subSlug = match[3]
 
       selectRaceBySlug(raceSlug)
 
@@ -238,7 +270,14 @@ const syncFromRoute = () => {
         if (lower === 'results' || lower === 'result') currentTab.value = 'results'
         else if (lower === 'list' || lower === 'start' || lower === 'startlist') currentTab.value = 'list'
         else if (lower === 'photos' || lower === 'photo') currentTab.value = 'photos'
-        else if (lower === 'coach' || lower === 'coaches') currentTab.value = 'coach'
+        else if (lower === 'coach' || lower === 'coaches') {
+          currentTab.value = 'coach'
+          if (subSlug && subSlug.toLowerCase().includes('warm')) {
+            coachSession.value = 'wu'
+          } else {
+            coachSession.value = 'pr'
+          }
+        }
         else if (lower === 'details' || lower === 'detail' || lower === 'info') currentTab.value = 'details'
       }
 
@@ -523,6 +562,8 @@ const handlePrint = () => {
         v-else-if="currentTab === 'coach'"
         :race="currentRace"
         :is-coach-auth="isCoachAuth"
+        :initial-session="coachSession"
+        @change-session="handleCoachSessionChange"
         @edit="openAdminWithTab('coach')"
         @open-auth="openAuthWithMode('login')"
       />

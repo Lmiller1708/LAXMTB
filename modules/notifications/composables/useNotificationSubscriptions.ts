@@ -4,6 +4,8 @@ import {
   parseTimeStrToMinutes
 } from '~/modules/results/services/raceresultService'
 import type { Race } from '~/modules/races/types/race'
+import { useCurrentUser, useFirestore } from 'vuefire'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 export interface NotifConfig {
   offset: number
@@ -26,6 +28,11 @@ export interface SubscribedRideGroup {
 }
 
 export const useNotificationSubscriptions = () => {
+  const user = useCurrentUser()
+  const db = useFirestore()
+  const isSyncing = useState<boolean>('notif_is_syncing', () => false)
+  const lastSyncedUid = useState<string | null>('notif_last_synced_uid', () => null)
+
   const notifConfig = useState<NotifConfig>('laxmtb_notif_config', () => ({
     offset: 15,
     sound: true,
@@ -40,10 +47,82 @@ export const useNotificationSubscriptions = () => {
 
   let schedulerTimer: ReturnType<typeof setInterval> | null = null
 
+  const loadUserSubscriptions = async (uid: string) => {
+    if (!import.meta.client) return
+    isSyncing.value = true
+    try {
+      // 1. Immediately hydrate from user-scoped local storage cache for fast rendering
+      const userCachedSubs = localStorage.getItem(`laxmtb_notif_subs_${uid}`)
+      if (userCachedSubs) {
+        try {
+          const parsed = JSON.parse(userCachedSubs)
+          if (Array.isArray(parsed.categories)) subscribedCategories.value = parsed.categories
+          if (Array.isArray(parsed.waves)) subscribedWaves.value = parsed.waves
+          if (Array.isArray(parsed.rideGroups)) subscribedRideGroups.value = parsed.rideGroups
+        } catch (e) {}
+      }
+      const userCachedConfig = localStorage.getItem(`laxmtb_notif_config_${uid}`)
+      if (userCachedConfig) {
+        try {
+          const parsedConfig = JSON.parse(userCachedConfig)
+          if (parsedConfig && typeof parsedConfig === 'object') {
+            if (typeof parsedConfig.offset === 'number') notifConfig.value.offset = parsedConfig.offset
+            if (typeof parsedConfig.sound === 'boolean') notifConfig.value.sound = parsedConfig.sound
+            if (['warmup', 'stage', 'start'].includes(parsedConfig.target)) notifConfig.value.target = parsedConfig.target
+            if (typeof parsedConfig.warmupOffset === 'number') notifConfig.value.warmupOffset = parsedConfig.warmupOffset
+          }
+        } catch (e) {}
+      }
+
+      // 2. Fetch fresh cloud source of truth from Firestore users/{uid}
+      if (db) {
+        const userRef = doc(db, 'users', uid)
+        const snap = await getDoc(userRef)
+        if (snap.exists()) {
+          const data = snap.data()
+          if (data?.notificationSubscriptions) {
+            const subs = data.notificationSubscriptions
+            if (Array.isArray(subs.categories)) subscribedCategories.value = subs.categories
+            if (Array.isArray(subs.waves)) subscribedWaves.value = subs.waves
+            if (Array.isArray(subs.rideGroups)) subscribedRideGroups.value = subs.rideGroups
+            if (subs.config && typeof subs.config === 'object') {
+              if (typeof subs.config.offset === 'number') notifConfig.value.offset = subs.config.offset
+              if (typeof subs.config.sound === 'boolean') notifConfig.value.sound = subs.config.sound
+              if (['warmup', 'stage', 'start'].includes(subs.config.target)) notifConfig.value.target = subs.config.target
+              if (typeof subs.config.warmupOffset === 'number') notifConfig.value.warmupOffset = subs.config.warmupOffset
+            }
+
+            const payload = {
+              categories: subscribedCategories.value,
+              waves: subscribedWaves.value,
+              rideGroups: subscribedRideGroups.value
+            }
+            localStorage.setItem(`laxmtb_notif_subs_${uid}`, JSON.stringify(payload))
+            localStorage.setItem('laxmtb_notif_subs', JSON.stringify(payload))
+            localStorage.setItem(`laxmtb_notif_config_${uid}`, JSON.stringify(notifConfig.value))
+            localStorage.setItem('laxmtb_notif_config', JSON.stringify(notifConfig.value))
+          } else if (subscribedCategories.value.length > 0 || subscribedWaves.value.length > 0 || subscribedRideGroups.value.length > 0) {
+            // First time this account signs in with local alerts — save them into Firestore
+            await saveSubs()
+          }
+        }
+      }
+      lastSyncedUid.value = uid
+    } catch (err) {
+      console.warn('[useNotificationSubscriptions] Error loading subscriptions from Firestore:', err)
+    } finally {
+      isSyncing.value = false
+    }
+  }
+
   const loadFromStorage = () => {
     if (!import.meta.client) return
     try {
-      const storedConfig = localStorage.getItem('laxmtb_notif_config')
+      const currentUid = user.value?.uid
+      const subsKey = currentUid ? `laxmtb_notif_subs_${currentUid}` : 'laxmtb_notif_subs'
+      const configKey = currentUid ? `laxmtb_notif_config_${currentUid}` : 'laxmtb_notif_config'
+
+      const storedConfig = localStorage.getItem(configKey) || localStorage.getItem('laxmtb_notif_config')
       if (storedConfig) {
         const parsed = JSON.parse(storedConfig)
         if (parsed && typeof parsed === 'object') {
@@ -54,7 +133,7 @@ export const useNotificationSubscriptions = () => {
         }
       }
 
-      const storedSubs = localStorage.getItem('laxmtb_notif_subs')
+      const storedSubs = localStorage.getItem(subsKey) || localStorage.getItem('laxmtb_notif_subs')
       if (storedSubs) {
         const parsed = JSON.parse(storedSubs)
         if (Array.isArray(parsed.categories)) subscribedCategories.value = parsed.categories
@@ -65,26 +144,77 @@ export const useNotificationSubscriptions = () => {
       if ('Notification' in window) {
         permissionStatus.value = Notification.permission
       }
+
+      if (currentUid && currentUid !== lastSyncedUid.value) {
+        loadUserSubscriptions(currentUid)
+      }
     } catch (e) {}
   }
 
-  const saveConfig = () => {
-    if (import.meta.client) {
+  const saveConfig = async () => {
+    if (!import.meta.client) return
+    const currentUid = user.value?.uid
+    try {
+      if (currentUid) {
+        localStorage.setItem(`laxmtb_notif_config_${currentUid}`, JSON.stringify(notifConfig.value))
+      }
+      localStorage.setItem('laxmtb_notif_config', JSON.stringify(notifConfig.value))
+    } catch (e) {}
+
+    if (db && currentUid) {
       try {
-        localStorage.setItem('laxmtb_notif_config', JSON.stringify(notifConfig.value))
-      } catch (e) {}
+        const userRef = doc(db, 'users', currentUid)
+        await setDoc(userRef, {
+          notificationSubscriptions: {
+            categories: subscribedCategories.value,
+            waves: subscribedWaves.value,
+            rideGroups: subscribedRideGroups.value,
+            config: notifConfig.value,
+            updatedAt: new Date().toISOString()
+          }
+        }, { merge: true })
+      } catch (err) {
+        console.warn('[useNotificationSubscriptions] Could not save config to user account:', err)
+      }
     }
   }
 
-  const saveSubs = () => {
-    if (import.meta.client) {
+  const saveSubs = async () => {
+    if (!import.meta.client) return
+    const currentUid = user.value?.uid
+    const payload = {
+      categories: subscribedCategories.value,
+      waves: subscribedWaves.value,
+      rideGroups: subscribedRideGroups.value
+    }
+
+    try {
+      if (currentUid) {
+        localStorage.setItem(`laxmtb_notif_subs_${currentUid}`, JSON.stringify(payload))
+      } else {
+        localStorage.setItem('laxmtb_notif_subs_guest', JSON.stringify(payload))
+      }
+      localStorage.setItem('laxmtb_notif_subs', JSON.stringify(payload))
+    } catch (e) {}
+
+    if (db && currentUid) {
       try {
-        localStorage.setItem('laxmtb_notif_subs', JSON.stringify({
-          categories: subscribedCategories.value,
-          waves: subscribedWaves.value,
-          rideGroups: subscribedRideGroups.value
-        }))
-      } catch (e) {}
+        isSyncing.value = true
+        const userRef = doc(db, 'users', currentUid)
+        await setDoc(userRef, {
+          notificationSubscriptions: {
+            categories: subscribedCategories.value,
+            waves: subscribedWaves.value,
+            rideGroups: subscribedRideGroups.value,
+            config: notifConfig.value,
+            updatedAt: new Date().toISOString()
+          }
+        }, { merge: true })
+      } catch (err) {
+        console.warn('[useNotificationSubscriptions] Could not save subscriptions to user account in Firestore:', err)
+      } finally {
+        isSyncing.value = false
+      }
     }
   }
 
@@ -537,6 +667,31 @@ export const useNotificationSubscriptions = () => {
     }, 15000)
   }
 
+  if (import.meta.client) {
+    watch(user, async (newUser, oldUser) => {
+      if (newUser) {
+        if (newUser.uid !== lastSyncedUid.value) {
+          await loadUserSubscriptions(newUser.uid)
+        }
+      } else if (oldUser && !newUser) {
+        // User logged out — reset in-memory alerts
+        lastSyncedUid.value = null
+        subscribedCategories.value = []
+        subscribedWaves.value = []
+        subscribedRideGroups.value = []
+        try {
+          const guestSubs = localStorage.getItem('laxmtb_notif_subs_guest')
+          if (guestSubs) {
+            const parsed = JSON.parse(guestSubs)
+            if (Array.isArray(parsed.categories)) subscribedCategories.value = parsed.categories
+            if (Array.isArray(parsed.waves)) subscribedWaves.value = parsed.waves
+            if (Array.isArray(parsed.rideGroups)) subscribedRideGroups.value = parsed.rideGroups
+          }
+        } catch (e) {}
+      }
+    }, { immediate: true })
+  }
+
   onMounted(() => {
     loadFromStorage()
   })
@@ -548,6 +703,9 @@ export const useNotificationSubscriptions = () => {
     subscribedRideGroups,
     permissionStatus,
     menuBadgeText,
+    user,
+    isSyncing,
+    loadUserSubscriptions,
     saveConfig,
     saveSubs,
     isCategorySubscribed,
