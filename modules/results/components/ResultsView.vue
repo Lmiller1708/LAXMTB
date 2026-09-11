@@ -363,7 +363,7 @@ function formatWaveLabel(wKey?: string): string {
                     <span class="step-time">{{ w.stageTime }}</span>
                   </span>
                   <span v-if="w.stageTime && w.waveTime" class="wave-schedule-sep">›</span>
-                  <span v-if="w.waveTime" class="wave-schedule-step step-start" title="Official gun start">
+                  <span v-if="w.waveTime" class="wave-schedule-step step-start" title="Official start">
                     <span class="step-lbl">Start:</span>
                     <span class="step-time">{{ w.waveTime }}</span>
                   </span>

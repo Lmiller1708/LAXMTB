@@ -114,8 +114,7 @@ export const defaultWaveSchedule: Record<string, Record<string, { start: string;
   'MS2 Boys': { '1': { start: '10:48 AM', stage: '10:33 AM' } },
   'Freshman Boys': {
     '1': { start: '10:53 AM', stage: '10:38 AM' },
-    '2': { start: '10:54 AM', stage: '10:38 AM' },
-    '3': { start: '10:55 AM', stage: '10:38 AM' }
+    '2': { start: '10:55 AM', stage: '10:40 AM' }
   },
   'MS2 Girls': { '1': { start: '11:35 AM', stage: '11:20 AM' } },
   'Freshman Girls': { '1': { start: '11:40 AM', stage: '11:25 AM' } },
@@ -229,10 +228,18 @@ export function getWaveScheduleEntry(race: any, category: string, waveStr: strin
     return { start: val, stage: undefined }
   }
 
-  // Check defaultWaveSchedule first (authoritative official 2026 wave schedule)
-  let entry: { start?: string; stage?: string } | null = findInSched(defaultWaveSchedule)
+  // Check custom race.waveSchedule first if custom wave schedule is enabled
+  let entry: { start?: string; stage?: string } | null = null
+  if (race && race.hasCustomWaveSchedule && race.waveSchedule) {
+    entry = findInSched(race.waveSchedule)
+  }
 
-  // Check custom race.waveSchedule if category not in standard schedule
+  // Check defaultWaveSchedule (authoritative official 2026 wave schedule)
+  if (!entry) {
+    entry = findInSched(defaultWaveSchedule)
+  }
+
+  // Check fallback race.waveSchedule if category not in standard schedule
   if (!entry && race && race.waveSchedule) {
     entry = findInSched(race.waveSchedule)
   }
@@ -252,6 +259,73 @@ export function getWaveScheduleEntry(race: any, category: string, waveStr: strin
   }
 
   return entry
+}
+
+export function getCategoryWaves(race: any, category: string): Array<{ wave: string; start: string; stage: string }> {
+  if (!category) return []
+  const normCat = category.trim().toLowerCase()
+    .replace(/^9th grade/, 'freshman')
+    .replace(/\bjviii\b/i, 'jv iii')
+    .replace(/\bjvii\b/i, 'jv ii')
+    .replace(/\bhso\b/i, 'hs open')
+
+  const findCatInSched = (sched: Record<string, any>) => {
+    if (!sched) return null
+    const cKey = Object.keys(sched).find(k => {
+      const kNorm = k.trim().toLowerCase()
+        .replace(/^9th grade/, 'freshman')
+        .replace(/\bjviii\b/i, 'jv iii')
+        .replace(/\bjvii\b/i, 'jv ii')
+        .replace(/\bhso\b/i, 'hs open')
+      return kNorm === normCat
+    }) || Object.keys(sched).find(k => k.toLowerCase() === category.toLowerCase())
+    return cKey ? sched[cKey] : null
+  }
+
+  let catObj = (race && race.hasCustomWaveSchedule && race.waveSchedule)
+    ? findCatInSched(race.waveSchedule)
+    : null
+
+  if (!catObj) {
+    catObj = findCatInSched(defaultWaveSchedule)
+  }
+  if (!catObj && race && race.waveSchedule) {
+    catObj = findCatInSched(race.waveSchedule)
+  }
+
+  if (!catObj) return []
+
+  const stagingOffset = (race && typeof race.stagingOffsetMinutes === 'number' && !isNaN(race.stagingOffsetMinutes))
+    ? race.stagingOffsetMinutes
+    : 15
+
+  const waves: Array<{ wave: string; start: string; stage: string }> = []
+  const waveKeys = Object.keys(catObj).sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, ''), 10) || 0
+    const numB = parseInt(b.replace(/\D/g, ''), 10) || 0
+    return numA - numB
+  })
+
+  for (const wKey of waveKeys) {
+    const val = catObj[wKey]
+    if (!val) continue
+    const startStr = typeof val === 'object' ? (val.start || '') : String(val)
+    let stageStr = typeof val === 'object' ? (val.stage || '') : ''
+    if (startStr && !stageStr) {
+      const startMins = parseTimeStrToMinutes(startStr)
+      if (startMins !== null) {
+        stageStr = formatMinutesToTimeStr(startMins - stagingOffset)
+      }
+    }
+    const waveNum = wKey.replace(/\D/g, '') || wKey
+    waves.push({
+      wave: waveNum,
+      start: startStr,
+      stage: stageStr
+    })
+  }
+
+  return waves
 }
 
 export function getCategoryStartTime(race: any, category: string): string | null {

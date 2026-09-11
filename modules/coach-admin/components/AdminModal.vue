@@ -11,7 +11,8 @@ import {
   parseDateRange,
   formatDateRange,
   MONTHS_SHORT,
-  MONTH_MAP
+  MONTH_MAP,
+  defaultWaveSchedule
 } from '~/modules/results/services/raceresultService'
 
 import { type TeamUserItem } from '~/modules/coach-admin/composables/useCoachAuth'
@@ -659,6 +660,87 @@ const ALL_CATEGORIES = [
 
 const getCatStart = (cat: string) => getCategoryStartTime(form.value, cat)
 const getCatStage = (cat: string) => getCategoryStageTime(form.value, cat)
+
+const getWavesForCategory = (cat: string): Record<string, { start: string; stage?: string }> => {
+  if (!form.value.waveSchedule) {
+    form.value.waveSchedule = JSON.parse(JSON.stringify(defaultWaveSchedule))
+  }
+  if (!form.value.waveSchedule[cat]) {
+    const def = defaultWaveSchedule[cat]
+    if (def) {
+      form.value.waveSchedule[cat] = JSON.parse(JSON.stringify(def))
+    } else {
+      form.value.waveSchedule[cat] = { '1': { start: '8:00 AM', stage: '7:45 AM' } }
+    }
+  }
+  return form.value.waveSchedule[cat] as Record<string, { start: string; stage?: string }>
+}
+
+const getSortedWaveKeys = (cat: string): string[] => {
+  const wavesObj = getWavesForCategory(cat)
+  return Object.keys(wavesObj).sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, ''), 10) || 0
+    const numB = parseInt(b.replace(/\D/g, ''), 10) || 0
+    return numA - numB
+  })
+}
+
+const onWaveStartChange = (cat: string, waveKey: string) => {
+  form.value.hasCustomWaveSchedule = true
+  const wavesObj = getWavesForCategory(cat)
+  const entry = wavesObj[waveKey]
+  if (entry && entry.start) {
+    const startMins = parseTimeStrToMinutes(entry.start)
+    const stagingOffset = form.value.stagingOffsetMinutes || 15
+    if (startMins !== null) {
+      entry.stage = formatMinutesToTimeStr(startMins - stagingOffset)
+    }
+  }
+}
+
+const addWaveToCategory = (cat: string) => {
+  form.value.hasCustomWaveSchedule = true
+  const wavesObj = getWavesForCategory(cat)
+  const keys = getSortedWaveKeys(cat)
+  const lastKey = keys[keys.length - 1] || '0'
+  const lastNum = parseInt(lastKey.replace(/\D/g, ''), 10) || 0
+  const nextNum = lastNum + 1
+
+  let newStart = '10:55 AM'
+  if (lastKey && wavesObj[lastKey]?.start) {
+    const prevMins = parseTimeStrToMinutes(wavesObj[lastKey].start)
+    if (prevMins !== null) {
+      newStart = formatMinutesToTimeStr(prevMins + 2)
+    }
+  }
+  const stagingOffset = form.value.stagingOffsetMinutes || 15
+  const startMins = parseTimeStrToMinutes(newStart)
+  const newStage = startMins !== null ? formatMinutesToTimeStr(startMins - stagingOffset) : ''
+
+  wavesObj[String(nextNum)] = {
+    start: newStart,
+    stage: newStage
+  }
+}
+
+const removeWaveFromCategory = (cat: string, waveKey: string) => {
+  form.value.hasCustomWaveSchedule = true
+  const wavesObj = getWavesForCategory(cat)
+  const keys = getSortedWaveKeys(cat)
+  if (keys.length <= 1) {
+    alert('Each category must have at least 1 wave.')
+    return
+  }
+  delete wavesObj[waveKey]
+}
+
+const resetWaveScheduleToDefaults = () => {
+  if (confirm('Reset all category wave times back to official Wisconsin League 2026 default schedule?')) {
+    form.value.waveSchedule = JSON.parse(JSON.stringify(defaultWaveSchedule))
+    form.value.hasCustomWaveSchedule = false
+    emit('toast', 'Wave schedule reset to official defaults!')
+  }
+}
 
 const initWarmupGroups = () => {
   if (!form.value.warmupGroups) {
@@ -1850,27 +1932,126 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
               </div>
             </div>
 
-            <!-- SUB-PANEL 3: CATEGORY WAVE SCHEDULE OVERVIEW -->
-            <div v-else-if="activeCoachAdminTab === 'waves'" style="display:flex;flex-direction:column;gap:10px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <h4 style="margin:0;font-size:13.5px;font-weight:700;color:var(--text-main);">🏁 Official 2026 Category Wave Times</h4>
-                <span style="font-size:11px;color:var(--text-muted);">Staging lead time: <strong>{{ form.stagingOffsetMinutes || 15 }}m</strong></span>
+            <!-- SUB-PANEL 3: CATEGORY WAVE SCHEDULE OVERVIEW & EDITOR -->
+            <div v-else-if="activeCoachAdminTab === 'waves'" style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h4 style="margin:0;font-size:14px;font-weight:700;color:var(--text-main);display:flex;align-items:center;gap:6px;">
+                    <span>🏁</span> Category Wave Schedule
+                    <span
+                      v-if="form.hasCustomWaveSchedule"
+                      style="font-size:10px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);padding:2px 8px;border-radius:999px;font-weight:700;"
+                    >
+                      Customized
+                    </span>
+                    <span
+                      v-else
+                      style="font-size:10px;background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.25);padding:2px 8px;border-radius:999px;font-weight:700;"
+                    >
+                      Official 2026 Defaults
+                    </span>
+                  </h4>
+                  <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
+                    Edit wave start times or add waves (e.g. Freshman Boys have 2 waves). Staging call-up is auto-calculated with {{ form.stagingOffsetMinutes || 15 }}m lead time.
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="padding:5px 10px;font-size:11.5px;font-weight:600;"
+                    title="Reset to official 2026 schedule"
+                    @click="resetWaveScheduleToDefaults"
+                  >
+                    🔄 Reset to Defaults
+                  </button>
+                </div>
               </div>
+
+              <!-- Wave Schedule Table -->
               <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-                <table class="results-table" style="font-size:11.5px;">
+                <table class="results-table" style="font-size:12px;width:100%;border-collapse:collapse;">
                   <thead>
                     <tr>
-                      <th>Category</th>
-                      <th style="width:110px;text-align:center;">Gun Start</th>
-                      <th style="width:120px;text-align:center;color:#f87171;">Staging Call-Up</th>
+                      <th style="text-align:left;padding:8px 12px;">Category</th>
+                      <th style="width:85px;text-align:center;padding:8px 6px;">Wave</th>
+                      <th style="width:130px;text-align:center;padding:8px 6px;">Start</th>
+                      <th style="width:130px;text-align:center;color:#f87171;padding:8px 6px;">Staging Call-Up</th>
+                      <th style="width:115px;text-align:center;padding:8px 6px;">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="cat in ALL_CATEGORIES" :key="cat">
-                      <td style="font-weight:700;color:var(--text-main);">{{ cat }}</td>
-                      <td style="text-align:center;font-weight:700;">{{ getCatStart(cat) || 'TBD' }}</td>
-                      <td style="text-align:center;color:#f87171;font-weight:700;">{{ getCatStage(cat) || 'TBD' }}</td>
-                    </tr>
+                    <template v-for="cat in ALL_CATEGORIES" :key="cat">
+                      <tr
+                        v-for="(wKey, wIdx) in getSortedWaveKeys(cat)"
+                        :key="cat + '-' + wKey"
+                        :style="{ borderBottom: wIdx === getSortedWaveKeys(cat).length - 1 ? '1px solid var(--border)' : '1px dashed rgba(255,255,255,0.06)' }"
+                      >
+                        <!-- Category name (rendered on first wave of category) -->
+                        <td
+                          v-if="wIdx === 0"
+                          :rowspan="getSortedWaveKeys(cat).length"
+                          style="font-weight:700;color:var(--text-main);padding:8px 12px;vertical-align:top;border-right:1px solid var(--border);"
+                        >
+                          <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                            <span>{{ cat }}</span>
+                            <span style="font-size:10px;color:var(--text-muted);font-weight:600;">
+                              ({{ getSortedWaveKeys(cat).length }} {{ getSortedWaveKeys(cat).length === 1 ? 'wave' : 'waves' }})
+                            </span>
+                          </div>
+                        </td>
+
+                        <!-- Wave label -->
+                        <td style="text-align:center;padding:6px;vertical-align:middle;">
+                          <span class="schedule-tag" style="font-size:10px;padding:2px 8px;font-weight:700;border-radius:6px;background:rgba(255,255,255,0.08);color:var(--text-main);">
+                            Wave {{ wKey }}
+                          </span>
+                        </td>
+
+                        <!-- Start time input -->
+                        <td style="text-align:center;padding:6px;vertical-align:middle;">
+                          <input
+                            v-model="getWavesForCategory(cat)[wKey].start"
+                            type="text"
+                            placeholder="e.g. 10:53 AM"
+                            class="custom-minutes-input"
+                            style="width:105px;text-align:center;font-weight:700;font-size:12px;padding:3px 6px;"
+                            @input="onWaveStartChange(cat, wKey)"
+                          >
+                        </td>
+
+                        <!-- Staging Call-Up -->
+                        <td style="text-align:center;color:#f87171;font-weight:700;padding:6px;vertical-align:middle;">
+                          <span>{{ getWavesForCategory(cat)[wKey].stage || 'TBD' }}</span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td style="text-align:center;padding:6px;vertical-align:middle;">
+                          <div style="display:inline-flex;align-items:center;gap:4px;">
+                            <button
+                              v-if="wIdx === 0"
+                              type="button"
+                              class="coach-add-btn"
+                              style="font-size:10px;padding:2px 7px;"
+                              title="Add another wave to this category"
+                              @click="addWaveToCategory(cat)"
+                            >
+                              + Wave
+                            </button>
+                            <button
+                              v-if="getSortedWaveKeys(cat).length > 1"
+                              type="button"
+                              class="action-mini-btn"
+                              style="font-size:10px;padding:2px 6px;color:#f87171;"
+                              title="Delete this wave"
+                              @click="removeWaveFromCategory(cat, wKey)"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </template>
                   </tbody>
                 </table>
               </div>

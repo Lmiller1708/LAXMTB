@@ -89,7 +89,7 @@ const onSoundChange = () => {
               <input :checked="notifConfig.target === 'start'" type="radio" value="start" @change="setAlertTarget('start')">
               <div class="radio-card-content">
                 <strong>Wave Start Time</strong>
-                <small>Alert prior to official wave gun start</small>
+                <small>Alert prior to official wave start</small>
               </div>
             </label>
           </div>

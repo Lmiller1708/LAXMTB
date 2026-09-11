@@ -27,6 +27,8 @@ export interface WaveTime {
   stage?: string;
 }
 
+export type WaveSchedule = Record<string, Record<string, WaveTime>>;
+
 export interface CoachSlot {
   id: string;
   name: string;
@@ -99,6 +101,7 @@ export interface Race {
   signups?: SignUpLinks;
   schedule?: ScheduleDay[];
   guidelines?: string[];
+  hasCustomWaveSchedule?: boolean;
   waveSchedule?: WaveSchedule;
   warmupGroups?: WarmupGroup[];
   photosUrl?: string;
