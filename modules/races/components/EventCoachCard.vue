@@ -392,8 +392,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="signup-hub-title">
           <span>🚵</span> Coach Sign-Ups
-          <span v-if="!canEditCoachSignups" class="signup-badge-closed">🔒 Locked</span>
-          <span v-else class="signup-badge-active">✏️ Editing Enabled</span>
+          <span v-if="canEditCoachSignups" class="signup-badge-active">✏️ Editing Enabled</span>
         </span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -431,24 +430,6 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
             <span>🔥</span> Warm-ups
           </button>
         </div>
-      </div>
-
-      <!-- Locked Banner for Logged-Out Users -->
-      <div v-if="!canEditCoachSignups" class="coach-locked-banner">
-        <div class="locked-banner-text">
-          <span style="font-size:16px;">🔒</span>
-          <div>
-            <div class="locked-banner-title">Coach Sign-Up Locked</div>
-            <div class="locked-banner-desc">Sign in to claim ride leader/support slots or edit names.</div>
-          </div>
-        </div>
-        <button
-          type="button"
-          class="coach-unlock-signin-btn"
-          @click="emit('openAuth')"
-        >
-          Sign In
-        </button>
       </div>
 
       <!-- Schedule Days Container -->
