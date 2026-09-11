@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --port 8888",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "test": "vitest run",

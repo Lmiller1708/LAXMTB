@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import type { Race } from '~/modules/races/types/race'
-
-interface PhotoItem {
-  url: string
-  w?: number
-  h?: number
-}
+import { doc, onSnapshot } from 'firebase/firestore'
+import { useFirestore } from 'vuefire'
+import type { Race, PhotoItem } from '~/modules/races/types/race'
 
 const props = defineProps<{
   race: Race
@@ -15,6 +11,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'edit'): void
 }>()
+
+const db = useFirestore()
+const { isOnline } = useNetworkStatus()
 
 const DEFAULT_TEAM_PHOTOS_URL = 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9'
 const DEFAULT_RACE_PHOTOS_MAP: Record<string, string> = {
@@ -47,26 +46,71 @@ const copyLink = () => {
 const photos = ref<PhotoItem[]>([])
 const photosPageLimit = ref(24)
 const currentLightboxIdx = ref(-1)
+const isLoadingPhotos = ref(false)
 
 const visiblePhotos = computed(() => photos.value.slice(0, photosPageLimit.value))
 const hasMore = computed(() => photos.value.length > photosPageLimit.value)
 
+const extractPhotosFromHtml = (html: string): PhotoItem[] => {
+  const matches = html.match(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_\-]+/g) || []
+  const unique = Array.from(new Set(matches))
+  return unique.map(url => ({
+    url,
+    w: 1920,
+    h: 1080
+  }))
+}
+
 const loadPhotos = async () => {
   if (!import.meta.client) return
-  if (props.race?.id !== 'bluff-bash') {
+
+  const targetUrl = albumUrl.value
+  if (!targetUrl) {
     photos.value = []
     return
   }
+
+  // Strictly pull ONLY when online; if offline, do not attempt
+  if (!navigator.onLine || !isOnline.value) {
+    console.info('[PhotosGallery] Device is offline — skipping live photos fetch')
+    photos.value = []
+    return
+  }
+
+  isLoadingPhotos.value = true
+
   try {
-    const res = await fetch('/team_photos.json?t=' + Date.now())
+    // Try local Nitro server API
+    const res = await fetch(`/api/photos?url=${encodeURIComponent(targetUrl)}`)
     if (res.ok) {
       const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) {
-        photos.value = data
+      if (Array.isArray(data?.photos) && data.photos.length > 0) {
+        photos.value = data.photos
+        isLoadingPhotos.value = false
+        return
+      }
+    }
+  } catch (e) {
+    // Falling back to proxy if on static environment
+  }
+
+  try {
+    // Fallback for static SPA hosting
+    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`
+    const res = await fetch(proxyUrl)
+    if (res.ok) {
+      const html = await res.text()
+      const extracted = extractPhotosFromHtml(html)
+      if (extracted.length > 0) {
+        photos.value = extracted
+        isLoadingPhotos.value = false
+        return
       }
     }
   } catch (err) {
-    console.warn('[PhotosGallery] Could not load photos:', err)
+    console.warn('[PhotosGallery] Could not fetch live photos from Google Photos:', err)
+  } finally {
+    isLoadingPhotos.value = false
   }
 }
 
@@ -74,7 +118,14 @@ onMounted(() => {
   loadPhotos()
 })
 
-watch(() => props.race?.id, () => {
+onUnmounted(() => {
+  // Wipe photos from memory on unmount
+  photos.value = []
+  currentLightboxIdx.value = -1
+})
+
+watch(() => [props.race?.id, albumUrl.value], () => {
+  photos.value = []
   photosPageLimit.value = 24
   currentLightboxIdx.value = -1
   loadPhotos()
@@ -231,6 +282,17 @@ onMounted(() => {
           </button>
         </div>
       </template>
+
+      <!-- Loading State -->
+      <div v-else-if="isLoadingPhotos" style="text-align:center;padding:48px 20px;background:var(--bg-subtle);border-radius:12px;margin-top:16px;border:1px solid var(--border);">
+        <div style="font-size:36px;margin-bottom:12px;display:inline-block;">🔄</div>
+        <h4 style="font-size:16px;font-weight:700;margin-bottom:6px;color:var(--text-main);">
+          Loading Live Photos...
+        </h4>
+        <p style="font-size:13px;color:var(--text-muted);margin:0;">
+          Connecting to shared Google Photos album for {{ race.name }}.
+        </p>
+      </div>
 
       <!-- Empty / Fallback Album Card -->
       <div v-else style="text-align:center;padding:42px 20px;background:var(--bg-subtle);border-radius:12px;margin-top:16px;border:1px solid var(--border);">

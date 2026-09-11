@@ -14,6 +14,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Photo gallery collection — public read, admin write
+    match /photos/{raceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Admins collection:
     // Any authorized admin can list/read/write the admins list (to manage coaches)
     // A signed-in user checking their own status can read their own email doc
