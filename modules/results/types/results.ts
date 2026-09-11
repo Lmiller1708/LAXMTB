@@ -1,4 +1,4 @@
-export type ResultsSortOrder = 'GRADE' | 'TIME'
+export type ResultsSortOrder = 'TIME' | 'GRADE' | 'GRADE_ASC' | 'GRADE_DESC'
 export type ResultsGroupMode = 'WAVE' | 'TEAM'
 export type TeamScope = 'DEFAULT_TEAMS' | 'ALL' | string
 export type FeedViewType =

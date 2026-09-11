@@ -12,6 +12,18 @@ export interface NotifConfig {
   warmupOffset: number
 }
 
+export interface SubscribedRideGroup {
+  id: string
+  name: string
+  sessionType: 'wu' | 'pr'
+  meetingTime: string
+  stagingTime?: string
+  day?: string
+  date?: string
+  categories?: string[]
+  raceId?: string
+}
+
 export const useNotificationSubscriptions = () => {
   const notifConfig = useState<NotifConfig>('laxmtb_notif_config', () => ({
     offset: 15,
@@ -22,6 +34,7 @@ export const useNotificationSubscriptions = () => {
 
   const subscribedCategories = useState<string[]>('subscribed_categories', () => [])
   const subscribedWaves = useState<string[]>('subscribed_waves', () => [])
+  const subscribedRideGroups = useState<SubscribedRideGroup[]>('subscribed_ride_groups', () => [])
   const permissionStatus = useState<string>('notif_permission_status', () => 'default')
 
   let schedulerTimer: ReturnType<typeof setInterval> | null = null
@@ -45,6 +58,7 @@ export const useNotificationSubscriptions = () => {
         const parsed = JSON.parse(storedSubs)
         if (Array.isArray(parsed.categories)) subscribedCategories.value = parsed.categories
         if (Array.isArray(parsed.waves)) subscribedWaves.value = parsed.waves
+        if (Array.isArray(parsed.rideGroups)) subscribedRideGroups.value = parsed.rideGroups
       }
 
       if ('Notification' in window) {
@@ -66,7 +80,8 @@ export const useNotificationSubscriptions = () => {
       try {
         localStorage.setItem('laxmtb_notif_subs', JSON.stringify({
           categories: subscribedCategories.value,
-          waves: subscribedWaves.value
+          waves: subscribedWaves.value,
+          rideGroups: subscribedRideGroups.value
         }))
       } catch (e) {}
     }
@@ -135,18 +150,18 @@ export const useNotificationSubscriptions = () => {
             reg.showNotification(title, {
               body,
               icon: '/logo.png',
-              badge: '/favicon.png',
+              badge: '/notification-badge.png',
               vibrate: [200, 100, 200]
             } as any)
           } else {
-            new Notification(title, { body, icon: '/logo.png' })
+            new Notification(title, { body, icon: '/logo.png', badge: '/notification-badge.png' } as any)
           }
         }).catch(() => {
-          new Notification(title, { body, icon: '/logo.png' })
+          new Notification(title, { body, icon: '/logo.png', badge: '/notification-badge.png' } as any)
         })
         return
       }
-      new Notification(title, { body, icon: '/logo.png' })
+      new Notification(title, { body, icon: '/logo.png', badge: '/notification-badge.png' } as any)
     } catch (e) {
       console.warn('dispatchSystemNotification failed:', e)
     }
@@ -218,6 +233,61 @@ export const useNotificationSubscriptions = () => {
     saveSubs()
   }
 
+  const isRideGroupSubscribed = (groupId: string) => {
+    return subscribedRideGroups.value.some(g => g.id === groupId)
+  }
+
+  const subscribeRideGroup = (group: SubscribedRideGroup) => {
+    const existingIdx = subscribedRideGroups.value.findIndex(g => g.id === group.id)
+    if (existingIdx !== -1) {
+      subscribedRideGroups.value[existingIdx] = { ...subscribedRideGroups.value[existingIdx], ...group }
+    } else {
+      subscribedRideGroups.value.push(group)
+    }
+
+    // Also auto-subscribe to any associated member categories for staging & race alerts
+    if (Array.isArray(group.categories) && group.categories.length > 0) {
+      group.categories.forEach(cat => {
+        if (!subscribedCategories.value.includes(cat)) {
+          subscribedCategories.value.push(cat)
+        }
+      })
+    }
+
+    if (import.meta.client && 'Notification' in window && Notification.permission === 'default') {
+      requestBrowserPermission()
+    }
+
+    const typeLabel = group.sessionType === 'wu' ? 'Warm-up Group' : 'Pre-Ride Wave'
+    showToastNotification('🔔 Subscribed to Ride Group Alerts', `Notifications active for ${group.name} (${group.meetingTime})`)
+    saveSubs()
+  }
+
+  const unsubscribeRideGroup = (groupId: string) => {
+    const idx = subscribedRideGroups.value.findIndex(g => g.id === groupId)
+    if (idx !== -1) {
+      const removed = subscribedRideGroups.value.splice(idx, 1)[0]
+      showToastNotification('🔕 Unsubscribed', `Removed alerts for ${removed.name}`)
+      saveSubs()
+    }
+  }
+
+  const toggleRideGroupSubscription = (group: SubscribedRideGroup) => {
+    if (isRideGroupSubscribed(group.id)) {
+      unsubscribeRideGroup(group.id)
+    } else {
+      subscribeRideGroup(group)
+    }
+  }
+
+  const removeRideGroupByIndex = (idx: number) => {
+    if (idx >= 0 && idx < subscribedRideGroups.value.length) {
+      const removed = subscribedRideGroups.value.splice(idx, 1)[0]
+      showToastNotification('🔕 Unsubscribed', `Removed alerts for ${removed.name}`)
+      saveSubs()
+    }
+  }
+
   const removeSubByIndex = (idx: number, isWave = false) => {
     if (isWave) {
       if (idx >= 0 && idx < subscribedWaves.value.length) {
@@ -234,6 +304,7 @@ export const useNotificationSubscriptions = () => {
   const clearAllSubscriptions = () => {
     subscribedCategories.value = []
     subscribedWaves.value = []
+    subscribedRideGroups.value = []
     saveSubs()
     showToastNotification('🔕 Subscriptions Cleared', 'All notification alerts have been removed.')
   }
@@ -250,7 +321,7 @@ export const useNotificationSubscriptions = () => {
   }
 
   const menuBadgeText = computed(() => {
-    const totalSubs = subscribedCategories.value.length + subscribedWaves.value.length
+    const totalSubs = subscribedCategories.value.length + subscribedWaves.value.length + subscribedRideGroups.value.length
     const targetStr = notifConfig.value.target === 'warmup' ? 'Warm-up' : (notifConfig.value.target === 'stage' ? 'Stage' : 'Start')
     if (totalSubs > 0) {
       return `${totalSubs} Alert${totalSubs > 1 ? 's' : ''} (${targetStr} • ${notifConfig.value.offset}m)`
@@ -401,6 +472,41 @@ export const useNotificationSubscriptions = () => {
           dispatchSystemNotification(title, body)
         }
       })
+
+      // Check ride group subscriptions (Warm-ups & Pre-Rides)
+      subscribedRideGroups.value.forEach(group => {
+        if (group.raceId && group.raceId !== raceId) return
+
+        let targetTimeStr = group.meetingTime
+        if (targetTimeStr && targetTimeStr.includes('-')) {
+          targetTimeStr = targetTimeStr.split('-')[0].trim()
+        }
+
+        const targetMinutes = parseTimeStrToMinutes(targetTimeStr)
+        if (targetMinutes === null) return
+        const alertMinutes = targetMinutes - notifConfig.value.offset
+        const alertKey = `group_${group.id}_${raceId}_${todayIso}_${group.sessionType}`
+
+        const minutesDiff = nowMinutes - alertMinutes
+        if (minutesDiff > 1 || nowMinutes >= targetMinutes) {
+          if (!firedAlerts.has(alertKey)) {
+            firedAlerts.add(alertKey)
+            localStorage.setItem('laxmtb_fired_alerts', JSON.stringify({ date: todayIso, alerts: Array.from(firedAlerts) }))
+          }
+          return
+        }
+
+        const isDue = (minutesDiff === 0 || (minutesDiff === 1 && now.getSeconds() <= 15)) && (nowMinutes < targetMinutes)
+        if (isDue && !firedAlerts.has(alertKey)) {
+          firedAlerts.add(alertKey)
+          localStorage.setItem('laxmtb_fired_alerts', JSON.stringify({ date: todayIso, alerts: Array.from(firedAlerts) }))
+          const sessionLabel = group.sessionType === 'wu' ? 'Warm-up Group' : 'Pre-Ride Wave'
+          const title = `🔔 ${sessionLabel} in ${notifConfig.value.offset}m`
+          const body = `${group.name} meets at ${group.meetingTime}. Get ready to assemble your riders!`
+          showToastNotification(title, body)
+          dispatchSystemNotification(title, body)
+        }
+      })
     })
   }
 
@@ -420,12 +526,18 @@ export const useNotificationSubscriptions = () => {
     notifConfig,
     subscribedCategories,
     subscribedWaves,
+    subscribedRideGroups,
     permissionStatus,
     menuBadgeText,
     saveConfig,
     saveSubs,
     isCategorySubscribed,
     isWaveSubscribed,
+    isRideGroupSubscribed,
+    subscribeRideGroup,
+    unsubscribeRideGroup,
+    toggleRideGroupSubscription,
+    removeRideGroupByIndex,
     toggleCategorySubscription,
     toggleWaveSubscription,
     removeSubByIndex,

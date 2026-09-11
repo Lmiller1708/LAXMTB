@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import type { Race, ScheduleEvent, CoachSlot } from '~/modules/races/types/race'
+import type { Race, ScheduleEvent, CoachSlot, WarmupGroup } from '~/modules/races/types/race'
+import {
+  categoryOrder,
+  getCategoryStartTime,
+  getCategoryStageTime,
+  calculateDefaultGroupWarmupTime,
+  parseTimeStrToMinutes,
+  formatMinutesToTimeStr
+} from '~/modules/results/services/raceresultService'
 
 const props = defineProps<{
   isOpen: boolean
@@ -120,6 +128,34 @@ const handleUnlockAdmin = () => {
 }
 
 const handleSave = () => {
+  // Sync warmupGroups and coachSignups.warmups
+  if (form.value.warmupGroups) {
+    if (!form.value.coachSignups) {
+      form.value.coachSignups = { policy: '', preRides: [], warmups: [] }
+    }
+    form.value.coachSignups.warmups = form.value.warmupGroups.map(wg => ({
+      id: wg.id,
+      name: wg.name,
+      meetingTime: wg.meetingTime,
+      stagingTime: wg.stagingTime || '',
+      day: wg.day,
+      date: wg.date,
+      subtitle: wg.subtitle,
+      categories: wg.categories || [],
+      ridersAllowed: wg.ridersAllowed || (wg.categories && wg.categories.length > 0 ? wg.categories.join(', ') : ''),
+      duration: wg.duration || '60 min',
+      tag: wg.tag || '',
+      tagClass: wg.tagClass || '',
+      leaders: wg.leaders || [],
+      support: wg.support || []
+    }))
+  }
+
+  // Ensure stagingOffsetMinutes has a valid number
+  if (typeof form.value.stagingOffsetMinutes === 'string') {
+    form.value.stagingOffsetMinutes = parseInt(form.value.stagingOffsetMinutes, 10) || 15
+  }
+
   emit('save', JSON.parse(JSON.stringify(form.value)))
   emit('toast', '💾 Changes saved!')
   emit('close')
@@ -346,8 +382,228 @@ const onDayDragEnd = () => {
   dayDragOverIdx.value = null
 }
 
+// Categories for Warm-up grouping
+const ALL_CATEGORIES = [
+  'Varsity Boys',
+  'JV III Boys',
+  'Varsity Girls',
+  'JV III Girls',
+  'MS2 Boys',
+  'Freshman Boys',
+  'MS2 Girls',
+  'Freshman Girls',
+  'JV II Girls',
+  'JV II Boys',
+  '8th Grade Boys',
+  '7th Grade Boys',
+  '6th Grade Boys',
+  '8th Grade Girls',
+  '7th Grade Girls',
+  '6th Grade Girls',
+  'HS Open Boys',
+  'HS Open Girls'
+]
+
+const getCatStart = (cat: string) => getCategoryStartTime(form.value, cat)
+const getCatStage = (cat: string) => getCategoryStageTime(form.value, cat)
+
+const initWarmupGroups = () => {
+  if (!form.value.warmupGroups) {
+    if (form.value.coachSignups?.warmups && form.value.coachSignups.warmups.length > 0) {
+      const assigned = new Set<string>()
+      form.value.warmupGroups = form.value.coachSignups.warmups.map(w => {
+        let cats = (w as any).categories
+        if (!cats) {
+          cats = ALL_CATEGORIES.filter(c => 
+            !assigned.has(c.toLowerCase()) && 
+            w.name && (
+              w.name.toLowerCase().includes(c.toLowerCase()) || 
+              (w.name.toLowerCase().includes('varsity') && w.name.toLowerCase().includes('jv3') && (c.includes('Varsity') || c.includes('JV III')))
+            )
+          )
+        }
+        cats.forEach((c: string) => assigned.add(c.toLowerCase()))
+        return {
+          id: w.id || `wu-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+          name: w.name || 'Warm-up Group',
+          meetingTime: w.meetingTime || '7:00 AM',
+          stagingTime: w.stagingTime || '',
+          day: w.day || 'Sunday',
+          date: w.date || '',
+          subtitle: w.subtitle || '',
+          categories: cats,
+          ridersAllowed: w.ridersAllowed || '',
+          duration: w.duration || '60 min',
+          tag: w.tag || '',
+          tagClass: w.tagClass || '',
+          leaders: w.leaders || [],
+          support: w.support || []
+        }
+      })
+    } else {
+      form.value.warmupGroups = []
+    }
+  }
+}
+
+const getAutoWarmupTime = (grp: WarmupGroup) => {
+  return calculateDefaultGroupWarmupTime(form.value, grp.categories || [])
+}
+
+const applyAutoWarmupTime = (grp: WarmupGroup) => {
+  const autoTime = getAutoWarmupTime(grp)
+  if (autoTime) {
+    grp.meetingTime = autoTime
+  }
+}
+
+const getCategoryAssignedGroup = (catName: string) => {
+  if (!form.value.warmupGroups) return null
+  return form.value.warmupGroups.find(g => 
+    g.categories && g.categories.some(c => c.toLowerCase() === catName.toLowerCase())
+  ) || null
+}
+
+const isCategoryInWarmupGroup = (grp: WarmupGroup, catName: string) => {
+  if (!grp.categories) return false
+  return grp.categories.some(c => c.toLowerCase() === catName.toLowerCase())
+}
+
+const isCategoryInOtherWarmupGroup = (currentGrp: WarmupGroup, catName: string) => {
+  const assigned = getCategoryAssignedGroup(catName)
+  return assigned !== null && assigned.id !== currentGrp.id
+}
+
+const getCategoryPillTitle = (grp: WarmupGroup, catName: string) => {
+  if (isCategoryInWarmupGroup(grp, catName)) {
+    return `Click to remove ${catName} from this warm-up group`
+  }
+  if (isCategoryInOtherWarmupGroup(grp, catName)) {
+    const other = getCategoryAssignedGroup(catName)
+    return `🔒 ${catName} is already assigned to "${other?.name || 'another group'}"`
+  }
+  return `Click to add ${catName} to this warm-up group`
+}
+
+const getCategoryPillStyle = (grp: WarmupGroup, catName: string) => {
+  if (isCategoryInWarmupGroup(grp, catName)) {
+    return 'cursor:pointer;background:rgba(239,68,68,0.18);border:1px solid var(--accent-red);color:var(--accent-red);font-weight:700;'
+  }
+  if (isCategoryInOtherWarmupGroup(grp, catName)) {
+    return 'cursor:not-allowed;background:var(--bg-subtle);border:1px dashed var(--border);color:var(--text-muted);opacity:0.4;'
+  }
+  return 'cursor:pointer;background:var(--bg-subtle);border:1px solid var(--border);color:var(--text-muted);font-weight:500;'
+}
+
+const addWarmupGroup = () => {
+  initWarmupGroups()
+  const newId = `wu-${Date.now()}`
+  
+  // Find all currently assigned categories across all groups
+  const assigned = new Set<string>()
+  for (const g of (form.value.warmupGroups || [])) {
+    if (g.categories) {
+      for (const c of g.categories) {
+        assigned.add(c.toLowerCase())
+      }
+    }
+  }
+  
+  // Pick the first unassigned category if available
+  const unassigned = ALL_CATEGORIES.filter(c => !assigned.has(c.toLowerCase()))
+  const defaultCats = unassigned.length > 0 ? [unassigned[0]] : []
+  const autoMeeting = defaultCats.length > 0 
+    ? (calculateDefaultGroupWarmupTime(form.value, defaultCats) || '7:00 AM')
+    : '7:00 AM'
+
+  form.value.warmupGroups!.push({
+    id: newId,
+    name: defaultCats.length > 0 ? defaultCats.join(', ') : 'New Warm-up Group',
+    meetingTime: autoMeeting,
+    stagingTime: '',
+    day: 'Sunday',
+    date: 'Sept 6',
+    subtitle: 'North Conference • Race Day',
+    categories: [...defaultCats],
+    ridersAllowed: '',
+    duration: '60 min',
+    tag: '',
+    tagClass: '',
+    leaders: [],
+    support: []
+  })
+}
+
+const removeWarmupGroup = (idx: number) => {
+  form.value.warmupGroups?.splice(idx, 1)
+}
+
+const toggleCategoryInWarmupGroup = (grp: WarmupGroup, catName: string) => {
+  if (!grp.categories) grp.categories = []
+  const idx = grp.categories.findIndex(c => c.toLowerCase() === catName.toLowerCase())
+  if (idx !== -1) {
+    grp.categories.splice(idx, 1)
+  } else {
+    // Prevent adding if already assigned to another warm-up group
+    const otherGrp = getCategoryAssignedGroup(catName)
+    if (otherGrp && otherGrp.id !== grp.id) {
+      return
+    }
+    grp.categories.push(catName)
+  }
+
+  // Automatically update group name to reflect categories
+  if (grp.categories.length > 0) {
+    grp.name = grp.categories.join(', ')
+    // Automatically recalculate and set warm-up time if not overridden
+    const autoTime = calculateDefaultGroupWarmupTime(form.value, grp.categories)
+    if (autoTime) {
+      grp.meetingTime = autoTime
+    }
+  } else {
+    grp.name = 'Empty Warm-up Group'
+  }
+}
+
+// Drag & drop for warmup groups
+const draggedWarmupIdx = ref<number | null>(null)
+const warmupDragOverIdx = ref<number | null>(null)
+
+const onWarmupDragStart = (idx: number, e: DragEvent) => {
+  draggedWarmupIdx.value = idx
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(idx))
+  }
+}
+
+const onWarmupDragOver = (idx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedWarmupIdx.value !== null && draggedWarmupIdx.value !== idx) {
+    warmupDragOverIdx.value = idx
+  }
+}
+
+const onWarmupDrop = (targetIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedWarmupIdx.value === null || !form.value.warmupGroups) return
+  const from = draggedWarmupIdx.value
+  const to = targetIdx
+  if (from !== to && form.value.warmupGroups[from] !== undefined) {
+    const item = form.value.warmupGroups.splice(from, 1)[0]
+    form.value.warmupGroups.splice(to, 0, item)
+  }
+  draggedWarmupIdx.value = null
+  warmupDragOverIdx.value = null
+}
+
+const onWarmupDragEnd = () => {
+  draggedWarmupIdx.value = null
+  warmupDragOverIdx.value = null
+}
+
 // Coach Sign-Ups Admin State & Methods
-const activeCoachAdminTab = ref<'pr' | 'wu'>('pr')
+const activeCoachAdminTab = ref<'wu' | 'pr' | 'waves'>('wu')
 
 const initCoachSignups = () => {
   if (!form.value.coachSignups) {
@@ -603,9 +859,8 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
         <div class="admin-tab-bar">
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'venue' }" @click="activeTab = 'venue'">📍 Venue Info</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'schedule' }" @click="activeTab = 'schedule'">⏱️ Schedule</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'waves' }" @click="activeTab = 'waves'">⏱️ Race Info</button>
+          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'waves' || activeTab === 'coach' }" @click="activeTab = 'waves'">⏱️ Waves & Warm-ups</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'signups' }" @click="activeTab = 'signups'">🤝 Volunteers & Food</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'coach' }" @click="activeTab = 'coach'">🚵 Coach Sign-Ups</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'photos' }" @click="activeTab = 'photos'">📸 Photos Album</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'maps' }" @click="activeTab = 'maps'">🗺️ Course Maps</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'announcements' }" @click="activeTab = 'announcements'">📢 Guidelines</button>
@@ -871,18 +1126,429 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
             </div>
           </div>
 
-          <!-- Race Info / Waves -->
-          <div v-else-if="activeTab === 'waves'" style="display:flex;flex-direction:column;gap:12px;">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-              <input v-model="form.isPublished" type="checkbox">
-              <strong style="font-size:13px;color:var(--text-main);">Publish Live Results & Start Lists</strong>
-            </label>
-            <div>
-              <label class="modal-label">RACE RESULT Event ID</label>
-              <input v-model.number="form.eventId" type="number" placeholder="e.g. 358327" class="custom-minutes-input" style="width:100%;">
-              <small style="color:var(--text-muted);font-size:11px;margin-top:4px;display:block;">
-                Enter the numeric ID from my.raceresult.com/XXXXXX to stream live start lists and finish times.
-              </small>
+          <!-- Race Info, Waves, Warm-up Groups & Pre-Rides (Unified Location) -->
+          <div v-else-if="activeTab === 'waves' || activeTab === 'coach'" style="display:flex;flex-direction:column;gap:14px;">
+            <!-- Live Results Event Settings Banner -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;">
+                  <input v-model="form.isPublished" type="checkbox">
+                  <strong style="font-size:13px;color:var(--text-main);">Publish Live Results & Start Lists</strong>
+                </label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <label class="modal-label" style="margin:0;font-size:11px;">RACE RESULT ID:</label>
+                  <input v-model.number="form.eventId" type="number" placeholder="e.g. 418104" class="custom-minutes-input" style="width:110px;height:28px;font-size:12px;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Global Staging & Warm-up Lead Time Configuration -->
+            <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+              <div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-size:16px;">⏱️</span>
+                  <strong style="font-size:13px;color:var(--text-main);">Staging & Warm-up Lead Times</strong>
+                  <span style="font-size:10px;color:var(--accent-red);background:rgba(239,68,68,0.12);padding:1px 6px;border-radius:4px;font-weight:700;">Global Calculation</span>
+                </div>
+                <p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">
+                  Staging is minutes before gun start. Default warm-up is minutes before staging call-up.
+                </p>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <!-- Staging Offset -->
+                <div style="display:flex;align-items:center;gap:6px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:4px 8px;">
+                  <label style="font-size:11px;font-weight:700;color:var(--text-muted);">🚩 Staging:</label>
+                  <input
+                    v-model.number="form.stagingOffsetMinutes"
+                    type="number"
+                    min="5"
+                    max="60"
+                    step="1"
+                    placeholder="15"
+                    class="custom-minutes-input"
+                    style="width:55px;text-align:center;font-weight:800;color:var(--accent-red);font-size:13px;height:28px;"
+                  >
+                  <span style="font-size:11px;color:var(--text-muted);">m before start</span>
+                </div>
+
+                <!-- Warm-up Offset (Right next to Staging) -->
+                <div style="display:flex;align-items:center;gap:6px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:4px 8px;">
+                  <label style="font-size:11px;font-weight:700;color:#f59e0b;">🔥 Warm-up:</label>
+                  <input
+                    v-model.number="form.warmupOffsetMinutes"
+                    type="number"
+                    min="15"
+                    max="120"
+                    step="5"
+                    placeholder="45"
+                    class="custom-minutes-input"
+                    style="width:55px;text-align:center;font-weight:800;color:#f59e0b;font-size:13px;height:28px;"
+                  >
+                  <span style="font-size:11px;color:var(--text-muted);">m before stage</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-tab Switcher: Warm-up Groups vs Pre-Rides vs All Waves -->
+            <div class="signup-tabs-toolbar" style="margin:0;">
+              <div class="signup-pills-group">
+                <button
+                  type="button"
+                  class="signup-tab-pill"
+                  :class="{ active: activeCoachAdminTab === 'wu' }"
+                  @click="activeCoachAdminTab = 'wu'"
+                >
+                  <span>🔥</span> Warm-up Groups ({{ (form.warmupGroups || form.coachSignups?.warmups || []).length }})
+                </button>
+                <button
+                  type="button"
+                  class="signup-tab-pill"
+                  :class="{ active: activeCoachAdminTab === 'pr' }"
+                  @click="activeCoachAdminTab = 'pr'"
+                >
+                  <span>🚵</span> Pre-Rides ({{ (form.coachSignups?.preRides || []).length }})
+                </button>
+                <button
+                  type="button"
+                  class="signup-tab-pill pill-league"
+                  :class="{ active: activeCoachAdminTab === 'waves' }"
+                  @click="activeCoachAdminTab = 'waves'"
+                >
+                  <span>🏁</span> Category Wave Schedule
+                </button>
+              </div>
+            </div>
+
+            <!-- SUB-PANEL 1: WARM-UP GROUPS -->
+            <div v-if="activeCoachAdminTab === 'wu'" style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h4 style="margin:0;font-size:13.5px;font-weight:700;color:var(--text-main);">🔥 Category Warm-Up Groups</h4>
+                  <p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">
+                    Group categories (e.g. Varsity + JV III Boys) to share the same warm-up time while keeping distinct staging & start times.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Warmup Groups List -->
+              <div
+                v-if="!form.warmupGroups || form.warmupGroups.length === 0"
+                class="no-results"
+                style="padding:16px;"
+              >
+                No warm-up groups configured yet. Click "+ Add Warm-Up Group" below.
+              </div>
+
+              <div
+                v-for="(grp, grpIdx) in form.warmupGroups"
+                :key="grp.id || grpIdx"
+                draggable="true"
+                class="drag-row"
+                :style="{
+                  background: 'var(--bg-card)',
+                  border: warmupDragOverIdx === grpIdx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  opacity: draggedWarmupIdx === grpIdx ? '0.4' : '1',
+                  transition: 'all 0.15s ease'
+                }"
+                @dragstart="onWarmupDragStart(grpIdx, $event)"
+                @dragover="onWarmupDragOver(grpIdx, $event)"
+                @dragleave="warmupDragOverIdx = null"
+                @drop="onWarmupDrop(grpIdx, $event)"
+                @dragend="onWarmupDragEnd"
+              >
+                <!-- Group Top Row: Name & Warmup Time -->
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:240px;">
+                    <span
+                      class="drag-handle"
+                      title="Drag group to reorder"
+                      style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 4px;"
+                    >
+                      ⠿
+                    </span>
+                    <input
+                      v-model="grp.name"
+                      type="text"
+                      placeholder="Group Name (e.g. Varsity Boys, JV III Boys)"
+                      class="custom-minutes-input"
+                      style="flex:2;min-width:160px;font-weight:700;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:8px;" draggable="false" @dragstart.stop>
+                    <div style="display:flex;align-items:center;gap:4px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);padding:2px 6px;border-radius:6px;">
+                      <span style="font-size:10.5px;font-weight:700;color:#f59e0b;">🔥 Warm-up Time:</span>
+                      <select
+                        v-model="grp.meetingTime"
+                        class="custom-minutes-input"
+                        style="font-size:11px;height:26px;padding:1px 4px;font-weight:700;color:#f59e0b;"
+                      >
+                        <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                      <button
+                        v-if="getAutoWarmupTime(grp)"
+                        type="button"
+                        class="action-mini-btn"
+                        style="font-size:10px;padding:1px 5px;height:22px;"
+                        :title="`Reset to default (${getAutoWarmupTime(grp)})`"
+                        @click="applyAutoWarmupTime(grp)"
+                      >
+                        ⚡ Auto ({{ getAutoWarmupTime(grp) }})
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="search-clear-btn"
+                      style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
+                      title="Delete this warm-up group"
+                      @click="removeWarmupGroup(grpIdx)"
+                    >
+                      ✕ Delete
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Grouped Categories Selection -->
+                <div draggable="false" @dragstart.stop>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <label class="modal-label" style="font-size:10.5px;margin:0;">
+                      Assigned Categories (Click to add / remove from this warm-up group):
+                    </label>
+                    <span style="font-size:10px;color:var(--text-muted);font-weight:600;">
+                      {{ (grp.categories || []).length }} category{{ (grp.categories || []).length === 1 ? '' : 'ies' }}
+                    </span>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                    <span
+                      v-for="cat in ALL_CATEGORIES"
+                      :key="cat"
+                      style="font-size:11px;padding:2.5px 7px;border-radius:6px;transition:all 0.15s ease;display:inline-flex;align-items:center;gap:3px;user-select:none;"
+                      :style="getCategoryPillStyle(grp, cat)"
+                      :title="getCategoryPillTitle(grp, cat)"
+                      @click="toggleCategoryInWarmupGroup(grp, cat)"
+                    >
+                      <span style="font-size:10px;">{{ isCategoryInWarmupGroup(grp, cat) ? '✓' : isCategoryInOtherWarmupGroup(grp, cat) ? '🔒' : '+' }}</span>
+                      <span>{{ cat }}</span>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Member Categories Live Timing Preview -->
+                <div v-if="grp.categories && grp.categories.length > 0" draggable="false" @dragstart.stop style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;padding:6px 10px;">
+                  <span style="font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:4px;">
+                    Member Categories Schedule Breakdown:
+                  </span>
+                  <div style="display:flex;flex-direction:column;gap:3px;">
+                    <div
+                      v-for="cName in grp.categories"
+                      :key="cName"
+                      style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:2px 0;border-bottom:1px dashed rgba(255,255,255,0.06);"
+                    >
+                      <span style="font-weight:700;color:var(--text-main);">🚩 {{ cName }}</span>
+                      <div style="display:flex;align-items:center;gap:8px;font-family:monospace;">
+                        <span style="color:#f87171;">Stage: {{ getCatStage(cName) || 'TBD' }} (-{{ form.stagingOffsetMinutes || 15 }}m)</span>
+                        <span style="color:var(--text-muted);">•</span>
+                        <span style="color:var(--text-main);font-weight:700;">Start: {{ getCatStart(cName) || 'TBD' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Add Warm-Up Group Button -->
+              <div style="display:flex;justify-content:center;margin-top:2px;">
+                <button
+                  type="button"
+                  class="action-mini-btn"
+                  style="width:100%;padding:9px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                  @click="addWarmupGroup"
+                >
+                  <span style="font-size:14px;">➕</span>
+                  <span>Add Warm-Up Group</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- SUB-PANEL 2: PRE-RIDES -->
+            <div v-else-if="activeCoachAdminTab === 'pr'" style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h4 style="margin:0;font-size:13.5px;font-weight:700;color:var(--text-main);">🚵 Weekend Pre-Ride Waves</h4>
+                  <p style="margin:2px 0 0;font-size:11px;color:var(--text-muted);">
+                    Manage weekend pre-ride waves, meeting times, and coach leader/support slots.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="action-mini-btn"
+                  @click="addCoachSlot('pr')"
+                >
+                  + Add Pre-Ride Wave
+                </button>
+              </div>
+
+              <div
+                v-if="!form.coachSignups?.preRides || form.coachSignups.preRides.length === 0"
+                class="no-results"
+                style="padding:16px;"
+              >
+                No pre-ride sessions configured yet. Click "+ Add Pre-Ride Wave" above.
+              </div>
+
+              <div
+                v-for="(slot, slotIdx) in form.coachSignups?.preRides"
+                :key="slot.id || slotIdx"
+                draggable="true"
+                class="drag-row"
+                :style="{
+                  background: 'var(--bg-card)',
+                  border: coachSlotDragOverIdx === slotIdx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  opacity: draggedCoachSlotIdx === slotIdx ? '0.4' : '1',
+                  transition: 'all 0.15s ease'
+                }"
+                @dragstart="onCoachSlotDragStart(slotIdx, $event)"
+                @dragover="onCoachSlotDragOver(slotIdx, $event)"
+                @dragleave="coachSlotDragOverIdx = null"
+                @drop="onCoachSlotDrop(slotIdx, 'pr', $event)"
+                @dragend="onCoachSlotDragEnd"
+              >
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:240px;">
+                    <span
+                      class="drag-handle"
+                      title="Drag slot to reorder"
+                      style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 4px;"
+                    >
+                      ⠿
+                    </span>
+                    <input
+                      v-model="slot.name"
+                      type="text"
+                      placeholder="Session Name (e.g. Saturday Coaches Pre-Ride)"
+                      class="custom-minutes-input"
+                      style="flex:2;min-width:160px;font-weight:700;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                    <input
+                      v-model="slot.tag"
+                      type="text"
+                      placeholder="Tag (e.g. Coaches)"
+                      class="custom-minutes-input"
+                      style="width:95px;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                  </div>
+
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <button
+                      type="button"
+                      class="search-clear-btn"
+                      style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
+                      title="Delete this slot"
+                      @click="removeCoachSlot('pr', slotIdx)"
+                    >
+                      ✕ Delete
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Day & Time -->
+                <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;" draggable="false" @dragstart.stop>
+                  <div style="min-width:120px;">
+                    <label class="modal-label" style="font-size:10.5px;">Day</label>
+                    <select
+                      v-model="slot.day"
+                      class="custom-minutes-input"
+                      style="width:100%;font-size:11.5px;height:30px;padding:2px 6px;"
+                    >
+                      <option v-for="d in DAY_OPTIONS" :key="d" :value="d">{{ d }}</option>
+                    </select>
+                  </div>
+
+                  <div style="flex:1;min-width:210px;">
+                    <label class="modal-label" style="font-size:10.5px;">Meeting Time</label>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                      <select
+                        :value="getSlotStart(slot.meetingTime)"
+                        class="custom-minutes-input"
+                        style="flex:1;font-size:11px;height:30px;padding:2px 4px;"
+                        @change="onSlotStartChange(slot, ($event.target as HTMLSelectElement).value)"
+                      >
+                        <option v-if="getSlotStart(slot.meetingTime) && !TIME_OPTIONS.includes(getSlotStart(slot.meetingTime))" :value="getSlotStart(slot.meetingTime)">
+                          {{ getSlotStart(slot.meetingTime) }}
+                        </option>
+                        <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                      <span style="font-size:10.5px;color:var(--text-muted);">to</span>
+                      <select
+                        :value="getSlotEnd(slot.meetingTime)"
+                        class="custom-minutes-input"
+                        style="flex:1;font-size:11px;height:30px;padding:2px 4px;"
+                        @change="onSlotEndChange(slot, ($event.target as HTMLSelectElement).value)"
+                      >
+                        <option value="">-- Single Time --</option>
+                        <option v-if="getSlotEnd(slot.meetingTime) && !TIME_OPTIONS.includes(getSlotEnd(slot.meetingTime))" :value="getSlotEnd(slot.meetingTime)">
+                          {{ getSlotEnd(slot.meetingTime) }}
+                        </option>
+                        <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <div draggable="false" @dragstart.stop>
+                  <label class="modal-label" style="font-size:10.5px;">Riders Allowed / Description</label>
+                  <input
+                    v-model="slot.ridersAllowed"
+                    type="text"
+                    placeholder="e.g. Registered Riders & Coaches"
+                    class="custom-minutes-input"
+                    style="width:100%;font-size:11.5px;"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-PANEL 3: CATEGORY WAVE SCHEDULE OVERVIEW -->
+            <div v-else-if="activeCoachAdminTab === 'waves'" style="display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <h4 style="margin:0;font-size:13.5px;font-weight:700;color:var(--text-main);">🏁 Official 2026 Category Wave Times</h4>
+                <span style="font-size:11px;color:var(--text-muted);">Staging lead time: <strong>{{ form.stagingOffsetMinutes || 15 }}m</strong></span>
+              </div>
+              <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                <table class="results-table" style="font-size:11.5px;">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th style="width:110px;text-align:center;">Gun Start</th>
+                      <th style="width:120px;text-align:center;color:#f87171;">Staging Call-Up</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="cat in ALL_CATEGORIES" :key="cat">
+                      <td style="font-weight:700;color:var(--text-main);">{{ cat }}</td>
+                      <td style="text-align:center;font-weight:700;">{{ getCatStart(cat) || 'TBD' }}</td>
+                      <td style="text-align:center;color:#f87171;font-weight:700;">{{ getCatStage(cat) || 'TBD' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -899,206 +1565,6 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
             <div>
               <label class="modal-label">Wisconsin League Volunteer Code or URL</label>
               <input v-model="form.signups!.league" type="text" class="custom-minutes-input" style="width:100%;">
-            </div>
-          </div>
-
-          <!-- Coach Sign-Ups Management -->
-          <div v-else-if="activeTab === 'coach'" style="display:flex;flex-direction:column;gap:14px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-              <div>
-                <h4 style="margin:0;font-size:14px;font-weight:700;color:var(--text-main);">🚵 Coach Sign-Ups & Shifts</h4>
-                <p style="margin:2px 0 0;font-size:11.5px;color:var(--text-muted);">Manage weekend pre-rides, warm-up waves, leaders, and support coaches.</p>
-              </div>
-              <button
-                type="button"
-                class="action-mini-btn"
-                @click="addCoachSlot(activeCoachAdminTab)"
-              >
-                + Add {{ activeCoachAdminTab === 'pr' ? 'Pre-Ride' : 'Warm-up' }} Slot
-              </button>
-            </div>
-
-            <!-- Sub-tab Switcher: Pre-Rides vs Warm-ups -->
-            <div class="signup-tabs-toolbar" style="margin:0;">
-              <div class="signup-pills-group">
-                <button
-                  type="button"
-                  class="signup-tab-pill"
-                  :class="{ active: activeCoachAdminTab === 'pr' }"
-                  @click="activeCoachAdminTab = 'pr'"
-                >
-                  <span>🚵</span> Pre-Rides ({{ form.coachSignups?.preRides?.length || 0 }})
-                </button>
-                <button
-                  type="button"
-                  class="signup-tab-pill pill-league"
-                  :class="{ active: activeCoachAdminTab === 'wu' }"
-                  @click="activeCoachAdminTab = 'wu'"
-                >
-                  <span>🔥</span> Warm-ups ({{ form.coachSignups?.warmups?.length || 0 }})
-                </button>
-              </div>
-            </div>
-
-            <!-- Policy Warning Banner Editor -->
-            <div>
-              <label class="modal-label">Policy / Banner Notice</label>
-              <textarea
-                v-if="form.coachSignups"
-                v-model="form.coachSignups.policy"
-                rows="2"
-                placeholder="Ride Leader must hold NICA Level 2+..."
-                class="custom-minutes-input"
-                style="width:100%;height:auto;"
-              />
-            </div>
-
-            <!-- Slot List -->
-            <div
-              v-if="!form.coachSignups || (activeCoachAdminTab === 'pr' ? (!form.coachSignups.preRides || form.coachSignups.preRides.length === 0) : (!form.coachSignups.warmups || form.coachSignups.warmups.length === 0))"
-              class="no-results"
-              style="padding:16px;"
-            >
-              No {{ activeCoachAdminTab === 'pr' ? 'pre-ride' : 'warm-up' }} sessions configured. Click "+ Add Slot" above to create one.
-            </div>
-
-            <div
-              v-for="(slot, slotIdx) in (activeCoachAdminTab === 'pr' ? form.coachSignups?.preRides : form.coachSignups?.warmups)"
-              :key="slot.id || slotIdx"
-              draggable="true"
-              class="drag-row"
-              :style="{
-                background: 'var(--bg-card)',
-                border: coachSlotDragOverIdx === slotIdx ? '2px dashed #6366f1' : '1px solid var(--border)',
-                borderRadius: '8px',
-                padding: '12px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                opacity: draggedCoachSlotIdx === slotIdx ? '0.4' : '1',
-                transition: 'all 0.15s ease'
-              }"
-              @dragstart="onCoachSlotDragStart(slotIdx, $event)"
-              @dragover="onCoachSlotDragOver(slotIdx, $event)"
-              @dragleave="coachSlotDragOverIdx = null"
-              @drop="onCoachSlotDrop(slotIdx, activeCoachAdminTab, $event)"
-              @dragend="onCoachSlotDragEnd"
-            >
-              <!-- Slot Top Row -->
-              <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
-                <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:260px;">
-                  <span
-                    class="drag-handle"
-                    title="Drag slot to reorder"
-                    style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 4px;"
-                  >
-                    ⠿
-                  </span>
-                  <input
-                    v-model="slot.name"
-                    type="text"
-                    placeholder="Session Name / Category (e.g. Varsity, JV3 Boys)"
-                    class="custom-minutes-input"
-                    style="flex:2;min-width:160px;font-weight:700;"
-                    draggable="false"
-                    @dragstart.stop
-                  >
-                  <input
-                    v-model="slot.tag"
-                    type="text"
-                    placeholder="Tag (e.g. Coaches, Varsity)"
-                    class="custom-minutes-input"
-                    style="width:95px;"
-                    draggable="false"
-                    @dragstart.stop
-                  >
-                </div>
-
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <button
-                    type="button"
-                    class="search-clear-btn"
-                    style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
-                    title="Delete this slot"
-                    @click="removeCoachSlot(activeCoachAdminTab, slotIdx)"
-                  >
-                    ✕ Delete Slot
-                  </button>
-                </div>
-              </div>
-
-              <!-- Day & Time Pickers -->
-              <div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;" draggable="false" @dragstart.stop>
-                <div style="min-width:120px;">
-                  <label class="modal-label" style="font-size:10.5px;">Day</label>
-                  <select
-                    v-model="slot.day"
-                    class="custom-minutes-input"
-                    style="width:100%;font-size:11.5px;height:30px;padding:2px 6px;"
-                  >
-                    <option v-for="d in DAY_OPTIONS" :key="d" :value="d">{{ d }}</option>
-                  </select>
-                </div>
-
-                <!-- Meeting Time Start/End Pickers -->
-                <div style="flex:1;min-width:210px;">
-                  <label class="modal-label" style="font-size:10.5px;">Meeting Time</label>
-                  <div style="display:flex;align-items:center;gap:4px;">
-                    <select
-                      :value="getSlotStart(slot.meetingTime)"
-                      class="custom-minutes-input"
-                      style="flex:1;font-size:11px;height:30px;padding:2px 4px;"
-                      @change="onSlotStartChange(slot, ($event.target as HTMLSelectElement).value)"
-                    >
-                      <option v-if="getSlotStart(slot.meetingTime) && !TIME_OPTIONS.includes(getSlotStart(slot.meetingTime))" :value="getSlotStart(slot.meetingTime)">
-                        {{ getSlotStart(slot.meetingTime) }}
-                      </option>
-                      <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
-                    </select>
-                    <span style="font-size:10.5px;color:var(--text-muted);">to</span>
-                    <select
-                      :value="getSlotEnd(slot.meetingTime)"
-                      class="custom-minutes-input"
-                      style="flex:1;font-size:11px;height:30px;padding:2px 4px;"
-                      @change="onSlotEndChange(slot, ($event.target as HTMLSelectElement).value)"
-                    >
-                      <option value="">-- Single Time --</option>
-                      <option v-if="getSlotEnd(slot.meetingTime) && !TIME_OPTIONS.includes(getSlotEnd(slot.meetingTime))" :value="getSlotEnd(slot.meetingTime)">
-                        {{ getSlotEnd(slot.meetingTime) }}
-                      </option>
-                      <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
-                    </select>
-                  </div>
-                </div>
-
-                <!-- Staging Time Picker (Warm-ups only) -->
-                <div v-if="activeCoachAdminTab === 'wu'" style="min-width:130px;">
-                  <label class="modal-label" style="font-size:10.5px;color:#f87171;">Staging Time</label>
-                  <select
-                    v-model="slot.stagingTime"
-                    class="custom-minutes-input"
-                    style="width:100%;font-size:11px;height:30px;padding:2px 4px;border-color:rgba(239,68,68,0.4);"
-                  >
-                    <option value="">-- None --</option>
-                    <option v-if="slot.stagingTime && !TIME_OPTIONS.includes(slot.stagingTime)" :value="slot.stagingTime">
-                      {{ slot.stagingTime }}
-                    </option>
-                    <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Riders Allowed Description -->
-              <div draggable="false" @dragstart.stop>
-                <label class="modal-label" style="font-size:10.5px;">Riders Allowed / Description</label>
-                <input
-                  v-model="slot.ridersAllowed"
-                  type="text"
-                  placeholder="e.g. Course preview for credentialed coaches only."
-                  class="custom-minutes-input"
-                  style="width:100%;font-size:11.5px;"
-                >
-              </div>
             </div>
           </div>
 

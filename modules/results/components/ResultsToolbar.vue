@@ -72,8 +72,10 @@ const activeFilterChips = computed(() => {
   // Sort chip
   if (sortOrder.value === 'TIME') {
     chips.push({ label: 'Sort: ', strongText: '⏱️ Start Time' })
-  } else if (sortOrder.value === 'GRADE') {
-    chips.push({ label: 'Sort: ', strongText: 'Grade / Division' })
+  } else if (sortOrder.value === 'GRADE_ASC') {
+    chips.push({ label: 'Sort: ', strongText: '6th Grade → Varsity' })
+  } else if (sortOrder.value === 'GRADE' || sortOrder.value === 'GRADE_DESC') {
+    chips.push({ label: 'Sort: ', strongText: 'Varsity → 6th Grade' })
   }
 
   // Category chip
@@ -93,16 +95,11 @@ const activeFilterChips = computed(() => {
       isLaxScope: true,
       onRemove: removeTeamFilter
     })
-  } else if (selectedTeamScope.value && selectedTeamScope.value !== 'ALL') {
+  } else if (selectedTeamScope.value !== 'ALL') {
     chips.push({
       label: 'Team: ',
       strongText: selectedTeamScope.value,
       onRemove: removeTeamFilter
-    })
-  } else {
-    chips.push({
-      label: 'Scope: ',
-      strongText: 'All Teams'
     })
   }
 
@@ -183,7 +180,8 @@ const activeFilterChips = computed(() => {
           <label class="filter-label">Sort By</label>
           <select v-model="sortOrder" id="sortOrderSelect" class="select-dropdown">
             <option value="TIME">Start Time (Default)</option>
-            <option value="GRADE">Grade / Division</option>
+            <option value="GRADE_ASC">Grade (6th Grade → Varsity)</option>
+            <option value="GRADE">Grade (Varsity → 6th Grade)</option>
           </select>
         </div>
 

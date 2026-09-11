@@ -49,6 +49,23 @@ export interface PhotoItem {
   h?: number;
 }
 
+export interface WarmupGroup {
+  id: string;
+  name: string;
+  meetingTime: string;
+  stagingTime?: string;
+  day?: string;
+  date?: string;
+  subtitle?: string;
+  categories: string[];
+  ridersAllowed?: string;
+  duration?: string;
+  tag?: string;
+  tagClass?: string;
+  leaders: string[];
+  support: string[];
+}
+
 export interface CoachSignupsData {
   policy?: string;
   preRides?: CoachSlot[];
@@ -75,10 +92,13 @@ export interface Race {
   eventId?: number | string | null;
   theme?: string;
   isPublished: boolean;
+  stagingOffsetMinutes?: number;
+  warmupOffsetMinutes?: number;
   signups?: SignUpLinks;
   schedule?: ScheduleDay[];
   guidelines?: string[];
   waveSchedule?: WaveSchedule;
+  warmupGroups?: WarmupGroup[];
   photosUrl?: string;
   photos?: PhotoItem[];
   coachSignups?: CoachSignupsData;

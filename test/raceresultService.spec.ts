@@ -16,7 +16,8 @@ import {
   getWaveScheduleEntry,
   getCategoryStartTime,
   getCategoryStageTime,
-  getWaveWarmupTime
+  getWaveWarmupTime,
+  calculateDefaultGroupWarmupTime
 } from '../modules/results/services/raceresultService'
 
 describe('RACE RESULT Metadata-Aware Parsing', () => {
@@ -237,6 +238,52 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
       ])
     })
 
+    it('correctly orders categories by Grade / Division hierarchy when sortOrder is GRADE', () => {
+      const categories = [
+        '8th Grade Girls',
+        'Varsity Boys',
+        'JV II Boys',
+        'Freshman Girls',
+        '6th Grade Girls',
+        'JV III Boys'
+      ]
+
+      const sorted = [...categories].sort((a, b) => compareCategories(a, b, 'GRADE', null))
+      // Varsity -> JV III -> JV II -> Freshman -> 8th Grade -> 6th Grade
+      expect(sorted).toEqual([
+        'Varsity Boys',
+        'JV III Boys',
+        'JV II Boys',
+        'Freshman Girls',
+        '8th Grade Girls',
+        '6th Grade Girls'
+      ])
+    })
+
+    it('correctly orders categories with 6th, 7th, 8th at the top and Varsity last when sortOrder is GRADE_ASC', () => {
+      const categories = [
+        'Varsity Boys',
+        '8th Grade Girls',
+        'JV II Boys',
+        'Freshman Girls',
+        '6th Grade Girls',
+        'JV III Boys',
+        '7th Grade Boys'
+      ]
+
+      const sorted = [...categories].sort((a, b) => compareCategories(a, b, 'GRADE_ASC', null))
+      // 6th Grade -> 7th Grade -> 8th Grade -> Freshman -> JV II -> JV III -> Varsity
+      expect(sorted).toEqual([
+        '6th Grade Girls',
+        '7th Grade Boys',
+        '8th Grade Girls',
+        'Freshman Girls',
+        'JV II Boys',
+        'JV III Boys',
+        'Varsity Boys'
+      ])
+    })
+
     it('ignores stale race.waveSchedule entries for standard categories', () => {
       const staleRace = {
         id: 'stale-race',
@@ -247,6 +294,61 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
 
       const entry = getWaveScheduleEntry(staleRace, '8th Grade Girls', '1')
       expect(entry).toEqual({ start: '1:58 PM', stage: '1:43 PM' })
+    })
+
+    it('calculates staging time dynamically based on custom stagingOffsetMinutes', () => {
+      const customRace = {
+        id: 'custom-offset-race',
+        stagingOffsetMinutes: 20
+      }
+
+      // Varsity Boys starts at 8:00 AM. Staging with 20 min offset = 7:40 AM
+      const entry = getWaveScheduleEntry(customRace, 'Varsity Boys', '1')
+      expect(entry).toEqual({ start: '8:00 AM', stage: '7:40 AM' })
+      expect(getCategoryStageTime(customRace, 'Varsity Boys')).toBe('7:40 AM')
+    })
+
+    it('resolves warm-up group meeting times for grouped categories (e.g., Varsity & JV III Boys)', () => {
+      const raceWithGroups = {
+        id: 'grouped-race',
+        stagingOffsetMinutes: 15,
+        warmupGroups: [
+          {
+            id: 'wg-1',
+            name: 'Varsity & JV III Boys',
+            meetingTime: '7:00 AM',
+            categories: ['Varsity Boys', 'JV III Boys'],
+            leaders: ['Coach Dave'],
+            support: ['Coach Sarah']
+          }
+        ]
+      }
+
+      // Both Varsity Boys and JV III Boys should receive the group's 7:00 AM warm-up time
+      expect(getWaveWarmupTime(raceWithGroups, 'Varsity Boys', '1')).toBe('7:00 AM')
+      expect(getWaveWarmupTime(raceWithGroups, 'JV III Boys', '1')).toBe('7:00 AM')
+      expect(getWaveWarmupTime(raceWithGroups, 'JV III Boys', '2')).toBe('7:00 AM')
+
+      // But their staging times remain distinct
+      expect(getWaveScheduleEntry(raceWithGroups, 'Varsity Boys', '1')).toEqual({ start: '8:00 AM', stage: '7:45 AM' })
+      expect(getWaveScheduleEntry(raceWithGroups, 'JV III Boys', '1')).toEqual({ start: '8:05 AM', stage: '7:50 AM' })
+    })
+
+    it('calculates default group warmup time from earliest category staging time', () => {
+      const race = {
+        id: 'test-race',
+        stagingOffsetMinutes: 15,
+        warmupOffsetMinutes: 45
+      }
+
+      // Varsity Boys staging is 7:45 AM, JV III Boys staging is 7:50 AM
+      // 45 min before earliest stage (7:45 AM) = 7:00 AM
+      const autoWarmup = calculateDefaultGroupWarmupTime(race, ['Varsity Boys', 'JV III Boys'])
+      expect(autoWarmup).toBe('7:00 AM')
+
+      // MS2 Boys (stage 10:33 AM), Freshman Boys (stage 11:15 AM) -> 45 min before 10:33 AM = 9:48 AM
+      const msWarmup = calculateDefaultGroupWarmupTime(race, ['MS2 Boys', 'Freshman Boys'])
+      expect(msWarmup).toBe('9:48 AM')
     })
   })
 })

@@ -12,6 +12,7 @@ import {
   categoryOrder,
   getWaveScheduleEntry,
   getWaveWarmupTime,
+  getWarmupGroupForCategory,
   getCategoryStartTime,
   getCategoryStageTime,
   compareCategories
@@ -142,12 +143,14 @@ const groupedByCategory = computed(() => {
     const totalInCat = Object.values(waves).reduce((acc, list) => acc + list.length, 0)
     const catStartTime = getCategoryStartTime(props.race, cat)
     const catStageTime = getCategoryStageTime(props.race, cat)
+    const warmupGroup = getWarmupGroupForCategory(props.race, cat)
 
     return {
       category: cat,
       totalInCat,
       catStartTime,
       catStageTime,
+      warmupGroup,
       waves: sortedWaveKeys.map(wKey => {
         const ridersInWave = [...waves[wKey]].sort((a, b) => {
           const pa = parseInt(a.seedingRank || a.pl || '') || parseInt(a.bib) || 0
@@ -196,9 +199,8 @@ const groupedByTeam = computed(() => {
     team: t,
     isTarget: isTargetTeam(t),
     riders: [...grouped[t]].sort((a, b) => {
-      const ia = categoryOrder.indexOf(a.category)
-      const ib = categoryOrder.indexOf(b.category)
-      if (ia !== -1 && ib !== -1) return ia - ib
+      const catComp = compareCategories(a.category, b.category, props.sortOrder, props.race)
+      if (catComp !== 0) return catComp
       return (parseInt(a.seedingRank || a.pl || '') || parseInt(a.bib) || 0) - (parseInt(b.seedingRank || b.pl || '') || parseInt(b.bib) || 0)
     })
   }))
@@ -309,6 +311,14 @@ function formatWaveLabel(wKey?: string): string {
             <span>{{ catGroup.category }}</span>
             <span class="category-badge">{{ catGroup.totalInCat }} RIDERS</span>
             <span
+              v-if="catGroup.warmupGroup"
+              class="category-time-badge"
+              style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#f59e0b;"
+              :title="`Group Warm-up (${catGroup.warmupGroup.name}): ${catGroup.warmupGroup.meetingTime}`"
+            >
+              🔥 Warm-up: {{ catGroup.warmupGroup.meetingTime }}
+            </span>
+            <span
               v-if="catGroup.catStartTime"
               class="category-time-badge"
               :title="`Category Start: ${catGroup.catStartTime}${catGroup.catStageTime ? ` | Stage: ${catGroup.catStageTime}` : ''}`"
@@ -351,7 +361,7 @@ function formatWaveLabel(wKey?: string): string {
               </div>
               <div class="wave-schedule-wrap" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0;">
                 <div v-if="w.waveWarmupTime || w.stageTime || w.waveTime" class="wave-schedule-strip">
-                  <span v-if="w.waveWarmupTime" class="wave-schedule-step step-warmup" :title="`Warm-up starts ${notifConfig.warmupOffset || 45}m before staging`">
+                  <span v-if="w.waveWarmupTime" class="wave-schedule-step step-warmup" :title="catGroup.warmupGroup ? `Warm-up Group: ${catGroup.warmupGroup.name}` : `Warm-up starts before staging`">
                     <span class="step-lbl"><span class="lbl-full">Warm-up:</span><span class="lbl-short">Warm:</span></span>
                     <span class="step-time">{{ w.waveWarmupTime }}</span>
                   </span>
