@@ -292,12 +292,29 @@ watch(
 const { startAlertScheduler } = useNotificationSubscriptions()
 let updateTimer: ReturnType<typeof setInterval> | null = null
 
+const siteHeaderRef = ref<HTMLElement | null>(null)
+let headerResizeObserver: ResizeObserver | null = null
+
 onMounted(() => {
   syncFromRoute()
   refreshData()
   startAlertScheduler(() => races.value as Race[])
 
   if (import.meta.client) {
+    const updateHeaderHeight = () => {
+      if (siteHeaderRef.value) {
+        const h = siteHeaderRef.value.getBoundingClientRect().height
+        if (h > 0) {
+          document.documentElement.style.setProperty('--site-header-height', `${Math.round(h)}px`)
+        }
+      }
+    }
+    updateHeaderHeight()
+    if (typeof ResizeObserver !== 'undefined' && siteHeaderRef.value) {
+      headerResizeObserver = new ResizeObserver(updateHeaderHeight)
+      headerResizeObserver.observe(siteHeaderRef.value)
+    }
+
     // 30-second update timer for live timing feeds
     updateTimer = setInterval(() => {
       refreshData()
@@ -310,6 +327,9 @@ onMounted(() => {
 onUnmounted(() => {
   if (updateTimer) {
     clearInterval(updateTimer)
+  }
+  if (headerResizeObserver) {
+    headerResizeObserver.disconnect()
   }
   if (import.meta.client) {
     window.removeEventListener('popstate', syncFromRoute)
@@ -380,7 +400,7 @@ const handlePrint = () => {
     <!-- PUBLIC RACE CENTRAL VIEW -->
     <div v-else>
       <!-- Site Header -->
-      <header class="site-header">
+      <header class="site-header" ref="siteHeaderRef">
         <!-- 1. Fixed Brand Header & Controls -->
         <AppHeader
           @open-whats-new="isWhatsNewOpen = true"
