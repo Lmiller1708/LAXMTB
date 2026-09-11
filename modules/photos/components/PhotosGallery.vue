@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { doc, onSnapshot } from 'firebase/firestore'
-import { useFirestore } from 'vuefire'
-import type { Race, PhotoItem } from '~/modules/races/types/race'
+import type { Race } from '~/modules/races/types/race'
 
 const props = defineProps<{
   race: Race
@@ -12,8 +10,7 @@ const emit = defineEmits<{
   (e: 'edit'): void
 }>()
 
-const db = useFirestore()
-const { isOnline } = useNetworkStatus()
+const copied = ref(false)
 
 const DEFAULT_TEAM_PHOTOS_URL = 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9'
 const DEFAULT_RACE_PHOTOS_MAP: Record<string, string> = {
@@ -35,171 +32,19 @@ const albumUrl = computed(() => {
 })
 
 const copyLink = () => {
-  if (import.meta.client) {
-    navigator.clipboard.writeText(albumUrl.value)
-      .then(() => alert('📋 Google Photos Album link copied to clipboard!'))
-      .catch(() => prompt('Copy album link:', albumUrl.value))
-  }
-}
-
-// Photos loading & pagination
-const photos = ref<PhotoItem[]>([])
-const photosPageLimit = ref(24)
-const currentLightboxIdx = ref(-1)
-const isLoadingPhotos = ref(false)
-
-const visiblePhotos = computed(() => photos.value.slice(0, photosPageLimit.value))
-const hasMore = computed(() => photos.value.length > photosPageLimit.value)
-
-const extractPhotosFromHtml = (html: string): PhotoItem[] => {
-  const matches = html.match(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_\-]+/g) || []
-  const unique = Array.from(new Set(matches))
-  return unique.map(url => ({
-    url,
-    w: 1920,
-    h: 1080
-  }))
-}
-
-const loadPhotos = async () => {
   if (!import.meta.client) return
-
-  const targetUrl = albumUrl.value
-  if (!targetUrl) {
-    photos.value = []
-    return
-  }
-
-  // Strictly pull ONLY when online; if offline, do not attempt
-  if (!navigator.onLine || !isOnline.value) {
-    console.info('[PhotosGallery] Device is offline — skipping live photos fetch')
-    photos.value = []
-    return
-  }
-
-  isLoadingPhotos.value = true
-
-  try {
-    // Try local Nitro server API
-    const res = await fetch(`/api/photos?url=${encodeURIComponent(targetUrl)}`)
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data?.photos) && data.photos.length > 0) {
-        photos.value = data.photos
-        isLoadingPhotos.value = false
-        return
-      }
-    }
-  } catch (e) {
-    // Falling back to proxy if on static environment
-  }
-
-  try {
-    // Fallback for static SPA hosting
-    const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`
-    const res = await fetch(proxyUrl)
-    if (res.ok) {
-      const html = await res.text()
-      const extracted = extractPhotosFromHtml(html)
-      if (extracted.length > 0) {
-        photos.value = extracted
-        isLoadingPhotos.value = false
-        return
-      }
-    }
-  } catch (err) {
-    console.warn('[PhotosGallery] Could not fetch live photos from Google Photos:', err)
-  } finally {
-    isLoadingPhotos.value = false
-  }
+  navigator.clipboard.writeText(albumUrl.value)
+    .then(() => {
+      copied.value = true
+      setTimeout(() => { copied.value = false }, 2500)
+    })
+    .catch(() => prompt('Copy album link:', albumUrl.value))
 }
-
-onMounted(() => {
-  loadPhotos()
-})
-
-onUnmounted(() => {
-  // Wipe photos from memory on unmount
-  photos.value = []
-  currentLightboxIdx.value = -1
-})
-
-watch(() => [props.race?.id, albumUrl.value], () => {
-  photos.value = []
-  photosPageLimit.value = 24
-  currentLightboxIdx.value = -1
-  loadPhotos()
-})
-
-// Lightbox controls
-const openLightbox = (idx: number) => {
-  currentLightboxIdx.value = idx
-}
-
-const closeLightbox = () => {
-  currentLightboxIdx.value = -1
-}
-
-const navLightbox = (step: number) => {
-  if (photos.value.length === 0) return
-  let next = currentLightboxIdx.value + step
-  if (next < 0) next = photos.value.length - 1
-  if (next >= photos.value.length) next = 0
-  currentLightboxIdx.value = next
-}
-
-// Touch swipe gestures for lightbox
-let touchStartX = 0
-let touchStartY = 0
-let touchEndX = 0
-let touchEndY = 0
-
-const onTouchStart = (e: TouchEvent) => {
-  if (!e.touches || e.touches.length !== 1) return
-  touchStartX = e.touches[0].clientX
-  touchStartY = e.touches[0].clientY
-  touchEndX = touchStartX
-  touchEndY = touchStartY
-}
-
-const onTouchMove = (e: TouchEvent) => {
-  if (!e.touches || e.touches.length !== 1) return
-  touchEndX = e.touches[0].clientX
-  touchEndY = e.touches[0].clientY
-}
-
-const onTouchEnd = () => {
-  const diffX = touchEndX - touchStartX
-  const diffY = touchEndY - touchStartY
-  const absX = Math.abs(diffX)
-  const absY = Math.abs(diffY)
-
-  if (absX > 45 && absX > absY * 1.5) {
-    if (diffX < 0) {
-      navLightbox(1) // swipe left -> next
-    } else {
-      navLightbox(-1) // swipe right -> prev
-    }
-  } else if (diffY > 80 && absY > absX * 1.5) {
-    closeLightbox() // swipe down -> close
-  }
-}
-
-// Keyboard shortcuts for lightbox
-onMounted(() => {
-  const onKeyDown = (e: KeyboardEvent) => {
-    if (currentLightboxIdx.value === -1) return
-    if (e.key === 'Escape') closeLightbox()
-    else if (e.key === 'ArrowRight') navLightbox(1)
-    else if (e.key === 'ArrowLeft') navLightbox(-1)
-  }
-  window.addEventListener('keydown', onKeyDown)
-  onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
-})
 </script>
 
 <template>
   <div class="photos-tab-wrapper">
+    <!-- Hero Album Showcase Card -->
     <div class="photos-gallery-section" style="margin-top:0;">
       <div class="photos-gallery-header" style="flex-wrap:wrap;gap:14px;align-items:center;">
         <div style="flex:1;min-width:240px;">
@@ -207,12 +52,7 @@ onMounted(() => {
             <span>📸</span> {{ race.name }} Photos
           </h3>
           <span style="font-size:12.5px;color:var(--text-muted);display:block;line-height:1.4;">
-            <template v-if="photos.length > 0">
-              Showing {{ visiblePhotos.length }} of {{ photos.length }} shared team photos • Tap any photo to view full-size
-            </template>
-            <template v-else>
-              Shared team photo album for {{ race.name }}.
-            </template>
+            Official shared Google Photos album for {{ race.name }} • {{ race.dateStr }}
           </span>
         </div>
         <div class="photos-actions-row" style="margin-left:auto;">
@@ -224,16 +64,16 @@ onMounted(() => {
             style="font-size:13px;padding:9px 18px;"
             title="Open in Google Photos"
           >
-            <span>📷</span> Open Google Photos {{ photos.length > 0 ? `(${photos.length})` : '↗' }}
+            <span>📷</span> Open Google Photos ↗
           </a>
           <button
             type="button"
             class="btn-photos-secondary"
             style="font-size:13px;padding:9px 14px;"
-            title="Copy shareable album link"
+            :title="copied ? 'Copied!' : 'Copy shareable album link'"
             @click="copyLink"
           >
-            <span>🔗</span> Copy Link
+            <span>{{ copied ? '✅' : '🔗' }}</span> {{ copied ? 'Copied!' : 'Copy Link' }}
           </button>
           <button
             v-if="isCoachAuth"
@@ -243,75 +83,40 @@ onMounted(() => {
             style="padding:9px 12px;border-radius:8px;font-size:12px;font-weight:700;"
             @click.stop="emit('edit')"
           >
-            <span>✏️</span> Edit
+            <span>✏️</span> Edit Link
           </button>
         </div>
       </div>
 
-      <!-- In-App Photos Grid -->
-      <template v-if="photos.length > 0">
-        <div class="photos-gallery-grid">
-          <div
-            v-for="(p, idx) in visiblePhotos"
-            :key="idx"
-            class="photo-thumb-card"
-            title="View photo full-size"
-            @click="openLightbox(idx)"
-          >
-            <img
-              :src="`${p.url}=w400-h400-c`"
-              alt="LAX MTB Team Photo"
-              class="photo-thumb-img"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-            >
-            <div class="photo-thumb-overlay">
-              <span class="photo-zoom-icon">🔍</span>
-            </div>
-          </div>
-        </div>
+      <!-- Main Interactive Hub Card -->
+      <div style="text-align:center;padding:48px 24px;background:var(--bg-subtle);border-radius:14px;margin-top:16px;border:1px solid var(--border);">
+        <div style="font-size:52px;margin-bottom:14px;line-height:1;">📸</div>
+        <h4 style="font-size:20px;font-weight:800;margin-bottom:8px;color:var(--text-main);letter-spacing:-0.3px;">
+          {{ race.name }} Shared Album
+        </h4>
+        <p style="font-size:14px;color:var(--text-muted);max-width:520px;margin:0 auto 24px;line-height:1.55;">
+          The team Google Photos album is ready for {{ race.name }}! Open the album to browse full-resolution photos, download favorites, and upload your race day pictures and videos.
+        </p>
 
-        <div v-if="hasMore" style="margin-top:16px;text-align:center;">
+        <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+          <a
+            :href="albumUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-primary"
+            style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;font-size:14px;text-decoration:none;border-radius:10px;font-weight:700;box-shadow:0 4px 12px rgba(220,38,38,0.25);"
+          >
+            <span>📷</span> Open in Google Photos ↗
+          </a>
           <button
             type="button"
             class="btn-photos-secondary"
-            style="font-size:13px;padding:10px 24px;"
-            @click="photosPageLimit += 24"
+            style="padding:12px 20px;font-size:14px;border-radius:10px;"
+            @click="copyLink"
           >
-            <span>⬇️</span> Load More Photos ({{ photos.length - visiblePhotos.length }} remaining)
+            <span>{{ copied ? '✅ Link Copied!' : '🔗 Copy Shareable Link' }}</span>
           </button>
         </div>
-      </template>
-
-      <!-- Loading State -->
-      <div v-else-if="isLoadingPhotos" style="text-align:center;padding:48px 20px;background:var(--bg-subtle);border-radius:12px;margin-top:16px;border:1px solid var(--border);">
-        <div style="font-size:36px;margin-bottom:12px;display:inline-block;">🔄</div>
-        <h4 style="font-size:16px;font-weight:700;margin-bottom:6px;color:var(--text-main);">
-          Loading Live Photos...
-        </h4>
-        <p style="font-size:13px;color:var(--text-muted);margin:0;">
-          Connecting to shared Google Photos album for {{ race.name }}.
-        </p>
-      </div>
-
-      <!-- Empty / Fallback Album Card -->
-      <div v-else style="text-align:center;padding:42px 20px;background:var(--bg-subtle);border-radius:12px;margin-top:16px;border:1px solid var(--border);">
-        <div style="font-size:44px;margin-bottom:12px;">📸</div>
-        <h4 style="font-size:17px;font-weight:700;margin-bottom:8px;color:var(--text-main);">
-          {{ race.name }} Shared Album
-        </h4>
-        <p style="font-size:13px;color:var(--text-muted);max-width:460px;margin:0 auto 20px;line-height:1.5;">
-          The shared Google Photos album for this event is ready! Tap below to open the album, browse shared photos, or upload your own pictures and videos.
-        </p>
-        <a
-          :href="albumUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn-primary"
-          style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-size:14px;text-decoration:none;border-radius:8px;font-weight:700;"
-        >
-          <span>📷</span> Open Google Photos Album ↗
-        </a>
       </div>
     </div>
 
@@ -381,30 +186,6 @@ onMounted(() => {
         </li>
       </ul>
     </div>
-
-    <!-- Lightbox Modal Container -->
-    <div
-      v-if="currentLightboxIdx >= 0 && photos[currentLightboxIdx]"
-      class="photo-lightbox-overlay show"
-      @click="closeLightbox"
-      @touchstart="onTouchStart"
-      @touchmove="onTouchMove"
-      @touchend="onTouchEnd"
-    >
-      <div class="photo-lightbox-content" @click.stop>
-        <button type="button" class="lightbox-close-btn" title="Close viewer" @click="closeLightbox">✕</button>
-        <img
-          :src="`${photos[currentLightboxIdx].url}=w1920-h1280`"
-          alt="LAX MTB Full Photo"
-          class="photo-lightbox-img"
-          referrerpolicy="no-referrer"
-        >
-        <div class="photo-lightbox-controls">
-          <button type="button" class="lightbox-nav-btn" title="Previous photo" @click="navLightbox(-1)">‹</button>
-          <span style="font-weight:700;font-size:13px;">{{ currentLightboxIdx + 1 }} / {{ photos.length }}</span>
-          <button type="button" class="lightbox-nav-btn" title="Next photo" @click="navLightbox(1)">›</button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
+
