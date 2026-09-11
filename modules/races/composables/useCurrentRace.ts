@@ -93,7 +93,10 @@ export const useCurrentRace = () => {
             const list: Race[] = []
             snapshot.forEach((d) => {
               const rData = d.data() as Race
-              const fallback = (fallbackEvents as Race[]).find(f => f.id === rData.id)
+              if (!rData.id) {
+                rData.id = d.id
+              }
+              const fallback = (fallbackEvents as Race[]).find(f => f.id === rData.id || f.id === d.id)
               if (fallback && fallback.waveSchedule) {
                 // Merge fallback waveSchedule to ensure standard categories always reflect official 2026 schedule
                 rData.waveSchedule = { ...(rData.waveSchedule || {}), ...fallback.waveSchedule }
@@ -183,19 +186,28 @@ export const useCurrentRace = () => {
    * Save race edits to local state AND Firestore
    */
   const updateRace = async (updated: Race) => {
-    const idx = races.value.findIndex(r => r.id === updated.id)
+    // Deep clone and strip undefined
+    const cleanUpdated = JSON.parse(JSON.stringify(updated))
+    const targetId = cleanUpdated.id || currentRace.value?.id
+    if (!cleanUpdated.id && targetId) {
+      cleanUpdated.id = targetId
+    }
+
+    const idx = races.value.findIndex(r => r.id === targetId)
     if (idx >= 0) {
-      races.value[idx] = updated
+      const nextRaces = [...races.value]
+      nextRaces[idx] = cleanUpdated
+      races.value = nextRaces
     }
 
     // Persist directly to Firestore
-    if (db) {
+    if (db && targetId) {
       try {
-        const docRef = doc(db, 'races', updated.id)
-        await setDoc(docRef, updated, { merge: true })
-        console.info('[Firestore] Saved race to Firestore:', updated.id)
+        const docRef = doc(db, 'races', targetId)
+        await setDoc(docRef, cleanUpdated, { merge: true })
+        console.info('[Firestore] Saved race to Firestore:', targetId)
       } catch (e) {
-        console.warn('[Firestore] Could not save race to Firestore:', e)
+        console.error('[Firestore] Could not save race to Firestore:', e)
       }
     }
   }

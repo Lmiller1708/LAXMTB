@@ -187,10 +187,11 @@ const isMeSignedUp = (slot: any, role: 'leader' | 'support'): boolean => {
 const addMeQuick = async (slot: any, role: 'leader' | 'support') => {
   const name = getMyName.value
   if (!name) return
-  await saveCoachName(slot, role, {
-    name,
-    photoURL: userPhoto.value || undefined
-  })
+  const item: { name: string; photoURL?: string } = { name }
+  if (userPhoto.value) {
+    item.photoURL = userPhoto.value
+  }
+  await saveCoachName(slot, role, item)
   cancelInlineInput()
 }
 
@@ -201,9 +202,13 @@ const submitInlineName = async (slot: any, role: 'leader' | 'support') => {
     return
   }
   const photo = val.toLowerCase() === getMyName.value.toLowerCase()
-    ? (userPhoto.value || undefined)
-    : (coachAvatarMap.value[val.toLowerCase()] || undefined)
-  await saveCoachName(slot, role, photo ? { name: val, photoURL: photo } : val)
+    ? userPhoto.value
+    : coachAvatarMap.value[val.toLowerCase()]
+  const item: { name: string; photoURL?: string } = { name: val }
+  if (photo) {
+    item.photoURL = photo
+  }
+  await saveCoachName(slot, role, item)
   cancelInlineInput()
 }
 
@@ -213,24 +218,44 @@ const saveCoachName = async (slot: any, role: 'leader' | 'support', itemToSave: 
   if (!updatedRace.coachSignups) {
     updatedRace.coachSignups = { policy: '', preRides: [], warmups: [] }
   }
+  if (!updatedRace.coachSignups.preRides) {
+    updatedRace.coachSignups.preRides = []
+  }
+  if (!updatedRace.coachSignups.warmups) {
+    updatedRace.coachSignups.warmups = []
+  }
+
+  // Sanitize itemToSave so NO undefined property is ever passed
+  const cleanItem = typeof itemToSave === 'object'
+    ? {
+        name: itemToSave.name || name,
+        ...(itemToSave.photoURL ? { photoURL: itemToSave.photoURL } : {})
+      }
+    : { name: String(itemToSave) }
 
   // Update in coachSignups.preRides / coachSignups.warmups
   const list = activeSession.value === 'pr'
     ? updatedRace.coachSignups.preRides
     : updatedRace.coachSignups.warmups
 
-  const targetSlot = list?.find(s => s.id === slot.id)
-  if (targetSlot) {
-    if (role === 'leader') {
-      if (!targetSlot.leaders) targetSlot.leaders = []
-      if (!hasCoach(targetSlot.leaders, name)) {
-        targetSlot.leaders.push(itemToSave)
-      }
-    } else {
-      if (!targetSlot.support) targetSlot.support = []
-      if (!hasCoach(targetSlot.support, name)) {
-        targetSlot.support.push(itemToSave)
-      }
+  let targetSlot = list?.find(s => s.id === slot.id)
+  if (!targetSlot) {
+    // If slot was not yet in array, clone from slot props and add to list
+    targetSlot = JSON.parse(JSON.stringify(slot))
+    targetSlot.leaders = targetSlot.leaders || []
+    targetSlot.support = targetSlot.support || []
+    list.push(targetSlot)
+  }
+
+  if (role === 'leader') {
+    if (!targetSlot.leaders) targetSlot.leaders = []
+    if (!hasCoach(targetSlot.leaders, name)) {
+      targetSlot.leaders.push(cleanItem)
+    }
+  } else {
+    if (!targetSlot.support) targetSlot.support = []
+    if (!hasCoach(targetSlot.support, name)) {
+      targetSlot.support.push(cleanItem)
     }
   }
 
@@ -240,15 +265,16 @@ const saveCoachName = async (slot: any, role: 'leader' | 'support', itemToSave: 
     if (wgSlot) {
       if (role === 'leader') {
         if (!wgSlot.leaders) wgSlot.leaders = []
-        if (!hasCoach(wgSlot.leaders, name)) wgSlot.leaders.push(itemToSave)
+        if (!hasCoach(wgSlot.leaders, name)) wgSlot.leaders.push(cleanItem)
       } else {
         if (!wgSlot.support) wgSlot.support = []
-        if (!hasCoach(wgSlot.support, name)) wgSlot.support.push(itemToSave)
+        if (!hasCoach(wgSlot.support, name)) wgSlot.support.push(cleanItem)
       }
     }
   }
 
-  await updateRace(updatedRace)
+  const sanitized = JSON.parse(JSON.stringify(updatedRace))
+  await updateRace(sanitized)
 
   // Automatically subscribe the coach to ride group notifications
   if (!isRideGroupSubscribed(slot.id)) {
@@ -299,7 +325,8 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
     }
   }
 
-  await updateRace(updatedRace)
+  const sanitized = JSON.parse(JSON.stringify(updatedRace))
+  await updateRace(sanitized)
 
   // Check if current coach is still signed up for this slot; if not, remove subscription
   const myName = getMyName.value
