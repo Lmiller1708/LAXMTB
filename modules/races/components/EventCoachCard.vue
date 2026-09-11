@@ -690,6 +690,15 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                           Add
                         </button>
                         <button
+                          v-if="user && !isMeSignedUp(slot, 'leader')"
+                          type="button"
+                          class="action-mini-btn inline-btn btn-quick-me"
+                          title="Add your signed-in name"
+                          @click="addMeQuick(slot, 'leader')"
+                        >
+                          + Me ({{ getMyName }})
+                        </button>
+                        <button
                           type="button"
                           class="action-mini-btn inline-btn"
                           @click="cancelInlineInput"
@@ -778,6 +787,15 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                           @click="submitInlineName(slot, 'support')"
                         >
                           Add
+                        </button>
+                        <button
+                          v-if="user && !isMeSignedUp(slot, 'support')"
+                          type="button"
+                          class="action-mini-btn inline-btn btn-quick-me"
+                          title="Add your signed-in name"
+                          @click="addMeQuick(slot, 'support')"
+                        >
+                          + Me ({{ getMyName }})
                         </button>
                         <button
                           type="button"

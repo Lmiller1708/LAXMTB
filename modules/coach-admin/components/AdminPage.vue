@@ -754,15 +754,39 @@ const getSortedWaveKeys = (cat: string): string[] => {
   })
 }
 
-const onWaveStartChange = (cat: string, waveKey: string) => {
+const to24h = (str?: string): string => {
+  if (!str) return ''
+  const trimmed = str.trim()
+  if (/^\d{1,2}:\d{2}$/.test(trimmed)) {
+    const [h, m] = trimmed.split(':')
+    return `${h.padStart(2, '0')}:${m}`
+  }
+  const mins = parseTimeStrToMinutes(trimmed)
+  if (mins === null) return ''
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return `${h < 10 ? '0' : ''}${h}:${m < 10 ? '0' : ''}${m}`
+}
+
+const onTimeInput = (cat: string, waveKey: string, time24: string) => {
+  if (!time24) return
+  const [hStr, mStr] = time24.split(':')
+  let h = parseInt(hStr, 10)
+  const m = parseInt(mStr, 10)
+  if (isNaN(h) || isNaN(m)) return
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  if (h > 12) h -= 12
+  if (h === 0) h = 12
+  const formatted12h = `${h}:${m < 10 ? '0' : ''}${m} ${ampm}`
+
   form.value.hasCustomWaveSchedule = true
   const wavesObj = getWavesForCategory(cat)
-  const entry = wavesObj[waveKey]
-  if (entry && entry.start) {
-    const startMins = parseTimeStrToMinutes(entry.start)
+  if (wavesObj[waveKey]) {
+    wavesObj[waveKey].start = formatted12h
     const stagingOffset = form.value.stagingOffsetMinutes || 15
-    if (startMins !== null) {
-      entry.stage = formatMinutesToTimeStr(startMins - stagingOffset)
+    const parsedMins = parseTimeStrToMinutes(formatted12h)
+    if (parsedMins !== null) {
+      wavesObj[waveKey].stage = formatMinutesToTimeStr(parsedMins - stagingOffset)
     }
   }
 }
@@ -2107,15 +2131,15 @@ const removePhoto = (idx: number) => {
               </div>
 
               <!-- Wave Schedule Table -->
-              <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-                <table class="results-table" style="font-size:12px;width:100%;border-collapse:collapse;">
+              <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;">
+                <table class="results-table" style="font-size:12px;width:100%;min-width:540px;border-collapse:collapse;">
                   <thead>
                     <tr>
-                      <th style="text-align:left;padding:8px 12px;">Category</th>
-                      <th style="width:85px;text-align:center;padding:8px 6px;">Wave</th>
-                      <th style="width:130px;text-align:center;padding:8px 6px;">Start</th>
-                      <th style="width:130px;text-align:center;color:#f87171;padding:8px 6px;">Staging Call-Up</th>
-                      <th style="width:115px;text-align:center;padding:8px 6px;">Actions</th>
+                      <th style="text-align:left;padding:8px 12px;min-width:140px;">Category</th>
+                      <th style="width:75px;text-align:center;padding:8px 6px;">Wave</th>
+                      <th style="width:130px;text-align:center;padding:8px 6px;">Start Time</th>
+                      <th style="width:125px;text-align:center;color:#f87171;padding:8px 6px;">Staging Call-Up</th>
+                      <th style="width:110px;text-align:center;padding:8px 6px;">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2149,12 +2173,11 @@ const removePhoto = (idx: number) => {
                         <!-- Start time input -->
                         <td style="text-align:center;padding:6px;vertical-align:middle;">
                           <input
-                            v-model="getWavesForCategory(cat)[wKey].start"
-                            type="text"
-                            placeholder="e.g. 10:53 AM"
-                            class="custom-minutes-input"
-                            style="width:105px;text-align:center;font-weight:700;font-size:12px;padding:3px 6px;"
-                            @input="onWaveStartChange(cat, wKey)"
+                            type="time"
+                            class="wave-time-input"
+                            :value="to24h(getWavesForCategory(cat)[wKey].start)"
+                            @input="onTimeInput(cat, wKey, ($event.target as HTMLInputElement).value)"
+                            @change="onTimeInput(cat, wKey, ($event.target as HTMLInputElement).value)"
                           >
                         </td>
 
@@ -2165,28 +2188,24 @@ const removePhoto = (idx: number) => {
 
                         <!-- Actions -->
                         <td style="text-align:center;padding:6px;vertical-align:middle;">
-                          <div style="display:inline-flex;align-items:center;gap:4px;">
-                            <button
-                              v-if="wIdx === 0"
-                              type="button"
-                              class="coach-add-btn"
-                              style="font-size:10px;padding:2px 7px;"
-                              title="Add another wave to this category"
-                              @click="addWaveToCategory(cat)"
-                            >
-                              + Wave
-                            </button>
-                            <button
-                              v-if="getSortedWaveKeys(cat).length > 1"
-                              type="button"
-                              class="action-mini-btn"
-                              style="font-size:10px;padding:2px 6px;color:#f87171;"
-                              title="Delete this wave"
-                              @click="removeWaveFromCategory(cat, wKey)"
-                            >
-                              ✕
-                            </button>
-                          </div>
+                          <button
+                            v-if="wIdx === 0"
+                            type="button"
+                            class="wave-add-btn"
+                            title="Add another wave to this category"
+                            @click="addWaveToCategory(cat)"
+                          >
+                            + Add Wave
+                          </button>
+                          <button
+                            v-else
+                            type="button"
+                            class="wave-del-btn"
+                            title="Delete this wave"
+                            @click="removeWaveFromCategory(cat, wKey)"
+                          >
+                            ✕ Remove
+                          </button>
                         </td>
                       </tr>
                     </template>
@@ -2923,11 +2942,120 @@ const removePhoto = (idx: number) => {
     grid-template-columns: 1fr !important;
   }
   /* Prevent inputs and cards from pushing past mobile viewport */
-  .admin-section-card input,
+  .admin-section-card input:not(.wave-time-input),
   .admin-section-card select,
   .admin-section-card textarea {
     max-width: 100%;
     box-sizing: border-box;
   }
+}
+
+.wave-time-input {
+  width: 108px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 6px;
+  text-align: center;
+  color-scheme: dark;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.wave-time-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.8;
+  filter: invert(0.8);
+}
+:root.theme-light .wave-time-input,
+.theme-light .wave-time-input,
+:root[data-theme="light"] .wave-time-input {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  color-scheme: light;
+}
+:root.theme-light .wave-time-input::-webkit-calendar-picker-indicator,
+.theme-light .wave-time-input::-webkit-calendar-picker-indicator,
+:root[data-theme="light"] .wave-time-input::-webkit-calendar-picker-indicator {
+  filter: none;
+}
+.wave-time-input:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.wave-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.wave-add-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+:root.theme-light .wave-add-btn,
+.theme-light .wave-add-btn,
+:root[data-theme="light"] .wave-add-btn {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+}
+:root.theme-light .wave-add-btn:hover,
+.theme-light .wave-add-btn:hover,
+:root[data-theme="light"] .wave-add-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.wave-del-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.wave-del-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+:root.theme-light .wave-del-btn,
+.theme-light .wave-del-btn,
+:root[data-theme="light"] .wave-del-btn {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #dc2626;
+}
+:root.theme-light .wave-del-btn:hover,
+.theme-light .wave-del-btn:hover,
+:root[data-theme="light"] .wave-del-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
 }
 </style>
