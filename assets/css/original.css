@@ -1030,80 +1030,42 @@
       display: none;
     }
 
-    /* Non-Mobile / Desktop View (>= 768px): Fix the ENTIRE header together as one solid block */
-    @media (min-width: 768px) {
-      .site-header {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        background: var(--bg-header);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-      }
-
-      .site-header-fixed {
-        position: static;
-        box-shadow: none;
-      }
-
-      .race-switcher-section {
-        position: static;
-        box-shadow: none;
-      }
-
-      .sub-nav-sticky-wrapper {
-        position: static;
-        box-shadow: none;
-      }
-
-      .compact-toolbar {
-        position: sticky;
-        top: 154px;
-        z-index: 90;
-      }
-
-      html {
-        scroll-padding-top: 164px;
-      }
+    /* Fix the ENTIRE header together as one solid block (Brand bar, Race switcher, Navigation tabs) */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-header);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
     }
 
-    /* Mobile View (< 768px): Brand bar fixed, Race carousel scrolls away, Sub-nav docks with zero overlap */
+    .site-header-fixed {
+      position: static;
+      box-shadow: none;
+    }
+
+    .race-switcher-section {
+      position: static;
+      box-shadow: none;
+    }
+
+    .sub-nav-sticky-wrapper {
+      position: static;
+      box-shadow: none;
+    }
+
+    .compact-toolbar {
+      position: sticky;
+      top: var(--site-header-height, 148px);
+      z-index: 90;
+    }
+
+    html {
+      scroll-padding-top: calc(var(--site-header-height, 148px) + 12px);
+    }
+
+    /* Mobile View (< 768px) */
     @media (max-width: 767px) {
-      .site-header {
-        display: contents; /* Unwraps children so brand bar and sub-nav participate in page sticky flow */
-      }
-
-      .site-header-fixed {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        background: var(--bg-header);
-        border-bottom: 1px solid var(--border);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-      }
-
-      .race-switcher-section {
-        position: static; /* Scrolls naturally out of view on mobile to maximize table space */
-      }
-
-      .sub-nav-sticky-wrapper {
-        position: sticky;
-        top: 46px; /* Docks right flush under the 46px slim brand bar */
-        z-index: 95;
-        background: var(--bg-header);
-        border-bottom: 1px solid var(--border);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-      }
-
-      .compact-toolbar {
-        position: sticky;
-        top: 86px;
-        z-index: 90;
-      }
-
-      html {
-        scroll-padding-top: 96px;
-      }
-
       /* Title fixed size on mobile as requested (no wrapping) */
       .brand-box {
         min-width: 0;
@@ -1292,7 +1254,7 @@
     /* Ultra-Compact Sticky Search & Filter Toolbar (Docks under sticky sub-nav) */
     .compact-toolbar {
       position: sticky;
-      top: 154px;
+      top: var(--site-header-height, 148px);
       z-index: 90;
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -1300,12 +1262,6 @@
       padding: 8px 10px;
       margin-bottom: 10px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-    }
-
-    @media (max-width: 767px) {
-      .compact-toolbar {
-        top: 86px;
-      }
     }
 
     .toolbar-main-row {
