@@ -10,7 +10,8 @@ import {
   type Firestore
 } from 'firebase/firestore'
 import type { Race } from '../types/race'
-import defaultRaces from '../../../events.json'
+import { defaultEvents } from '../data/defaultEvents'
+const defaultRaces = defaultEvents
 
 export function subscribeToRaces(
   db: Firestore,

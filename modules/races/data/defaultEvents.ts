@@ -1,4 +1,6 @@
-[
+import type { Race } from "../types/race"
+
+export const defaultEvents: Race[] = [
   {
     "id": "bluff-bash",
     "name": "Bluff Bash Festival",
@@ -7,21 +9,21 @@
     "exactTrailhead": "Powers Bluff North Trailhead",
     "address": "Powers Bluff North Trailhead, Arpin, WI 54410 (Wood County)",
     "city": "Marshfield, WI",
-    "warning": "<strong>\u26a0\ufe0f Navigation Warning:</strong> Navigating to generic <em>\"Powers Bluff County Park\"</em> will put you on the wrong side of the venue! Navigate directly to <strong>Powers Bluff North Trailhead</strong>.",
+    "warning": "<strong>⚠️ Navigation Warning:</strong> Navigating to generic <em>\"Powers Bluff County Park\"</em> will put you on the wrong side of the venue! Navigate directly to <strong>Powers Bluff North Trailhead</strong>.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Powers+Bluff+North+Trailhead+Arpin+WI",
     "appleMapsUrl": "https://maps.apple.com/?daddr=Powers+Bluff+North+Trailhead,+Arpin,+WI&q=Powers+Bluff+North+Trailhead",
     "eventGuideUrl": "https://wisconsinmtb.org/events/bluff-bash-festival/",
     "embedMapUrl": "https://www.google.com/maps/d/embed?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI&ehbc=2E312F",
     "fullMapUrl": "https://www.google.com/maps/d/viewer?mid=1fqlN1Is8o9PaE1L0haVxzxGA7sLGjoI",
-    "conference": "North Conference (Sunday Racing) \u2022 South Conference (Saturday Racing)",
+    "conference": "North Conference (Sunday Racing) • South Conference (Saturday Racing)",
     "logo": "/logos/bluff-bash.png",
     "eventId": 418104,
-    "theme": "TROPICAL BEACH LUAU! \ud83c\udf34\ud83c\udf3a\ud83c\udfdd\ufe0f\u2600\ufe0f",
+    "theme": "TROPICAL BEACH LUAU! 🌴🌺🏝️☀️",
     "isPublished": true,
     "signups": {
-      "volunteer": "81287266078",
-      "food": "502983656067",
-      "league": "773733678034"
+      "volunteer": null,
+      "food": null,
+      "league": null
     },
     "schedule": [
       {
@@ -306,12 +308,8 @@
           "subtitle": "South Conference",
           "tag": "Coaches",
           "tagClass": "tag-preride",
-          "leaders": [
-            "Emily"
-          ],
-          "support": [
-            "Nate"
-          ]
+          "leaders": [],
+          "support": []
         },
         {
           "id": "pr-3",
@@ -324,16 +322,8 @@
           "subtitle": "South Conference",
           "tag": "Varsity / JV3",
           "tagClass": "tag-special",
-          "leaders": [
-            "Matt",
-            "Mary"
-          ],
-          "support": [
-            "Andy M.",
-            "Lance",
-            "Nate",
-            "Ben V"
-          ]
+          "leaders": [],
+          "support": []
         },
         {
           "id": "pr-4",
@@ -343,17 +333,11 @@
           "duration": "60 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "Pre-Ride",
           "tagClass": "tag-preride",
-          "leaders": [
-            "Nate"
-          ],
-          "support": [
-            "Mike",
-            "Glenn",
-            "Nick"
-          ]
+          "leaders": [],
+          "support": []
         },
         {
           "id": "pr-5",
@@ -363,17 +347,11 @@
           "duration": "60 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "Pre-Ride",
           "tagClass": "tag-preride",
-          "leaders": [
-            "Carey",
-            "Ben V"
-          ],
-          "support": [
-            "Lance",
-            "Tiffany"
-          ]
+          "leaders": [],
+          "support": []
         },
         {
           "id": "pr-6",
@@ -383,17 +361,11 @@
           "duration": "30 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "Pre-Ride",
           "tagClass": "tag-preride",
-          "leaders": [
-            "Emily"
-          ],
-          "support": [
-            "Lance",
-            "Tiffany",
-            "Dustin"
-          ]
+          "leaders": [],
+          "support": []
         }
       ],
       "warmups": [
@@ -406,15 +378,11 @@
           "duration": "60 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "Varsity / JV3",
           "tagClass": "tag-special",
-          "leaders": [
-            "Matt"
-          ],
-          "support": [
-            "Mike"
-          ]
+          "leaders": [],
+          "support": []
         },
         {
           "id": "wu-2",
@@ -425,15 +393,11 @@
           "duration": "70 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "Varsity / JV3",
           "tagClass": "tag-special",
-          "leaders": [
-            "Andy M."
-          ],
-          "support": [
-            "Dustin"
-          ]
+          "leaders": [],
+          "support": []
         },
         {
           "id": "wu-3",
@@ -444,16 +408,11 @@
           "duration": "65 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "MS / 9th / 8th",
           "tagClass": "",
-          "leaders": [
-            "Emily",
-            "Ben V"
-          ],
-          "support": [
-            "Nick"
-          ]
+          "leaders": [],
+          "support": []
         },
         {
           "id": "wu-4",
@@ -464,15 +423,11 @@
           "duration": "60 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "MS / 9th",
           "tagClass": "",
-          "leaders": [
-            "Glenn"
-          ],
-          "support": [
-            "Kiel"
-          ]
+          "leaders": [],
+          "support": []
         },
         {
           "id": "wu-5",
@@ -483,12 +438,10 @@
           "duration": "60 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "JV2 / 8th",
           "tagClass": "",
-          "leaders": [
-            "Lance"
-          ],
+          "leaders": [],
           "support": []
         },
         {
@@ -500,14 +453,11 @@
           "duration": "55 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "JV2 / 7th",
           "tagClass": "",
           "leaders": [],
-          "support": [
-            "Mike",
-            "Scott"
-          ]
+          "support": []
         },
         {
           "id": "wu-7",
@@ -518,15 +468,11 @@
           "duration": "55 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "6th Grade",
           "tagClass": "",
-          "leaders": [
-            "Emily"
-          ],
-          "support": [
-            "Tiffany"
-          ]
+          "leaders": [],
+          "support": []
         },
         {
           "id": "wu-8",
@@ -537,15 +483,11 @@
           "duration": "60 min",
           "day": "Sunday",
           "date": "Sept 6",
-          "subtitle": "North Conference \u2022 Race Day",
+          "subtitle": "North Conference • Race Day",
           "tag": "7th / 6th / HSO",
           "tagClass": "",
-          "leaders": [
-            "Nick"
-          ],
-          "support": [
-            "Jim"
-          ]
+          "leaders": [],
+          "support": []
         }
       ]
     }
@@ -558,7 +500,7 @@
     "exactTrailhead": "Carlson Competition Stadium (Birkie Trailhead)",
     "address": "42225 Telemark Village Rd, Cable, WI 54821",
     "city": "Cable, WI",
-    "warning": "<strong>\ud83d\udccd Venue Info:</strong> Start & finish located under the iconic American Birkebeiner arch at Carlson Competition Stadium.",
+    "warning": "<strong>📍 Venue Info:</strong> Start & finish located under the iconic American Birkebeiner arch at Carlson Competition Stadium.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Mt+Telemark+Village+42225+Telemark+Village+Cable+WI+54821",
     "appleMapsUrl": "https://maps.apple.com/?daddr=42225+Telemark+Village,+Cable,+WI+54821&q=Mt+Telemark+Village",
     "eventGuideUrl": "https://wisconsinmtb.org/events/cable-conquest-festival/",
@@ -902,7 +844,7 @@
     "exactTrailhead": "Camp Tesomas Boy Scout Reservation",
     "address": "5403 Spider Lake Rd, Rhinelander, WI 54501",
     "city": "Rhinelander, WI",
-    "warning": "<strong>\ud83d\udccd Scout Camp Venue:</strong> Located on private scout reservation singletrack around Spider Lake.",
+    "warning": "<strong>📍 Scout Camp Venue:</strong> Located on private scout reservation singletrack around Spider Lake.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Camp+Tesomas+5403+Spider+Lake+Rd+Rhinelander+WI+54501",
     "appleMapsUrl": "https://maps.apple.com/?daddr=5403+Spider+Lake+Rd,+Rhinelander,+WI+54501&q=Camp+Tesomas",
     "eventGuideUrl": "https://wisconsinmtb.org/events/hodag-hustle-festival/",
@@ -1237,7 +1179,7 @@
     "exactTrailhead": "Nordic Mountain Main Chalet & MTB Trailhead",
     "address": "W5806 County Rd W, Wild Rose, WI 54984",
     "city": "Wild Rose, WI",
-    "warning": "<strong>\ud83d\udccd Ski Resort Venue:</strong> Staging and viewing located directly in front of the main ski chalet bowl.",
+    "warning": "<strong>📍 Ski Resort Venue:</strong> Staging and viewing located directly in front of the main ski chalet bowl.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Nordic+Mountain+W5806+County+Rd+W+Wild+Rose+WI+54984",
     "appleMapsUrl": "https://maps.apple.com/?daddr=W5806+County+Rd+W,+Wild+Rose,+WI+54984&q=Nordic+Mountain",
     "eventGuideUrl": "https://wisconsinmtb.org/events/gnarly-nordic-festival/",
@@ -1572,7 +1514,7 @@
     "exactTrailhead": "Trek Headquarters Trails",
     "address": "97 Canal Rd, Waterloo, WI 53594",
     "city": "Waterloo, WI",
-    "warning": "<strong>\ud83c\udfc6 State Championship Finale:</strong> Exclusive access to private Trek World HQ Trails, historic Red Barn festival, pump track, and night ride.",
+    "warning": "<strong>🏆 State Championship Finale:</strong> Exclusive access to private Trek World HQ Trails, historic Red Barn festival, pump track, and night ride.",
     "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=Trek+Trails+97+Canal+Rd+Waterloo+WI+53594",
     "appleMapsUrl": "https://maps.apple.com/?daddr=97+Canal+Rd,+Waterloo,+WI+53594&q=Trek+Trails",
     "eventGuideUrl": "https://wisconsinmtb.org/events/red-barn-state-championship/",
@@ -1899,4 +1841,4 @@
       ]
     }
   }
-]
+] as Race[]

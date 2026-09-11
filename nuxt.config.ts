@@ -4,6 +4,10 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: false, // Client-side SPA for maximum offline PWA responsiveness
 
+  devServer: {
+    port: 8888
+  },
+
   experimental: {
     appManifest: false
   },

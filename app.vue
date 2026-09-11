@@ -228,11 +228,6 @@ onMounted(() => {
     }, 30000)
 
     window.addEventListener('popstate', syncFromRoute)
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then((reg) => console.log('[LAXMTB] PWA ServiceWorker registered with scope:', reg.scope))
-        .catch((err) => console.warn('[LAXMTB] ServiceWorker registration failed:', err))
-    }
   }
 })
 
