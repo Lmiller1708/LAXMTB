@@ -534,6 +534,8 @@ export const useCoachAuth = () => {
       let errMsg = 'Sign-in failed. Please check your credentials.'
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         errMsg = 'Invalid email or password.'
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errMsg = 'Email/Password sign-in is not enabled yet in your Firebase Console. Please enable it under Authentication > Sign-in method.'
       } else if (err.code === 'auth/too-many-requests') {
         errMsg = 'Too many failed login attempts. Please try again later or reset your password.'
       } else if (err.message) {
@@ -604,6 +606,8 @@ export const useCoachAuth = () => {
         errMsg = 'Invalid email address.'
       } else if (err.code === 'auth/weak-password') {
         errMsg = 'Password is too weak. Please use at least 6 characters.'
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errMsg = 'Email/Password sign-in is not enabled yet in your Firebase Console. Please enable it under Authentication > Sign-in method.'
       } else if (err.message) {
         errMsg = err.message
       }
