@@ -70,23 +70,12 @@ const loadPhotos = async () => {
     return
   }
 
-  // 1. If offline, do NOT attempt network fetch
+  // Strictly pull ONLY when online; if offline, do not attempt
   if (!navigator.onLine || !isOnline.value) {
     console.info('[PhotosGallery] Device is offline — skipping live photos fetch')
+    photos.value = []
     return
   }
-
-  // 2. Fast in-memory / sessionStorage cache
-  const cacheKey = `laxmtb_live_photos_${props.race?.id || 'race'}`
-  try {
-    const cached = sessionStorage.getItem(cacheKey)
-    if (cached) {
-      const parsed = JSON.parse(cached)
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        photos.value = parsed
-      }
-    }
-  } catch (e) {}
 
   isLoadingPhotos.value = true
 
@@ -97,7 +86,6 @@ const loadPhotos = async () => {
       const data = await res.json()
       if (Array.isArray(data?.photos) && data.photos.length > 0) {
         photos.value = data.photos
-        try { sessionStorage.setItem(cacheKey, JSON.stringify(data.photos)) } catch (e) {}
         isLoadingPhotos.value = false
         return
       }
@@ -115,7 +103,6 @@ const loadPhotos = async () => {
       const extracted = extractPhotosFromHtml(html)
       if (extracted.length > 0) {
         photos.value = extracted
-        try { sessionStorage.setItem(cacheKey, JSON.stringify(extracted)) } catch (e) {}
         isLoadingPhotos.value = false
         return
       }
@@ -131,7 +118,14 @@ onMounted(() => {
   loadPhotos()
 })
 
+onUnmounted(() => {
+  // Wipe photos from memory on unmount
+  photos.value = []
+  currentLightboxIdx.value = -1
+})
+
 watch(() => [props.race?.id, albumUrl.value], () => {
+  photos.value = []
   photosPageLimit.value = 24
   currentLightboxIdx.value = -1
   loadPhotos()
