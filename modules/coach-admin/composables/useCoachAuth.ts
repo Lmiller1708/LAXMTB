@@ -587,6 +587,8 @@ export const useCoachAuth = () => {
     }
   }
 
+  const updateCoachRole = (email: string, role: 'admin' | 'coach') => updateUserRole(email, role)
+
   /**
    * Remove a coach or admin from Firestore
    */
