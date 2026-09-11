@@ -1,7 +1,7 @@
 import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore'
 import { useFirestore } from 'vuefire'
-import type { Race } from '../types/race'
-import fallbackEvents from '~/events.json'
+import { defaultEvents } from '../data/defaultEvents'
+const fallbackEvents = defaultEvents
 
 /**
  * Slugify a race name for URL routing
