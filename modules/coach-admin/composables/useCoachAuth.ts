@@ -28,6 +28,19 @@ export interface CoachAdminItem {
 
 export type CoachItem = CoachAdminItem
 
+export interface TeamUserItem {
+  id: string
+  uid?: string
+  email: string
+  name: string
+  phone?: string
+  photoURL?: string
+  role: 'owner' | 'admin' | 'coach' | 'guardian' | 'member'
+  createdAt?: string
+  lastLoginAt?: string
+  isPendingAdmin?: boolean
+}
+
 export interface UserProfile {
   uid: string
   email: string
@@ -89,6 +102,10 @@ export const useCoachAuth = () => {
   // List of all coaches and admins loaded from Firestore
   const adminsList = useState<CoachAdminItem[]>('coach_admins_list', () => [])
   const adminsLoading = useState<boolean>('coach_admins_loading', () => false)
+
+  // List of all registered team users and admins
+  const allUsersList = useState<TeamUserItem[]>('coach_all_users_list', () => [])
+  const allUsersLoading = useState<boolean>('coach_all_users_loading', () => false)
 
   // Primary bootstrap administrator(s)
   const DEFAULT_ADMINS = ['lmiller1708@gmail.com']
@@ -306,6 +323,7 @@ export const useCoachAuth = () => {
       isAdminUnlocked.value = false
       authError.value = ''
       adminsList.value = []
+      allUsersList.value = []
       return
     }
 
@@ -414,12 +432,92 @@ export const useCoachAuth = () => {
   }
 
   /**
-   * Add a new coach or admin to Firestore
+   * Fetch all registered users (from users collection) merged with administrators (from admins collection)
+   */
+  const fetchAllUsers = async () => {
+    if (!db) return
+    allUsersLoading.value = true
+    try {
+      const [usersSnap, adminsSnap] = await Promise.all([
+        getDocs(collection(db, 'users')),
+        getDocs(collection(db, 'admins'))
+      ])
+
+      const adminMap: Record<string, { role: string; name?: string; addedAt?: string; addedBy?: string }> = {}
+      adminsSnap.forEach((d) => {
+        const data = d.data()
+        adminMap[d.id.toLowerCase().trim()] = {
+          role: data.role || 'admin',
+          name: data.name,
+          addedAt: data.addedAt,
+          addedBy: data.addedBy
+        }
+      })
+
+      const userMap: Record<string, TeamUserItem> = {}
+
+      usersSnap.forEach((d) => {
+        const u = d.data()
+        const email = (u.email || '').toLowerCase().trim()
+        if (!email) return
+
+        let role: 'owner' | 'admin' | 'coach' | 'guardian' | 'member' = 'coach'
+        if (email === 'lmiller1708@gmail.com') {
+          role = 'owner'
+        } else if (adminMap[email]?.role === 'admin' || adminMap[email]?.role === 'owner' || u.role === 'admin' || u.role === 'owner') {
+          role = 'admin'
+        } else if (u.role === 'guardian') {
+          role = 'guardian'
+        } else if (u.role === 'member') {
+          role = 'member'
+        } else {
+          role = 'coach'
+        }
+
+        userMap[email] = {
+          id: d.id,
+          uid: d.id,
+          email: u.email || email,
+          name: u.name || adminMap[email]?.name || email.split('@')[0],
+          phone: u.phone || '',
+          photoURL: u.photoURL || '',
+          role,
+          createdAt: u.createdAt || adminMap[email]?.addedAt,
+          lastLoginAt: u.lastLoginAt || u.updatedAt
+        }
+      })
+
+      // Add any admins who haven't registered a document in users collection yet
+      Object.keys(adminMap).forEach((adminEmail) => {
+        if (!userMap[adminEmail]) {
+          const adm = adminMap[adminEmail]
+          const isOwner = adminEmail === 'lmiller1708@gmail.com'
+          userMap[adminEmail] = {
+            id: adminEmail,
+            email: adminEmail,
+            name: adm.name || adminEmail.split('@')[0],
+            role: isOwner ? 'owner' : (adm.role === 'coach' ? 'coach' : 'admin'),
+            createdAt: adm.addedAt,
+            isPendingAdmin: true
+          }
+        }
+      })
+
+      allUsersList.value = Object.values(userMap)
+    } catch (e) {
+      console.warn('[useCoachAuth] Could not fetch all users list:', e)
+    } finally {
+      allUsersLoading.value = false
+    }
+  }
+
+  /**
+   * Add a new administrator to Firestore
    */
   const addCoachAdmin = async (
     email: string,
     name?: string,
-    role: 'admin' | 'coach' = 'coach'
+    role: 'admin' | 'coach' = 'admin'
   ): Promise<{ success: boolean; error?: string }> => {
     if (!email || !email.includes('@')) {
       return { success: false, error: 'Please enter a valid email address' }
@@ -429,47 +527,84 @@ export const useCoachAuth = () => {
       await setDoc(doc(db, 'admins', cleanEmail), {
         email: cleanEmail,
         name: name?.trim() || cleanEmail.split('@')[0],
-        role: role,
+        role: 'admin',
         addedAt: new Date().toISOString(),
         addedBy: user.value?.email || 'admin'
       }, { merge: true })
       await fetchAdmins()
+      await fetchAllUsers()
       return { success: true }
     } catch (e: any) {
-      console.error('[useCoachAuth] Error adding coach:', e)
-      return { success: false, error: e.message || 'Failed to add coach' }
+      console.error('[useCoachAuth] Error adding administrator:', e)
+      return { success: false, error: e.message || 'Failed to add administrator' }
     }
   }
 
   /**
-   * Update a coach's role in Firestore
+   * Update a user's role/access in Firestore (both admins and users collections)
    */
-  const updateCoachRole = async (
+  const updateUserRole = async (
     email: string,
-    role: 'admin' | 'coach'
+    newRole: 'admin' | 'coach' | 'guardian',
+    uid?: string
   ): Promise<{ success: boolean; error?: string }> => {
     const cleanEmail = email.toLowerCase().trim()
+    if (cleanEmail === 'lmiller1708@gmail.com') {
+      return { success: false, error: 'Founder / Head Coach account access cannot be modified' }
+    }
+    if (cleanEmail === user.value?.email?.toLowerCase().trim()) {
+      return { success: false, error: 'You cannot change your own administrator access' }
+    }
+
     try {
-      await setDoc(doc(db, 'admins', cleanEmail), { role }, { merge: true })
+      if (newRole === 'admin') {
+        await setDoc(doc(db, 'admins', cleanEmail), {
+          email: cleanEmail,
+          role: 'admin',
+          addedAt: new Date().toISOString(),
+          addedBy: user.value?.email || 'admin'
+        }, { merge: true })
+        if (uid) {
+          await setDoc(doc(db, 'users', uid), { role: 'admin' }, { merge: true })
+        }
+      } else {
+        // Demote from admin collection
+        try {
+          await deleteDoc(doc(db, 'admins', cleanEmail))
+        } catch (err) {
+          await setDoc(doc(db, 'admins', cleanEmail), { role: newRole }, { merge: true })
+        }
+        if (uid) {
+          await setDoc(doc(db, 'users', uid), { role: newRole }, { merge: true })
+        }
+      }
       await fetchAdmins()
+      await fetchAllUsers()
       return { success: true }
     } catch (e: any) {
-      console.error('[useCoachAuth] Error updating coach role:', e)
-      return { success: false, error: e.message || 'Failed to update coach role' }
+      console.error('[useCoachAuth] Error updating user role:', e)
+      return { success: false, error: e.message || 'Failed to update user role' }
     }
   }
 
   /**
    * Remove a coach or admin from Firestore
    */
-  const removeCoachAdmin = async (email: string): Promise<{ success: boolean; error?: string }> => {
+  const removeCoachAdmin = async (email: string, uid?: string): Promise<{ success: boolean; error?: string }> => {
     const cleanEmail = email.toLowerCase().trim()
+    if (cleanEmail === 'lmiller1708@gmail.com') {
+      return { success: false, error: 'Cannot remove Founder / Head Coach account' }
+    }
     if (cleanEmail === user.value?.email?.toLowerCase().trim()) {
       return { success: false, error: 'You cannot remove your own access' }
     }
     try {
-      await deleteDoc(doc(db, 'admins', cleanEmail))
+      await deleteDoc(doc(db, 'admins', cleanEmail)).catch(() => {})
+      if (uid) {
+        await deleteDoc(doc(db, 'users', uid)).catch(() => {})
+      }
       await fetchAdmins()
+      await fetchAllUsers()
       return { success: true }
     } catch (e: any) {
       console.error('[useCoachAuth] Error removing coach:', e)
@@ -865,7 +1000,10 @@ export const useCoachAuth = () => {
     authLoading,
     adminsList,
     adminsLoading,
+    allUsersList,
+    allUsersLoading,
     fetchAdmins,
+    fetchAllUsers,
     fetchInviteSettings,
     validateInviteCode,
     updateInviteCodes,
@@ -873,7 +1011,9 @@ export const useCoachAuth = () => {
     fetchCoachAvatars,
     addCoachAdmin,
     updateCoachRole,
+    updateUserRole,
     removeCoachAdmin,
+    removeTeamUser: removeCoachAdmin,
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,

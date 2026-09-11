@@ -9,6 +9,8 @@ import {
   formatMinutesToTimeStr
 } from '~/modules/results/services/raceresultService'
 
+import { type TeamUserItem } from '~/modules/coach-admin/composables/useCoachAuth'
+
 const props = defineProps<{
   isOpen: boolean
   initialTab?: string
@@ -31,12 +33,16 @@ const {
   authLoading,
   adminsList,
   adminsLoading,
+  allUsersList,
+  allUsersLoading,
   fetchAdmins,
+  fetchAllUsers,
   inviteSettings,
   fetchInviteSettings,
   updateInviteCodes,
   addCoachAdmin,
   updateCoachRole,
+  updateUserRole,
   removeCoachAdmin,
   signInWithGoogle,
   signOut,
@@ -57,44 +63,99 @@ watch(currentRace, (newRace) => {
   form.value = JSON.parse(JSON.stringify(newRace))
 }, { deep: true })
 
-// State for adding new coach
+// State for adding new coach administrator
 const newCoachEmail = ref('')
 const newCoachName = ref('')
-const newCoachRole = ref<'admin' | 'coach'>('coach')
 const isAddingCoach = ref(false)
 
 const handleAddCoach = async () => {
   if (!newCoachEmail.value) return
   isAddingCoach.value = true
-  const res = await addCoachAdmin(newCoachEmail.value, newCoachName.value, newCoachRole.value)
+  const res = await addCoachAdmin(newCoachEmail.value, newCoachName.value)
   isAddingCoach.value = false
   if (res.success) {
-    const roleLabel = newCoachRole.value === 'admin' ? 'Coach Admin' : 'Coach'
-    emit('toast', `✅ Added ${newCoachEmail.value} as ${roleLabel}!`)
+    emit('toast', `✅ Added ${newCoachEmail.value} as Coach Administrator!`)
     newCoachEmail.value = ''
     newCoachName.value = ''
-    newCoachRole.value = 'coach'
   } else {
-    emit('toast', `⛔ ${res.error || 'Failed to add coach'}`)
+    emit('toast', `⛔ ${res.error || 'Failed to add administrator'}`)
   }
 }
 
-const handleUpdateRole = async (email: string, role: 'admin' | 'coach') => {
-  const res = await updateCoachRole(email, role)
+// User Directory State (Search, Role Filter, Column Sorting)
+const userSearchQuery = ref('')
+const userRoleFilter = ref<'all' | 'admin' | 'coach' | 'guardian'>('all')
+const userSortField = ref<'name' | 'email' | 'role' | 'date'>('name')
+const userSortOrder = ref<'asc' | 'desc'>('asc')
+
+const toggleUserSort = (field: 'name' | 'email' | 'role' | 'date') => {
+  if (userSortField.value === field) {
+    userSortOrder.value = userSortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    userSortField.value = field
+    userSortOrder.value = 'asc'
+  }
+}
+
+const filteredUsers = computed(() => {
+  let list = [...allUsersList.value]
+
+  // Search filter (name, email, phone)
+  if (userSearchQuery.value.trim()) {
+    const q = userSearchQuery.value.toLowerCase().trim()
+    list = list.filter(u =>
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.phone && u.phone.includes(q))
+    )
+  }
+
+  // Role filter
+  if (userRoleFilter.value !== 'all') {
+    list = list.filter(u => {
+      if (userRoleFilter.value === 'admin') return u.role === 'admin' || u.role === 'owner'
+      return u.role === userRoleFilter.value
+    })
+  }
+
+  // Sorting
+  list.sort((a, b) => {
+    let comparison = 0
+    if (userSortField.value === 'name') {
+      comparison = (a.name || '').localeCompare(b.name || '')
+    } else if (userSortField.value === 'email') {
+      comparison = (a.email || '').localeCompare(b.email || '')
+    } else if (userSortField.value === 'role') {
+      const roleWeight = (r: string) => r === 'owner' ? 4 : (r === 'admin' ? 3 : (r === 'coach' ? 2 : 1))
+      comparison = roleWeight(b.role) - roleWeight(a.role)
+    } else if (userSortField.value === 'date') {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      comparison = dateB - dateA
+    }
+    return userSortOrder.value === 'asc' ? comparison : -comparison
+  })
+
+  return list
+})
+
+const handleUpdateUserRole = async (userItem: TeamUserItem, newRole: 'admin' | 'coach' | 'guardian') => {
+  const res = await updateUserRole(userItem.email, newRole, userItem.uid)
   if (res.success) {
-    emit('toast', `🔄 Updated ${email} to ${role === 'admin' ? 'Coach Admin' : 'Coach'}`)
+    const roleLabel = newRole === 'admin' ? 'Coach Admin' : (newRole === 'guardian' ? 'Guardian' : 'Coach')
+    emit('toast', `🔄 Updated ${userItem.name || userItem.email} to ${roleLabel}`)
   } else {
-    emit('toast', `⛔ ${res.error || 'Failed to update role'}`)
+    emit('toast', `⛔ ${res.error || 'Failed to update access'}`)
   }
 }
 
-const handleRemoveCoach = async (email: string) => {
-  if (confirm(`Are you sure you want to remove access for ${email}?`)) {
-    const res = await removeCoachAdmin(email)
+const handleRemoveUser = async (userItem: TeamUserItem) => {
+  if (confirm(`Are you sure you want to remove access for ${userItem.name || userItem.email}?`)) {
+    const res = await removeCoachAdmin(userItem.email, userItem.uid)
     if (res.success) {
-      emit('toast', `🗑️ Removed ${email}`)
+      emit('toast', `🗑️ Removed ${userItem.name || userItem.email}`)
     } else {
-      emit('toast', `⛔ ${res.error || 'Failed to remove coach'}`)
+      emit('toast', `⛔ ${res.error || 'Failed to remove user'}`)
     }
   }
 }
@@ -134,11 +195,13 @@ watch(() => props.isOpen, (open) => {
   if (open) {
     fetchInviteSettings()
     fetchAdmins()
+    fetchAllUsers()
   }
 })
 
 onMounted(() => {
   fetchInviteSettings()
+  fetchAllUsers()
 })
 
 const copyCoachLink = async () => {
@@ -1833,33 +1896,25 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
             </div>
 
             <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:14px;">
-              <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);">Manage Team Administrators & Roles</h4>
+              <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);">Add Team Administrator</h4>
               <p style="margin:0 0 10px;font-size:11.5px;color:var(--text-muted);line-height:1.4;">
-                All registered coaches and members can sign in and claim ride leader/support slots directly. Users added here as <strong>Coach Admin</strong> receive full race configuration, schedule editing, and settings control.
+                Users added here as <strong>Coach Admin</strong> receive full race configuration, schedule editing, and settings control. Coaches and guardians register themselves directly using the team invite links above.
               </p>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                 <input
                   v-model="newCoachEmail"
                   type="email"
-                  placeholder="coach.email@gmail.com"
+                  placeholder="admin.email@gmail.com"
                   class="custom-minutes-input"
                   style="flex:2;min-width:180px;"
                 >
                 <input
                   v-model="newCoachName"
                   type="text"
-                  placeholder="Coach Name (Optional)"
+                  placeholder="Admin Name (Optional)"
                   class="custom-minutes-input"
                   style="flex:1.5;min-width:130px;"
                 >
-                <select
-                  v-model="newCoachRole"
-                  class="custom-minutes-input"
-                  style="min-width:125px;height:34px;font-size:12px;padding:2px 6px;"
-                >
-                  <option value="admin">🛡️ Coach Admin</option>
-                  <option value="coach">🚵 Coach</option>
-                </select>
                 <button
                   type="button"
                   class="done-modal-btn admin-save-btn"
@@ -1867,66 +1922,181 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                   :disabled="isAddingCoach"
                   @click="handleAddCoach"
                 >
-                  <span>{{ isAddingCoach ? 'Adding...' : '+ Add Admin / Role' }}</span>
+                  <span>{{ isAddingCoach ? 'Adding...' : '+ Add Administrator' }}</span>
                 </button>
               </div>
             </div>
 
             <div>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <label class="modal-label" style="margin:0;">Active Team Coaches & Admins ({{ adminsList.length }})</label>
-                <button type="button" class="action-mini-btn" @click="fetchAdmins">🔄 Refresh</button>
+              <!-- User Directory Header -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <h4 style="margin:0;font-size:14px;font-weight:700;color:var(--text-main);">Registered Team Users & Admins ({{ allUsersList.length }})</h4>
+                  <div style="font-size:11px;color:var(--text-muted);">View all accounts, search by name/email, and manage administrator privileges.</div>
+                </div>
+                <button type="button" class="action-mini-btn" @click="fetchAllUsers" :disabled="allUsersLoading">
+                  <span>{{ allUsersLoading ? '⏳ Loading...' : '🔄 Refresh' }}</span>
+                </button>
               </div>
 
-              <div v-if="adminsLoading" style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">
-                Loading authorized coaches...
+              <!-- Search Bar & Role Filter Chips -->
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+                <div style="position:relative;flex:1;min-width:200px;">
+                  <input
+                    v-model="userSearchQuery"
+                    type="text"
+                    placeholder="🔍 Search users by name, email, or phone..."
+                    class="custom-minutes-input"
+                    style="width:100%;padding-left:10px;height:34px;font-size:12px;"
+                  />
+                  <button
+                    v-if="userSearchQuery"
+                    type="button"
+                    class="search-clear-btn"
+                    style="right:8px;top:50%;transform:translateY(-50%);"
+                    @click="userSearchQuery = ''"
+                  >✕</button>
+                </div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    :class="{ active: userRoleFilter === 'all' }"
+                    style="font-size:11px;padding:4px 8px;"
+                    @click="userRoleFilter = 'all'"
+                  >All ({{ allUsersList.length }})</button>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    :class="{ active: userRoleFilter === 'admin' }"
+                    style="font-size:11px;padding:4px 8px;"
+                    @click="userRoleFilter = 'admin'"
+                  >🛡️ Admins ({{ allUsersList.filter(u => u.role === 'admin' || u.role === 'owner').length }})</button>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    :class="{ active: userRoleFilter === 'coach' }"
+                    style="font-size:11px;padding:4px 8px;"
+                    @click="userRoleFilter = 'coach'"
+                  >🚵 Coaches ({{ allUsersList.filter(u => u.role === 'coach').length }})</button>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    :class="{ active: userRoleFilter === 'guardian' }"
+                    style="font-size:11px;padding:4px 8px;"
+                    @click="userRoleFilter = 'guardian'"
+                  >👨‍👩‍👧 Guardians ({{ allUsersList.filter(u => u.role === 'guardian').length }})</button>
+                </div>
+              </div>
+
+              <!-- Sort Column Headers -->
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">
+                <div style="display:flex;align-items:center;gap:12px;flex:1;">
+                  <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;" @click="toggleUserSort('name')">
+                    User {{ userSortField === 'name' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                  </span>
+                  <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;" @click="toggleUserSort('email')">
+                    Email {{ userSortField === 'email' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                  </span>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;">
+                  <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;" @click="toggleUserSort('role')">
+                    Role / Access {{ userSortField === 'role' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                  </span>
+                  <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:3px;" @click="toggleUserSort('date')">
+                    Joined {{ userSortField === 'date' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                  </span>
+                  <span style="width:75px;text-align:right;">Actions</span>
+                </div>
+              </div>
+
+              <!-- User List Content -->
+              <div v-if="allUsersLoading" style="text-align:center;padding:24px;color:var(--text-muted);font-size:12px;">
+                Loading team users...
+              </div>
+              <div v-else-if="filteredUsers.length === 0" style="text-align:center;padding:24px;background:var(--bg-subtle);border:1px dashed var(--border);border-radius:8px;color:var(--text-muted);font-size:12px;">
+                No users found matching your search or filter.
               </div>
               <div v-else style="display:flex;flex-direction:column;gap:6px;">
                 <div
-                  v-for="admin in adminsList"
-                  :key="admin.email"
-                  style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;gap:8px;flex-wrap:wrap;"
+                  v-for="u in filteredUsers"
+                  :key="u.id || u.email"
+                  style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;gap:10px;flex-wrap:wrap;transition:all 0.15s ease;"
                 >
-                  <div style="display:flex;align-items:center;gap:10px;min-width:200px;">
-                    <span style="font-size:18px;">{{ admin.role === 'coach' ? '🚵' : '🛡️' }}</span>
-                    <div>
+                  <!-- Left: Avatar + Name + Email + Badges -->
+                  <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:220px;">
+                    <img
+                      v-if="u.photoURL"
+                      :src="u.photoURL"
+                      alt="Avatar"
+                      referrerpolicy="no-referrer"
+                      style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,0.15);flex-shrink:0;"
+                    />
+                    <div
+                      v-else
+                      style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--text-main);flex-shrink:0;"
+                    >
+                      {{ (u.name || u.email).slice(0, 2).toUpperCase() }}
+                    </div>
+
+                    <div style="min-width:0;">
                       <div style="font-weight:700;font-size:13px;color:var(--text-main);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                        <span>{{ admin.name || admin.email.split('@')[0] }}</span>
+                        <span>{{ u.name }}</span>
                         <span
                           class="category-badge"
-                          :style="admin.role === 'coach' ? 'background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:#60a5fa;' : 'background:rgba(220,38,38,0.12);border-color:rgba(220,38,38,0.3);color:var(--accent-red);'"
+                          :style="u.role === 'owner' ? 'background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.35);color:#c084fc;' :
+                                 u.role === 'admin' ? 'background:rgba(220,38,38,0.15);border-color:rgba(220,38,38,0.35);color:var(--accent-red);' :
+                                 u.role === 'guardian' ? 'background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.35);color:#4ade80;' :
+                                 'background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:#60a5fa;'"
                         >
-                          {{ admin.role === 'coach' ? 'Coach' : (admin.role === 'owner' ? 'Owner / Head Coach' : 'Admin') }}
+                          {{ u.role === 'owner' ? 'Owner / Head Coach' : (u.role === 'admin' ? 'Admin' : (u.role === 'guardian' ? 'Guardian' : 'Coach')) }}
                         </span>
                         <span
-                          v-if="admin.email.toLowerCase() === user?.email?.toLowerCase()"
+                          v-if="u.email.toLowerCase() === user?.email?.toLowerCase()"
                           style="font-size:10px;color:#22c55e;background:rgba(34,197,94,0.15);padding:1px 5px;border-radius:4px;font-weight:600;"
                         >You</span>
+                        <span
+                          v-if="u.isPendingAdmin"
+                          style="font-size:10px;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);padding:1px 5px;border-radius:4px;font-weight:600;"
+                          title="Administrator added in database, awaiting account registration"
+                        >Invited Admin</span>
                       </div>
-                      <div style="font-size:11px;color:var(--text-muted);">{{ admin.email }}</div>
+                      <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:8px;margin-top:2px;">
+                        <span>{{ u.email }}</span>
+                        <span v-if="u.phone" style="opacity:0.8;">• 📞 {{ u.phone }}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-                    <!-- Role selector (if not owner/self) -->
+                  <!-- Right: Role dropdown + Remove action -->
+                  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+                    <!-- Interactive Role Selector Dropdown -->
                     <select
-                      v-if="admin.role !== 'owner' && admin.email.toLowerCase() !== user?.email?.toLowerCase()"
-                      :value="admin.role === 'coach' ? 'coach' : 'admin'"
+                      v-if="u.role !== 'owner' && u.email.toLowerCase() !== user?.email?.toLowerCase()"
+                      :value="u.role === 'admin' ? 'admin' : (u.role === 'guardian' ? 'guardian' : 'coach')"
                       class="custom-minutes-input"
-                      style="font-size:11px;height:28px;padding:2px 4px;width:115px;"
-                      @change="handleUpdateRole(admin.email, ($event.target as HTMLSelectElement).value as 'admin' | 'coach')"
+                      style="font-size:11.5px;height:30px;padding:2px 8px;font-weight:600;min-width:130px;"
+                      @change="handleUpdateUserRole(u, ($event.target as HTMLSelectElement).value as 'admin' | 'coach' | 'guardian')"
                     >
-                      <option value="coach">🚵 Coach</option>
                       <option value="admin">🛡️ Admin</option>
+                      <option value="coach">🚵 Coach</option>
+                      <option value="guardian">👨‍👩‍👧 Guardian</option>
                     </select>
+                    <span
+                      v-else
+                      style="font-size:11px;color:var(--text-muted);padding:4px 8px;font-style:italic;"
+                    >
+                      {{ u.role === 'owner' ? '🔒 Founder' : '🔒 Active Session' }}
+                    </span>
 
+                    <!-- Remove Action -->
                     <button
-                      v-if="admin.role !== 'owner' && admin.email.toLowerCase() !== user?.email?.toLowerCase()"
+                      v-if="u.role !== 'owner' && u.email.toLowerCase() !== user?.email?.toLowerCase()"
                       type="button"
                       class="search-clear-btn"
-                      style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
-                      title="Remove coach access"
-                      @click="handleRemoveCoach(admin.email)"
+                      style="position:static;display:inline-flex;align-items:center;color:#ef4444;font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
+                      title="Remove user or revoke admin access"
+                      @click="handleRemoveUser(u)"
                     >
                       ✕ Remove
                     </button>

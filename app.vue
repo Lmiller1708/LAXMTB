@@ -16,6 +16,7 @@ const isProfileOpen = ref(false)
 const initialAuthMode = ref<'login' | 'signup'>('login')
 const activeInviteCode = ref('')
 const adminInitialTab = ref('venue')
+const isAdminRoute = ref(false)
 
 const { currentRace, currentRaceSlug, races, currentRaceIndex, selectRace, selectRaceBySlug, updateRace } = useCurrentRace()
 const { user, isCoachAuth } = useCoachAuth()
@@ -154,10 +155,27 @@ const syncFromRoute = () => {
   try {
     let path = window.location.pathname || route.path
 
-    // Handle GitHub Pages hash redirect (e.g. /#/race/bluffbash/details)
-    if (window.location.hash && window.location.hash.startsWith('#/')) {
-      path = window.location.hash.substring(1)
+    // Handle GitHub Pages hash redirect (e.g. /#/race/bluffbash/details or #admin)
+    if (window.location.hash && (window.location.hash.startsWith('#/') || window.location.hash === '#admin')) {
+      if (window.location.hash === '#admin' || window.location.hash.startsWith('#/admin')) {
+        path = '/admin'
+      } else {
+        path = window.location.hash.substring(1)
+      }
       window.history.replaceState(null, '', path)
+    }
+
+    // Check if on /admin route
+    if (path === '/admin' || path.startsWith('/admin') || route.path === '/admin' || route.path.startsWith('/admin')) {
+      isAdminRoute.value = true
+      const params = new URLSearchParams(window.location.search)
+      const adminTabParam = params.get('tab')
+      if (adminTabParam) {
+        adminInitialTab.value = adminTabParam
+      }
+      return
+    } else {
+      isAdminRoute.value = false
     }
 
     // Check URL query/hash legacy parameters
@@ -293,7 +311,21 @@ onUnmounted(() => {
 
 const openAdminWithTab = (tab: string) => {
   adminInitialTab.value = tab
-  isAdminOpen.value = true
+  isAdminRoute.value = true
+  if (import.meta.client) {
+    const target = `/admin?tab=${encodeURIComponent(tab)}`
+    window.history.pushState({ admin: true, tab }, '', target)
+    router.push(target).catch(() => {})
+  }
+}
+
+const navigateBackFromAdmin = () => {
+  isAdminRoute.value = false
+  if (import.meta.client) {
+    const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
+    const slug = slugifyRaceId(race?.id || 'race')
+    updateUrl(slug, currentTab.value, true)
+  }
 }
 
 const handleSaveRace = (updated: Race) => {
@@ -308,9 +340,9 @@ const handleSyncData = () => {
   }, 1000)
 }
 
-watch([isWhatsNewOpen, isNotifOpen, isAdminOpen, isAuthOpen, isProfileOpen], ([wn, notif, admin, auth, prof]) => {
+watch([isWhatsNewOpen, isNotifOpen, isAuthOpen, isProfileOpen], ([wn, notif, auth, prof]) => {
   if (import.meta.client) {
-    document.body.classList.toggle('modal-open', Boolean(wn || notif || admin || auth || prof))
+    document.body.classList.toggle('modal-open', Boolean(wn || notif || auth || prof))
   }
 })
 
@@ -326,47 +358,50 @@ const handlePrint = () => {
     <!-- Toast Notification Container -->
     <div class="notif-toast-container" id="notifToastContainer"></div>
 
-    <!-- Site Header -->
-    <header class="site-header">
-      <!-- 1. Fixed Brand Header & Controls -->
-      <AppHeader
-        @open-whats-new="isWhatsNewOpen = true"
-        @open-notifications="isNotifOpen = true"
-        @open-admin="openAdminWithTab('venue')"
-        @open-auth="openAuthWithMode('login')"
-        @open-profile="isProfileOpen = true"
-        @sync-data="handleSyncData"
-        @toast="showNotifToast"
-      />
-
-      <!-- 2. Season Race Switcher Bar -->
-      <RaceSwitcherBar @select-race="setRace" />
-
-      <!-- 3. Navigation Tabs -->
-      <NavigationTabs :current-tab="currentTab" :is-coach-auth="isCoachAuth" @change-tab="setTab" />
-    </header>
-
-    <!-- Modals -->
-    <WhatsNewModal
-      :is-open="isWhatsNewOpen"
-      @close="isWhatsNewOpen = false"
-      @open-notifications="isNotifOpen = true"
-    />
-
-    <NotificationModal
-      :is-open="isNotifOpen"
-      @close="isNotifOpen = false"
-    />
-
-    <AdminModal
-      :is-open="isAdminOpen"
+    <!-- DEDICATED COACH ADMIN PAGE -->
+    <AdminPage
+      v-if="isAdminRoute"
       :initial-tab="adminInitialTab"
-      @close="isAdminOpen = false"
+      @back="navigateBackFromAdmin"
       @save="handleSaveRace"
       @toast="showNotifToast"
     />
 
-    <AuthModal
+    <!-- PUBLIC RACE CENTRAL VIEW -->
+    <div v-else>
+      <!-- Site Header -->
+      <header class="site-header">
+        <!-- 1. Fixed Brand Header & Controls -->
+        <AppHeader
+          @open-whats-new="isWhatsNewOpen = true"
+          @open-notifications="isNotifOpen = true"
+          @open-admin="openAdminWithTab('venue')"
+          @open-auth="openAuthWithMode('login')"
+          @open-profile="isProfileOpen = true"
+          @sync-data="handleSyncData"
+          @toast="showNotifToast"
+        />
+
+        <!-- 2. Season Race Switcher Bar -->
+        <RaceSwitcherBar @select-race="setRace" />
+
+        <!-- 3. Navigation Tabs -->
+        <NavigationTabs :current-tab="currentTab" :is-coach-auth="isCoachAuth" @change-tab="setTab" />
+      </header>
+
+      <!-- Modals -->
+      <WhatsNewModal
+        :is-open="isWhatsNewOpen"
+        @close="isWhatsNewOpen = false"
+        @open-notifications="isNotifOpen = true"
+      />
+
+      <NotificationModal
+        :is-open="isNotifOpen"
+        @close="isNotifOpen = false"
+      />
+
+      <AuthModal
       :is-open="isAuthOpen"
       :initial-mode="initialAuthMode"
       :initial-invite-code="activeInviteCode"
@@ -487,5 +522,6 @@ const handlePrint = () => {
         @edit="openAdminWithTab('photos')"
       />
     </main>
+    </div>
   </div>
 </template>
