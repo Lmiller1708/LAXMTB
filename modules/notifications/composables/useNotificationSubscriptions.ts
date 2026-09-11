@@ -18,6 +18,7 @@ export interface SubscribedRideGroup {
   sessionType: 'wu' | 'pr'
   meetingTime: string
   stagingTime?: string
+  startTime?: string
   day?: string
   date?: string
   categories?: string[]

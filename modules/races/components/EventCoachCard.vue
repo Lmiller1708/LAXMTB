@@ -3,7 +3,13 @@ import { ref, computed, nextTick, onMounted } from 'vue'
 import type { Race, CoachSlot, WarmupGroup } from '../types/race'
 import { useCurrentRace } from '../composables/useCurrentRace'
 import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
-import { getCategoryStartTime, getCategoryStageTime } from '~/modules/results/services/raceresultService'
+import {
+  getCategoryStartTime,
+  getCategoryStageTime,
+  getCategoryStartTimeMinutes,
+  parseTimeStrToMinutes,
+  formatMinutesToTimeStr
+} from '~/modules/results/services/raceresultService'
 import { useNotificationSubscriptions } from '~/modules/notifications/composables/useNotificationSubscriptions'
 
 type SessionKey = 'pr' | 'wu'
@@ -67,6 +73,39 @@ const getSlotCategories = (slot: any): string[] => {
 
 const getCatStart = (cat: string) => getCategoryStartTime(props.race, cat)
 const getCatStage = (cat: string) => getCategoryStageTime(props.race, cat)
+
+const getSlotStartTime = (slot: any): string | null => {
+  if (slot.startTime) return slot.startTime
+
+  const cats = getSlotCategories(slot)
+  if (cats && cats.length > 0) {
+    let earliestMins: number | null = null
+    let earliestStr: string | null = null
+    for (const cat of cats) {
+      const startStr = getCatStart(cat)
+      if (startStr) {
+        const mins = getCategoryStartTimeMinutes(props.race, cat)
+        if (mins !== 9999 && (earliestMins === null || mins < earliestMins)) {
+          earliestMins = mins
+          earliestStr = startStr
+        }
+      }
+    }
+    if (earliestStr) return earliestStr
+  }
+
+  if (slot.stagingTime) {
+    const stageMins = parseTimeStrToMinutes(slot.stagingTime)
+    if (stageMins !== null) {
+      const offset = (props.race && typeof props.race.stagingOffsetMinutes === 'number')
+        ? props.race.stagingOffsetMinutes
+        : 15
+      return formatMinutesToTimeStr(stageMins + offset)
+    }
+  }
+
+  return null
+}
 
 interface DayGroup {
   day: string
@@ -284,6 +323,7 @@ const saveCoachName = async (slot: any, role: 'leader' | 'support', itemToSave: 
       sessionType: activeSession.value,
       meetingTime: slot.meetingTime || '8:00 AM',
       stagingTime: slot.stagingTime,
+      startTime: getSlotStartTime(slot) || undefined,
       day: slot.day,
       date: slot.date,
       categories: getSlotCategories(slot),
@@ -449,12 +489,15 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
 
                 <!-- Time Badges & Alert Status -->
                 <div class="coach-slot-time-group" style="display:flex;align-items:center;gap:6px;">
-                  <template v-if="slot.stagingTime">
-                    <span class="time-badge" style="font-size:10.5px;padding:1px 6px;">
+                  <template v-if="slot.stagingTime || getSlotStartTime(slot)">
+                    <span v-if="slot.meetingTime" class="time-badge" style="font-size:10.5px;padding:1px 6px;">
                       <span style="font-size:9px;color:var(--text-muted);font-weight:700;margin-right:2px;">MEET</span>{{ slot.meetingTime }}
                     </span>
-                    <span class="time-badge" style="border-color:rgba(239,68,68,0.4);color:#f87171;font-size:10.5px;padding:1px 6px;">
+                    <span v-if="slot.stagingTime" class="time-badge" style="border-color:rgba(239,68,68,0.4);color:#f87171;font-size:10.5px;padding:1px 6px;">
                       <span style="font-size:9px;opacity:0.8;font-weight:700;margin-right:2px;">STAGE</span>{{ slot.stagingTime }}
+                    </span>
+                    <span v-if="getSlotStartTime(slot)" class="time-badge" style="border-color:rgba(34,197,94,0.4);color:#4ade80;font-size:10.5px;padding:1px 6px;">
+                      <span style="font-size:9px;opacity:0.8;font-weight:700;margin-right:2px;">START</span>{{ getSlotStartTime(slot) }}
                     </span>
                   </template>
                   <template v-else>
@@ -478,6 +521,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                       sessionType: activeSession,
                       meetingTime: slot.meetingTime || '8:00 AM',
                       stagingTime: slot.stagingTime,
+                      startTime: getSlotStartTime(slot) || undefined,
                       day: slot.day,
                       date: slot.date,
                       categories: getSlotCategories(slot),
