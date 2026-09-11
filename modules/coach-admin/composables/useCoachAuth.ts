@@ -50,6 +50,13 @@ export interface UserProfile {
   role?: 'admin' | 'coach' | 'guardian' | 'owner'
   createdAt?: string
   updatedAt?: string
+  notificationSubscriptions?: {
+    categories?: string[]
+    waves?: string[]
+    rideGroups?: any[]
+    config?: any
+    updatedAt?: string
+  }
 }
 
 export interface InviteSettings {

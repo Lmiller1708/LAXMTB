@@ -15,6 +15,8 @@ const {
   subscribedWaves,
   subscribedRideGroups,
   permissionStatus,
+  user,
+  isSyncing,
   saveConfig,
   removeSubByIndex,
   removeRideGroupByIndex,
@@ -152,7 +154,31 @@ const onSoundChange = () => {
         </div>
 
         <div class="modal-section">
-          <label class="modal-label">Active Subscriptions</label>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label class="modal-label" style="margin:0;">Active Subscriptions</label>
+            <span v-if="user" style="font-size:11px;color:#4ade80;display:flex;align-items:center;gap:4px;font-weight:600;">
+              <span>☁️</span> Tied to account
+            </span>
+            <span v-else style="font-size:11px;color:var(--text-muted);">
+              Saved locally
+            </span>
+          </div>
+
+          <!-- Account sync banner -->
+          <div v-if="user" style="font-size:11.5px;color:var(--text-muted);margin-bottom:10px;padding:6px 10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.22);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div style="display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+              <span>👤</span>
+              <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Account: <strong style="color:var(--text-main);">{{ user.displayName || user.email }}</strong></span>
+            </div>
+            <span style="font-size:10.5px;color:#4ade80;font-weight:700;white-space:nowrap;">
+              {{ isSyncing ? 'Syncing...' : '✓ Synced to Cloud' }}
+            </span>
+          </div>
+          <div v-else style="font-size:11px;color:var(--text-muted);margin-bottom:10px;padding:6px 10px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px;">
+            <span>ℹ️</span>
+            <span>Sign in to tie alerts to your account and sync across all your devices.</span>
+          </div>
+
           <div class="active-subs-box">
             <template v-if="subscribedCategories.length === 0 && subscribedWaves.length === 0 && subscribedRideGroups.length === 0">
               <span style="color:var(--text-muted);font-size:12px;">No active alerts. Tap 🔔 on any category, wave, or sign up for a ride group to subscribe.</span>
