@@ -117,4 +117,25 @@ describe('Team Invite Gatekeeping & Role Permissions', () => {
       expect(canEditCoachSignups(coachUser, null, true, false)).toBe(true)
     })
   })
+
+  describe('Registration Role Assignment', () => {
+    it('assigns coach role when registering with lax-coach-2026', () => {
+      const inviteCheck = validateInviteCode('lax-coach-2026')
+      expect(inviteCheck.valid).toBe(true)
+      const assignedRole = inviteCheck.role || 'guardian'
+      expect(assignedRole).toBe('coach')
+    })
+
+    it('assigns guardian role when registering with lax-guardian-2026', () => {
+      const inviteCheck = validateInviteCode('lax-guardian-2026')
+      expect(inviteCheck.valid).toBe(true)
+      const assignedRole = inviteCheck.role || 'guardian'
+      expect(assignedRole).toBe('guardian')
+    })
+
+    it('prevents registration when invite code is invalid', () => {
+      const inviteCheck = validateInviteCode('invalid-code')
+      expect(inviteCheck.valid).toBe(false)
+    })
+  })
 })

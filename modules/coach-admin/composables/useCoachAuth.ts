@@ -256,6 +256,54 @@ export const useCoachAuth = () => {
   }
 
   /**
+   * Accept an invite code for an already-authenticated user (e.g. upgrade from guardian to coach)
+   */
+  const acceptInviteForCurrentUser = async (inviteCode: string): Promise<{ success: boolean; role?: UserRole; error?: string }> => {
+    if (!user.value || !db) return { success: false, error: 'Not authenticated' }
+    const check = validateInviteCode(inviteCode)
+    if (!check.valid || !check.role) {
+      return { success: false, error: check.error || 'Invalid invite code' }
+    }
+    const targetRole = check.role
+    const cleanEmail = user.value.email?.toLowerCase().trim() || ''
+
+    // Do not demote admins or owners
+    if (coachRole.value === 'admin' || coachRole.value === 'owner') {
+      return { success: true, role: coachRole.value }
+    }
+
+    try {
+      if (user.value.uid) {
+        await setDoc(doc(db, 'users', user.value.uid), {
+          role: targetRole,
+          updatedAt: new Date().toISOString()
+        }, { merge: true })
+      }
+
+      if (targetRole === 'coach' && cleanEmail) {
+        await setDoc(doc(db, 'admins', cleanEmail), {
+          email: cleanEmail,
+          name: user.value.displayName || cleanEmail.split('@')[0],
+          role: 'coach',
+          addedAt: new Date().toISOString(),
+          addedBy: 'invite-coach'
+        }, { merge: true })
+        coachRole.value = 'coach'
+        isAuthorizedCoach.value = true
+      }
+
+      if (userProfile.value) {
+        userProfile.value.role = targetRole
+      }
+
+      return { success: true, role: targetRole }
+    } catch (err: any) {
+      console.warn('[useCoachAuth] acceptInviteForCurrentUser error:', err)
+      return { success: false, error: err.message || 'Failed to apply invite' }
+    }
+  }
+
+  /**
    * Load or initialize the user's Firestore profile doc in `users/{uid}`
    */
   const syncUserProfile = async (firebaseUser: any) => {
@@ -284,18 +332,48 @@ export const useCoachAuth = () => {
           setDoc(userRef, { photoURL: firebaseUser.photoURL }, { merge: true }).catch(() => {})
         }
       } else {
+        let initialRole: UserRole = 'guardian'
+        if (isAdminCoach.value) {
+          initialRole = 'admin'
+        } else if (isAuthorizedCoach.value) {
+          initialRole = 'coach'
+        } else if (import.meta.client) {
+          const token = sessionStorage.getItem('laxmtb_invite_token')
+          if (token) {
+            const chk = validateInviteCode(token)
+            if (chk.valid && chk.role) {
+              initialRole = chk.role
+            }
+          }
+        }
+
         const initialProfile: UserProfile = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
           name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'MTB Member',
           phone: '',
           photoURL: firebaseUser.photoURL || '',
-          role: isAdminCoach.value ? 'admin' : 'guardian',
+          role: initialRole,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
         await setDoc(userRef, initialProfile)
         userProfile.value = initialProfile
+
+        if (initialRole === 'coach' && firebaseUser.email) {
+          const cleanEmail = firebaseUser.email.toLowerCase().trim()
+          try {
+            await setDoc(doc(db, 'admins', cleanEmail), {
+              email: cleanEmail,
+              name: initialProfile.name,
+              role: 'coach',
+              addedAt: new Date().toISOString(),
+              addedBy: 'invite-coach'
+            }, { merge: true })
+            coachRole.value = 'coach'
+            isAuthorizedCoach.value = true
+          } catch (e) {}
+        }
       }
     } catch (err) {
       console.warn('[useCoachAuth] Error syncing user profile from Firestore:', err)
@@ -713,6 +791,7 @@ export const useCoachAuth = () => {
           return { success: false, error: errMsg }
         }
 
+        const assignedRole: UserRole = isPreAdmin ? 'admin' : (inviteCheck.role || 'guardian')
         if (db && result.user.uid) {
           const newProf: UserProfile = {
             uid: result.user.uid,
@@ -720,12 +799,28 @@ export const useCoachAuth = () => {
             name: result.user.displayName || email.split('@')[0] || 'Team Member',
             phone: '',
             photoURL: result.user.photoURL || '',
-            role: isPreAdmin ? 'admin' : (inviteCheck.role || 'coach'),
+            role: assignedRole,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           }
           await setDoc(doc(db, 'users', result.user.uid), newProf)
           userProfile.value = newProf
+
+          if (assignedRole === 'coach') {
+            try {
+              await setDoc(doc(db, 'admins', cleanEmail), {
+                email: cleanEmail,
+                name: newProf.name,
+                role: 'coach',
+                addedAt: new Date().toISOString(),
+                addedBy: 'invite-coach'
+              }, { merge: true })
+              coachRole.value = 'coach'
+              isAuthorizedCoach.value = true
+            } catch (admErr) {
+              console.warn('[useCoachAuth] Could not write coach to admins collection:', admErr)
+            }
+          }
         }
       } else {
         await syncUserProfile(result.user)
@@ -824,6 +919,8 @@ export const useCoachAuth = () => {
       return { success: false, error: inviteCheck.error || 'Registration is by invitation only.' }
     }
 
+    const assignedRole: UserRole = inviteCheck.role || 'guardian'
+
     authError.value = ''
     authLoading.value = true
 
@@ -843,12 +940,28 @@ export const useCoachAuth = () => {
           email: cred.user.email?.toLowerCase().trim() || email.trim().toLowerCase(),
           name: name.trim(),
           phone: phone.trim(),
-          role: 'guardian',
+          role: assignedRole,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
         await setDoc(userRef, profileData)
         userProfile.value = profileData
+
+        if (assignedRole === 'coach') {
+          try {
+            await setDoc(doc(db, 'admins', cleanEmail), {
+              email: cleanEmail,
+              name: name.trim(),
+              role: 'coach',
+              addedAt: new Date().toISOString(),
+              addedBy: 'invite-coach'
+            }, { merge: true })
+            coachRole.value = 'coach'
+            isAuthorizedCoach.value = true
+          } catch (admErr) {
+            console.warn('[useCoachAuth] Could not write coach to admins collection:', admErr)
+          }
+        }
       }
 
       await verifyCoachEmail(cred.user.email || '')
@@ -1069,6 +1182,7 @@ export const useCoachAuth = () => {
     fetchInviteSettings,
     validateInviteCode,
     updateInviteCodes,
+    acceptInviteForCurrentUser,
     coachAvatarMap,
     fetchCoachAvatars,
     addCoachAdmin,

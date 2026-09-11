@@ -19,7 +19,7 @@ const adminInitialTab = ref('venue')
 const isAdminRoute = ref(false)
 
 const { currentRace, currentRaceSlug, races, currentRaceIndex, selectRace, selectRaceBySlug, updateRace } = useCurrentRace()
-const { user, isCoachAuth } = useCoachAuth()
+const { user, isCoachAuth, acceptInviteForCurrentUser } = useCoachAuth()
 
 const openAuthWithMode = (mode: 'login' | 'signup' = 'login') => {
   initialAuthMode.value = mode
@@ -194,6 +194,12 @@ const syncFromRoute = () => {
         initialAuthMode.value = 'signup'
         isAuthOpen.value = true
         showNotifToast('🎟️ Team Invite Accepted!', 'Please complete your registration below.')
+      } else {
+        acceptInviteForCurrentUser(cleanInvite).then((res) => {
+          if (res?.success && res.role === 'coach') {
+            showNotifToast('🎉 Coach Invite Accepted!', 'Your account has been upgraded to Team Coach.')
+          }
+        })
       }
     } else {
       if (import.meta.client) {
