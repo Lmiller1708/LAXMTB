@@ -34,7 +34,13 @@ export const isRaceCompleted = (race?: Race | null): boolean => {
   try {
     const parts = race.dateStr.split('-')
     const endPart = (parts.length > 1 ? parts[1] : parts[0]).trim()
-    const parsed = new Date(`${endPart} 23:59:59`)
+    let dateToParse = endPart
+    if (!/\d{4}/.test(endPart)) {
+      const yearMatch = race.dateStr.match(/\d{4}/)
+      const year = yearMatch ? yearMatch[0] : new Date().getFullYear()
+      dateToParse = `${endPart} ${year}`
+    }
+    const parsed = new Date(`${dateToParse} 23:59:59`)
     if (!isNaN(parsed.getTime())) {
       return Date.now() > parsed.getTime()
     }
@@ -43,9 +49,38 @@ export const isRaceCompleted = (race?: Race | null): boolean => {
   return false
 }
 
+const RACES_CACHE_KEY = 'laxmtb_cached_races'
+
+const readCachedRaces = (): Race[] | null => {
+  if (!import.meta.client) return null
+  try {
+    const raw = localStorage.getItem(RACES_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed
+    }
+  } catch (e) {
+    console.warn('[Cache] Could not parse cached races from localStorage:', e)
+  }
+  return null
+}
+
+const writeCachedRaces = (raceList: Race[]) => {
+  if (!import.meta.client || !Array.isArray(raceList) || raceList.length === 0) return
+  try {
+    localStorage.setItem(RACES_CACHE_KEY, JSON.stringify(raceList))
+  } catch (e) {
+    console.warn('[Cache] Could not write cached races to localStorage:', e)
+  }
+}
+
 export const useCurrentRace = () => {
   const db = useFirestore()
-  const races = useState<Race[]>('all_races', () => (fallbackEvents as Race[]))
+  const races = useState<Race[]>('all_races', () => {
+    const cached = readCachedRaces()
+    return (cached || fallbackEvents) as Race[]
+  })
   const currentRaceIndex = useState<number>('current_race_index', () => 0)
   const isSyncingFirestore = useState<boolean>('races_firestore_syncing', () => false)
 
@@ -76,6 +111,14 @@ export const useCurrentRace = () => {
   // Subscribe to real-time updates from Firestore
   if (import.meta.client && db) {
     onMounted(() => {
+      // Immediate hydration from localStorage cache if offline or currently holding fallback
+      const cached = readCachedRaces()
+      if (cached && cached.length > 0) {
+        if (!navigator.onLine || JSON.stringify(races.value) === JSON.stringify(fallbackEvents)) {
+          races.value = cached
+        }
+      }
+
       if (isSyncingFirestore.value) return
       isSyncingFirestore.value = true
 
@@ -129,9 +172,10 @@ export const useCurrentRace = () => {
             })
 
             races.value = list
+            writeCachedRaces(list)
           },
           (err) => {
-            console.warn('[Firestore] Real-time races subscription error (using fallback events):', err)
+            console.warn('[Firestore] Real-time races subscription note (using offline cache/fallback):', err)
           }
         )
       } catch (e) {
@@ -180,6 +224,7 @@ export const useCurrentRace = () => {
 
   const setRaces = (newRaces: Race[]) => {
     races.value = newRaces
+    writeCachedRaces(newRaces)
   }
 
   /**
@@ -198,6 +243,7 @@ export const useCurrentRace = () => {
       const nextRaces = [...races.value]
       nextRaces[idx] = cleanUpdated
       races.value = nextRaces
+      writeCachedRaces(nextRaces)
     }
 
     // Persist directly to Firestore
@@ -206,8 +252,12 @@ export const useCurrentRace = () => {
         const docRef = doc(db, 'races', targetId)
         await setDoc(docRef, cleanUpdated, { merge: true })
         console.info('[Firestore] Saved race to Firestore:', targetId)
-      } catch (e) {
-        console.error('[Firestore] Could not save race to Firestore:', e)
+      } catch (e: any) {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          console.info('[Firestore] Offline: race saved locally in cache, queued for sync:', targetId)
+        } else {
+          console.error('[Firestore] Could not save race to Firestore:', e)
+        }
       }
     }
   }
@@ -229,6 +279,7 @@ export const useCurrentRace = () => {
         coachSignups: cleanSignups
       }
       races.value = nextRaces
+      writeCachedRaces(nextRaces)
     }
 
     if (db && targetId) {
@@ -236,9 +287,13 @@ export const useCurrentRace = () => {
         const docRef = doc(db, 'races', targetId)
         await updateDoc(docRef, { coachSignups: cleanSignups })
         console.info('[Firestore] Saved coachSignups to Firestore:', targetId)
-      } catch (e) {
-        console.error('[Firestore] Could not save coachSignups to Firestore:', e)
-        throw e
+      } catch (e: any) {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          console.info('[Firestore] Offline: coachSignups saved locally in cache, queued for sync:', targetId)
+        } else {
+          console.error('[Firestore] Could not save coachSignups to Firestore:', e)
+          throw e
+        }
       }
     }
   }

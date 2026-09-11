@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue'
 import type { Race, CoachSlot, WarmupGroup } from '../types/race'
-import { useCurrentRace } from '../composables/useCurrentRace'
+import { useCurrentRace, isRaceCompleted } from '../composables/useCurrentRace'
 import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
 import {
   getCategoryStartTime,
@@ -34,6 +34,10 @@ const {
   coachAvatarMap,
   fetchCoachAvatars
 } = useCoachAuth()
+
+const isEventCompleted = computed(() => isRaceCompleted(props.race))
+const isSignupsClosed = computed(() => isEventCompleted.value)
+const canEditSignupsActive = computed(() => canEditCoachSignups.value && !isSignupsClosed.value)
 
 onMounted(() => {
   fetchCoachAvatars()
@@ -162,6 +166,7 @@ const splitTime = (timeStr?: string) => {
 }
 
 const startInlineInput = (slotId: string, role: 'leader' | 'support') => {
+  if (isSignupsClosed.value) return
   if (!canEditCoachSignups.value) {
     emit('openAuth')
     return
@@ -232,6 +237,11 @@ const isMeSignedUp = (slot: any, role: 'leader' | 'support'): boolean => {
 }
 
 const addMeQuick = async (slot: any, role: 'leader' | 'support') => {
+  if (isSignupsClosed.value) return
+  if (!canEditCoachSignups.value) {
+    emit('openAuth')
+    return
+  }
   const name = getMyName.value
   if (!name) return
   const item: { name: string; photoURL?: string } = { name }
@@ -243,6 +253,7 @@ const addMeQuick = async (slot: any, role: 'leader' | 'support') => {
 }
 
 const submitInlineName = async (slot: any, role: 'leader' | 'support') => {
+  if (isSignupsClosed.value) return
   const val = inlineNameInput.value.trim()
   if (!val) {
     cancelInlineInput()
@@ -260,6 +271,7 @@ const submitInlineName = async (slot: any, role: 'leader' | 'support') => {
 }
 
 const saveCoachName = async (slot: any, role: 'leader' | 'support', itemToSave: any) => {
+  if (isSignupsClosed.value) return
   const name = getCoachName(itemToSave)
   const updatedRace = JSON.parse(JSON.stringify(props.race)) as Race
   if (!updatedRace.coachSignups) {
@@ -346,6 +358,7 @@ const saveCoachName = async (slot: any, role: 'leader' | 'support', itemToSave: 
 }
 
 const removeCoachName = async (slot: any, role: 'leader' | 'support', index: number) => {
+  if (isSignupsClosed.value) return
   if (!canEditCoachSignups.value) {
     emit('openAuth')
     return
@@ -410,7 +423,8 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="signup-hub-title">
           <span>🚵</span> Coach Sign-Ups
-          <span v-if="canEditCoachSignups" class="signup-badge-active">✏️ Editing Enabled</span>
+          <span v-if="isSignupsClosed" class="signup-badge-closed">🔒 Sign-Ups Closed</span>
+          <span v-else-if="canEditCoachSignups" class="signup-badge-active">✏️ Editing Enabled</span>
         </span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -428,6 +442,12 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
     </div>
 
     <div v-show="isOpen" class="collapsible-body">
+      <!-- Closed banner if race date range has passed -->
+      <div v-if="isSignupsClosed" class="signups-closed-banner">
+        <span>🔒</span>
+        <span>This event has concluded ({{ race.dateStr }}). Coach sign-ups are closed.</span>
+      </div>
+
       <!-- Session Pills Toolbar -->
       <div class="signup-tabs-toolbar" style="margin-bottom:8px;">
         <div class="signup-pills-group">
@@ -596,9 +616,9 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                           {{ getCoachInitials(coachItem) }}
                         </span>
                         <span class="coach-chip-name">{{ getCoachName(coachItem) }}</span>
-                        <!-- ✕ Remove button only visible if user can edit -->
+                        <!-- ✕ Remove button only visible if user can edit and event is active -->
                         <button
-                          v-if="canEditCoachSignups"
+                          v-if="canEditSignupsActive"
                           type="button"
                           class="coach-chip-remove"
                           title="Remove coach"
@@ -608,16 +628,16 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                         </button>
                       </div>
 
-                      <!-- Empty slot notice when locked -->
+                      <!-- Empty slot notice when locked or closed -->
                       <span
-                        v-if="!canEditCoachSignups && (!slot.leaders || slot.leaders.length === 0)"
+                        v-if="!canEditSignupsActive && (!slot.leaders || slot.leaders.length === 0)"
                         class="coach-empty-slot"
                       >
-                        Open slot (Sign in to claim)
+                        {{ isSignupsClosed ? 'No coaches signed up' : 'Open slot (Sign in to claim)' }}
                       </span>
 
                       <!-- Add Leader Buttons -->
-                      <template v-if="canEditCoachSignups && !(activeInputSlotId === slot.id && activeInputRole === 'leader')">
+                      <template v-if="canEditSignupsActive && !(activeInputSlotId === slot.id && activeInputRole === 'leader')">
                         <!-- Quick 1-click Add Me button with photo and name -->
                         <button
                           v-if="user && !isMeSignedUp(slot, 'leader')"
@@ -652,7 +672,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
 
                       <!-- Inline Leader Input -->
                       <div
-                        v-if="canEditCoachSignups && activeInputSlotId === slot.id && activeInputRole === 'leader'"
+                        v-if="canEditSignupsActive && activeInputSlotId === slot.id && activeInputRole === 'leader'"
                         class="inline-name-box"
                       >
                         <input
@@ -716,9 +736,9 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                           {{ getCoachInitials(coachItem) }}
                         </span>
                         <span class="coach-chip-name">{{ getCoachName(coachItem) }}</span>
-                        <!-- ✕ Remove button only visible if user can edit -->
+                        <!-- ✕ Remove button only visible if user can edit and event is active -->
                         <button
-                          v-if="canEditCoachSignups"
+                          v-if="canEditSignupsActive"
                           type="button"
                           class="coach-chip-remove"
                           title="Remove coach"
@@ -728,16 +748,16 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                         </button>
                       </div>
 
-                      <!-- Empty slot notice when locked -->
+                      <!-- Empty slot notice when locked or closed -->
                       <span
-                        v-if="!canEditCoachSignups && (!slot.support || slot.support.length === 0)"
+                        v-if="!canEditSignupsActive && (!slot.support || slot.support.length === 0)"
                         class="coach-empty-slot"
                       >
-                        Open slot (Sign in to claim)
+                        {{ isSignupsClosed ? 'No coaches signed up' : 'Open slot (Sign in to claim)' }}
                       </span>
 
                       <!-- Add Support Buttons -->
-                      <template v-if="canEditCoachSignups && !(activeInputSlotId === slot.id && activeInputRole === 'support')">
+                      <template v-if="canEditSignupsActive && !(activeInputSlotId === slot.id && activeInputRole === 'support')">
                         <!-- Quick 1-click Add Me button with photo and name -->
                         <button
                           v-if="user && !isMeSignedUp(slot, 'support')"
@@ -772,7 +792,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
 
                       <!-- Inline Support Input -->
                       <div
-                        v-if="canEditCoachSignups && activeInputSlotId === slot.id && activeInputRole === 'support'"
+                        v-if="canEditSignupsActive && activeInputSlotId === slot.id && activeInputRole === 'support'"
                         class="inline-name-box"
                       >
                         <input
@@ -897,6 +917,33 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
   color: #4ade80;
   margin-left: 6px;
   vertical-align: middle;
+}
+
+.signup-badge-closed {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.signups-closed-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  color: #fca5a5;
+  font-size: 11.5px;
+  font-weight: 600;
 }
 
 /* Modern Outline Notification Bell Button */

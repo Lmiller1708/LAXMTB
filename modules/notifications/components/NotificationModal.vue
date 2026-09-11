@@ -23,7 +23,6 @@ const {
   triggerTestNotification
 } = useNotificationSubscriptions()
 
-const customWarmupInput = ref(notifConfig.value.warmupOffset || 45)
 const customLeadTimeInput = ref(notifConfig.value.offset || 15)
 
 const handleClose = () => {
@@ -34,22 +33,6 @@ const handleClose = () => {
 const setAlertTarget = (target: 'warmup' | 'stage' | 'start') => {
   notifConfig.value.target = target
   saveConfig()
-}
-
-const setWarmupOffset = (val: number | 'custom') => {
-  if (val === 'custom') {
-    notifConfig.value.warmupOffset = customWarmupInput.value || 45
-  } else {
-    notifConfig.value.warmupOffset = val
-  }
-  saveConfig()
-}
-
-const onCustomWarmupChange = () => {
-  if (customWarmupInput.value > 0) {
-    notifConfig.value.warmupOffset = customWarmupInput.value
-    saveConfig()
-  }
 }
 
 const setLeadTime = (val: number | 'custom') => {
@@ -109,43 +92,6 @@ const onSoundChange = () => {
                 <small>Alert prior to official wave gun start</small>
               </div>
             </label>
-          </div>
-        </div>
-
-        <div class="modal-section">
-          <label class="modal-label">Warm-up Schedule (Before Staging)</label>
-          <div class="lead-time-buttons" id="warmupOffsetButtons">
-            <button
-              type="button"
-              class="lead-time-btn"
-              :class="{ active: notifConfig.warmupOffset === 60 }"
-              @click="setWarmupOffset(60)"
-            >60 mins</button>
-            <button
-              type="button"
-              class="lead-time-btn"
-              :class="{ active: notifConfig.warmupOffset === 45 }"
-              @click="setWarmupOffset(45)"
-            >45 mins</button>
-            <button
-              type="button"
-              class="lead-time-btn"
-              :class="{ active: notifConfig.warmupOffset === 30 }"
-              @click="setWarmupOffset(30)"
-            >30 mins</button>
-            <button
-              type="button"
-              class="lead-time-btn"
-              :class="{ active: ![60, 45, 30].includes(notifConfig.warmupOffset) }"
-              @click="setWarmupOffset('custom')"
-            >Custom</button>
-          </div>
-          <div v-show="![60, 45, 30].includes(notifConfig.warmupOffset)" class="custom-time-row" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
-            <input v-model.number="customWarmupInput" type="number" min="1" max="180" placeholder="Minutes" class="custom-minutes-input" @input="onCustomWarmupChange">
-            <span style="font-size:12px;color:var(--text-muted);">minutes before staging</span>
-          </div>
-          <div style="margin-top:5px;font-size:11px;color:var(--text-muted);line-height:1.35;">
-            Automatically schedules rider warm-up for every race & category relative to staging time.
           </div>
         </div>
 
