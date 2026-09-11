@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Race, ScheduleEvent, CoachSlot, WarmupGroup } from '~/modules/races/types/race'
+import type { Race, ScheduleDay, ScheduleEvent, CoachSlot, WarmupGroup } from '~/modules/races/types/race'
 import {
   categoryOrder,
   getCategoryStartTime,
@@ -7,7 +7,11 @@ import {
   calculateDefaultGroupWarmupTime,
   formatWarmupGroupTitle,
   parseTimeStrToMinutes,
-  formatMinutesToTimeStr
+  formatMinutesToTimeStr,
+  parseDateRange,
+  formatDateRange,
+  MONTHS_SHORT,
+  MONTH_MAP
 } from '~/modules/results/services/raceresultService'
 
 import { type TeamUserItem } from '~/modules/coach-admin/composables/useCoachAuth'
@@ -60,8 +64,101 @@ watch(() => props.initialTab, (newTab) => {
 // Local editable copy of current race
 const form = ref<Race>({ ...currentRace.value })
 
+// Date Range Picker State
+const dateRangeStart = ref('')
+const dateRangeEnd = ref('')
+
+function updateDateRangeFromForm() {
+  const { start, end } = parseDateRange(form.value.dateStr || '')
+  dateRangeStart.value = start
+  dateRangeEnd.value = end
+}
+
+const onDateRangeChange = () => {
+  if (dateRangeStart.value) {
+    if (dateRangeEnd.value && dateRangeEnd.value < dateRangeStart.value) {
+      dateRangeEnd.value = dateRangeStart.value
+    }
+    form.value.dateStr = formatDateRange(dateRangeStart.value, dateRangeEnd.value || dateRangeStart.value)
+  }
+}
+
+const onDateStrManualInput = () => {
+  const { start, end } = parseDateRange(form.value.dateStr || '')
+  if (start) dateRangeStart.value = start
+  if (end) dateRangeEnd.value = end
+}
+
+const syncScheduleDaysFromDateRange = () => {
+  if (!dateRangeStart.value) return
+  const endVal = dateRangeEnd.value || dateRangeStart.value
+  const [y1, m1, d1] = dateRangeStart.value.split('-').map(Number)
+  const [y2, m2, d2] = endVal.split('-').map(Number)
+
+  const startDt = new Date(y1, m1 - 1, d1)
+  const endDt = new Date(y2, m2 - 1, d2)
+
+  const days: { day: string, date: string, isRaceDay: boolean }[] = []
+  const cur = new Date(startDt)
+  while (cur <= endDt) {
+    const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][cur.getDay()]
+    const monName = MONTHS_SHORT[cur.getMonth()]
+    const isRaceDay = cur.getTime() === endDt.getTime() || dayName === 'Sunday'
+    days.push({
+      day: dayName,
+      date: `${monName} ${cur.getDate()}`,
+      isRaceDay
+    })
+    cur.setDate(cur.getDate() + 1)
+  }
+
+  if (!form.value.schedule) form.value.schedule = []
+
+  days.forEach((newD, i) => {
+    if (form.value.schedule[i]) {
+      form.value.schedule[i].day = newD.day
+      form.value.schedule[i].date = newD.date
+      if (newD.isRaceDay) form.value.schedule[i].isRaceDay = true
+    } else {
+      form.value.schedule.push({
+        day: newD.day,
+        date: newD.date,
+        subtitle: newD.isRaceDay ? 'Race Day' : '',
+        isRaceDay: newD.isRaceDay,
+        events: []
+      })
+    }
+  })
+}
+
+const getDayIso = (dateStr?: string): string => {
+  if (!dateStr) return ''
+  const m = dateStr.trim().match(/^([A-Za-z]+)\s+(\d{1,2})$/)
+  if (m) {
+    const mon = MONTH_MAP[m[1].toLowerCase()]
+    if (mon !== undefined) {
+      const d = parseInt(m[2], 10)
+      const yr = dateRangeStart.value ? parseInt(dateRangeStart.value.split('-')[0], 10) : new Date().getFullYear()
+      return `${yr}-${String(mon + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    }
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
+  return ''
+}
+
+const onScheduleDayDateChange = (day: ScheduleDay, isoDate: string) => {
+  if (!isoDate) return
+  const [y, m, d] = isoDate.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  day.day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dt.getDay()]
+  day.date = `${MONTHS_SHORT[m - 1]} ${d}`
+}
+
+updateDateRangeFromForm()
+
 watch(currentRace, (newRace) => {
   form.value = JSON.parse(JSON.stringify(newRace))
+  updateDateRangeFromForm()
 }, { deep: true })
 
 // State for adding new coach administrator
@@ -628,7 +725,7 @@ const getCategoryPillTitle = (grp: WarmupGroup, catName: string) => {
   }
   if (isCategoryInOtherWarmupGroup(grp, catName)) {
     const other = getCategoryAssignedGroup(catName)
-    return `🔒 ${catName} is already assigned to "${other?.name || 'another group'}"`
+    return `🔒 ${catName} is locked to "${other?.name || 'another group'}". Unclick it in "${other?.name || 'that group'}" first to move it.`
   }
   return `Click to add ${catName} to this warm-up group`
 }
@@ -1039,15 +1136,59 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
               <label class="modal-label">Camping Theme</label>
               <input v-model="form.theme" type="text" placeholder="Camping Theme" class="custom-minutes-input" style="width:100%;">
             </div>
-            <div style="grid-template-columns:1fr 1fr;display:grid;gap:10px;">
-              <div>
-                <label class="modal-label">Date String</label>
-                <input v-model="form.dateStr" type="text" class="custom-minutes-input" style="width:100%;">
+            <!-- Event Date Range Picker -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;">
+              <label class="modal-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <span>📅 Event Date Range</span>
+                <span v-if="form.dateStr" style="color:var(--accent-red);font-weight:700;font-size:12px;">{{ form.dateStr }}</span>
+              </label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <span style="font-size:11px;font-weight:700;color:var(--text-muted);">Start Date:</span>
+                  <input
+                    v-model="dateRangeStart"
+                    type="date"
+                    class="custom-minutes-input"
+                    style="width:100%;height:32px;font-size:12px;padding:4px 8px;"
+                    @change="onDateRangeChange"
+                  >
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <span style="font-size:11px;font-weight:700;color:var(--text-muted);">End Date:</span>
+                  <input
+                    v-model="dateRangeEnd"
+                    type="date"
+                    :min="dateRangeStart"
+                    class="custom-minutes-input"
+                    style="width:100%;height:32px;font-size:12px;padding:4px 8px;"
+                    @change="onDateRangeChange"
+                  >
+                </div>
               </div>
-              <div>
-                <label class="modal-label">Conference</label>
-                <input v-model="form.conference" type="text" class="custom-minutes-input" style="width:100%;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <input
+                  v-model="form.dateStr"
+                  type="text"
+                  placeholder="e.g. 11 - 13 Sept 2026"
+                  class="custom-minutes-input"
+                  style="flex:1;min-width:160px;font-size:12px;font-weight:600;"
+                  @input="onDateStrManualInput"
+                >
+                <button
+                  type="button"
+                  class="action-mini-btn"
+                  style="font-size:11px;padding:6px 12px;white-space:nowrap;font-weight:700;"
+                  title="Populate or sync schedule days from this date range"
+                  @click="syncScheduleDaysFromDateRange"
+                >
+                  🔄 Sync Schedule Days
+                </button>
               </div>
+            </div>
+
+            <div>
+              <label class="modal-label">Conference</label>
+              <input v-model="form.conference" type="text" class="custom-minutes-input" style="width:100%;">
             </div>
             <div>
               <label class="modal-label">Trailhead / Venue Name</label>
@@ -1122,19 +1263,27 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                     type="text"
                     placeholder="e.g. Friday / Saturday / Sunday"
                     class="custom-minutes-input"
-                    style="width:130px;font-weight:700;"
+                    style="width:125px;font-weight:700;"
                     draggable="false"
                     @dragstart.stop
                   >
-                  <input
-                    v-model="day.date"
-                    type="text"
-                    placeholder="e.g. Sept 5"
-                    class="custom-minutes-input"
-                    style="width:100px;"
-                    draggable="false"
-                    @dragstart.stop
-                  >
+                  <div style="display:flex;align-items:center;gap:3px;" draggable="false" @dragstart.stop>
+                    <input
+                      v-model="day.date"
+                      type="text"
+                      placeholder="e.g. Sept 13"
+                      class="custom-minutes-input"
+                      style="width:80px;"
+                    >
+                    <input
+                      type="date"
+                      :value="getDayIso(day.date)"
+                      class="custom-minutes-input"
+                      style="width:34px;padding:2px 2px;cursor:pointer;background:var(--bg-subtle);"
+                      title="Choose date from calendar"
+                      @change="onScheduleDayDateChange(day, ($event.target as HTMLInputElement).value)"
+                    >
+                  </div>
                   <input
                     v-model="day.subtitle"
                     type="text"

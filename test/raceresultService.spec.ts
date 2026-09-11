@@ -18,7 +18,9 @@ import {
   getCategoryStageTime,
   getWaveWarmupTime,
   calculateDefaultGroupWarmupTime,
-  formatWarmupGroupTitle
+  formatWarmupGroupTitle,
+  parseDateRange,
+  formatDateRange
 } from '../modules/results/services/raceresultService'
 
 describe('RACE RESULT Metadata-Aware Parsing', () => {
@@ -367,6 +369,26 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
 
       // Empty categories
       expect(formatWarmupGroupTitle([])).toBe('Warm-up Group')
+    })
+
+    it('parses and formats date ranges correctly', () => {
+      // Standard format: "11 - 13 Sept 2026"
+      const parsed1 = parseDateRange('11 - 13 Sept 2026')
+      expect(parsed1.start).toBe('2026-09-11')
+      expect(parsed1.end).toBe('2026-09-13')
+      expect(formatDateRange(parsed1.start, parsed1.end)).toBe('11 - 13 Sept 2026')
+
+      // Across months: "30 Aug - 02 Sept 2026"
+      const parsed2 = parseDateRange('30 Aug - 02 Sept 2026')
+      expect(parsed2.start).toBe('2026-08-30')
+      expect(parsed2.end).toBe('2026-09-02')
+      expect(formatDateRange(parsed2.start, parsed2.end)).toBe('30 Aug - 02 Sept 2026')
+
+      // Single day
+      const parsed3 = parseDateRange('13 Sept 2026')
+      expect(parsed3.start).toBe('2026-09-13')
+      expect(parsed3.end).toBe('2026-09-13')
+      expect(formatDateRange(parsed3.start, parsed3.end)).toBe('13 Sept 2026')
     })
   })
 })

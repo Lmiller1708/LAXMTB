@@ -353,6 +353,110 @@ export function formatWarmupGroupTitle(categories: string[]): string {
   return parts.join(', ')
 }
 
+export const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']
+export const MONTH_MAP: Record<string, number> = {
+  jan: 0, january: 0,
+  feb: 1, february: 1,
+  mar: 2, march: 2,
+  apr: 3, april: 3,
+  may: 4,
+  jun: 5, june: 5,
+  jul: 6, july: 6,
+  aug: 7, august: 7,
+  sep: 8, sept: 8, september: 8,
+  oct: 9, october: 9,
+  nov: 10, november: 10,
+  dec: 11, december: 11
+}
+
+export function parseDateRange(dateStr: string): { start: string, end: string } {
+  if (!dateStr) return { start: '', end: '' }
+  const s = dateStr.trim()
+
+  // 1. "11 - 13 Sept 2026" or "04 - 07 Sept 2026"
+  const m1 = s.match(/^(\d{1,2})\s*[-–—]\s*(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/)
+  if (m1) {
+    const d1 = parseInt(m1[1], 10)
+    const d2 = parseInt(m1[2], 10)
+    const mon = MONTH_MAP[m1[3].toLowerCase()] ?? 0
+    const yr = parseInt(m1[4], 10)
+    const startIso = `${yr}-${String(mon + 1).padStart(2, '0')}-${String(d1).padStart(2, '0')}`
+    const endIso = `${yr}-${String(mon + 1).padStart(2, '0')}-${String(d2).padStart(2, '0')}`
+    return { start: startIso, end: endIso }
+  }
+
+  // 2. "Sept 11 - 13, 2026" or "Sept 11 - 13 2026"
+  const m2 = s.match(/^([A-Za-z]+)\s+(\d{1,2})\s*[-–—]\s*(\d{1,2}),?\s+(\d{4})$/)
+  if (m2) {
+    const mon = MONTH_MAP[m2[1].toLowerCase()] ?? 0
+    const d1 = parseInt(m2[2], 10)
+    const d2 = parseInt(m2[3], 10)
+    const yr = parseInt(m2[4], 10)
+    const startIso = `${yr}-${String(mon + 1).padStart(2, '0')}-${String(d1).padStart(2, '0')}`
+    const endIso = `${yr}-${String(mon + 1).padStart(2, '0')}-${String(d2).padStart(2, '0')}`
+    return { start: startIso, end: endIso }
+  }
+
+  // 3. "30 Aug - 02 Sept 2026"
+  const m3 = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s*[-–—]\s*(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/)
+  if (m3) {
+    const d1 = parseInt(m3[1], 10)
+    const mon1 = MONTH_MAP[m3[2].toLowerCase()] ?? 0
+    const d2 = parseInt(m3[3], 10)
+    const mon2 = MONTH_MAP[m3[4].toLowerCase()] ?? 0
+    const yr = parseInt(m3[5], 10)
+    const startIso = `${yr}-${String(mon1 + 1).padStart(2, '0')}-${String(d1).padStart(2, '0')}`
+    const endIso = `${yr}-${String(mon2 + 1).padStart(2, '0')}-${String(d2).padStart(2, '0')}`
+    return { start: startIso, end: endIso }
+  }
+
+  // 4. "YYYY-MM-DD - YYYY-MM-DD"
+  const m4 = s.match(/^(\d{4}-\d{2}-\d{2})\s*[-–—]\s*(\d{4}-\d{2}-\d{2})$/)
+  if (m4) {
+    return { start: m4[1], end: m4[2] }
+  }
+
+  // 5. "13 Sept 2026" single date
+  const m5 = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/)
+  if (m5) {
+    const d = parseInt(m5[1], 10)
+    const mon = MONTH_MAP[m5[2].toLowerCase()] ?? 0
+    const yr = parseInt(m5[3], 10)
+    const iso = `${yr}-${String(mon + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    return { start: iso, end: iso }
+  }
+
+  // 6. Single date YYYY-MM-DD
+  const m6 = s.match(/^(\d{4}-\d{2}-\d{2})$/)
+  if (m6) {
+    return { start: m6[1], end: m6[1] }
+  }
+
+  return { start: '', end: '' }
+}
+
+export function formatDateRange(startIso: string, endIso: string): string {
+  if (!startIso) return ''
+  const [y1, m1, d1] = startIso.split('-').map(Number)
+  if (!endIso || startIso === endIso) {
+    const monName = MONTHS_SHORT[m1 - 1] || 'Jan'
+    return `${String(d1).padStart(2, '0')} ${monName} ${y1}`
+  }
+  const [y2, m2, d2] = endIso.split('-').map(Number)
+  const monName1 = MONTHS_SHORT[m1 - 1] || 'Jan'
+  const monName2 = MONTHS_SHORT[m2 - 1] || 'Jan'
+
+  if (y1 === y2 && m1 === m2) {
+    return `${String(d1).padStart(2, '0')} - ${String(d2).padStart(2, '0')} ${monName1} ${y1}`
+  }
+
+  if (y1 === y2) {
+    return `${String(d1).padStart(2, '0')} ${monName1} - ${String(d2).padStart(2, '0')} ${monName2} ${y1}`
+  }
+
+  return `${String(d1).padStart(2, '0')} ${monName1} ${y1} - ${String(d2).padStart(2, '0')} ${monName2} ${y2}`
+}
+
 export function normalizeCategoryName(name: string): string {
   if (!name) return ''
   let clean = String(name).replace(/^(\d+_)+/, '').replace(/^Category:\s*/i, '').replace(/\s+\d+$/, '').trim()
