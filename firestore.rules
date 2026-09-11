@@ -2,13 +2,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: check if the authenticated user is in the admins collection
+    // Helper: check if the authenticated user is an admin or bootstrap owner
     function isAdmin() {
-      return request.auth != null &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+      return request.auth != null && (
+        request.auth.token.email == 'lmiller1708@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email))
+      );
     }
 
-    // Race data — anyone can read (public app), authenticated users can update (e.g. coach signups), admins can write
+    // Race data — public read, authenticated users can update (e.g. coach signups), admins can write
     match /races/{raceId} {
       allow read: if true;
       allow write: if request.auth != null;
@@ -21,17 +23,18 @@ service cloud.firestore {
     }
 
     // Admins collection:
-    // Any authorized admin can list/read/write the admins list (to manage coaches)
-    // A signed-in user checking their own status can read their own email doc
+    // Any authenticated user can read the coaches/admins list
+    // Only admins can add or remove coaches
     match /admins/{email} {
-      allow read: if request.auth != null && (isAdmin() || request.auth.token.email.lower() == email);
+      allow read: if request.auth != null;
       allow write: if isAdmin();
     }
 
     // Users collection:
-    // Users can only read/write their own profile doc (Admins can read for team coordination)
+    // Any authenticated user can view teammates' coach name and photo
+    // Users can only write/edit their own profile doc
     match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 

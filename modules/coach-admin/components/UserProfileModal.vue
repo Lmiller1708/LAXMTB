@@ -25,6 +25,7 @@ const {
 
 const nameInput = ref('')
 const phoneInput = ref('')
+const photoInput = ref('')
 const isSaving = ref(false)
 const saveSuccess = ref(false)
 const errorMessage = ref('')
@@ -38,6 +39,7 @@ watch([() => props.isOpen, userProfile, user], ([open]) => {
   if (open) {
     nameInput.value = userProfile.value?.name || user.value?.displayName || ''
     phoneInput.value = userProfile.value?.phone || ''
+    photoInput.value = userProfile.value?.photoURL || user.value?.photoURL || ''
     isSaving.value = false
     saveSuccess.value = false
     errorMessage.value = ''
@@ -45,6 +47,15 @@ watch([() => props.isOpen, userProfile, user], ([open]) => {
     isDeleting.value = false
   }
 }, { immediate: true })
+
+const displayAvatar = computed(() => {
+  return photoInput.value?.trim() || userPhoto.value || ''
+})
+
+const avatarLoadError = ref(false)
+watch(displayAvatar, () => {
+  avatarLoadError.value = false
+})
 
 const initials = computed(() => {
   const n = nameInput.value || user.value?.displayName || user.value?.email || 'U'
@@ -85,7 +96,8 @@ const handleSaveProfile = async () => {
   isSaving.value = true
   const res = await updateUserProfile({
     name: nameInput.value,
-    phone: phoneInput.value
+    phone: phoneInput.value,
+    photoURL: photoInput.value
   })
   isSaving.value = false
 
@@ -140,11 +152,12 @@ const handleDeleteAccount = async () => {
         <!-- User Profile Banner Card -->
         <div class="profile-header-card">
           <img
-            v-if="userPhoto"
-            :src="userPhoto"
+            v-if="displayAvatar && !avatarLoadError"
+            :src="displayAvatar"
             alt="User avatar"
             class="profile-avatar img"
             referrerpolicy="no-referrer"
+            @error="avatarLoadError = true"
           />
           <div v-else class="profile-avatar">{{ initials }}</div>
           <div class="profile-meta">
@@ -190,6 +203,18 @@ const handleDeleteAccount = async () => {
               class="profile-input"
             >
             <small class="profile-hint">Used for day-of-race coach updates and team communication.</small>
+          </div>
+
+          <!-- Profile Photo URL Field -->
+          <div class="profile-field">
+            <label class="profile-label">Profile Photo URL</label>
+            <input
+              v-model="photoInput"
+              type="url"
+              placeholder="https://example.com/photo.jpg"
+              class="profile-input"
+            >
+            <small class="profile-hint">(Optional) Direct link to a picture or avatar (.png, .jpg). Pulled automatically if you sign in with Google.</small>
           </div>
 
           <!-- Email Address (Locked / Read-Only) -->

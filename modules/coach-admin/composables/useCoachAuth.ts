@@ -647,31 +647,49 @@ export const useCoachAuth = () => {
   /**
    * Update User Profile Details (Name & Phone only — Email cannot be changed)
    */
-  const updateUserProfile = async (details: { name: string; phone: string }): Promise<{ success: boolean; error?: string }> => {
+  const updateUserProfile = async (details: { name: string; phone: string; photoURL?: string }): Promise<{ success: boolean; error?: string }> => {
     if (!user.value || !user.value.uid) {
       return { success: false, error: 'User not signed in.' }
     }
     const cleanName = details.name.trim()
     const cleanPhone = details.phone.trim()
+    const cleanPhoto = details.photoURL !== undefined ? details.photoURL.trim() : undefined
 
     try {
-      await updateProfile(user.value, {
-        displayName: cleanName
-      })
+      const authUpdates: any = { displayName: cleanName }
+      if (cleanPhoto !== undefined) {
+        authUpdates.photoURL = cleanPhoto
+      }
+      await updateProfile(user.value, authUpdates)
 
       if (db) {
         const userRef = doc(db, 'users', user.value.uid)
-        await setDoc(userRef, {
+        const docUpdates: any = {
           name: cleanName,
           phone: cleanPhone,
           updatedAt: new Date().toISOString()
-        }, { merge: true })
+        }
+        if (cleanPhoto !== undefined) {
+          docUpdates.photoURL = cleanPhoto
+        }
+        await setDoc(userRef, docUpdates, { merge: true })
       }
 
       if (userProfile.value) {
         userProfile.value.name = cleanName
         userProfile.value.phone = cleanPhone
+        if (cleanPhoto !== undefined) {
+          userProfile.value.photoURL = cleanPhoto
+        }
         userProfile.value.updatedAt = new Date().toISOString()
+      }
+
+      if (cleanPhoto) {
+        coachAvatarMap.value = {
+          ...coachAvatarMap.value,
+          [cleanName.toLowerCase()]: cleanPhoto,
+          [(user.value.email || '').toLowerCase()]: cleanPhoto
+        }
       }
 
       return { success: true }
