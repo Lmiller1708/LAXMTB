@@ -22,7 +22,6 @@ scratch_*
 *.pem
 events.json
 events.local.json
-*team_photos.json
 
 # Nuxt & Node
 node_modules/
