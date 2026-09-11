@@ -1304,7 +1304,7 @@ export const defaultEvents: Race[] = [
           "ridersAllowed": "Registered Riders & Coaches",
           "id": "pr-1789071120591",
           "day": "Saturday",
-          "meetingTime": "3:00 PM"
+          "meetingTime": "4:00 PM"
         }
       ],
       "warmups": [
