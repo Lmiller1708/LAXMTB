@@ -1922,10 +1922,9 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
           </div>
 
           <!-- Guidelines -->
-          <div v-else-if="activeTab === 'announcements'" style="display:flex;flex-direction:column;gap:12px;">
+          <div v-else-if="activeTab === 'announcements'" style="display:flex;flex-direction:column;gap:10px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <label class="modal-label" style="margin:0;">Venue Guidelines & Spectator Rules</label>
-              <button type="button" class="action-mini-btn" @click="addGuideline">+ Add Item</button>
             </div>
             <div
               v-for="(g, idx) in form.guidelines"
@@ -1940,8 +1939,8 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                 borderRadius: '6px',
                 transition: 'all 0.15s ease',
                 opacity: draggedGuidelineIdx === idx ? '0.4' : '1',
-                border: guidelineDragOverIdx === idx ? '2px dashed #6366f1' : '1px solid transparent',
-                background: guidelineDragOverIdx === idx ? 'rgba(99, 102, 241, 0.08)' : 'transparent'
+                border: guidelineDragOverIdx === idx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                background: guidelineDragOverIdx === idx ? 'rgba(99, 102, 241, 0.08)' : 'var(--bg-subtle)'
               }"
               @dragstart="onGuidelineDragStart(idx, $event)"
               @dragover="onGuidelineDragOver(idx, $event)"
@@ -1967,11 +1966,24 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
               <button
                 type="button"
                 class="search-clear-btn"
-                style="position:static;display:block;"
+                style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid rgba(239,68,68,0.2);background:rgba(239,68,68,0.06);cursor:pointer;"
                 title="Delete rule"
                 @click="removeGuideline(idx)"
               >
                 ✕
+              </button>
+            </div>
+
+            <!-- Bottom Add Guideline Button -->
+            <div style="display:flex;justify-content:center;margin-top:4px;">
+              <button
+                type="button"
+                class="action-mini-btn"
+                style="width:100%;padding:9px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                @click="addGuideline"
+              >
+                <span style="font-size:14px;">➕</span>
+                <span>Add Guideline</span>
               </button>
             </div>
           </div>

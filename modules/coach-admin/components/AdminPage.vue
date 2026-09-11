@@ -158,6 +158,12 @@ function syncFormFromRace(raceData: Race | null) {
   if (!form.value.schedule) {
     form.value.schedule = []
   }
+  if (!form.value.signups) {
+    form.value.signups = { volunteer: '', food: '', league: '', photos: '' }
+  }
+  if (!form.value.guidelines) {
+    form.value.guidelines = []
+  }
   updateDateRangeFromForm()
   initWarmupGroups()
 }
@@ -404,16 +410,48 @@ const handleSave = () => {
   emit('toast', '💾 Changes saved successfully!')
 }
 
-// Schedule and Guidelines helpers
-const newGuideline = ref('')
+// Guidelines helpers & Drag-and-Drop
 const addGuideline = () => {
-  if (!newGuideline.value.trim()) return
   if (!form.value.guidelines) form.value.guidelines = []
-  form.value.guidelines.push(newGuideline.value.trim())
-  newGuideline.value = ''
+  form.value.guidelines.push('')
 }
 const removeGuideline = (idx: number) => {
   form.value.guidelines?.splice(idx, 1)
+}
+
+const draggedGuidelineIdx = ref<number | null>(null)
+const guidelineDragOverIdx = ref<number | null>(null)
+
+const onGuidelineDragStart = (idx: number, e: DragEvent) => {
+  draggedGuidelineIdx.value = idx
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(idx))
+  }
+}
+
+const onGuidelineDragOver = (idx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedGuidelineIdx.value === null || draggedGuidelineIdx.value === idx) return
+  guidelineDragOverIdx.value = idx
+}
+
+const onGuidelineDrop = (idx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedGuidelineIdx.value === null || !form.value.guidelines) return
+  const from = draggedGuidelineIdx.value
+  const to = idx
+  if (from !== to && form.value.guidelines[from] !== undefined) {
+    const item = form.value.guidelines.splice(from, 1)[0]
+    form.value.guidelines.splice(to, 0, item)
+  }
+  guidelineDragOverIdx.value = null
+  draggedGuidelineIdx.value = null
+}
+
+const onGuidelineDragEnd = () => {
+  draggedGuidelineIdx.value = null
+  guidelineDragOverIdx.value = null
 }
 
 // Schedule Days & Events Helpers
@@ -1509,42 +1547,27 @@ const removePhoto = (idx: number) => {
             <h3 class="admin-card-title">🤝 Volunteer Signups & Meal Planning</h3>
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div>
-                <label class="modal-label">Team Volunteer Spreadsheet URL</label>
-                <input v-model="form.signups.teamSheetUrl" type="url" placeholder="https://docs.google.com/..." class="custom-minutes-input" style="width:100%;">
+                <label class="modal-label">Team Volunteers Signup Code or URL</label>
+                <input v-model="form.signups!.volunteer" type="text" placeholder="https://signup.com/client/invitation2/secure/..." class="custom-minutes-input" style="width:100%;">
               </div>
               <div>
-                <label class="modal-label">WI League Volunteer URL</label>
-                <input v-model="form.signups.leagueSignupUrl" type="url" placeholder="https://..." class="custom-minutes-input" style="width:100%;">
+                <label class="modal-label">Food & Hospitality Signup Code or URL</label>
+                <input v-model="form.signups!.food" type="text" placeholder="https://signup.com/client/invitation2/secure/..." class="custom-minutes-input" style="width:100%;">
               </div>
               <div>
-                <label class="modal-label">Meal / Food Planning URL</label>
-                <input v-model="form.signups.foodSignupUrl" type="url" placeholder="https://..." class="custom-minutes-input" style="width:100%;">
+                <label class="modal-label">Wisconsin League Volunteer Code or URL</label>
+                <input v-model="form.signups!.league" type="text" placeholder="https://signup.com/client/invitation2/secure/..." class="custom-minutes-input" style="width:100%;">
               </div>
             </div>
           </div>
 
           <!-- 5. Photos Album Tab -->
           <div v-else-if="activeTab === 'photos'" class="admin-section-card">
-            <h3 class="admin-card-title">📸 Race Photo Gallery</h3>
+            <h3 class="admin-card-title">📸 Photos Album</h3>
             <div style="display:flex;flex-direction:column;gap:12px;">
-              <div style="display:flex;gap:8px;align-items:center;">
-                <input v-model="newPhotoUrl" type="url" placeholder="Paste image URL..." class="custom-minutes-input" style="flex:1;">
-                <button type="button" class="done-modal-btn admin-save-btn" style="padding:8px 16px;" @click="addPhoto">+ Add Photo</button>
-              </div>
-
-              <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:10px;margin-top:10px;">
-                <div
-                  v-for="(photo, idx) in form.photos"
-                  :key="idx"
-                  style="position:relative;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;overflow:hidden;aspect-ratio:16/9;"
-                >
-                  <img :src="photo.url" alt="Race photo" style="width:100%;height:100%;object-fit:cover;">
-                  <button
-                    type="button"
-                    style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);color:#ef4444;border:none;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:11px;"
-                    @click="removePhoto(idx)"
-                  >✕</button>
-                </div>
+              <div>
+                <label class="modal-label">Google Photos Shared Album URL</label>
+                <input v-model="form.photosUrl" type="text" placeholder="https://photos.app.goo.gl/..." class="custom-minutes-input" style="width:100%;">
               </div>
             </div>
           </div>
@@ -1554,12 +1577,12 @@ const removePhoto = (idx: number) => {
             <h3 class="admin-card-title">🗺️ Course Maps & GPS Links</h3>
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div>
-                <label class="modal-label">Course Map Image URL</label>
-                <input v-model="form.mapImageUrl" type="url" class="custom-minutes-input" style="width:100%;">
+                <label class="modal-label">Google MyMaps Embed URL</label>
+                <input v-model="form.embedMapUrl" type="text" placeholder="https://www.google.com/maps/d/embed?mid=..." class="custom-minutes-input" style="width:100%;">
               </div>
               <div>
-                <label class="modal-label">Strava / GPX Route URL</label>
-                <input v-model="form.stravaUrl" type="url" class="custom-minutes-input" style="width:100%;">
+                <label class="modal-label">Direct Full Map URL</label>
+                <input v-model="form.fullMapUrl" type="text" placeholder="https://www.google.com/maps/d/viewer?mid=..." class="custom-minutes-input" style="width:100%;">
               </div>
             </div>
           </div>
@@ -1567,15 +1590,71 @@ const removePhoto = (idx: number) => {
           <!-- 7. Guidelines Tab -->
           <div v-else-if="activeTab === 'announcements'" class="admin-section-card">
             <h3 class="admin-card-title">📢 Team Guidelines & Reminders</h3>
-            <div style="display:flex;flex-direction:column;gap:10px;">
-              <div v-for="(g, idx) in form.guidelines" :key="idx" style="display:flex;align-items:center;gap:8px;">
-                <input v-model="form.guidelines[idx]" type="text" class="custom-minutes-input" style="flex:1;">
-                <button type="button" class="search-clear-btn" style="position:static;" @click="removeGuideline(idx)">✕</button>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div v-if="!form.guidelines || form.guidelines.length === 0" class="no-results" style="padding:16px;">
+                No team guidelines added yet. Click "+ Add Guideline" below.
               </div>
 
-              <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
-                <input v-model="newGuideline" type="text" placeholder="Add new guideline..." class="custom-minutes-input" style="flex:1;">
-                <button type="button" class="done-modal-btn admin-save-btn" style="padding:8px 16px;" @click="addGuideline">+ Add</button>
+              <div
+                v-for="(g, idx) in form.guidelines"
+                :key="idx"
+                draggable="true"
+                class="drag-row"
+                :style="{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  transition: 'all 0.15s ease',
+                  opacity: draggedGuidelineIdx === idx ? '0.4' : '1',
+                  border: guidelineDragOverIdx === idx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                  background: guidelineDragOverIdx === idx ? 'rgba(99, 102, 241, 0.12)' : 'var(--bg-subtle)'
+                }"
+                @dragstart="onGuidelineDragStart(idx, $event)"
+                @dragover="onGuidelineDragOver(idx, $event)"
+                @dragleave="guidelineDragOverIdx = null"
+                @drop="onGuidelineDrop(idx, $event)"
+                @dragend="onGuidelineDragEnd"
+              >
+                <span
+                  class="drag-handle"
+                  title="Drag to rearrange"
+                  style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 4px;"
+                >
+                  ⠿
+                </span>
+                <input
+                  v-model="form.guidelines[idx]"
+                  type="text"
+                  placeholder="Guideline text (HTML supported, e.g. <strong>Trails:</strong> ...)"
+                  class="custom-minutes-input"
+                  style="flex:1;"
+                  draggable="false"
+                  @dragstart.stop
+                >
+                <button
+                  type="button"
+                  class="search-clear-btn"
+                  style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid rgba(239,68,68,0.2);background:rgba(239,68,68,0.06);cursor:pointer;"
+                  title="Delete guideline"
+                  @click="removeGuideline(idx)"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <!-- Bottom Add Guideline Button -->
+              <div style="display:flex;justify-content:center;margin-top:4px;">
+                <button
+                  type="button"
+                  class="action-mini-btn"
+                  style="width:100%;padding:9px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                  @click="addGuideline"
+                >
+                  <span style="font-size:14px;">➕</span>
+                  <span>Add Guideline</span>
+                </button>
               </div>
             </div>
           </div>
