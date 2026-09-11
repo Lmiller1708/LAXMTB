@@ -1166,7 +1166,6 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
               <div style="display:flex;flex-direction:column;gap:6px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                   <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Events ({{ day.events?.length || 0 }})</span>
-                  <button type="button" class="action-mini-btn" style="font-size:10.5px;padding:2px 8px;" @click="addScheduleEvent(dayIdx)">+ Add Event</button>
                 </div>
 
                 <div
@@ -1281,7 +1280,33 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                     ✕
                   </button>
                 </div>
+
+                <!-- Bottom Add Event Button -->
+                <div style="display:flex;justify-content:center;margin-top:2px;">
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="width:100%;padding:8px;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:6px;cursor:pointer;transition:all 0.15s ease;"
+                    @click="addScheduleEvent(dayIdx)"
+                  >
+                    <span style="font-size:13px;">➕</span>
+                    <span>Add Event</span>
+                  </button>
+                </div>
               </div>
+            </div>
+
+            <!-- Bottom Add Schedule Day Button -->
+            <div style="display:flex;justify-content:center;margin-top:4px;">
+              <button
+                type="button"
+                class="action-mini-btn"
+                style="width:100%;padding:9px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                @click="addScheduleDay"
+              >
+                <span style="font-size:14px;">➕</span>
+                <span>Add Schedule Day</span>
+              </button>
             </div>
           </div>
 

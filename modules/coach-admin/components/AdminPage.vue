@@ -1045,13 +1045,12 @@ const removePhoto = (idx: number) => {
 
           <!-- 2. Schedule Timeline Tab -->
           <div v-else-if="activeTab === 'schedule'" class="admin-section-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <div style="margin-bottom:12px;">
               <h3 class="admin-card-title" style="margin:0;">⏱️ Weekend Schedule Timeline</h3>
-              <button type="button" class="action-mini-btn" @click="addScheduleDay">+ Add Day</button>
             </div>
 
             <div v-if="!form.schedule || form.schedule.length === 0" class="no-results" style="padding:16px;">
-              No schedule days added yet. Click "+ Add Day" above.
+              No schedule days added yet. Click "+ Add Schedule Day" below.
             </div>
 
             <div style="display:flex;flex-direction:column;gap:12px;">
@@ -1136,7 +1135,6 @@ const removePhoto = (idx: number) => {
                 <div style="display:flex;flex-direction:column;gap:6px;">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
                     <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Events ({{ day.events?.length || 0 }})</span>
-                    <button type="button" class="action-mini-btn" style="font-size:10.5px;padding:2px 8px;" @click="addScheduleEvent(dayIdx)">+ Add Event</button>
                   </div>
 
                   <div
@@ -1251,7 +1249,33 @@ const removePhoto = (idx: number) => {
                       ✕
                     </button>
                   </div>
+
+                  <!-- Bottom Add Event Button -->
+                  <div style="display:flex;justify-content:center;margin-top:2px;">
+                    <button
+                      type="button"
+                      class="action-mini-btn"
+                      style="width:100%;padding:8px;font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:6px;cursor:pointer;transition:all 0.15s ease;"
+                      @click="addScheduleEvent(dayIdx)"
+                    >
+                      <span style="font-size:13px;">➕</span>
+                      <span>Add Event</span>
+                    </button>
+                  </div>
                 </div>
+              </div>
+
+              <!-- Bottom Add Schedule Day Button -->
+              <div style="display:flex;justify-content:center;margin-top:4px;">
+                <button
+                  type="button"
+                  class="action-mini-btn"
+                  style="width:100%;padding:9px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                  @click="addScheduleDay"
+                >
+                  <span style="font-size:14px;">➕</span>
+                  <span>Add Schedule Day</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1266,9 +1290,6 @@ const removePhoto = (idx: number) => {
               <div style="display:flex;gap:6px;align-items:center;">
                 <button type="button" class="action-mini-btn" style="padding:6px 12px;font-size:12px;font-weight:700;" @click="autoConfigureAllGroups">
                   ⚡ Auto-Calculate Times
-                </button>
-                <button type="button" class="action-mini-btn" style="padding:6px 12px;font-size:12px;font-weight:700;" @click="addWarmupGroup">
-                  ➕ Add Group
                 </button>
               </div>
             </div>
@@ -1325,6 +1346,19 @@ const removePhoto = (idx: number) => {
                     </span>
                   </div>
                 </div>
+              </div>
+
+              <!-- Bottom Add Warm-Up Group Button -->
+              <div style="display:flex;justify-content:center;margin-top:4px;">
+                <button
+                  type="button"
+                  class="action-mini-btn"
+                  style="width:100%;padding:10px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed rgba(239,68,68,0.4);background:rgba(239,68,68,0.06);color:var(--accent-red);border-radius:8px;cursor:pointer;transition:all 0.15s ease;"
+                  @click="addWarmupGroup"
+                >
+                  <span style="font-size:14px;">➕</span>
+                  <span>Add Warm-Up Group</span>
+                </button>
               </div>
             </div>
           </div>
