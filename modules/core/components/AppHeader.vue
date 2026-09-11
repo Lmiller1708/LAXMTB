@@ -4,11 +4,14 @@ import { useNetworkStatus } from '../composables/useNetworkStatus'
 import { useTheme } from '../composables/useTheme'
 import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
 import { useNotificationSubscriptions } from '~/modules/notifications/composables/useNotificationSubscriptions'
+import { usePwaUpdate } from '../composables/usePwaUpdate'
 
 const { isOnline } = useNetworkStatus()
 const { theme, toggleTheme } = useTheme()
 const { user, userProfile, userPhoto, isCoachAuth, isAdminCoach, isAuthorizedCoach, signOut } = useCoachAuth()
 const { menuBadgeText } = useNotificationSubscriptions()
+const { hasUpdate, isChecking, lastChecked, checkForUpdate, applyUpdate } = usePwaUpdate()
+const config = useRuntimeConfig()
 
 const isMenuOpen = ref(false)
 
@@ -29,6 +32,21 @@ const handleWhatsNew = () => { closeMenu(); emit('openWhatsNew') }
 const handleNotifications = () => { closeMenu(); emit('openNotifications') }
 const handleAdmin = () => { closeMenu(); emit('openAdmin') }
 const handleSync = () => { closeMenu(); emit('syncData') }
+
+const handleCheckUpdate = async () => {
+  if (hasUpdate.value) {
+    closeMenu()
+    await applyUpdate()
+    return
+  }
+  emit('toast', '⚡ Checking for app updates...')
+  const found = await checkForUpdate(true)
+  if (found) {
+    emit('toast', '🚀 New version downloaded! Tap Update Now to refresh.')
+  } else {
+    emit('toast', '✅ You are on the latest version of LAX MTB.')
+  }
+}
 
 const handleAuth = () => {
   closeMenu()
@@ -144,6 +162,7 @@ onMounted(() => {
             :aria-expanded="isMenuOpen"
             @click.stop="toggleMenu"
           >
+            <span v-if="hasUpdate" class="update-badge-dot" />
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="3" y1="6" x2="21" y2="6" />
               <line x1="3" y1="12" x2="21" y2="12" />
@@ -194,6 +213,25 @@ onMounted(() => {
           </div>
         </div>
         <span class="mobile-menu-badge" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.3);color:var(--text-main);">Sync</span>
+      </div>
+
+      <!-- Check for Updates -->
+      <div class="mobile-menu-item" @click="handleCheckUpdate">
+        <div class="mobile-menu-item-left">
+          <span>⚡</span>
+          <div>
+            <div class="mobile-menu-item-title">Check for Updates</div>
+            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">
+              {{ hasUpdate ? 'New version ready to load!' : (lastChecked ? `Checked ${lastChecked}` : 'Get latest app features') }}
+            </div>
+          </div>
+        </div>
+        <span
+          class="mobile-menu-badge"
+          :style="hasUpdate ? 'background:rgba(220,38,38,0.2);border-color:rgba(220,38,38,0.5);color:#ef4444;font-weight:700;' : 'background:rgba(255,255,255,0.06);border-color:var(--border);color:var(--text-main);'"
+        >
+          {{ isChecking ? 'Checking...' : (hasUpdate ? 'Update Now' : 'Check') }}
+        </span>
       </div>
 
       <!-- Divider -->
@@ -259,6 +297,11 @@ onMounted(() => {
           <span class="mobile-menu-badge" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#ef4444;">Sign Out</span>
         </div>
       </template>
+
+      <!-- App Version Footer -->
+      <div style="padding:10px 14px 8px;font-size:10px;color:var(--text-muted);text-align:center;border-top:1px solid var(--border);margin-top:4px;">
+        LAX MTB Race Central v{{ config.public?.appVersion || '1.2.5' }}
+      </div>
 
     </div>
   </div>
@@ -344,5 +387,27 @@ onMounted(() => {
   .header-controls {
     gap: 6px !important;
   }
+}
+
+.mobile-menu-btn {
+  position: relative;
+}
+
+.update-badge-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 1.5px solid #0d0d0d;
+  box-shadow: 0 0 6px #ef4444;
+  animation: pulse-dot-anim 1.5s infinite;
+}
+
+@keyframes pulse-dot-anim {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.8; }
 }
 </style>

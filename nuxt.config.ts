@@ -104,8 +104,19 @@ export default defineNuxtConfig({
     ]
   },
 
+  runtimeConfig: {
+    public: {
+      appVersion: '1.2.5',
+      buildDate: new Date().toISOString()
+    }
+  },
+
   pwa: {
     registerType: 'autoUpdate',
+    client: {
+      installPrompt: true,
+      periodicSyncForUpdates: 300 // Check for updates in the background every 5 minutes
+    },
     manifest: {
       name: 'LAX MTB Race Central',
       short_name: 'LAX MTB',
@@ -124,6 +135,10 @@ export default defineNuxtConfig({
     },
     workbox: {
       globPatterns: ['**/*.{js,css,html,png,svg,ico,json}'],
+      cleanupOutdatedCaches: true,
+      clientsClaim: true,
+      skipWaiting: true,
+      navigateFallback: null,
       runtimeCaching: [
         {
           urlPattern: /^https:\/\/my\.raceresult\.com\/.*/i,
@@ -149,3 +164,4 @@ export default defineNuxtConfig({
     preset: 'github-pages'
   }
 })
+
