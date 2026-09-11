@@ -20,18 +20,21 @@ const emit = defineEmits<{
   (e: 'change', val: string): void
 }>()
 
-const triggerRef = ref<HTMLElement | null>(null)
-const popoverRef = ref<HTMLElement | null>(null)
-const inputRef = ref<HTMLInputElement | null>(null)
-
 const isOpen = ref(false)
-const typedText = ref('')
-const popoverStyle = ref<{ top: string; left: string }>({ top: '0px', left: '0px' })
+const activeView = ref<'hour' | 'minute'>('hour')
+const inputMode = ref<'dial' | 'keyboard'>('dial')
 
-// Parsed local state
+// Local selection state
 const selectedHour = ref(8)
 const selectedMinute = ref(0)
 const meridiem = ref<'AM' | 'PM'>('AM')
+
+// Keyboard mode inputs
+const keyboardHour = ref('08')
+const keyboardMinute = ref('00')
+
+const clockDialRef = ref<HTMLElement | null>(null)
+const isDragging = ref(false)
 
 // Parse incoming value
 const parseValue = (val?: string) => {
@@ -39,12 +42,11 @@ const parseValue = (val?: string) => {
     selectedHour.value = 8
     selectedMinute.value = 0
     meridiem.value = 'AM'
-    typedText.value = '8:00 AM'
+    keyboardHour.value = '08'
+    keyboardMinute.value = '00'
     return
   }
   const clean = val.trim()
-  typedText.value = clean
-
   const match = clean.match(/(\d+):(\d+)\s*(AM|PM)?/i)
   if (match) {
     let h = parseInt(match[1], 10)
@@ -74,6 +76,12 @@ const parseValue = (val?: string) => {
       meridiem.value = med
     }
   }
+  syncKeyboardInputs()
+}
+
+const syncKeyboardInputs = () => {
+  keyboardHour.value = String(selectedHour.value).padStart(2, '0')
+  keyboardMinute.value = String(selectedMinute.value).padStart(2, '0')
 }
 
 watch(
@@ -86,81 +94,136 @@ watch(
   { immediate: true }
 )
 
-const formattedTime = computed(() => {
-  const mStr = selectedMinute.value < 10 ? `0${selectedMinute.value}` : `${selectedMinute.value}`
-  return `${selectedHour.value}:${mStr} ${meridiem.value}`
+const displayHourStr = computed(() => {
+  return String(selectedHour.value).padStart(2, '0')
 })
 
 const displayMinuteStr = computed(() => {
-  return selectedMinute.value < 10 ? `0${selectedMinute.value}` : `${selectedMinute.value}`
+  return String(selectedMinute.value).padStart(2, '0')
 })
 
-const commitValue = () => {
-  const finalStr = formattedTime.value
-  typedText.value = finalStr
-  emit('update:modelValue', finalStr)
-  emit('change', finalStr)
-}
+const formattedTime = computed(() => {
+  return `${selectedHour.value}:${displayMinuteStr.value} ${meridiem.value}`
+})
 
-const updatePosition = () => {
-  if (!triggerRef.value) return
-  const rect = triggerRef.value.getBoundingClientRect()
-  const popoverWidth = 280
-  const popoverHeight = 350
-
-  let left = rect.left + rect.width / 2 - popoverWidth / 2
-  if (left < 10) left = 10
-  if (left + popoverWidth > window.innerWidth - 10) {
-    left = window.innerWidth - popoverWidth - 10
-  }
-
-  let top = rect.bottom + 6
-  if (top + popoverHeight > window.innerHeight - 10 && rect.top > popoverHeight + 10) {
-    top = rect.top - popoverHeight - 6
-  }
-
-  popoverStyle.value = {
-    top: `${Math.round(top)}px`,
-    left: `${Math.round(left)}px`
-  }
-}
-
-const openPopover = () => {
+const openModal = () => {
   if (props.disabled) return
   parseValue(props.modelValue)
+  activeView.value = 'hour'
   isOpen.value = true
-  nextTick(() => {
-    updatePosition()
-  })
 }
 
-const closePopover = () => {
-  if (!isOpen.value) return
+const closeModal = () => {
   isOpen.value = false
-  commitValue()
 }
 
-const togglePopover = () => {
-  if (isOpen.value) {
-    closePopover()
-  } else {
-    openPopover()
+const handleConfirm = () => {
+  if (inputMode.value === 'keyboard') {
+    let h = parseInt(keyboardHour.value, 10)
+    let m = parseInt(keyboardMinute.value, 10)
+    if (isNaN(h) || h < 1) h = 12
+    if (h > 12) h = 12
+    if (isNaN(m) || m < 0) m = 0
+    if (m > 59) m = 59
+    selectedHour.value = h
+    selectedMinute.value = m
   }
+  const finalStr = formattedTime.value
+  emit('update:modelValue', finalStr)
+  emit('change', finalStr)
+  closeModal()
 }
 
-const selectHour = (h: number) => {
-  selectedHour.value = h
-  commitValue()
+const handleCancel = () => {
+  parseValue(props.modelValue)
+  closeModal()
 }
 
-const selectMinute = (m: number) => {
-  selectedMinute.value = m
-  commitValue()
+// Dial Needle Angle calculations
+const needleAngle = computed(() => {
+  if (activeView.value === 'hour') {
+    const h = selectedHour.value % 12
+    return h * 30 // 30 degrees per hour
+  } else {
+    return selectedMinute.value * 6 // 6 degrees per minute
+  }
+})
+
+// Calculate number positions around clock face (diameter = 256px, radius = 128px, num radius = 96px)
+const getNumberPosition = (index: number, total: number) => {
+  const angle = (index * (360 / total) - 90) * (Math.PI / 180)
+  const r = 96 // distance from center
+  const x = 128 + r * Math.cos(angle)
+  const y = 128 + r * Math.sin(angle)
+  return { left: `${x}px`, top: `${y}px` }
 }
 
-const setMeridiem = (med: 'AM' | 'PM') => {
-  meridiem.value = med
-  commitValue()
+const hoursList = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+const minutesList = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+
+// Dial drag and click interaction
+const calculateValueFromPointer = (e: MouseEvent | TouchEvent) => {
+  if (!clockDialRef.value) return
+  const rect = clockDialRef.value.getBoundingClientRect()
+  const centerX = rect.left + rect.width / 2
+  const centerY = rect.top + rect.height / 2
+
+  let clientX = 0
+  let clientY = 0
+  if ('touches' in e && e.touches.length > 0) {
+    clientX = e.touches[0].clientX
+    clientY = e.touches[0].clientY
+  } else if ('clientX' in e) {
+    clientX = (e as MouseEvent).clientX
+    clientY = (e as MouseEvent).clientY
+  }
+
+  const dx = clientX - centerX
+  const dy = clientY - centerY
+
+  let angleDeg = (Math.atan2(dy, dx) * (180 / Math.PI)) + 90
+  if (angleDeg < 0) angleDeg += 360
+
+  if (activeView.value === 'hour') {
+    let h = Math.round(angleDeg / 30) % 12
+    if (h === 0) h = 12
+    selectedHour.value = h
+  } else {
+    let m = Math.round(angleDeg / 6) % 60
+    selectedMinute.value = m
+  }
+  syncKeyboardInputs()
+}
+
+const onDialPointerDown = (e: MouseEvent | TouchEvent) => {
+  isDragging.value = true
+  calculateValueFromPointer(e)
+  window.addEventListener('mousemove', onDialPointerMove)
+  window.addEventListener('mouseup', onDialPointerUp)
+  window.addEventListener('touchmove', onDialPointerMove, { passive: false })
+  window.addEventListener('touchend', onDialPointerUp)
+}
+
+const onDialPointerMove = (e: MouseEvent | TouchEvent) => {
+  if (!isDragging.value) return
+  if (e.cancelable) e.preventDefault()
+  calculateValueFromPointer(e)
+}
+
+const onDialPointerUp = () => {
+  if (!isDragging.value) return
+  isDragging.value = false
+  window.removeEventListener('mousemove', onDialPointerMove)
+  window.removeEventListener('mouseup', onDialPointerUp)
+  window.removeEventListener('touchmove', onDialPointerMove)
+  window.removeEventListener('touchend', onDialPointerUp)
+
+  // Auto-advance from hour to minute view once selected (Material Design standard)
+  if (activeView.value === 'hour') {
+    setTimeout(() => {
+      activeView.value = 'minute'
+    }, 220)
+  }
 }
 
 const nudgeMinutes = (delta: number) => {
@@ -181,203 +244,225 @@ const nudgeMinutes = (delta: number) => {
   selectedHour.value = h
   selectedMinute.value = m
   meridiem.value = med
-  commitValue()
+  syncKeyboardInputs()
 }
 
-const resetToDefault = () => {
-  selectedHour.value = 8
-  selectedMinute.value = 0
-  meridiem.value = 'AM'
-  commitValue()
-}
-
-// Direct keyboard input in the trigger box
-const onInputBlur = () => {
-  parseValue(typedText.value)
-  commitValue()
-}
-
-const onInputKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter') {
-    e.preventDefault()
-    parseValue(typedText.value)
-    commitValue()
-    if (isOpen.value) closePopover()
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault()
-    nudgeMinutes(e.shiftKey ? 5 : 1)
-  } else if (e.key === 'ArrowDown') {
-    e.preventDefault()
-    nudgeMinutes(e.shiftKey ? -5 : -1)
-  } else if (e.key === 'Escape') {
-    if (isOpen.value) {
-      e.preventDefault()
-      closePopover()
-    }
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && isOpen.value) {
+    closeModal()
+  } else if (e.key === 'Enter' && isOpen.value) {
+    handleConfirm()
   }
-}
-
-// Click outside handling
-const handleDocPointerDown = (e: PointerEvent) => {
-  if (!isOpen.value) return
-  const target = e.target as Node
-  if (triggerRef.value && triggerRef.value.contains(target)) return
-  if (popoverRef.value && popoverRef.value.contains(target)) return
-  closePopover()
 }
 
 onMounted(() => {
   if (typeof window !== 'undefined') {
-    window.addEventListener('pointerdown', handleDocPointerDown)
-    window.addEventListener('scroll', updatePosition, true)
-    window.addEventListener('resize', updatePosition)
+    window.addEventListener('keydown', handleKeydown)
   }
 })
 
 onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
-    window.removeEventListener('pointerdown', handleDocPointerDown)
-    window.removeEventListener('scroll', updatePosition, true)
-    window.removeEventListener('resize', updatePosition)
+    window.removeEventListener('keydown', handleKeydown)
+    window.removeEventListener('mousemove', onDialPointerMove)
+    window.removeEventListener('mouseup', onDialPointerUp)
+    window.removeEventListener('touchmove', onDialPointerMove)
+    window.removeEventListener('touchend', onDialPointerUp)
   }
 })
 </script>
 
 <template>
-  <div ref="triggerRef" class="custom-time-picker-trigger">
-    <div class="time-input-container" :class="{ 'is-open': isOpen, 'is-disabled': disabled }">
-      <input
-        ref="inputRef"
-        v-model="typedText"
-        type="text"
-        :placeholder="placeholder"
-        :disabled="disabled"
-        class="time-text-input"
-        @focus="openPopover"
-        @blur="onInputBlur"
-        @keydown="onInputKeydown"
-      />
-      <button
-        type="button"
-        class="time-clock-btn"
-        tabindex="-1"
-        :title="isOpen ? 'Close time picker' : 'Pick time'"
-        @click.stop="togglePopover"
-      >
-        <svg
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+  <div class="m2-timepicker-wrapper">
+    <!-- Trigger Button in Table Cell -->
+    <button
+      type="button"
+      class="m2-time-trigger"
+      :disabled="disabled"
+      title="Click to edit wave time"
+      @click="openModal"
+    >
+      <span class="m2-trigger-text">{{ modelValue || '8:00 AM' }}</span>
+      <span class="m2-trigger-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
-      </button>
-    </div>
+      </span>
+    </button>
 
-    <!-- Floating Popover via Teleport to Body -->
+    <!-- Material Design 2 Time Picker Dialog Modal -->
     <Teleport to="body">
-      <Transition name="picker-pop">
-        <div
-          v-if="isOpen"
-          ref="popoverRef"
-          class="custom-time-popover"
-          :style="popoverStyle"
-          @pointerdown.stop
-        >
-          <!-- Top Clock Display & AM/PM Toggle -->
-          <div class="popover-clock-display">
-            <div class="clock-digits-group">
-              <span class="digit-box">{{ selectedHour }}</span>
-              <span class="colon-sep">:</span>
-              <span class="digit-box">{{ displayMinuteStr }}</span>
-            </div>
-            <div class="meridiem-toggle">
-              <button
-                type="button"
-                class="meridiem-btn"
-                :class="{ active: meridiem === 'AM' }"
-                @click="setMeridiem('AM')"
-              >
-                AM
-              </button>
-              <button
-                type="button"
-                class="meridiem-btn"
-                :class="{ active: meridiem === 'PM' }"
-                @click="setMeridiem('PM')"
-              >
-                PM
-              </button>
-            </div>
-          </div>
-
-          <!-- Quick Nudge Row (+2m, +5m wave offsets) -->
-          <div class="nudge-section">
-            <span class="nudge-label">Wave Shift:</span>
-            <div class="nudge-pills">
-              <button type="button" class="nudge-pill" title="Subtract 5 minutes" @click="nudgeMinutes(-5)">-5m</button>
-              <button type="button" class="nudge-pill" title="Subtract 2 minutes" @click="nudgeMinutes(-2)">-2m</button>
-              <button type="button" class="nudge-pill accent" title="Add 2 minutes (standard wave interval)" @click="nudgeMinutes(2)">+2m</button>
-              <button type="button" class="nudge-pill accent" title="Add 5 minutes" @click="nudgeMinutes(5)">+5m</button>
-              <button type="button" class="nudge-pill" title="Add 15 minutes" @click="nudgeMinutes(15)">+15m</button>
-            </div>
-          </div>
-
-          <!-- Hours Selector -->
-          <div class="picker-section">
-            <div class="section-title">Hour</div>
-            <div class="hours-grid">
-              <button
-                v-for="h in [8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7]"
-                :key="h"
-                type="button"
-                class="picker-btn hour-btn"
-                :class="{ active: selectedHour === h }"
-                @click="selectHour(h)"
-              >
-                {{ h }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Minutes Selector with Stepper -->
-          <div class="picker-section">
-            <div class="section-header-row">
-              <span class="section-title">Minute</span>
-              <div class="minute-stepper">
-                <button type="button" class="stepper-btn" title="Subtract 1 minute" @click="nudgeMinutes(-1)">−</button>
-                <span class="stepper-value">:{{ displayMinuteStr }}</span>
-                <button type="button" class="stepper-btn" title="Add 1 minute" @click="nudgeMinutes(1)">+</button>
+      <Transition name="m2-dialog-fade">
+        <div v-if="isOpen" class="m2-dialog-backdrop" @click.self="handleCancel">
+          <div class="m2-time-dialog" role="dialog" aria-modal="true" aria-label="Select time">
+            <!-- Header Label -->
+            <div class="m2-dialog-header-label">
+              <span>SELECT TIME</span>
+              <!-- Quick Nudge Chips for Race Waves -->
+              <div class="m2-nudge-group">
+                <button type="button" class="m2-nudge-btn" title="Shift back 5 min" @click="nudgeMinutes(-5)">-5m</button>
+                <button type="button" class="m2-nudge-btn" title="Shift back 2 min" @click="nudgeMinutes(-2)">-2m</button>
+                <button type="button" class="m2-nudge-btn accent" title="Standard wave gap (+2m)" @click="nudgeMinutes(2)">+2m</button>
+                <button type="button" class="m2-nudge-btn accent" title="Wave gap (+5m)" @click="nudgeMinutes(5)">+5m</button>
               </div>
             </div>
-            <div class="minutes-grid">
-              <button
-                v-for="m in [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]"
-                :key="m"
-                type="button"
-                class="picker-btn minute-btn"
-                :class="{ active: selectedMinute === m }"
-                @click="selectMinute(m)"
-              >
-                :{{ m < 10 ? `0${m}` : m }}
-              </button>
-            </div>
-          </div>
 
-          <!-- Footer Actions -->
-          <div class="popover-footer">
-            <button type="button" class="popover-action-btn secondary" @click="resetToDefault">
-              Default (8:00 AM)
-            </button>
-            <button type="button" class="popover-action-btn primary" @click="closePopover">
-              Done
-            </button>
+            <!-- Main Time Display Section -->
+            <div class="m2-time-display-row">
+              <div class="m2-time-inputs-group">
+                <!-- Hour Display / Input -->
+                <button
+                  v-if="inputMode === 'dial'"
+                  type="button"
+                  class="m2-time-box"
+                  :class="{ active: activeView === 'hour' }"
+                  @click="activeView = 'hour'"
+                >
+                  {{ selectedHour }}
+                </button>
+                <input
+                  v-else
+                  v-model="keyboardHour"
+                  type="text"
+                  maxlength="2"
+                  class="m2-time-box-input"
+                  placeholder="08"
+                />
+
+                <span class="m2-time-colon">:</span>
+
+                <!-- Minute Display / Input -->
+                <button
+                  v-if="inputMode === 'dial'"
+                  type="button"
+                  class="m2-time-box"
+                  :class="{ active: activeView === 'minute' }"
+                  @click="activeView = 'minute'"
+                >
+                  {{ displayMinuteStr }}
+                </button>
+                <input
+                  v-else
+                  v-model="keyboardMinute"
+                  type="text"
+                  maxlength="2"
+                  class="m2-time-box-input"
+                  placeholder="00"
+                />
+              </div>
+
+              <!-- AM / PM Segmented Selector -->
+              <div class="m2-period-selector">
+                <button
+                  type="button"
+                  class="m2-period-btn"
+                  :class="{ active: meridiem === 'AM' }"
+                  @click="meridiem = 'AM'"
+                >
+                  AM
+                </button>
+                <button
+                  type="button"
+                  class="m2-period-btn"
+                  :class="{ active: meridiem === 'PM' }"
+                  @click="meridiem = 'PM'"
+                >
+                  PM
+                </button>
+              </div>
+            </div>
+
+            <!-- Material 2 Clock Dial Face -->
+            <div v-if="inputMode === 'dial'" class="m2-dial-container">
+              <div
+                ref="clockDialRef"
+                class="m2-clock-dial"
+                @mousedown="onDialPointerDown"
+                @touchstart.prevent="onDialPointerDown"
+              >
+                <!-- Central Pin -->
+                <div class="m2-dial-center-pin"></div>
+
+                <!-- Hand / Needle extending from center to number -->
+                <div
+                  class="m2-dial-needle"
+                  :style="{ transform: `rotate(${needleAngle}deg)` }"
+                >
+                  <div class="m2-dial-selector-dot"></div>
+                </div>
+
+                <!-- Clock Numbers -->
+                <template v-if="activeView === 'hour'">
+                  <div
+                    v-for="(h, idx) in hoursList"
+                    :key="`hour-${h}`"
+                    class="m2-dial-number"
+                    :class="{ selected: selectedHour === h }"
+                    :style="getNumberPosition(idx, 12)"
+                  >
+                    {{ h }}
+                  </div>
+                </template>
+
+                <template v-else>
+                  <div
+                    v-for="(m, idx) in minutesList"
+                    :key="`min-${m}`"
+                    class="m2-dial-number"
+                    :class="{ selected: selectedMinute === m }"
+                    :style="getNumberPosition(idx, 12)"
+                  >
+                    {{ m === 0 ? '00' : (m < 10 ? `0${m}` : m) }}
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Material 2 Keyboard Helper Text -->
+            <div v-else class="m2-keyboard-helper">
+              <div class="m2-keyboard-labels">
+                <span>Hour (1–12)</span>
+                <span>Minute (0–59)</span>
+              </div>
+              <p class="m2-keyboard-hint">Type hour and minute or toggle back to dial picker.</p>
+            </div>
+
+            <!-- Dialog Actions Footer -->
+            <div class="m2-dialog-footer">
+              <!-- Mode Switcher (Keyboard vs Dial) -->
+              <button
+                type="button"
+                class="m2-mode-icon-btn"
+                :title="inputMode === 'dial' ? 'Switch to text input' : 'Switch to dial picker'"
+                @click="inputMode = inputMode === 'dial' ? 'keyboard' : 'dial'"
+              >
+                <svg v-if="inputMode === 'dial'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                  <line x1="6" y1="8" x2="6" y2="8"></line>
+                  <line x1="10" y1="8" x2="10" y2="8"></line>
+                  <line x1="14" y1="8" x2="14" y2="8"></line>
+                  <line x1="18" y1="8" x2="18" y2="8"></line>
+                  <line x1="6" y1="12" x2="6" y2="12"></line>
+                  <line x1="18" y1="12" x2="18" y2="12"></line>
+                  <line x1="7" y1="16" x2="17" y2="16"></line>
+                </svg>
+                <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </button>
+
+              <!-- Cancel & OK Action Buttons -->
+              <div class="m2-actions-group">
+                <button type="button" class="m2-action-btn" @click="handleCancel">
+                  CANCEL
+                </button>
+                <button type="button" class="m2-action-btn confirm" @click="handleConfirm">
+                  OK
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </Transition>
@@ -386,388 +471,470 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.custom-time-picker-trigger {
+.m2-timepicker-wrapper {
   display: inline-block;
-  position: relative;
 }
 
-.time-input-container {
+/* Trigger Button in Table Cell */
+.m2-time-trigger {
   display: inline-flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0 4px 0 8px;
-  transition: all 0.15s ease;
-  width: 110px;
-  box-sizing: border-box;
-}
-
-:root.theme-light .time-input-container,
-.theme-light .time-input-container,
-:root[data-theme="light"] .time-input-container {
-  background: #ffffff;
-  border-color: #cbd5e1;
-}
-
-.time-input-container:hover {
-  border-color: rgba(239, 68, 68, 0.4);
-}
-
-.time-input-container.is-open,
-.time-input-container:focus-within {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
-}
-
-.time-text-input {
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: var(--text-main);
-  font-size: 12px;
-  font-weight: 700;
-  padding: 5px 0;
-  text-align: center;
-  outline: none;
-}
-
-:root.theme-light .time-text-input,
-.theme-light .time-text-input,
-:root[data-theme="light"] .time-text-input {
-  color: #0f172a;
-}
-
-.time-clock-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 3px 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.15s ease;
-}
-
-.time-clock-btn:hover {
-  color: #ef4444;
-}
-
-/* Floating Popover */
-.custom-time-popover {
-  position: fixed;
-  z-index: 999999;
-  width: 275px;
-  background: #18181b;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  padding: 12px;
-  color: #f4f4f5;
-  font-family: inherit;
-  user-select: none;
-}
-
-:root.theme-light .custom-time-popover,
-.theme-light .custom-time-popover,
-:root[data-theme="light"] .custom-time-popover {
-  background: #ffffff;
-  border-color: #e2e8f0;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
-  color: #0f172a;
-}
-
-/* Top Clock Display */
-.popover-clock-display {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 6px 10px;
-  margin-bottom: 10px;
-}
-
-:root.theme-light .popover-clock-display,
-.theme-light .popover-clock-display,
-:root[data-theme="light"] .popover-clock-display {
-  background: #f8fafc;
-  border-color: #e2e8f0;
-}
-
-.clock-digits-group {
-  display: flex;
-  align-items: center;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-
-.digit-box {
-  min-width: 24px;
-  text-align: center;
-}
-
-.colon-sep {
-  opacity: 0.6;
-  margin: 0 2px;
-}
-
-.meridiem-toggle {
-  display: inline-flex;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  padding: 2px;
-  gap: 2px;
-}
-
-:root.theme-light .meridiem-toggle,
-.theme-light .meridiem-toggle,
-:root[data-theme="light"] .meridiem-toggle {
-  background: #e2e8f0;
-  border-color: #cbd5e1;
-}
-
-.meridiem-btn {
-  background: transparent;
-  border: none;
-  color: #a1a1aa;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.meridiem-btn.active {
-  background: #ef4444;
-  color: #ffffff;
-}
-
-/* Nudge section */
-.nudge-section {
-  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 108px;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
 }
 
-:root.theme-light .nudge-section,
-.theme-light .nudge-section,
-:root[data-theme="light"] .nudge-section {
-  border-bottom-color: #e2e8f0;
+:root.theme-light .m2-time-trigger,
+.theme-light .m2-time-trigger,
+:root[data-theme="light"] .m2-time-trigger {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
 }
 
-.nudge-label {
-  font-size: 10.5px;
+.m2-time-trigger:hover {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.m2-trigger-text {
+  flex: 1;
+  text-align: center;
+}
+
+.m2-trigger-icon {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+/* Modal Backdrop */
+.m2-dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+/* Material Design 2 Time Picker Dialog Box */
+.m2-time-dialog {
+  width: 320px;
+  background: #1e1e24;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  padding: 20px 20px 14px 20px;
+  color: #ffffff;
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  user-select: none;
+  animation: m2-pop 0.2s cubic-bezier(0, 0, 0.2, 1);
+}
+
+:root.theme-light .m2-time-dialog,
+.theme-light .m2-time-dialog,
+:root[data-theme="light"] .m2-time-dialog {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
+}
+
+/* Header Label */
+.m2-dialog-header-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
   color: #a1a1aa;
-  font-weight: 600;
-  white-space: nowrap;
+  margin-bottom: 12px;
 }
 
-.nudge-pills {
+.m2-nudge-group {
   display: flex;
   gap: 4px;
 }
 
-.nudge-pill {
+.m2-nudge-btn {
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #d4d4d8;
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 5px;
+  padding: 2px 6px;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.12s ease;
 }
 
-.nudge-pill:hover {
-  background: rgba(255, 255, 255, 0.15);
+.m2-nudge-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
   color: #ffffff;
 }
 
-.nudge-pill.accent {
+.m2-nudge-btn.accent {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.35);
   color: #f87171;
 }
 
-.nudge-pill.accent:hover {
+.m2-nudge-btn.accent:hover {
   background: #ef4444;
   color: #ffffff;
 }
 
-/* Sections */
-.picker-section {
-  margin-bottom: 10px;
-}
-
-.section-header-row {
+/* Big Display Row */
+.m2-time-display-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 5px;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
-.section-title {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #a1a1aa;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 5px;
-}
-
-.minute-stepper {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  padding: 1px 4px;
-}
-
-.stepper-btn {
-  background: transparent;
-  border: none;
-  color: #f87171;
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1;
-  padding: 1px 4px;
-  cursor: pointer;
-  border-radius: 2px;
-}
-
-.stepper-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-}
-
-.stepper-value {
-  font-size: 11px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-:root.theme-light .stepper-value,
-.theme-light .stepper-value,
-:root[data-theme="light"] .stepper-value {
-  color: #0f172a;
-}
-
-/* Grids */
-.hours-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
-}
-
-.minutes-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
-}
-
-.picker-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #e4e4e7;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 5px 0;
-  border-radius: 5px;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.12s ease;
-}
-
-:root.theme-light .picker-btn,
-.theme-light .picker-btn,
-:root[data-theme="light"] .picker-btn {
-  background: #f1f5f9;
-  border-color: #e2e8f0;
-  color: #334155;
-}
-
-.picker-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.picker-btn.active {
-  background: #ef4444 !important;
-  border-color: #dc2626 !important;
-  color: #ffffff !important;
-  font-weight: 800;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
-}
-
-/* Popover Footer */
-.popover-footer {
+.m2-time-inputs-group {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 4px;
 }
 
-:root.theme-light .popover-footer,
-.theme-light .popover-footer,
-:root[data-theme="light"] .popover-footer {
-  border-top-color: #e2e8f0;
-}
-
-.popover-action-btn {
-  border-radius: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
+.m2-time-box {
+  width: 80px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  color: #d4d4d8;
+  font-size: 44px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.popover-action-btn.secondary {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #a1a1aa;
+:root.theme-light .m2-time-box,
+.theme-light .m2-time-box,
+:root[data-theme="light"] .m2-time-box {
+  background: #f1f5f9;
+  color: #334155;
 }
 
-.popover-action-btn.secondary:hover {
+.m2-time-box.active {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: #ef4444;
+  color: #f87171;
+  font-weight: 500;
+}
+
+.m2-time-box-input {
+  width: 80px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid #ef4444;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 40px;
+  font-weight: 500;
+  text-align: center;
+  outline: none;
+}
+
+:root.theme-light .m2-time-box-input,
+.theme-light .m2-time-box-input,
+:root[data-theme="light"] .m2-time-box-input {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.m2-time-colon {
+  font-size: 40px;
+  font-weight: 300;
+  color: #a1a1aa;
+  line-height: 1;
+  margin: 0 2px;
+}
+
+/* AM / PM Selector */
+.m2-period-selector {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+  height: 64px;
+  width: 44px;
+}
+
+:root.theme-light .m2-period-selector,
+.theme-light .m2-period-selector,
+:root[data-theme="light"] .m2-period-selector {
+  border-color: #cbd5e1;
+}
+
+.m2-period-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.m2-period-btn:first-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+:root.theme-light .m2-period-btn:first-child,
+.theme-light .m2-period-btn:first-child,
+:root[data-theme="light"] .m2-period-btn:first-child {
+  border-bottom-color: #cbd5e1;
+}
+
+.m2-period-btn.active {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* Dial Container & Clock Face */
+.m2-dial-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 0 10px 0;
+}
+
+.m2-clock-dial {
+  position: relative;
+  width: 256px;
+  height: 256px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: none;
+}
+
+:root.theme-light .m2-clock-dial,
+.theme-light .m2-clock-dial,
+:root[data-theme="light"] .m2-clock-dial {
+  background: #f1f5f9;
+}
+
+.m2-dial-center-pin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+/* Dial Needle */
+.m2-dial-needle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 96px;
+  background: #ef4444;
+  transform-origin: top center;
+  z-index: 4;
+  pointer-events: none;
+  transition: transform 0.08s ease-out;
+}
+
+/* Selector Bubble at the end of needle */
+.m2-dial-selector-dot {
+  position: absolute;
+  bottom: -18px;
+  left: -17px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.45);
+}
+
+/* Number Label placed around dial */
+.m2-dial-number {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #e4e4e7;
+  pointer-events: none;
+  z-index: 6;
+  transition: color 0.1s ease;
+}
+
+:root.theme-light .m2-dial-number,
+.theme-light .m2-dial-number,
+:root[data-theme="light"] .m2-dial-number {
+  color: #334155;
+}
+
+.m2-dial-number.selected {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+/* Keyboard Input Helper */
+.m2-keyboard-helper {
+  min-height: 256px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.m2-keyboard-labels {
+  display: flex;
+  gap: 50px;
+  font-size: 11px;
+  color: #a1a1aa;
+  margin-bottom: 8px;
+}
+
+.m2-keyboard-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 14px;
+}
+
+/* Dialog Footer */
+.m2-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:root.theme-light .m2-dialog-footer,
+.theme-light .m2-dialog-footer,
+:root[data-theme="light"] .m2-dialog-footer {
+  border-top-color: #e2e8f0;
+}
+
+.m2-mode-icon-btn {
+  background: none;
+  border: none;
+  color: #a1a1aa;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.m2-mode-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+:root.theme-light .m2-mode-icon-btn:hover,
+.theme-light .m2-mode-icon-btn:hover,
+:root[data-theme="light"] .m2-mode-icon-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.m2-actions-group {
+  display: flex;
+  gap: 8px;
+}
+
+.m2-action-btn {
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.m2-action-btn:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
 }
 
-.popover-action-btn.primary {
-  background: #ef4444;
-  border: 1px solid #ef4444;
-  color: #ffffff;
+:root.theme-light .m2-action-btn:hover,
+.theme-light .m2-action-btn:hover,
+:root[data-theme="light"] .m2-action-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
-.popover-action-btn.primary:hover {
-  background: #dc2626;
-  border-color: #dc2626;
+.m2-action-btn.confirm {
+  color: #ef4444;
 }
 
-/* Transition */
-.picker-pop-enter-active,
-.picker-pop-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+.m2-action-btn.confirm:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
 }
 
-.picker-pop-enter-from,
-.picker-pop-leave-to {
+/* Dialog Transitions */
+.m2-dialog-fade-enter-active,
+.m2-dialog-fade-leave-active {
+  transition: opacity 0.18s ease;
+}
+
+.m2-dialog-fade-enter-from,
+.m2-dialog-fade-leave-to {
   opacity: 0;
-  transform: scale(0.96) translateY(-4px);
+}
+
+@keyframes m2-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>
