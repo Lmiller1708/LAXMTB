@@ -633,11 +633,20 @@ const hasValue = computed(() => {
   left: 0;
   z-index: 9999;
   width: 290px;
+  max-width: calc(100vw - 28px);
   background: #18181b;
   border: 1px solid #3f3f46;
   border-radius: 12px;
   padding: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .cdp-popover {
+    left: auto;
+    right: 0;
+  }
 }
 
 /* Quick edit row inside popover */

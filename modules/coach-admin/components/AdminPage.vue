@@ -54,10 +54,57 @@ const {
   unlockAdmin
 } = useCoachAuth()
 
-const activeTab = ref(props.initialTab || 'venue')
+const normalizeTab = (tab?: string) => {
+  if (!tab) return 'venue'
+  if (tab === 'coach') return 'waves'
+  if (tab === 'users') return 'coaches'
+  return tab
+}
+
+const activeTab = ref(normalizeTab(props.initialTab))
+
+const selectTab = (tab: string) => {
+  const clean = normalizeTab(tab)
+  activeTab.value = clean
+  if (import.meta.client && typeof window !== 'undefined') {
+    const target = `/admin?tab=${encodeURIComponent(clean)}`
+    if (window.location.pathname + window.location.search !== target) {
+      window.history.pushState({ admin: true, tab: clean }, '', target)
+    }
+  }
+}
 
 watch(() => props.initialTab, (newTab) => {
-  if (newTab) activeTab.value = newTab
+  if (newTab) activeTab.value = normalizeTab(newTab)
+})
+
+const onPopState = () => {
+  if (import.meta.client && typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search)
+    const tabParam = params.get('tab')
+    if (tabParam && tabParam !== activeTab.value) {
+      activeTab.value = normalizeTab(tabParam)
+    }
+  }
+}
+
+onMounted(() => {
+  if (import.meta.client && typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search)
+    const tabParam = params.get('tab')
+    if (tabParam) {
+      activeTab.value = normalizeTab(tabParam)
+    } else if (props.initialTab) {
+      activeTab.value = normalizeTab(props.initialTab)
+    }
+    window.addEventListener('popstate', onPopState)
+  }
+})
+
+onUnmounted(() => {
+  if (import.meta.client && typeof window !== 'undefined') {
+    window.removeEventListener('popstate', onPopState)
+  }
 })
 
 // Local editable copy of current race
@@ -186,6 +233,13 @@ watch(currentRace, (newRace) => {
 watch(activeTab, (newTab) => {
   if (newTab === 'waves' || newTab === 'coach') {
     initWarmupGroups()
+  }
+  if (import.meta.client && typeof window !== 'undefined') {
+    const clean = normalizeTab(newTab)
+    const target = `/admin?tab=${encodeURIComponent(clean)}`
+    if (window.location.search !== `?tab=${clean}`) {
+      window.history.replaceState({ admin: true, tab: clean }, '', target)
+    }
   }
 })
 
@@ -1056,83 +1110,86 @@ const removePhoto = (idx: number) => {
     <!-- FULL ADMIN DASHBOARD -->
     <div v-else class="admin-dashboard-layout">
       
-      <!-- Top Sticky Navigation Bar -->
-      <header class="admin-top-nav">
-        <div class="admin-nav-inner">
-          <div class="admin-nav-left">
-            <button
-              type="button"
-              class="admin-back-btn"
-              title="Return to public race dashboard"
-              @click="emit('back')"
-            >
-              <span>←</span>
-              <span class="back-text">Back to Race Central</span>
-            </button>
+      <!-- Combined Sticky Header (Nav + Tabs) -->
+      <div class="admin-sticky-header">
+        <!-- Top Sticky Navigation Bar -->
+        <header class="admin-top-nav">
+          <div class="admin-nav-inner">
+            <div class="admin-nav-left">
+              <button
+                type="button"
+                class="admin-back-btn"
+                title="Return to public race dashboard"
+                @click="emit('back')"
+              >
+                <span>←</span>
+                <span class="back-text">Back to Race Central</span>
+              </button>
 
-            <div class="admin-brand-separator">|</div>
+              <div class="admin-brand-separator">|</div>
 
-            <div class="admin-brand-box">
-              <span class="admin-brand-icon">⚙️</span>
-              <div class="admin-brand-text">
-                <span class="admin-brand-title">COACH ADMIN PORTAL</span>
-                <span class="admin-brand-sub">{{ user?.email }}</span>
+              <div class="admin-brand-box">
+                <span class="admin-brand-icon">⚙️</span>
+                <div class="admin-brand-text">
+                  <span class="admin-brand-title">COACH ADMIN PORTAL</span>
+                  <span class="admin-brand-sub">{{ user?.email }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Active Race Switcher -->
-          <div class="admin-nav-center">
-            <label class="admin-race-label">Active Race:</label>
-            <select
-              :value="currentRaceIndex"
-              class="admin-race-select"
-              @change="selectRace(Number(($event.target as HTMLSelectElement).value))"
-            >
-              <option v-for="(r, idx) in races" :key="r.id" :value="idx">{{ r.name }}</option>
-            </select>
-          </div>
+            <!-- Active Race Switcher -->
+            <div class="admin-nav-center">
+              <label class="admin-race-label">Active Race:</label>
+              <select
+                :value="currentRaceIndex"
+                class="admin-race-select"
+                @change="selectRace(Number(($event.target as HTMLSelectElement).value))"
+              >
+                <option v-for="(r, idx) in races" :key="r.id" :value="idx">{{ r.name }}</option>
+              </select>
+            </div>
 
-          <!-- Top Actions (Lock + Save) -->
-          <div class="admin-nav-right">
-            <button
-              type="button"
-              class="admin-lock-btn"
-              title="Lock editing and return to viewer mode"
-              @click="handleLockAdmin"
-            >
-              <span>🔒</span>
-              <span class="action-btn-text">Lock Admin</span>
+            <!-- Top Actions (Lock + Save) -->
+            <div class="admin-nav-right">
+              <button
+                type="button"
+                class="admin-lock-btn"
+                title="Lock editing and return to viewer mode"
+                @click="handleLockAdmin"
+              >
+                <span>🔒</span>
+                <span class="action-btn-text">Lock Admin</span>
+              </button>
+
+              <button
+                type="button"
+                class="done-modal-btn admin-save-btn"
+                style="padding:7px 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;"
+                @click="handleSave"
+              >
+                <span>💾</span>
+                <span>Save Changes</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Tab Navigation Strip -->
+        <nav class="admin-subnav-tabs">
+          <div class="admin-tabs-scroller">
+            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'venue' }" @click="selectTab('venue')">📍 Venue Info</button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'schedule' }" @click="selectTab('schedule')">⏱️ Schedule</button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'waves' || activeTab === 'coach' }" @click="selectTab('waves')">⏱️ Waves & Warm-ups</button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'signups' }" @click="selectTab('signups')">🤝 Volunteers & Food</button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'photos' }" @click="selectTab('photos')">📸 Photos Album</button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'maps' }" @click="selectTab('maps')">🗺️ Course Maps</button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'announcements' }" @click="selectTab('announcements')">📢 Guidelines</button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'coaches' || activeTab === 'users' }" @click="selectTab('coaches')">
+              👥 Team Admins & Users ({{ allUsersList.length }})
             </button>
-
-            <button
-              type="button"
-              class="done-modal-btn admin-save-btn"
-              style="padding:7px 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;"
-              @click="handleSave"
-            >
-              <span>💾</span>
-              <span>Save Changes</span>
-            </button>
           </div>
-        </div>
-      </header>
-
-      <!-- Tab Navigation Strip -->
-      <nav class="admin-subnav-tabs">
-        <div class="admin-tabs-scroller">
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'venue' }" @click="activeTab = 'venue'">📍 Venue Info</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'schedule' }" @click="activeTab = 'schedule'">⏱️ Schedule</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'waves' || activeTab === 'coach' }" @click="activeTab = 'waves'">⏱️ Waves & Warm-ups</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'signups' }" @click="activeTab = 'signups'">🤝 Volunteers & Food</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'photos' }" @click="activeTab = 'photos'">📸 Photos Album</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'maps' }" @click="activeTab = 'maps'">🗺️ Course Maps</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'announcements' }" @click="activeTab = 'announcements'">📢 Guidelines</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'coaches' || activeTab === 'users' }" @click="activeTab = 'coaches'">
-            👥 Team Admins & Users ({{ allUsersList.length }})
-          </button>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       <!-- Main Body Container -->
       <main class="admin-page-body">
@@ -1156,7 +1213,7 @@ const removePhoto = (idx: number) => {
                   <span>📅 Event Date Range</span>
                   <span v-if="form.dateStr" style="color:var(--accent-red);font-weight:700;font-size:12px;">{{ form.dateStr }}</span>
                 </label>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
+                <div class="date-range-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
                   <div style="display:flex;flex-direction:column;gap:4px;">
                     <span style="font-size:11px;font-weight:700;color:var(--text-muted);">Start Date:</span>
                     <CustomDatePicker
@@ -1259,7 +1316,7 @@ const removePhoto = (idx: number) => {
                 @dragend="onDayDragEnd"
               >
                 <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
-                  <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px;">
+                  <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;flex-wrap:wrap;">
                     <span
                       class="drag-handle"
                       title="Drag day to reorder"
@@ -1280,12 +1337,12 @@ const removePhoto = (idx: number) => {
                       type="text"
                       placeholder="Subtitle (e.g. Race Day, Camping Opens)"
                       class="custom-minutes-input"
-                      style="flex:1;min-width:140px;"
+                      style="flex:1;min-width:140px;max-width:100%;"
                       draggable="false"
                       @dragstart.stop
                     >
                   </div>
-                  <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;">
                     <label style="display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;color:var(--text-muted);white-space:nowrap;" draggable="false" @dragstart.stop>
                       <input v-model="day.isRaceDay" type="checkbox">
                       <span>🏁 Race Day</span>
@@ -1480,12 +1537,12 @@ const removePhoto = (idx: number) => {
               >
                 <!-- Group Top Row -->
                 <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
-                  <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:240px;">
+                  <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;flex-wrap:wrap;">
                     <span class="drag-handle" title="Drag to reorder">⠿</span>
-                    <input v-model="grp.name" type="text" placeholder="Group Name" class="custom-minutes-input" style="flex:2;min-width:160px;font-weight:700;" draggable="false" @dragstart.stop>
+                    <input v-model="grp.name" type="text" placeholder="Group Name" class="custom-minutes-input" style="flex:2;min-width:140px;max-width:100%;font-weight:700;" draggable="false" @dragstart.stop>
                   </div>
-                  <div style="display:flex;align-items:center;gap:8px;" draggable="false" @dragstart.stop>
-                    <div style="display:flex;align-items:center;gap:4px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);padding:2px 6px;border-radius:6px;">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;" draggable="false" @dragstart.stop>
+                    <div style="display:flex;align-items:center;gap:4px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);padding:2px 6px;border-radius:6px;flex-wrap:wrap;">
                       <span style="font-size:11px;font-weight:700;color:#f59e0b;">🔥 Warm-up Time:</span>
                       <select v-model="grp.meetingTime" class="custom-minutes-input" style="font-size:11px;height:26px;padding:1px 4px;font-weight:700;color:#f59e0b;">
                         <option v-for="t in getWarmupTimeOptions(grp)" :key="t" :value="t">{{ t }}</option>
@@ -1669,8 +1726,8 @@ const removePhoto = (idx: number) => {
               <div style="display:flex;flex-direction:column;gap:10px;">
                 <!-- Coach Invite Link -->
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                  <span style="font-size:11.5px;font-weight:700;color:#60a5fa;min-width:110px;">Coach Invite:</span>
-                  <div style="flex:1;min-width:220px;display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:monospace;font-size:11.5px;color:var(--text-main);overflow-x:auto;white-space:nowrap;">
+                  <span style="font-size:11.5px;font-weight:700;color:#60a5fa;min-width:90px;">Coach Invite:</span>
+                  <div style="flex:1;min-width:0;max-width:100%;display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:monospace;font-size:11.5px;color:var(--text-main);overflow-x:auto;white-space:nowrap;box-sizing:border-box;">
                     {{ coachInviteUrl }}
                   </div>
                   <button type="button" class="action-mini-btn" style="padding:5px 12px;font-size:11.5px;" @click="copyCoachLink">
@@ -1680,8 +1737,8 @@ const removePhoto = (idx: number) => {
 
                 <!-- Guardian Invite Link -->
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                  <span style="font-size:11.5px;font-weight:700;color:#c084fc;min-width:110px;">Guardian Invite:</span>
-                  <div style="flex:1;min-width:220px;display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:monospace;font-size:11.5px;color:var(--text-main);overflow-x:auto;white-space:nowrap;">
+                  <span style="font-size:11.5px;font-weight:700;color:#c084fc;min-width:90px;">Guardian Invite:</span>
+                  <div style="flex:1;min-width:0;max-width:100%;display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:monospace;font-size:11.5px;color:var(--text-main);overflow-x:auto;white-space:nowrap;box-sizing:border-box;">
                     {{ guardianInviteUrl }}
                   </div>
                   <button type="button" class="action-mini-btn" style="padding:5px 12px;font-size:11.5px;" @click="copyGuardianLink">
@@ -1703,19 +1760,19 @@ const removePhoto = (idx: number) => {
                   type="email"
                   placeholder="admin.email@gmail.com"
                   class="custom-minutes-input"
-                  style="flex:2;min-width:180px;"
+                  style="flex:2;min-width:160px;max-width:100%;"
                 >
                 <input
                   v-model="newCoachName"
                   type="text"
                   placeholder="Admin Name (Optional)"
                   class="custom-minutes-input"
-                  style="flex:1.5;min-width:140px;"
+                  style="flex:1.5;min-width:130px;max-width:100%;"
                 >
                 <button
                   type="button"
                   class="done-modal-btn admin-save-btn"
-                  style="padding:8px 18px;white-space:nowrap;"
+                  style="padding:8px 18px;white-space:nowrap;max-width:100%;"
                   :disabled="isAddingCoach"
                   @click="handleAddCoach"
                 >
@@ -1822,7 +1879,7 @@ const removePhoto = (idx: number) => {
                   style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;gap:12px;flex-wrap:wrap;transition:all 0.15s ease;"
                 >
                   <!-- Left: Avatar + Name + Email + Badges -->
-                  <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:240px;">
+                  <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;max-width:100%;">
                     <img
                       v-if="u.photoURL"
                       :src="u.photoURL"
@@ -1837,7 +1894,7 @@ const removePhoto = (idx: number) => {
                       {{ (u.name || u.email).slice(0, 2).toUpperCase() }}
                     </div>
 
-                    <div style="min-width:0;">
+                    <div style="min-width:0;flex:1;">
                       <div style="font-weight:700;font-size:13.5px;color:var(--text-main);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                         <span>{{ u.name }}</span>
                         <span
@@ -1859,15 +1916,15 @@ const removePhoto = (idx: number) => {
                           title="Administrator added in database, awaiting account registration"
                         >Invited Admin</span>
                       </div>
-                      <div style="font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:8px;margin-top:2px;">
-                        <span>{{ u.email }}</span>
+                      <div style="font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:8px;margin-top:2px;flex-wrap:wrap;">
+                        <span style="word-break:break-all;">{{ u.email }}</span>
                         <span v-if="u.phone" style="opacity:0.8;">• 📞 {{ u.phone }}</span>
                       </div>
                     </div>
                   </div>
 
                   <!-- Right: Interactive Role Dropdown + Remove action -->
-                  <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+                  <div style="display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap;">
                     <!-- Dropdown for role changes -->
                     <select
                       v-if="u.role !== 'owner' && u.email.toLowerCase() !== user?.email?.toLowerCase()"
@@ -1921,6 +1978,10 @@ const removePhoto = (idx: number) => {
   font-family: 'Inter', sans-serif;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .admin-gate-screen {
@@ -1960,16 +2021,29 @@ const removePhoto = (idx: number) => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
-.admin-top-nav {
+/* Combined Sticky Header (Nav + Tabs) */
+.admin-sticky-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(13, 13, 13, 0.95);
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+.admin-top-nav {
+  background: rgba(13, 13, 13, 0.96);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
   padding: 10px 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .admin-nav-inner {
@@ -1980,6 +2054,8 @@ const removePhoto = (idx: number) => {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .admin-nav-left {
@@ -2001,6 +2077,7 @@ const removePhoto = (idx: number) => {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 .admin-back-btn:hover {
   background: rgba(220, 38, 38, 0.15);
@@ -2030,10 +2107,12 @@ const removePhoto = (idx: number) => {
   font-weight: 800;
   letter-spacing: 0.5px;
   color: var(--text-main, #ffffff);
+  white-space: nowrap;
 }
 .admin-brand-sub {
   font-size: 10.5px;
   color: var(--text-muted, #9ca3af);
+  white-space: nowrap;
 }
 
 .admin-nav-center {
@@ -2069,22 +2148,25 @@ const removePhoto = (idx: number) => {
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .admin-subnav-tabs {
   background: var(--bg-surface, #141414);
   border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-  position: sticky;
-  top: 57px;
-  z-index: 90;
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .admin-tabs-scroller {
-  max-width: 1280px;
+  max-width: 100%;
   margin: 0 auto;
   display: flex;
   gap: 4px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 6px 16px;
   scrollbar-width: none;
 }
@@ -2103,6 +2185,7 @@ const removePhoto = (idx: number) => {
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 .admin-tab-btn:hover {
   color: var(--text-main, #ffffff);
@@ -2118,11 +2201,17 @@ const removePhoto = (idx: number) => {
 .admin-page-body {
   flex: 1;
   padding: 24px 16px;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .admin-body-container {
   max-width: 1280px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .admin-section-card {
@@ -2131,6 +2220,10 @@ const removePhoto = (idx: number) => {
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .admin-card-title {
@@ -2163,20 +2256,72 @@ const removePhoto = (idx: number) => {
 }
 .drag-row {
   transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 640px) {
+  .admin-top-nav {
+    padding: 8px 10px;
+  }
+  .admin-nav-inner {
+    gap: 8px;
+  }
+  .admin-nav-left {
+    gap: 6px;
+  }
+  .admin-back-btn {
+    padding: 5px 8px;
+  }
   .back-text {
     display: none;
   }
   .action-btn-text {
     display: none;
   }
+  .admin-brand-separator {
+    display: none;
+  }
+  .admin-brand-icon {
+    display: none;
+  }
+  .admin-brand-title {
+    font-size: 11px;
+    letter-spacing: 0;
+  }
   .admin-brand-sub {
     display: none;
   }
+  .admin-nav-center {
+    order: 3;
+    width: 100%;
+    min-width: 0;
+    justify-content: stretch;
+    margin-top: 2px;
+  }
+  .admin-race-select {
+    max-width: 100%;
+    flex: 1;
+  }
+  .admin-tabs-scroller {
+    padding: 6px 10px;
+  }
+  .admin-page-body {
+    padding: 14px 8px;
+  }
   .admin-section-card {
-    padding: 16px;
+    padding: 14px 10px;
+    border-radius: 8px;
+  }
+  .date-range-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Prevent inputs and cards from pushing past mobile viewport */
+  .admin-section-card input,
+  .admin-section-card select,
+  .admin-section-card textarea {
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 </style>
