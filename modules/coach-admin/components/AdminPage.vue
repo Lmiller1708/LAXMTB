@@ -5,6 +5,7 @@ import {
   getCategoryStartTime,
   getCategoryStageTime,
   calculateDefaultGroupWarmupTime,
+  formatWarmupGroupTitle,
   parseTimeStrToMinutes,
   formatMinutesToTimeStr
 } from '~/modules/results/services/raceresultService'
@@ -57,9 +58,26 @@ watch(() => props.initialTab, (newTab) => {
 // Local editable copy of current race
 const form = ref<Race>({ ...currentRace.value })
 
+function syncFormFromRace(raceData: Race | null) {
+  if (!raceData) return
+  form.value = JSON.parse(JSON.stringify(raceData))
+  if (!form.value.schedule) {
+    form.value.schedule = []
+  }
+  initWarmupGroups()
+}
+
+syncFormFromRace(currentRace.value)
+
 watch(currentRace, (newRace) => {
-  form.value = JSON.parse(JSON.stringify(newRace))
+  syncFormFromRace(newRace)
 }, { deep: true })
+
+watch(activeTab, (newTab) => {
+  if (newTab === 'waves' || newTab === 'coach') {
+    initWarmupGroups()
+  }
+})
 
 // State for adding new coach administrator
 const newCoachEmail = ref('')
@@ -303,43 +321,166 @@ const removeGuideline = (idx: number) => {
   form.value.guidelines?.splice(idx, 1)
 }
 
-const newScheduleItem = ref<ScheduleEvent>({ time: '', title: '', desc: '', location: '', badge: '' })
-const addScheduleItem = () => {
-  if (!newScheduleItem.value.time || !newScheduleItem.value.title) return
+// Schedule Days & Events Helpers
+const addScheduleDay = () => {
   if (!form.value.schedule) form.value.schedule = []
-  form.value.schedule.push({ ...newScheduleItem.value })
-  newScheduleItem.value = { time: '', title: '', desc: '', location: '', badge: '' }
+  const dayNum = form.value.schedule.length + 1
+  form.value.schedule.push({
+    day: `Day ${dayNum}`,
+    date: '',
+    subtitle: '',
+    isRaceDay: false,
+    events: [
+      { time: '8:00 AM', desc: '', tag: 'Team Event' }
+    ]
+  })
 }
-const removeScheduleItem = (idx: number) => {
+
+const removeScheduleDay = (idx: number) => {
   form.value.schedule?.splice(idx, 1)
 }
 
-// Drag reorder helpers for Schedule
-const draggedScheduleIdx = ref<number | null>(null)
-const scheduleDragOverIdx = ref<number | null>(null)
-const onScheduleDragStart = (idx: number, e: DragEvent) => {
-  draggedScheduleIdx.value = idx
-  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+const addScheduleEvent = (dayIdx: number) => {
+  if (!form.value.schedule || !form.value.schedule[dayIdx]) return
+  if (!form.value.schedule[dayIdx].events) form.value.schedule[dayIdx].events = []
+  form.value.schedule[dayIdx].events.push({
+    time: '10:00 AM',
+    desc: '',
+    tag: 'Team Event'
+  })
 }
-const onScheduleDragOver = (idx: number, e: DragEvent) => {
-  e.preventDefault()
-  if (draggedScheduleIdx.value === null || draggedScheduleIdx.value === idx) return
-  scheduleDragOverIdx.value = idx
+
+const removeScheduleEvent = (dayIdx: number, evIdx: number) => {
+  form.value.schedule?.[dayIdx]?.events?.splice(evIdx, 1)
 }
-const onScheduleDrop = (idx: number, e: DragEvent) => {
-  e.preventDefault()
-  const from = draggedScheduleIdx.value
-  const to = idx
-  if (from !== null && from !== to && form.value.schedule) {
-    const item = form.value.schedule.splice(from, 1)[0]
-    form.value.schedule.splice(to, 0, item)
+
+const isEventTbd = (timeStr?: string) => {
+  if (!timeStr) return false
+  return timeStr.trim().toUpperCase() === 'TBD'
+}
+
+const getEventStart = (timeStr?: string) => {
+  const str = String(timeStr || '').trim()
+  if (!str || str.toUpperCase() === 'TBD') return ''
+  const parts = str.split(/\s*[-–—]\s*|\s+to\s+/i)
+  return parts[0]?.trim() || ''
+}
+
+const getEventEnd = (timeStr?: string) => {
+  const str = String(timeStr || '').trim()
+  if (!str || str.toUpperCase() === 'TBD') return ''
+  const parts = str.split(/\s*[-–—]\s*|\s+to\s+/i)
+  return parts.length >= 2 ? parts[1]?.trim() || '' : ''
+}
+
+const onStartChange = (ev: ScheduleEvent, newStart: string) => {
+  if (newStart === 'TBD') {
+    ev.time = 'TBD'
+    return
   }
-  draggedScheduleIdx.value = null
-  scheduleDragOverIdx.value = null
+  const end = getEventEnd(ev.time)
+  if (!newStart && !end) {
+    ev.time = 'TBD'
+  } else if (newStart && end) {
+    ev.time = `${newStart} - ${end}`
+  } else {
+    ev.time = newStart || end
+  }
 }
-const onScheduleDragEnd = () => {
-  draggedScheduleIdx.value = null
-  scheduleDragOverIdx.value = null
+
+const onEndChange = (ev: ScheduleEvent, newEnd: string) => {
+  const start = getEventStart(ev.time) || '9:00 AM'
+  if (newEnd) {
+    ev.time = `${start} - ${newEnd}`
+  } else {
+    ev.time = start
+  }
+}
+
+const toggleTbd = (ev: ScheduleEvent, isTbd: boolean) => {
+  if (isTbd) {
+    ev.time = 'TBD'
+  } else {
+    ev.time = '9:00 AM'
+  }
+}
+
+// Drag and Drop: Schedule Events (within and across days)
+const draggedEvent = ref<{ dayIdx: number; evIdx: number } | null>(null)
+const eventDragOver = ref<{ dayIdx: number; evIdx: number } | null>(null)
+
+const onEventDragStart = (dayIdx: number, evIdx: number, e: DragEvent) => {
+  draggedEvent.value = { dayIdx, evIdx }
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', `${dayIdx}:${evIdx}`)
+  }
+}
+
+const onEventDragOver = (dayIdx: number, evIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedEvent.value) {
+    eventDragOver.value = { dayIdx, evIdx }
+  }
+}
+
+const onEventDrop = (targetDayIdx: number, targetEvIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (!draggedEvent.value || !form.value.schedule) return
+  const { dayIdx: srcDayIdx, evIdx: srcEvIdx } = draggedEvent.value
+  const srcEvents = form.value.schedule[srcDayIdx]?.events
+  const targetEvents = form.value.schedule[targetDayIdx]?.events
+  if (!srcEvents || !targetEvents) return
+
+  const item = srcEvents.splice(srcEvIdx, 1)[0]
+  if (item) {
+    targetEvents.splice(targetEvIdx, 0, item)
+  }
+
+  draggedEvent.value = null
+  eventDragOver.value = null
+}
+
+const onEventDragEnd = () => {
+  draggedEvent.value = null
+  eventDragOver.value = null
+}
+
+// Drag and Drop: Schedule Days
+const draggedDayIdx = ref<number | null>(null)
+const dayDragOverIdx = ref<number | null>(null)
+
+const onDayDragStart = (dayIdx: number, e: DragEvent) => {
+  draggedDayIdx.value = dayIdx
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(dayIdx))
+  }
+}
+
+const onDayDragOver = (dayIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedDayIdx.value !== null && draggedDayIdx.value !== dayIdx) {
+    dayDragOverIdx.value = dayIdx
+  }
+}
+
+const onDayDrop = (targetDayIdx: number, e: DragEvent) => {
+  e.preventDefault()
+  if (draggedDayIdx.value === null || !form.value.schedule) return
+  const from = draggedDayIdx.value
+  const to = targetDayIdx
+  if (from !== to && form.value.schedule[from] !== undefined) {
+    const dayItem = form.value.schedule.splice(from, 1)[0]
+    form.value.schedule.splice(to, 0, dayItem)
+  }
+  draggedDayIdx.value = null
+  dayDragOverIdx.value = null
+}
+
+const onDayDragEnd = () => {
+  draggedDayIdx.value = null
+  dayDragOverIdx.value = null
 }
 
 // Wave Schedule helpers
@@ -347,8 +488,9 @@ const ALL_CATEGORIES = categoryOrder
 const getCatStart = (cat: string) => getCategoryStartTime(form.value, cat)
 const getCatStage = (cat: string) => getCategoryStageTime(form.value, cat)
 
-const initWarmupGroups = () => {
-  if (!form.value.warmupGroups) {
+function initWarmupGroups() {
+  if (!form.value) return
+  if (!form.value.warmupGroups || form.value.warmupGroups.length === 0) {
     if (form.value.coachSignups?.warmups && form.value.coachSignups.warmups.length > 0) {
       const assigned = new Set<string>()
       form.value.warmupGroups = form.value.coachSignups.warmups.map(w => {
@@ -363,10 +505,11 @@ const initWarmupGroups = () => {
           )
         }
         cats.forEach((c: string) => assigned.add(c.toLowerCase()))
+        const autoMeeting = calculateDefaultGroupWarmupTime(form.value, cats)
         return {
           id: w.id || `wu-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-          name: w.name || 'Warm-up Group',
-          meetingTime: w.meetingTime || '7:00 AM',
+          name: w.name || formatWarmupGroupTitle(cats),
+          meetingTime: w.meetingTime || autoMeeting || '8:00 AM',
           stagingTime: w.stagingTime || '',
           startTime: w.startTime || '',
           day: w.day || 'Sunday',
@@ -385,6 +528,16 @@ const initWarmupGroups = () => {
       form.value.warmupGroups = []
     }
   }
+
+  // Ensure any groups without meetingTime get populated from auto-time
+  if (form.value.warmupGroups) {
+    form.value.warmupGroups.forEach(grp => {
+      if (!grp.meetingTime) {
+        const auto = calculateDefaultGroupWarmupTime(form.value, grp.categories || [])
+        if (auto) grp.meetingTime = auto
+      }
+    })
+  }
 }
 
 const getAutoWarmupTime = (grp: WarmupGroup) => {
@@ -396,6 +549,19 @@ const applyAutoWarmupTime = (grp: WarmupGroup) => {
   if (autoTime) {
     grp.meetingTime = autoTime
   }
+}
+
+const getWarmupTimeOptions = (grp: WarmupGroup) => {
+  const options = new Set<string>(TIME_OPTIONS)
+  const autoTime = getAutoWarmupTime(grp)
+  if (autoTime) options.add(autoTime)
+  if (grp.meetingTime) options.add(grp.meetingTime)
+
+  return Array.from(options).sort((a, b) => {
+    const minA = parseTimeStrToMinutes(a) ?? 0
+    const minB = parseTimeStrToMinutes(b) ?? 0
+    return minA - minB
+  })
 }
 
 const getCategoryAssignedGroup = (catName: string) => {
@@ -424,10 +590,24 @@ const toggleCategoryInWarmupGroup = (grp: WarmupGroup, catName: string) => {
     for (const other of (form.value.warmupGroups || [])) {
       if (other.id !== grp.id && other.categories) {
         const oIdx = other.categories.findIndex(c => c.toLowerCase() === catName.toLowerCase())
-        if (oIdx >= 0) other.categories.splice(oIdx, 1)
+        if (oIdx >= 0) {
+          other.categories.splice(oIdx, 1)
+          other.name = formatWarmupGroupTitle(other.categories)
+          const otherAuto = getAutoWarmupTime(other)
+          if (otherAuto) other.meetingTime = otherAuto
+        }
       }
     }
     grp.categories.push(catName)
+  }
+
+  // Dynamically update group title to reflect assigned categories
+  grp.name = formatWarmupGroupTitle(grp.categories)
+
+  // Dynamically update warmup meeting time
+  const autoTime = getAutoWarmupTime(grp)
+  if (autoTime) {
+    grp.meetingTime = autoTime
   }
 }
 
@@ -865,36 +1045,213 @@ const removePhoto = (idx: number) => {
 
           <!-- 2. Schedule Timeline Tab -->
           <div v-else-if="activeTab === 'schedule'" class="admin-section-card">
-            <h3 class="admin-card-title">⏱️ Weekend Schedule Timeline</h3>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+              <h3 class="admin-card-title" style="margin:0;">⏱️ Weekend Schedule Timeline</h3>
+              <button type="button" class="action-mini-btn" @click="addScheduleDay">+ Add Day</button>
+            </div>
+
+            <div v-if="!form.schedule || form.schedule.length === 0" class="no-results" style="padding:16px;">
+              No schedule days added yet. Click "+ Add Day" above.
+            </div>
+
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div
-                v-for="(item, idx) in form.schedule"
-                :key="idx"
-                class="drag-row"
-                :class="{ 'drag-over': scheduleDragOverIdx === idx }"
-                style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;flex-wrap:wrap;"
+                v-for="(day, dayIdx) in form.schedule"
+                :key="dayIdx"
                 draggable="true"
-                @dragstart="onScheduleDragStart(idx, $event)"
-                @dragover="onScheduleDragOver(idx, $event)"
-                @dragleave="scheduleDragOverIdx = null"
-                @drop="onScheduleDrop(idx, $event)"
-                @dragend="onScheduleDragEnd"
+                class="drag-row"
+                :style="{
+                  background: 'var(--bg-card)',
+                  border: dayDragOverIdx === dayIdx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  opacity: draggedDayIdx === dayIdx ? '0.4' : '1',
+                  transition: 'all 0.15s ease'
+                }"
+                @dragstart="onDayDragStart(dayIdx, $event)"
+                @dragover="onDayDragOver(dayIdx, $event)"
+                @dragleave="dayDragOverIdx = null"
+                @drop="onDayDrop(dayIdx, $event)"
+                @dragend="onDayDragEnd"
               >
-                <span class="drag-handle" title="Drag to reorder">⠿</span>
-                <input v-model="item.time" type="text" placeholder="Time" class="custom-minutes-input" style="width:90px;" draggable="false" @dragstart.stop>
-                <input v-model="item.title" type="text" placeholder="Title" class="custom-minutes-input" style="flex:2;min-width:140px;font-weight:700;" draggable="false" @dragstart.stop>
-                <input v-model="item.desc" type="text" placeholder="Description" class="custom-minutes-input" style="flex:2;min-width:140px;" draggable="false" @dragstart.stop>
-                <input v-model="item.badge" type="text" placeholder="Badge (Optional)" class="custom-minutes-input" style="width:100px;" draggable="false" @dragstart.stop>
-                <button type="button" class="search-clear-btn" style="position:static;" @click="removeScheduleItem(idx)">✕</button>
-              </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px;gap:8px;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:240px;">
+                    <span
+                      class="drag-handle"
+                      title="Drag day to reorder"
+                      style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 4px;"
+                    >
+                      ⠿
+                    </span>
+                    <span style="font-weight:800;font-size:13px;color:var(--text-main);">Day {{ dayIdx + 1 }}:</span>
+                    <input
+                      v-model="day.day"
+                      type="text"
+                      placeholder="e.g. Friday / Saturday / Sunday"
+                      class="custom-minutes-input"
+                      style="width:130px;font-weight:700;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                    <input
+                      v-model="day.date"
+                      type="text"
+                      placeholder="e.g. Sept 5"
+                      class="custom-minutes-input"
+                      style="width:100px;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                    <input
+                      v-model="day.subtitle"
+                      type="text"
+                      placeholder="Subtitle (e.g. Race Day, Camping Opens)"
+                      class="custom-minutes-input"
+                      style="flex:1;min-width:140px;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <label style="display:flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer;color:var(--text-muted);white-space:nowrap;" draggable="false" @dragstart.stop>
+                      <input v-model="day.isRaceDay" type="checkbox">
+                      <span>🏁 Race Day</span>
+                    </label>
+                    <button
+                      type="button"
+                      class="search-clear-btn"
+                      style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);cursor:pointer;"
+                      title="Delete this whole day"
+                      @click="removeScheduleDay(dayIdx)"
+                    >
+                      ✕ Delete Day
+                    </button>
+                  </div>
+                </div>
 
-              <!-- Add New Schedule Item -->
-              <div style="display:flex;align-items:center;gap:8px;padding:10px;background:rgba(255,255,255,0.02);border:1px dashed var(--border);border-radius:6px;flex-wrap:wrap;margin-top:6px;">
-                <input v-model="newScheduleItem.time" type="text" placeholder="Time (e.g. 8:00 AM)" class="custom-minutes-input" style="width:100px;">
-                <input v-model="newScheduleItem.title" type="text" placeholder="Title" class="custom-minutes-input" style="flex:2;min-width:140px;">
-                <input v-model="newScheduleItem.desc" type="text" placeholder="Description (Optional)" class="custom-minutes-input" style="flex:2;min-width:140px;">
-                <input v-model="newScheduleItem.badge" type="text" placeholder="Badge (e.g. Mandatory)" class="custom-minutes-input" style="width:120px;">
-                <button type="button" class="done-modal-btn admin-save-btn" style="padding:6px 14px;" @click="addScheduleItem">+ Add Event</button>
+                <!-- Events within Day -->
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">Events ({{ day.events?.length || 0 }})</span>
+                    <button type="button" class="action-mini-btn" style="font-size:10.5px;padding:2px 8px;" @click="addScheduleEvent(dayIdx)">+ Add Event</button>
+                  </div>
+
+                  <div
+                    v-for="(ev, evIdx) in day.events"
+                    :key="evIdx"
+                    draggable="true"
+                    class="drag-row"
+                    :style="{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 8px',
+                      background: eventDragOver?.dayIdx === dayIdx && eventDragOver?.evIdx === evIdx ? 'rgba(99, 102, 241, 0.12)' : 'var(--bg-subtle)',
+                      borderRadius: '6px',
+                      border: eventDragOver?.dayIdx === dayIdx && eventDragOver?.evIdx === evIdx ? '2px dashed #6366f1' : '1px solid var(--border)',
+                      opacity: draggedEvent?.dayIdx === dayIdx && draggedEvent?.evIdx === evIdx ? '0.4' : '1',
+                      flexWrap: 'wrap',
+                      transition: 'all 0.15s ease'
+                    }"
+                    @dragstart="onEventDragStart(dayIdx, evIdx, $event)"
+                    @dragover="onEventDragOver(dayIdx, evIdx, $event)"
+                    @dragleave="eventDragOver = null"
+                    @drop="onEventDrop(dayIdx, evIdx, $event)"
+                    @dragend="onEventDragEnd"
+                  >
+                    <span
+                      class="drag-handle"
+                      title="Drag event to reorder"
+                      style="cursor:grab;color:var(--text-muted);font-size:16px;line-height:1;user-select:none;padding:2px 2px;"
+                    >
+                      ⠿
+                    </span>
+
+                    <!-- Time Selection: Start / End / TBD -->
+                    <div
+                      style="display:flex;align-items:center;gap:4px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:3px 6px;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                      <label style="display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text-muted);user-select:none;">
+                        <input
+                          type="checkbox"
+                          :checked="isEventTbd(ev.time)"
+                          @change="toggleTbd(ev, ($event.target as HTMLInputElement).checked)"
+                        >
+                        <span :style="{ color: isEventTbd(ev.time) ? '#f59e0b' : 'inherit' }">TBD</span>
+                      </label>
+
+                      <template v-if="!isEventTbd(ev.time)">
+                        <span style="font-size:10.5px;color:var(--text-muted);margin-left:2px;">Start:</span>
+                        <select
+                          :value="getEventStart(ev.time)"
+                          class="custom-minutes-input"
+                          style="padding:2px 4px;font-size:11px;height:26px;width:94px;background:var(--bg-subtle);"
+                          @change="onStartChange(ev, ($event.target as HTMLSelectElement).value)"
+                        >
+                          <option value="TBD">TBD</option>
+                          <option v-if="getEventStart(ev.time) && !TIME_OPTIONS.includes(getEventStart(ev.time)) && getEventStart(ev.time) !== 'TBD'" :value="getEventStart(ev.time)">
+                            {{ getEventStart(ev.time) }}
+                          </option>
+                          <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                        </select>
+
+                        <span style="font-size:10.5px;color:var(--text-muted);">to</span>
+                        <select
+                          :value="getEventEnd(ev.time)"
+                          class="custom-minutes-input"
+                          style="padding:2px 4px;font-size:11px;height:26px;width:94px;background:var(--bg-subtle);"
+                          @change="onEndChange(ev, ($event.target as HTMLSelectElement).value)"
+                        >
+                          <option value="">-- None --</option>
+                          <option v-if="getEventEnd(ev.time) && !TIME_OPTIONS.includes(getEventEnd(ev.time))" :value="getEventEnd(ev.time)">
+                            {{ getEventEnd(ev.time) }}
+                          </option>
+                          <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                        </select>
+                      </template>
+                    </div>
+                    <input
+                      v-model="ev.desc"
+                      type="text"
+                      placeholder="Event Description (e.g. LAXMTB Team Dinner)"
+                      class="custom-minutes-input"
+                      style="flex:1;min-width:180px;font-size:11.5px;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                    <input
+                      v-model="ev.tag"
+                      type="text"
+                      placeholder="Tag (e.g. Pre-Ride, Venue)"
+                      class="custom-minutes-input"
+                      style="width:105px;font-size:11.5px;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                    <label
+                      style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text-muted);white-space:nowrap;"
+                      draggable="false"
+                      @dragstart.stop
+                    >
+                      <input v-model="ev.isSpecial" type="checkbox">
+                      <span>⭐ Special</span>
+                    </label>
+                    <button
+                      type="button"
+                      class="search-clear-btn"
+                      style="position:static;display:inline-flex;color:#ef4444;font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid rgba(239,68,68,0.2);background:rgba(239,68,68,0.06);cursor:pointer;"
+                      title="Delete event"
+                      @click="removeScheduleEvent(dayIdx, evIdx)"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -939,7 +1296,7 @@ const removePhoto = (idx: number) => {
                     <div style="display:flex;align-items:center;gap:4px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);padding:2px 6px;border-radius:6px;">
                       <span style="font-size:11px;font-weight:700;color:#f59e0b;">🔥 Warm-up Time:</span>
                       <select v-model="grp.meetingTime" class="custom-minutes-input" style="font-size:11px;height:26px;padding:1px 4px;font-weight:700;color:#f59e0b;">
-                        <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                        <option v-for="t in getWarmupTimeOptions(grp)" :key="t" :value="t">{{ t }}</option>
                       </select>
                       <button v-if="getAutoWarmupTime(grp)" type="button" class="action-mini-btn" style="font-size:10px;padding:1px 5px;height:22px;" @click="applyAutoWarmupTime(grp)">
                         ⚡ Auto ({{ getAutoWarmupTime(grp) }})
@@ -1244,7 +1601,7 @@ const removePhoto = (idx: number) => {
                                  u.role === 'guardian' ? 'background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.35);color:#4ade80;' :
                                  'background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:#60a5fa;'"
                         >
-                          {{ u.role === 'owner' ? 'Owner / Head Coach' : (u.role === 'admin' ? 'Admin' : (u.role === 'guardian' ? 'Guardian' : 'Coach')) }}
+                          {{ u.role === 'owner' ? 'Owner' : (u.role === 'admin' ? 'Admin' : (u.role === 'guardian' ? 'Guardian' : 'Coach')) }}
                         </span>
                         <span
                           v-if="u.email.toLowerCase() === user?.email?.toLowerCase()"

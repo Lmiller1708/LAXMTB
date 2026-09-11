@@ -314,6 +314,45 @@ export function getWaveWarmupTime(race: any, category: string, waveStr: string, 
   return formatMinutesToTimeStr(warmupMins)
 }
 
+export function formatWarmupGroupTitle(categories: string[]): string {
+  if (!categories || categories.length === 0) return 'Warm-up Group'
+
+  const sorted = [...categories].sort((a, b) => {
+    const idxA = categoryOrder.indexOf(a)
+    const idxB = categoryOrder.indexOf(b)
+    return (idxA >= 0 ? idxA : 999) - (idxB >= 0 ? idxB : 999)
+  })
+
+  const boys = sorted.filter(c => c.endsWith('Boys'))
+  const girls = sorted.filter(c => c.endsWith('Girls'))
+  const others = sorted.filter(c => !c.endsWith('Boys') && !c.endsWith('Girls'))
+
+  const formatSubgroup = (list: string[], suffix: string) => {
+    if (list.length === 0) return ''
+    const prefixes = list.map(c =>
+      c.replace(` ${suffix}`, '')
+       .replace('JV III', 'JV3')
+       .replace('JV II', 'JV2')
+       .trim()
+    )
+    const allGrade = prefixes.every(p => p.includes('Grade'))
+    if (allGrade && prefixes.length > 1) {
+      const grades = prefixes.map(p => p.replace(' Grade', ''))
+      return `${grades.join(', ')} Grade ${suffix}`
+    }
+    if (prefixes.length === 1) return `${prefixes[0]} ${suffix}`
+    if (prefixes.length === 2) return `${prefixes[0]}, ${prefixes[1]} ${suffix}`
+    return `${prefixes.slice(0, -1).join(', ')}, ${prefixes[prefixes.length - 1]} ${suffix}`
+  }
+
+  const parts: string[] = []
+  if (boys.length > 0) parts.push(formatSubgroup(boys, 'Boys'))
+  if (girls.length > 0) parts.push(formatSubgroup(girls, 'Girls'))
+  if (others.length > 0) parts.push(...others)
+
+  return parts.join(', ')
+}
+
 export function normalizeCategoryName(name: string): string {
   if (!name) return ''
   let clean = String(name).replace(/^(\d+_)+/, '').replace(/^Category:\s*/i, '').replace(/\s+\d+$/, '').trim()

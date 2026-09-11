@@ -5,6 +5,7 @@ import {
   getCategoryStartTime,
   getCategoryStageTime,
   calculateDefaultGroupWarmupTime,
+  formatWarmupGroupTitle,
   parseTimeStrToMinutes,
   formatMinutesToTimeStr
 } from '~/modules/results/services/raceresultService'
@@ -701,16 +702,26 @@ const toggleCategoryInWarmupGroup = (grp: WarmupGroup, catName: string) => {
   }
 
   // Automatically update group name to reflect categories
-  if (grp.categories.length > 0) {
-    grp.name = grp.categories.join(', ')
-    // Automatically recalculate and set warm-up time if not overridden
-    const autoTime = calculateDefaultGroupWarmupTime(form.value, grp.categories)
-    if (autoTime) {
-      grp.meetingTime = autoTime
-    }
-  } else {
-    grp.name = 'Empty Warm-up Group'
+  grp.name = formatWarmupGroupTitle(grp.categories)
+
+  // Automatically recalculate and set warm-up time
+  const autoTime = calculateDefaultGroupWarmupTime(form.value, grp.categories)
+  if (autoTime) {
+    grp.meetingTime = autoTime
   }
+}
+
+const getWarmupTimeOptions = (grp: WarmupGroup) => {
+  const options = new Set<string>(TIME_OPTIONS)
+  const autoTime = getAutoWarmupTime(grp)
+  if (autoTime) options.add(autoTime)
+  if (grp.meetingTime) options.add(grp.meetingTime)
+
+  return Array.from(options).sort((a, b) => {
+    const minA = parseTimeStrToMinutes(a) ?? 0
+    const minB = parseTimeStrToMinutes(b) ?? 0
+    return minA - minB
+  })
 }
 
 // Drag & drop for warmup groups
@@ -1438,7 +1449,7 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                         class="custom-minutes-input"
                         style="font-size:11px;height:26px;padding:1px 4px;font-weight:700;color:#f59e0b;"
                       >
-                        <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
+                        <option v-for="t in getWarmupTimeOptions(grp)" :key="t" :value="t">{{ t }}</option>
                       </select>
                       <button
                         v-if="getAutoWarmupTime(grp)"
@@ -2049,7 +2060,7 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                                  u.role === 'guardian' ? 'background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.35);color:#4ade80;' :
                                  'background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:#60a5fa;'"
                         >
-                          {{ u.role === 'owner' ? 'Owner / Head Coach' : (u.role === 'admin' ? 'Admin' : (u.role === 'guardian' ? 'Guardian' : 'Coach')) }}
+                          {{ u.role === 'owner' ? 'Owner' : (u.role === 'admin' ? 'Admin' : (u.role === 'guardian' ? 'Guardian' : 'Coach')) }}
                         </span>
                         <span
                           v-if="u.email.toLowerCase() === user?.email?.toLowerCase()"

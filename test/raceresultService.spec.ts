@@ -17,7 +17,8 @@ import {
   getCategoryStartTime,
   getCategoryStageTime,
   getWaveWarmupTime,
-  calculateDefaultGroupWarmupTime
+  calculateDefaultGroupWarmupTime,
+  formatWarmupGroupTitle
 } from '../modules/results/services/raceresultService'
 
 describe('RACE RESULT Metadata-Aware Parsing', () => {
@@ -349,6 +350,23 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
       // MS2 Boys (stage 10:33 AM), Freshman Boys (stage 11:15 AM) -> 45 min before 10:33 AM = 9:48 AM
       const msWarmup = calculateDefaultGroupWarmupTime(race, ['MS2 Boys', 'Freshman Boys'])
       expect(msWarmup).toBe('9:48 AM')
+    })
+
+    it('formats warm-up group title dynamically based on assigned categories', () => {
+      // 2 boys categories
+      expect(formatWarmupGroupTitle(['Varsity Boys', 'JV III Boys'])).toBe('Varsity, JV3 Boys')
+
+      // Adding a girls category
+      expect(formatWarmupGroupTitle(['Varsity Boys', 'JV III Boys', 'Varsity Girls'])).toBe('Varsity, JV3 Boys, Varsity Girls')
+
+      // Middle school grade boys
+      expect(formatWarmupGroupTitle(['8th Grade Boys', '7th Grade Boys', '6th Grade Boys'])).toBe('8th, 7th, 6th Grade Boys')
+
+      // Girls group
+      expect(formatWarmupGroupTitle(['MS2 Girls', 'Freshman Girls', 'JV II Girls'])).toBe('MS2, Freshman, JV2 Girls')
+
+      // Empty categories
+      expect(formatWarmupGroupTitle([])).toBe('Warm-up Group')
     })
   })
 })
