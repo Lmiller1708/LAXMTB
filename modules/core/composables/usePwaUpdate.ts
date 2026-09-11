@@ -4,7 +4,7 @@ export const usePwaUpdate = () => {
   const lastChecked = useState<string>('pwa_last_checked', () => '')
 
   const checkForUpdate = async (manual = false): Promise<boolean> => {
-    if (!import.meta.client || !('serviceWorker' in navigator)) return false
+    if (!import.meta.client || !('serviceWorker' in navigator) || !navigator.onLine) return false
     isChecking.value = true
     try {
       const registration = await navigator.serviceWorker.getRegistration()

@@ -138,7 +138,6 @@ export default defineNuxtConfig({
       cleanupOutdatedCaches: true,
       clientsClaim: true,
       skipWaiting: true,
-      navigateFallback: null,
       runtimeCaching: [
         {
           urlPattern: /^https:\/\/my\.raceresult\.com\/.*/i,
