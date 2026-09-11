@@ -57,13 +57,15 @@ const initials = computed(() => {
 
 const roleBadgeLabel = computed(() => {
   if (isAdminCoach.value) return '🛡️ Team Admin'
-  if (isAuthorizedCoach.value) return '🚵 Team Coach'
+  if (userProfile.value?.role === 'coach' || isAuthorizedCoach.value) return '🚵 Team Coach'
+  if (userProfile.value?.role === 'guardian') return '👪 Guardian / Parent'
   return '🚴 Team Member'
 })
 
 const roleBadgeStyle = computed(() => {
   if (isAdminCoach.value) return 'background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.35);color:#f87171;'
-  if (isAuthorizedCoach.value) return 'background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:#60a5fa;'
+  if (userProfile.value?.role === 'coach' || isAuthorizedCoach.value) return 'background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:#60a5fa;'
+  if (userProfile.value?.role === 'guardian') return 'background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.35);color:#c084fc;'
   return 'background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.35);color:#4ade80;'
 })
 

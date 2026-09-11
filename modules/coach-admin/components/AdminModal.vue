@@ -25,12 +25,16 @@ const {
   user,
   isCoachAuth,
   isAuthorizedCoach,
+  isAdminCoach,
   isAdminUnlocked,
   authError,
   authLoading,
   adminsList,
   adminsLoading,
   fetchAdmins,
+  inviteSettings,
+  fetchInviteSettings,
+  updateInviteCodes,
   addCoachAdmin,
   updateCoachRole,
   removeCoachAdmin,
@@ -92,6 +96,84 @@ const handleRemoveCoach = async (email: string) => {
     } else {
       emit('toast', `⛔ ${res.error || 'Failed to remove coach'}`)
     }
+  }
+}
+
+// State for invite codes & shareable links
+const coachCodeInput = ref('')
+const guardianCodeInput = ref('')
+const isSavingInvites = ref(false)
+const copiedCoach = ref(false)
+const copiedGuardian = ref(false)
+
+const originUrl = computed(() => {
+  if (import.meta.client && typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin
+  }
+  return 'https://laxmtb.org'
+})
+
+const coachInviteUrl = computed(() => {
+  const code = coachCodeInput.value.trim() || inviteSettings.value.coachCode || 'lax-coach-2026'
+  return `${originUrl.value}/?invite=${encodeURIComponent(code)}`
+})
+
+const guardianInviteUrl = computed(() => {
+  const code = guardianCodeInput.value.trim() || inviteSettings.value.guardianCode || 'lax-guardian-2026'
+  return `${originUrl.value}/?invite=${encodeURIComponent(code)}`
+})
+
+watch(inviteSettings, (val) => {
+  if (val) {
+    coachCodeInput.value = val.coachCode || 'lax-coach-2026'
+    guardianCodeInput.value = val.guardianCode || 'lax-guardian-2026'
+  }
+}, { immediate: true })
+
+watch(() => props.isOpen, (open) => {
+  if (open) {
+    fetchInviteSettings()
+    fetchAdmins()
+  }
+})
+
+onMounted(() => {
+  fetchInviteSettings()
+})
+
+const copyCoachLink = async () => {
+  try {
+    await navigator.clipboard.writeText(coachInviteUrl.value)
+    copiedCoach.value = true
+    emit('toast', '📋 Coach invite link copied to clipboard!')
+    setTimeout(() => { copiedCoach.value = false }, 2500)
+  } catch {
+    emit('toast', 'Could not copy link automatically. Please select and copy manually.')
+  }
+}
+
+const copyGuardianLink = async () => {
+  try {
+    await navigator.clipboard.writeText(guardianInviteUrl.value)
+    copiedGuardian.value = true
+    emit('toast', '📋 Guardian invite link copied to clipboard!')
+    setTimeout(() => { copiedGuardian.value = false }, 2500)
+  } catch {
+    emit('toast', 'Could not copy link automatically. Please select and copy manually.')
+  }
+}
+
+const handleSaveInviteCodes = async () => {
+  isSavingInvites.value = true
+  const res = await updateInviteCodes({
+    coachCode: coachCodeInput.value,
+    guardianCode: guardianCodeInput.value
+  })
+  isSavingInvites.value = false
+  if (res.success) {
+    emit('toast', '💾 Invite links & access codes updated!')
+  } else {
+    emit('toast', `⛔ ${res.error || 'Failed to update invite codes'}`)
   }
 }
 
@@ -1645,6 +1727,108 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
 
           <!-- Manage Coaches & Admins -->
           <div v-else-if="activeTab === 'coaches'" style="display:flex;flex-direction:column;gap:14px;">
+            <!-- Shareable Registration Links & Access Codes -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+                <div>
+                  <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);display:flex;align-items:center;gap:6px;">
+                    <span>🔗</span>
+                    <span>Shareable Team Registration Links</span>
+                  </h4>
+                  <p style="margin:0;font-size:11.5px;color:var(--text-muted);line-height:1.4;">
+                    Registration is invite-only. Anyone visiting directly without a valid invite code or link cannot create an account. Share the appropriate link below.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="done-modal-btn admin-save-btn"
+                  style="padding:6px 14px;font-size:11.5px;white-space:nowrap;"
+                  :disabled="isSavingInvites"
+                  @click="handleSaveInviteCodes"
+                >
+                  {{ isSavingInvites ? 'Saving...' : '💾 Save Invite Codes' }}
+                </button>
+              </div>
+
+              <!-- Coach Invite Link Card -->
+              <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:16px;">🚵</span>
+                    <span style="font-size:13px;font-weight:700;color:#60a5fa;">Coach Invite Link</span>
+                    <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);">Active for Sharing</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="padding:4px 10px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;background:#2563eb;color:#ffffff;border:none;border-radius:6px;cursor:pointer;"
+                    @click="copyCoachLink"
+                  >
+                    <span>{{ copiedCoach ? '✓ Copied!' : '📋 Copy Coach Link' }}</span>
+                  </button>
+                </div>
+
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:220px;display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:monospace;font-size:11.5px;color:var(--text-main);overflow-x:auto;white-space:nowrap;">
+                    {{ coachInviteUrl }}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;">Code:</span>
+                    <input
+                      v-model="coachCodeInput"
+                      type="text"
+                      class="custom-minutes-input"
+                      placeholder="lax-coach-2026"
+                      style="width:140px;height:32px;font-family:monospace;font-size:12px;"
+                    />
+                  </div>
+                </div>
+
+                <p style="margin:0;font-size:11px;color:var(--text-muted);line-height:1.4;">
+                  Grants the <strong>Coach</strong> role upon registration. Allows coaches to sign up for ride leader and support slots.
+                </p>
+              </div>
+
+              <!-- Guardian / Parent Invite Link Card -->
+              <div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.25);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:16px;">👪</span>
+                    <span style="font-size:13px;font-weight:700;color:#c084fc;">Guardian / Parent Invite Link</span>
+                    <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(234,179,8,0.15);color:#eab308;border:1px solid rgba(234,179,8,0.3);">🔒 Staged for Future (Do Not Share Yet)</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="action-mini-btn"
+                    style="padding:4px 10px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;background:rgba(168,85,247,0.2);color:#c084fc;border:1px solid rgba(168,85,247,0.4);border-radius:6px;cursor:pointer;"
+                    @click="copyGuardianLink"
+                  >
+                    <span>{{ copiedGuardian ? '✓ Copied!' : '📋 Copy Guardian Link' }}</span>
+                  </button>
+                </div>
+
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:220px;display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:monospace;font-size:11.5px;color:var(--text-main);overflow-x:auto;white-space:nowrap;">
+                    {{ guardianInviteUrl }}
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:11px;color:var(--text-muted);white-space:nowrap;">Code:</span>
+                    <input
+                      v-model="guardianCodeInput"
+                      type="text"
+                      class="custom-minutes-input"
+                      placeholder="lax-guardian-2026"
+                      style="width:140px;height:32px;font-family:monospace;font-size:12px;"
+                    />
+                  </div>
+                </div>
+
+                <p style="margin:0;font-size:11px;color:var(--text-muted);line-height:1.4;">
+                  Grants the <strong>Guardian / Parent</strong> role. Parent accounts <em>cannot</em> claim or edit coach ride slots. Keep this code internal until parent portal features launch.
+                </p>
+              </div>
+            </div>
+
             <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:14px;">
               <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);">Manage Team Administrators & Roles</h4>
               <p style="margin:0 0 10px;font-size:11.5px;color:var(--text-muted);line-height:1.4;">

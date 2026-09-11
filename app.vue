@@ -13,10 +13,17 @@ const isNotifOpen = ref(false)
 const isAdminOpen = ref(false)
 const isAuthOpen = ref(false)
 const isProfileOpen = ref(false)
+const initialAuthMode = ref<'login' | 'signup'>('login')
+const activeInviteCode = ref('')
 const adminInitialTab = ref('venue')
 
 const { currentRace, currentRaceSlug, races, currentRaceIndex, selectRace, selectRaceBySlug, updateRace } = useCurrentRace()
-const { isCoachAuth } = useCoachAuth()
+const { user, isCoachAuth } = useCoachAuth()
+
+const openAuthWithMode = (mode: 'login' | 'signup' = 'login') => {
+  initialAuthMode.value = mode
+  isAuthOpen.value = true
+}
 
 const {
   riders,
@@ -136,6 +143,20 @@ const syncFromRoute = () => {
 
     // Check URL query/hash legacy parameters
     const params = new URLSearchParams(window.location.search)
+
+    // Check for invite parameter (?invite=<code> or ?join=<code>)
+    const inviteParam = params.get('invite') || params.get('join') || params.get('code')
+    if (inviteParam) {
+      const cleanInvite = inviteParam.trim()
+      activeInviteCode.value = cleanInvite
+      localStorage.setItem('laxmtb_invite_token', cleanInvite)
+      if (!user.value) {
+        initialAuthMode.value = 'signup'
+        isAuthOpen.value = true
+        showNotifToast('🎟️ Team Invite Accepted!', 'Please complete your registration below.')
+      }
+    }
+
     const tabParam = params.get('tab') || window.location.hash.replace(/^#/, '')
     if (tabParam && !tabParam.startsWith('/')) {
       const slug = tabParam.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -280,7 +301,7 @@ const handlePrint = () => {
         @open-whats-new="isWhatsNewOpen = true"
         @open-notifications="isNotifOpen = true"
         @open-admin="openAdminWithTab('venue')"
-        @open-auth="isAuthOpen = true"
+        @open-auth="openAuthWithMode('login')"
         @open-profile="isProfileOpen = true"
         @sync-data="handleSyncData"
         @toast="showNotifToast"
@@ -315,6 +336,8 @@ const handlePrint = () => {
 
     <AuthModal
       :is-open="isAuthOpen"
+      :initial-mode="initialAuthMode"
+      :initial-invite-code="activeInviteCode"
       @close="isAuthOpen = false"
       @toast="showNotifToast"
     />
@@ -404,7 +427,7 @@ const handlePrint = () => {
         :race="currentRace"
         :is-coach-auth="isCoachAuth"
         @edit="openAdminWithTab('coach')"
-        @open-auth="isAuthOpen = true"
+        @open-auth="openAuthWithMode('signup')"
       />
 
       <!-- Tab 3 & 4: Start Lists & Results -->

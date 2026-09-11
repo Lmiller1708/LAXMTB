@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useCoachAuth } from '../composables/useCoachAuth'
 
 const props = defineProps<{
   isOpen: boolean
   initialMode?: 'login' | 'signup'
+  initialInviteCode?: string
 }>()
 
 const emit = defineEmits<{
@@ -19,7 +20,9 @@ const {
   signInWithEmail,
   signUpWithEmail,
   signInWithGoogle,
-  sendResetEmail
+  sendResetEmail,
+  validateInviteCode,
+  fetchInviteSettings
 } = useCoachAuth()
 
 const mode = ref<'login' | 'signup' | 'forgot'>('login')
@@ -30,8 +33,26 @@ const phoneInput = ref('')
 const emailInput = ref('')
 const passwordInput = ref('')
 const confirmPasswordInput = ref('')
+const inviteCodeInput = ref('')
 const localError = ref('')
 const resetSent = ref(false)
+
+const activeInviteCheck = computed(() => {
+  return validateInviteCode(inviteCodeInput.value)
+})
+
+const loadStoredInviteToken = () => {
+  if (props.initialInviteCode) {
+    inviteCodeInput.value = props.initialInviteCode
+    return
+  }
+  if (import.meta.client) {
+    const stored = localStorage.getItem('laxmtb_invite_token')
+    if (stored) {
+      inviteCodeInput.value = stored
+    }
+  }
+}
 
 watch(() => props.isOpen, (open) => {
   if (open) {
@@ -41,6 +62,8 @@ watch(() => props.isOpen, (open) => {
     passwordInput.value = ''
     confirmPasswordInput.value = ''
     authError.value = ''
+    loadStoredInviteToken()
+    fetchInviteSettings()
   }
 })
 
@@ -48,6 +71,10 @@ watch(user, (newUser) => {
   if (newUser && props.isOpen) {
     emit('close')
   }
+})
+
+onMounted(() => {
+  loadStoredInviteToken()
 })
 
 const handleClose = () => {
@@ -63,7 +90,7 @@ const handleLogin = async () => {
 
   const res = await signInWithEmail(emailInput.value, passwordInput.value)
   if (res.success) {
-    emit('toast', `👋 Welcome back, ${nameInput.value || emailInput.value.split('@')[0]}!`)
+    emit('toast', `👋 Welcome back!`)
     emit('close')
   } else if (res.error) {
     localError.value = res.error
@@ -88,12 +115,17 @@ const handleSignUp = async () => {
     localError.value = 'Passwords do not match.'
     return
   }
+  if (!activeInviteCheck.value.valid) {
+    localError.value = activeInviteCheck.value.error || 'Please enter a valid team access code.'
+    return
+  }
 
   const res = await signUpWithEmail(
     emailInput.value,
     passwordInput.value,
     nameInput.value,
-    phoneInput.value
+    phoneInput.value,
+    inviteCodeInput.value
   )
 
   if (res.success) {
@@ -106,7 +138,7 @@ const handleSignUp = async () => {
 
 const handleGoogleAuth = async () => {
   localError.value = ''
-  const res = await signInWithGoogle()
+  const res = await signInWithGoogle(inviteCodeInput.value)
   if (res.success) {
     emit('toast', '👋 Signed in with Google successfully!')
     emit('close')
@@ -226,8 +258,44 @@ const handleResetPassword = async () => {
           </button>
         </form>
 
-        <!-- 2. CREATE ACCOUNT FORM -->
+        <!-- 2. CREATE ACCOUNT FORM (INVITE ONLY) -->
         <form v-else-if="mode === 'signup'" @submit.prevent="handleSignUp" class="auth-form">
+          <!-- Invite Verification Banner (If verified from link) -->
+          <div v-if="activeInviteCheck.valid" class="invite-status-card valid">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:16px;">🎟️</span>
+              <div>
+                <div style="font-size:12px;font-weight:800;color:#4ade80;">{{ activeInviteCheck.label }} Verified</div>
+                <div style="font-size:10.5px;color:var(--text-muted);">Access Token: <code>{{ inviteCodeInput }}</code></div>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="invite-change-link"
+              @click="inviteCodeInput = ''"
+              title="Change invite code"
+            >
+              Change
+            </button>
+          </div>
+
+          <!-- Team Access Code Input (Required if not pre-verified) -->
+          <div v-else class="auth-field invite-required-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <label class="auth-label">Team Access Code <span style="color:var(--accent-red);">*</span></label>
+              <span class="invite-badge">Invite Required</span>
+            </div>
+            <input
+              v-model="inviteCodeInput"
+              type="text"
+              placeholder="e.g. lax-coach-2026"
+              required
+              class="auth-input"
+              autocomplete="off"
+            >
+            <small class="auth-hint">Enter the invite code from your head coach or open your team's invite link.</small>
+          </div>
+
           <div class="auth-field">
             <label class="auth-label">Full Name <span style="color:var(--accent-red);">*</span></label>
             <input
@@ -361,7 +429,7 @@ const handleResetPassword = async () => {
 
       <!-- Footer Note -->
       <div class="modal-footer" style="justify-content:center;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);">
-        <span>Team Coaches & Members: Sign in to manage ride slots</span>
+        <span>Registration is invite-only for LAX MTB coaches and parents</span>
       </div>
     </div>
   </div>
@@ -424,6 +492,45 @@ const handleResetPassword = async () => {
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+
+.invite-status-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.invite-change-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.invite-change-link:hover {
+  color: var(--text-main);
+}
+
+.invite-required-box {
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.invite-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
 }
 
 .auth-label {

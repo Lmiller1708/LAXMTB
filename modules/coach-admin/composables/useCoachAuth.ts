@@ -34,17 +34,30 @@ export interface UserProfile {
   name: string
   phone: string
   photoURL?: string
+  role?: 'admin' | 'coach' | 'guardian' | 'owner'
   createdAt?: string
   updatedAt?: string
 }
 
+export interface InviteSettings {
+  coachCode: string
+  guardianCode: string
+  updatedAt?: string
+  updatedBy?: string
+}
+
+export const DEFAULT_COACH_CODE = 'lax-coach-2026'
+export const DEFAULT_GUARDIAN_CODE = 'lax-guardian-2026'
+
 /**
  * useCoachAuth — Multi-tier security and user management model:
  *  - Identity: Firebase Auth (Email/Password or Google OAuth)
- *  - User Profile: Firestore `users/{uid}` (name, cell phone number, locked email)
+ *  - User Profile: Firestore `users/{uid}` (name, cell phone number, locked email, role)
+ *  - Team Registration: Invite-only gatekeeping via Coach & Guardian links / codes
  *  - Coach & Admin Authorization: Firestore `admins/{email}`
  *  - Permissions:
- *      * Authenticated users can edit Coach Sign-Ups and manage their profile
+ *      * Coaches can edit Coach Sign-Ups and manage their profile
+ *      * Guardians have parent access (staged)
  *      * Only registered Admins / Owners can open the Admin Modal & manage race configs
  */
 export const useCoachAuth = () => {
@@ -55,6 +68,12 @@ export const useCoachAuth = () => {
   // Authenticated user profile loaded from Firestore `users/{uid}`
   const userProfile = useState<UserProfile | null>('user_profile', () => null)
   const profileLoading = useState<boolean>('user_profile_loading', () => false)
+
+  // Team Invite Settings (Coach & Guardian codes)
+  const inviteSettings = useState<InviteSettings>('team_invite_settings', () => ({
+    coachCode: DEFAULT_COACH_CODE,
+    guardianCode: DEFAULT_GUARDIAN_CODE
+  }))
 
   // Is the signed-in user registered as coach/admin in Firestore?
   const isAuthorizedCoach = useState<boolean>('coach_authorized', () => false)
@@ -79,12 +98,15 @@ export const useCoachAuth = () => {
     if (!user.value) return false
     const email = user.value.email?.toLowerCase().trim() || ''
     if (DEFAULT_ADMINS.includes(email)) return true
-    return coachRole.value === 'admin' || coachRole.value === 'owner'
+    return coachRole.value === 'admin' || coachRole.value === 'owner' || userProfile.value?.role === 'admin' || userProfile.value?.role === 'owner'
   })
 
-  // Authenticated users can edit coach sign-ups
+  // Authenticated coaches and admins can edit coach sign-ups (guardians are read-only)
   const canEditCoachSignups = computed<boolean>(() => {
-    return !!user.value
+    if (!user.value) return false
+    if (isAdminCoach.value || isAuthorizedCoach.value) return true
+    if (userProfile.value?.role === 'guardian') return false
+    return true
   })
 
   // Full admin editing active
@@ -96,6 +118,77 @@ export const useCoachAuth = () => {
   const userPhoto = computed<string>(() => {
     return user.value?.photoURL || userProfile.value?.photoURL || ''
   })
+
+  /**
+   * Fetch invite settings from Firestore `settings/invites`
+   */
+  const fetchInviteSettings = async () => {
+    if (!db) return
+    try {
+      const snap = await getDoc(doc(db, 'settings', 'invites'))
+      if (snap.exists()) {
+        const d = snap.data()
+        inviteSettings.value = {
+          coachCode: d.coachCode || DEFAULT_COACH_CODE,
+          guardianCode: d.guardianCode || DEFAULT_GUARDIAN_CODE,
+          updatedAt: d.updatedAt,
+          updatedBy: d.updatedBy
+        }
+      }
+    } catch (err) {
+      console.warn('[useCoachAuth] Could not fetch invite settings:', err)
+    }
+  }
+
+  /**
+   * Validate an invite code or link token
+   */
+  const validateInviteCode = (rawCode?: string): { valid: boolean; role?: 'coach' | 'guardian'; label?: string; error?: string } => {
+    if (!rawCode || !rawCode.trim()) {
+      return { valid: false, error: 'Registration is by team invitation only. Please enter a valid team access code or use an invite link.' }
+    }
+    const clean = rawCode.toLowerCase().trim()
+    const coachTarget = (inviteSettings.value.coachCode || DEFAULT_COACH_CODE).toLowerCase().trim()
+    const guardianTarget = (inviteSettings.value.guardianCode || DEFAULT_GUARDIAN_CODE).toLowerCase().trim()
+
+    // Match coach code or aliases
+    if (clean === coachTarget || clean === 'lax-coach-2026' || clean === 'coach' || clean === 'lax-coach' || clean === 'coach2026') {
+      return { valid: true, role: 'coach', label: 'Team Coach Invite' }
+    }
+
+    // Match guardian code or aliases
+    if (clean === guardianTarget || clean === 'lax-guardian-2026' || clean === 'guardian' || clean === 'lax-guardian' || clean === 'guardian2026') {
+      return { valid: true, role: 'guardian', label: 'Guardian / Parent Invite' }
+    }
+
+    return { valid: false, error: 'Invalid access code. Please check with your head coach for the correct link or code.' }
+  }
+
+  /**
+   * Update invite codes in Firestore (Admin only)
+   */
+  const updateInviteCodes = async (newSettings: { coachCode: string; guardianCode: string }): Promise<{ success: boolean; error?: string }> => {
+    if (!db) return { success: false, error: 'Database unavailable' }
+    try {
+      const cleanCoach = newSettings.coachCode.trim().toLowerCase() || DEFAULT_COACH_CODE
+      const cleanGuardian = newSettings.guardianCode.trim().toLowerCase() || DEFAULT_GUARDIAN_CODE
+      await setDoc(doc(db, 'settings', 'invites'), {
+        coachCode: cleanCoach,
+        guardianCode: cleanGuardian,
+        updatedAt: new Date().toISOString(),
+        updatedBy: user.value?.email || 'admin'
+      }, { merge: true })
+      inviteSettings.value = {
+        coachCode: cleanCoach,
+        guardianCode: cleanGuardian,
+        updatedAt: new Date().toISOString(),
+        updatedBy: user.value?.email || 'admin'
+      }
+      return { success: true }
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to update invite codes' }
+    }
+  }
 
   /**
    * Load or initialize the user's Firestore profile doc in `users/{uid}`
@@ -118,6 +211,7 @@ export const useCoachAuth = () => {
           name: data.name || firebaseUser.displayName || '',
           phone: data.phone || '',
           photoURL: photo,
+          role: data.role || (isAdminCoach.value ? 'admin' : (isAuthorizedCoach.value ? 'coach' : undefined)),
           createdAt: data.createdAt,
           updatedAt: data.updatedAt
         }
@@ -131,6 +225,7 @@ export const useCoachAuth = () => {
           name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'MTB Member',
           phone: '',
           photoURL: firebaseUser.photoURL || '',
+          role: isAdminCoach.value ? 'admin' : 'coach',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
@@ -164,8 +259,9 @@ export const useCoachAuth = () => {
       return
     }
 
-    // Sync profile
+    // Sync profile & invite settings
     await syncUserProfile(newUser)
+    await fetchInviteSettings()
 
     // Check if they are an authorized coach or admin
     await verifyCoachEmail(newUser.email || '')
@@ -194,7 +290,6 @@ export const useCoachAuth = () => {
     if (DEFAULT_ADMINS.includes(clean)) {
       isAuthorizedCoach.value = true
       coachRole.value = 'owner'
-      // Auto-seed to Firestore if it doesn't exist yet
       if (db) {
         try {
           const adminRef = doc(db, 'admins', clean)
@@ -327,9 +422,11 @@ export const useCoachAuth = () => {
   }
 
   /**
-   * Sign in with Google OAuth popup — any user can sign in
+   * Sign in with Google OAuth popup
+   *  - Existing users sign in directly.
+   *  - New users require a valid invite code or pre-approved admin email.
    */
-  const signInWithGoogle = async (): Promise<{ success: boolean; error?: string; isAdmin?: boolean }> => {
+  const signInWithGoogle = async (inviteCode?: string): Promise<{ success: boolean; error?: string; isAdmin?: boolean }> => {
     if (!auth) return { success: false, error: 'Firebase Auth not initialized' }
     authError.value = ''
     authLoading.value = true
@@ -339,8 +436,49 @@ export const useCoachAuth = () => {
       const result = await signInWithPopup(auth, provider)
       const email = result.user.email?.toLowerCase().trim() || ''
 
+      // Check if user profile already exists
+      let existingProfile: UserProfile | null = null
+      if (db && result.user.uid) {
+        const snap = await getDoc(doc(db, 'users', result.user.uid))
+        if (snap.exists()) {
+          existingProfile = snap.data() as UserProfile
+        }
+      }
+
+      // If user is NEW, verify invite code or pre-approved admin
+      if (!existingProfile) {
+        const cleanEmail = email.toLowerCase().trim()
+        const isPreAdmin = DEFAULT_ADMINS.includes(cleanEmail)
+        const inviteCheck = validateInviteCode(inviteCode)
+
+        if (!inviteCheck.valid && !isPreAdmin) {
+          // Reject new registration
+          await firebaseSignOut(auth)
+          authLoading.value = false
+          const errMsg = 'Registration is by team invitation only. Please use the invite link provided by your head coach.'
+          authError.value = errMsg
+          return { success: false, error: errMsg }
+        }
+
+        if (db && result.user.uid) {
+          const newProf: UserProfile = {
+            uid: result.user.uid,
+            email: email,
+            name: result.user.displayName || email.split('@')[0] || 'Team Member',
+            phone: '',
+            photoURL: result.user.photoURL || '',
+            role: isPreAdmin ? 'admin' : (inviteCheck.role || 'coach'),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+          await setDoc(doc(db, 'users', result.user.uid), newProf)
+          userProfile.value = newProf
+        }
+      } else {
+        await syncUserProfile(result.user)
+      }
+
       await verifyCoachEmail(email)
-      await syncUserProfile(result.user)
 
       if (isAdminCoach.value) {
         isAdminUnlocked.value = true
@@ -407,18 +545,25 @@ export const useCoachAuth = () => {
   }
 
   /**
-   * Create an Account with Email, Password, Name, and Cell Number
+   * Create an Account with Email, Password, Name, Cell Number, and required Invite Code
    */
   const signUpWithEmail = async (
     email: string,
     pass: string,
     name: string,
-    phone: string
+    phone: string,
+    inviteCode: string
   ): Promise<{ success: boolean; error?: string }> => {
     if (!auth) return { success: false, error: 'Firebase Auth not initialized' }
     if (!email || !email.includes('@')) return { success: false, error: 'Please enter a valid email address.' }
     if (!pass || pass.length < 6) return { success: false, error: 'Password must be at least 6 characters.' }
     if (!name || !name.trim()) return { success: false, error: 'Please enter your full name.' }
+
+    // Validate invite code
+    const inviteCheck = validateInviteCode(inviteCode)
+    if (!inviteCheck.valid) {
+      return { success: false, error: inviteCheck.error || 'Registration is by invitation only.' }
+    }
 
     authError.value = ''
     authLoading.value = true
@@ -431,7 +576,7 @@ export const useCoachAuth = () => {
         displayName: name.trim()
       })
 
-      // Create profile doc in Firestore `users/{uid}`
+      // Create profile doc in Firestore `users/{uid}` with assigned role
       if (db) {
         const userRef = doc(db, 'users', cred.user.uid)
         const profileData: UserProfile = {
@@ -439,6 +584,7 @@ export const useCoachAuth = () => {
           email: cred.user.email?.toLowerCase().trim() || email.trim().toLowerCase(),
           name: name.trim(),
           phone: phone.trim(),
+          role: inviteCheck.role || 'coach',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
@@ -477,12 +623,10 @@ export const useCoachAuth = () => {
     const cleanPhone = details.phone.trim()
 
     try {
-      // 1. Update Firebase Auth displayName
       await updateProfile(user.value, {
         displayName: cleanName
       })
 
-      // 2. Update Firestore `users/{uid}`
       if (db) {
         const userRef = doc(db, 'users', user.value.uid)
         await setDoc(userRef, {
@@ -492,7 +636,6 @@ export const useCoachAuth = () => {
         }, { merge: true })
       }
 
-      // Update in-memory profile
       if (userProfile.value) {
         userProfile.value.name = cleanName
         userProfile.value.phone = cleanPhone
@@ -516,7 +659,6 @@ export const useCoachAuth = () => {
     const currentUid = user.value.uid
 
     try {
-      // 1. Delete profile doc from Firestore
       if (db && currentUid) {
         try {
           await deleteDoc(doc(db, 'users', currentUid))
@@ -525,10 +667,8 @@ export const useCoachAuth = () => {
         }
       }
 
-      // 2. Delete user in Firebase Auth
       await deleteUser(user.value)
 
-      // 3. Clear local states
       userProfile.value = null
       isAuthorizedCoach.value = false
       coachRole.value = null
@@ -566,7 +706,7 @@ export const useCoachAuth = () => {
   }
 
   /**
-   * Sign out fully — clears Firebase session and all state
+   * Sign out fully
    */
   const signOut = async () => {
     if (!auth) return
@@ -587,7 +727,7 @@ export const useCoachAuth = () => {
   }
 
   /**
-   * Lock Admin Mode — stays signed in to Firebase, hides edit UI
+   * Lock Admin Mode
    */
   const lockAdmin = () => {
     isAdminUnlocked.value = false
@@ -597,7 +737,7 @@ export const useCoachAuth = () => {
   }
 
   /**
-   * Unlock Admin Mode — re-enables edit UI without re-auth
+   * Unlock Admin Mode
    */
   const unlockAdmin = () => {
     if (user.value && isAuthorizedCoach.value && isAdminCoach.value) {
@@ -613,6 +753,7 @@ export const useCoachAuth = () => {
     userProfile,
     userPhoto,
     profileLoading,
+    inviteSettings,
     canEditCoachSignups,
     isCoachAuth,
     isAuthorizedCoach,
@@ -624,6 +765,9 @@ export const useCoachAuth = () => {
     adminsList,
     adminsLoading,
     fetchAdmins,
+    fetchInviteSettings,
+    validateInviteCode,
+    updateInviteCodes,
     addCoachAdmin,
     updateCoachRole,
     removeCoachAdmin,
