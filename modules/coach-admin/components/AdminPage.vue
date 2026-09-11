@@ -266,7 +266,7 @@ const filteredUsers = computed(() => {
 })
 
 const handleUpdateUserRole = async (userItem: TeamUserItem, newRole: 'admin' | 'coach' | 'guardian') => {
-  const res = await updateUserRole(userItem.email, newRole, userItem.uid)
+  const res = await updateUserRole(userItem.email, newRole, userItem.uid || userItem.id)
   if (res.success) {
     const roleLabel = newRole === 'admin' ? 'Coach Admin' : (newRole === 'guardian' ? 'Guardian' : 'Coach')
     emit('toast', `🔄 Updated ${userItem.name || userItem.email} to ${roleLabel}`)
@@ -277,7 +277,7 @@ const handleUpdateUserRole = async (userItem: TeamUserItem, newRole: 'admin' | '
 
 const handleRemoveUser = async (userItem: TeamUserItem) => {
   if (confirm(`Are you sure you want to remove access for ${userItem.name || userItem.email}?`)) {
-    const res = await removeCoachAdmin(userItem.email, userItem.uid)
+    const res = await removeCoachAdmin(userItem.email, userItem.uid || userItem.id)
     if (res.success) {
       emit('toast', `🗑️ Removed ${userItem.name || userItem.email}`)
     } else {
