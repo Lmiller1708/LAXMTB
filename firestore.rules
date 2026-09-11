@@ -25,13 +25,19 @@ service cloud.firestore {
       );
     }
 
-    // Helper: Authorized coach check — requires authenticated user AND registered membership in admins collection
+    // Helper: Authorized coach check — requires authenticated user AND registered membership in admins or users collection
     function isAuthorizedCoach() {
       return isOwner() || (
         request.auth != null &&
-        request.auth.token.email != null &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) &&
-        get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())).data.role in ['coach', 'admin', 'owner']
+        request.auth.token.email != null && (
+          (
+            exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) &&
+            get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())).data.role in ['coach', 'admin', 'owner']
+          ) || (
+            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['coach', 'admin', 'owner']
+          )
+        )
       );
     }
 
@@ -58,10 +64,17 @@ service cloud.firestore {
 
     // Admins collection:
     // - Authenticated users can read the coaches/admins roster
-    // - ONLY verified admins/owners can add, edit, or remove administrator/coach records
+    // - Admins can add, edit, or remove administrator/coach records
+    // - Authenticated coaches registering can record their own coach entry
     match /admins/{email} {
       allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow create: if isAdmin() || (
+        request.auth != null &&
+        request.auth.token.email != null &&
+        request.auth.token.email.lower() == email.lower() &&
+        request.resource.data.role == 'coach'
+      );
+      allow update, delete: if isAdmin();
     }
 
     // Users collection:
@@ -71,7 +84,9 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == userId && (
-        !('role' in request.resource.data) || request.resource.data.role == 'guardian' || isAdmin()
+        !('role' in request.resource.data) ||
+        request.resource.data.role in ['guardian', 'coach'] ||
+        isAdmin()
       );
       allow update: if request.auth != null && (
         (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])) ||
