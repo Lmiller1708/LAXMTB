@@ -12,7 +12,7 @@ const emit = defineEmits<{
   (e: 'toast', msg: string): void
 }>()
 
-const { currentRace, updateRace } = useCurrentRace()
+const { currentRace, updateRace, updateCoachSignups } = useCurrentRace()
 
 const {
   user,
@@ -207,10 +207,14 @@ const syncPhotoToRaceSlots = async (photoUrl?: string) => {
 
   if (updatedRace.coachSignups?.preRides) updateList(updatedRace.coachSignups.preRides)
   if (updatedRace.coachSignups?.warmups) updateList(updatedRace.coachSignups.warmups)
-  if (updatedRace.warmupGroups) updateList(updatedRace.warmupGroups)
+  if (isAdminCoach.value && updatedRace.warmupGroups) updateList(updatedRace.warmupGroups)
 
-  if (changed) {
-    await updateRace(updatedRace)
+  if (changed && isAuthorizedCoach.value) {
+    if (!isAdminCoach.value) {
+      await updateCoachSignups(updatedRace.id, updatedRace.coachSignups)
+    } else {
+      await updateRace(updatedRace)
+    }
   }
 }
 

@@ -24,11 +24,12 @@ const emit = defineEmits<{
   (e: 'openAuth'): void
 }>()
 
-const { updateRace } = useCurrentRace()
+const { updateRace, updateCoachSignups } = useCurrentRace()
 const {
   user,
   userProfile,
   userPhoto,
+  isAdminCoach,
   canEditCoachSignups,
   coachAvatarMap,
   fetchCoachAvatars
@@ -61,7 +62,14 @@ const preRideSlots = computed<CoachSlot[]>(() => {
 
 const warmupSlots = computed<any[]>(() => {
   if (props.race.warmupGroups && props.race.warmupGroups.length > 0) {
-    return props.race.warmupGroups
+    return props.race.warmupGroups.map(group => {
+      const signupSlot = coachData.value?.warmups?.find(w => w.id === group.id)
+      return {
+        ...group,
+        leaders: signupSlot?.leaders ?? group.leaders ?? [],
+        support: signupSlot?.support ?? group.support ?? []
+      }
+    })
   }
   return coachData.value?.warmups || []
 })
@@ -298,8 +306,8 @@ const saveCoachName = async (slot: any, role: 'leader' | 'support', itemToSave: 
     }
   }
 
-  // Also update in updatedRace.warmupGroups if applicable
-  if (activeSession.value === 'wu' && updatedRace.warmupGroups) {
+  // Also update in updatedRace.warmupGroups if applicable (ADMINS ONLY)
+  if (isAdminCoach.value && activeSession.value === 'wu' && updatedRace.warmupGroups) {
     const wgSlot = updatedRace.warmupGroups.find(w => w.id === slot.id)
     if (wgSlot) {
       if (role === 'leader') {
@@ -312,8 +320,13 @@ const saveCoachName = async (slot: any, role: 'leader' | 'support', itemToSave: 
     }
   }
 
-  const sanitized = JSON.parse(JSON.stringify(updatedRace))
-  await updateRace(sanitized)
+  if (!isAdminCoach.value) {
+    // Ordinary coach: strictly update coachSignups to satisfy Firestore security rules
+    await updateCoachSignups(props.race.id, updatedRace.coachSignups)
+  } else {
+    const sanitized = JSON.parse(JSON.stringify(updatedRace))
+    await updateRace(sanitized)
+  }
 
   // Automatically subscribe the coach to ride group notifications
   if (!isRideGroupSubscribed(slot.id)) {
@@ -353,8 +366,8 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
     }
   }
 
-  // Also remove from updatedRace.warmupGroups if applicable
-  if (activeSession.value === 'wu' && updatedRace.warmupGroups) {
+  // Also remove from updatedRace.warmupGroups if applicable (ADMINS ONLY)
+  if (isAdminCoach.value && activeSession.value === 'wu' && updatedRace.warmupGroups) {
     const wgSlot = updatedRace.warmupGroups.find(w => w.id === slot.id)
     if (wgSlot) {
       if (role === 'leader' && wgSlot.leaders) {
@@ -365,14 +378,19 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
     }
   }
 
-  const sanitized = JSON.parse(JSON.stringify(updatedRace))
-  await updateRace(sanitized)
+  if (!isAdminCoach.value) {
+    // Ordinary coach: strictly update coachSignups to satisfy Firestore security rules
+    await updateCoachSignups(props.race.id, updatedRace.coachSignups)
+  } else {
+    const sanitized = JSON.parse(JSON.stringify(updatedRace))
+    await updateRace(sanitized)
+  }
 
   // Check if current coach is still signed up for this slot; if not, remove subscription
   const myName = getMyName.value
   const slotAfter = (activeSession.value === 'pr'
     ? updatedRace.coachSignups?.preRides
-    : (updatedRace.warmupGroups || updatedRace.coachSignups?.warmups)
+    : (updatedRace.coachSignups?.warmups || updatedRace.warmupGroups)
   )?.find(s => s.id === slot.id)
 
   const stillSignedUp = slotAfter && (

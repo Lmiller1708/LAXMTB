@@ -25,24 +25,28 @@ service cloud.firestore {
       );
     }
 
-    // Helper: Check if user is an authorized coach or member (guardians are read-only)
-    function canUpdateSignups() {
-      return request.auth != null && (
-        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role != 'guardian'
+    // Helper: Authorized coach check — requires verified email AND registered membership in admins collection
+    function isAuthorizedCoach() {
+      return isOwner() || (
+        isVerified() &&
+        request.auth.token.email != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())).data.role in ['coach', 'admin', 'owner']
       );
     }
 
     // Race data:
     // - Public read for race participants, parents, and coaches
     // - Admins can create, delete, and modify all race fields
-    // - Coaches/members can ONLY update coachSignups and warmupGroups
+    // - Ordinary coaches can ONLY update coachSignups (and cannot modify signup policy)
+    // - Race metadata, warmupGroups, schedule, and guidelines are reserved for admins
     match /races/{raceId} {
       allow read: if true;
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || (
-        canUpdateSignups() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coachSignups', 'warmupGroups'])
+        isAuthorizedCoach() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coachSignups']) &&
+        (!('policy' in resource.data.coachSignups) || request.resource.data.coachSignups.policy == resource.data.coachSignups.policy)
       );
     }
 
@@ -63,11 +67,11 @@ service cloud.firestore {
     // Users collection:
     // - Authenticated users can view teammate names and profile photos
     // - Users can only write/edit their own profile
-    // - Non-admins cannot elevate their own role
+    // - Non-admins cannot set or elevate their own role
     match /users/{userId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == userId && (
-        !('role' in request.resource.data) || request.resource.data.role in ['coach', 'guardian', 'member']
+        !('role' in request.resource.data) || request.resource.data.role == 'guardian' || isAdmin()
       );
       allow update: if request.auth != null && request.auth.uid == userId && (
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || isAdmin()

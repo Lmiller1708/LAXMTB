@@ -118,20 +118,18 @@ export const useCoachAuth = () => {
     return false
   }
 
-  // Is the current user an admin (requires verified identity)
+  // Is the current user an admin (requires verified identity and admin/owner role in admins collection)
   const isAdminCoach = computed<boolean>(() => {
     if (!user.value || !isVerifiedAuth(user.value)) return false
     const email = user.value.email?.toLowerCase().trim() || ''
     if (DEFAULT_ADMINS.includes(email)) return true
-    return coachRole.value === 'admin' || coachRole.value === 'owner' || userProfile.value?.role === 'admin' || userProfile.value?.role === 'owner'
+    return coachRole.value === 'admin' || coachRole.value === 'owner'
   })
 
-  // Authenticated coaches and admins can edit coach sign-ups (guardians are read-only)
+  // Authenticated coaches and admins can edit coach sign-ups (requires authorized coach record in admins collection)
   const canEditCoachSignups = computed<boolean>(() => {
-    if (!user.value) return false
-    if (isAdminCoach.value || isAuthorizedCoach.value) return true
-    if (userProfile.value?.role === 'guardian') return false
-    return true
+    if (!user.value || !isVerifiedAuth(user.value)) return false
+    return isAdminCoach.value || isAuthorizedCoach.value
   })
 
   // Full admin editing active
@@ -292,7 +290,7 @@ export const useCoachAuth = () => {
           name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'MTB Member',
           phone: '',
           photoURL: firebaseUser.photoURL || '',
-          role: isAdminCoach.value ? 'admin' : 'coach',
+          role: isAdminCoach.value ? 'admin' : 'guardian',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
@@ -783,7 +781,7 @@ export const useCoachAuth = () => {
           email: cred.user.email?.toLowerCase().trim() || email.trim().toLowerCase(),
           name: name.trim(),
           phone: phone.trim(),
-          role: inviteCheck.role || 'coach',
+          role: 'guardian',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }

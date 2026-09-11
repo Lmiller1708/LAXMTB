@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore'
 import { useFirestore } from 'vuefire'
 import { defaultEvents } from '../data/defaultEvents'
 const fallbackEvents = defaultEvents
@@ -212,6 +212,37 @@ export const useCurrentRace = () => {
     }
   }
 
+  /**
+   * Save coach signups update directly to Firestore races/{id}
+   * Used by coaches so ONLY coachSignups is touched (meeting strict Firestore security rules)
+   */
+  const updateCoachSignups = async (raceId: string, coachSignups: any) => {
+    const cleanSignups = JSON.parse(JSON.stringify(coachSignups))
+    const targetId = raceId || currentRace.value?.id
+    if (!targetId) return
+
+    const idx = races.value.findIndex(r => r.id === targetId)
+    if (idx >= 0) {
+      const nextRaces = [...races.value]
+      nextRaces[idx] = {
+        ...nextRaces[idx],
+        coachSignups: cleanSignups
+      }
+      races.value = nextRaces
+    }
+
+    if (db && targetId) {
+      try {
+        const docRef = doc(db, 'races', targetId)
+        await updateDoc(docRef, { coachSignups: cleanSignups })
+        console.info('[Firestore] Saved coachSignups to Firestore:', targetId)
+      } catch (e) {
+        console.error('[Firestore] Could not save coachSignups to Firestore:', e)
+        throw e
+      }
+    }
+  }
+
   return {
     races: readonly(races),
     currentRace,
@@ -221,6 +252,7 @@ export const useCurrentRace = () => {
     selectRaceBySlug,
     setRaces,
     updateRace,
+    updateCoachSignups,
     seedRacesToFirestore
   }
 }

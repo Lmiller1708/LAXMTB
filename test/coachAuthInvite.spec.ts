@@ -28,14 +28,12 @@ function validateInviteCode(
 
 /**
  * Pure permission helper matching useCoachAuth.canEditCoachSignups logic
+ * Strictly requires authorized coach record in admins collection or admin privileges.
+ * Profile absence or self-assigned roles in users/{uid} cannot grant access.
  */
 function canEditCoachSignups(user: any, userProfile: any, isAuthorizedCoach: boolean, isAdminCoach: boolean): boolean {
   if (!user) return false
-  if (isAdminCoach) return true
-  if (userProfile?.role === 'admin' || userProfile?.role === 'owner') return true
-  if (userProfile?.role === 'coach' || isAuthorizedCoach) return true
-  if (userProfile?.role === 'guardian') return false
-  return true
+  return isAdminCoach || isAuthorizedCoach
 }
 
 describe('Team Invite Gatekeeping & Role Permissions', () => {
@@ -100,6 +98,23 @@ describe('Team Invite Gatekeeping & Role Permissions', () => {
     it('disallows guardian / parent accounts from editing coach signups', () => {
       const guardianUser = { uid: 'u2', email: 'parent@gmail.com' }
       expect(canEditCoachSignups(guardianUser, { role: 'guardian' }, false, false)).toBe(false)
+    })
+
+    it('denies signup edits when profile is missing or deleted (preventing deleted profile bypass)', () => {
+      const untrustedUser = { uid: 'u3', email: 'random@gmail.com' }
+      // Profile doc is null (deleted or never created), but user is not an authorized coach
+      expect(canEditCoachSignups(untrustedUser, null, false, false)).toBe(false)
+    })
+
+    it('denies signup edits when user self-assigns coach in their profile without admin collection record', () => {
+      const sneakyUser = { uid: 'u4', email: 'sneaky@gmail.com' }
+      // Profile doc contains role: 'coach', but isAuthorizedCoach in admins collection is false
+      expect(canEditCoachSignups(sneakyUser, { role: 'coach' }, false, false)).toBe(false)
+    })
+
+    it('authorizes coach based strictly on admin/coach membership even if profile is absent', () => {
+      const coachUser = { uid: 'u5', email: 'verifiedcoach@laxmtb.org' }
+      expect(canEditCoachSignups(coachUser, null, true, false)).toBe(true)
     })
   })
 })
