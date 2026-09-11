@@ -43,6 +43,12 @@ export interface CoachSlot {
   support: string[];
 }
 
+export interface PhotoItem {
+  url: string;
+  w?: number;
+  h?: number;
+}
+
 export interface CoachSignupsData {
   policy?: string;
   preRides?: CoachSlot[];
@@ -74,5 +80,6 @@ export interface Race {
   guidelines?: string[];
   waveSchedule?: WaveSchedule;
   photosUrl?: string;
+  photos?: PhotoItem[];
   coachSignups?: CoachSignupsData;
 }

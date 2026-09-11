@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import type { Race } from '~/modules/races/types/race'
-
-interface PhotoItem {
-  url: string
-  w?: number
-  h?: number
-}
+import { doc, onSnapshot } from 'firebase/firestore'
+import { useFirestore } from 'vuefire'
+import type { Race, PhotoItem } from '~/modules/races/types/race'
 
 const props = defineProps<{
   race: Race
@@ -15,6 +11,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'edit'): void
 }>()
+
+const db = useFirestore()
+const { isOnline } = useNetworkStatus()
 
 const DEFAULT_TEAM_PHOTOS_URL = 'https://photos.app.goo.gl/XgNFXXB5XMakNz5U9'
 const DEFAULT_RACE_PHOTOS_MAP: Record<string, string> = {
@@ -47,31 +46,70 @@ const copyLink = () => {
 const photos = ref<PhotoItem[]>([])
 const photosPageLimit = ref(24)
 const currentLightboxIdx = ref(-1)
+let unsubscribePhotos: (() => void) | null = null
 
 const visiblePhotos = computed(() => photos.value.slice(0, photosPageLimit.value))
 const hasMore = computed(() => photos.value.length > photosPageLimit.value)
 
-const loadPhotos = async () => {
+const loadPhotos = () => {
   if (!import.meta.client) return
-  if (props.race?.id !== 'bluff-bash') {
-    photos.value = []
+
+  // 1. If race object already contains photos array
+  if (Array.isArray(props.race?.photos) && props.race.photos.length > 0) {
+    photos.value = props.race.photos
     return
   }
-  try {
-    const res = await fetch('/team_photos.json?t=' + Date.now())
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) {
-        photos.value = data
-      }
+
+  // 2. Check offline guard: If offline, do not attempt network fetch
+  if (!navigator.onLine || !isOnline.value) {
+    console.info('[PhotosGallery] Device is offline — skipping live photos fetch')
+    return
+  }
+
+  // 3. Connect to live Firestore photos collection
+  if (db && props.race?.id) {
+    if (unsubscribePhotos) {
+      unsubscribePhotos()
+      unsubscribePhotos = null
     }
-  } catch (err) {
-    console.warn('[PhotosGallery] Could not load photos:', err)
+
+    try {
+      const docRef = doc(db, 'photos', props.race.id)
+      unsubscribePhotos = onSnapshot(
+        docRef,
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data()
+            if (Array.isArray(data?.items)) {
+              photos.value = data.items
+              return
+            }
+          }
+          if (Array.isArray(props.race?.photos)) {
+            photos.value = props.race.photos
+          } else {
+            photos.value = []
+          }
+        },
+        (err) => {
+          console.warn('[PhotosGallery] Firestore live photos error:', err)
+        }
+      )
+    } catch (err) {
+      console.warn('[PhotosGallery] Could not attach Firestore photos listener:', err)
+    }
   }
 }
 
 onMounted(() => {
   loadPhotos()
+})
+
+onUnmounted(() => {
+  if (unsubscribePhotos) {
+    unsubscribePhotos()
+    unsubscribePhotos = null
+  }
 })
 
 watch(() => props.race?.id, () => {
