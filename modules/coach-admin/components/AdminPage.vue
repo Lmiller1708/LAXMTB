@@ -17,6 +17,7 @@ import {
 } from '~/modules/results/services/raceresultService'
 import { type TeamUserItem } from '~/modules/coach-admin/composables/useCoachAuth'
 import CustomDatePicker from './CustomDatePicker.vue'
+import CustomTimePicker from './CustomTimePicker.vue'
 
 const props = defineProps<{
   initialTab?: string
@@ -754,37 +755,15 @@ const getSortedWaveKeys = (cat: string): string[] => {
   })
 }
 
-const to24h = (str?: string): string => {
-  if (!str) return ''
-  const trimmed = str.trim()
-  if (/^\d{1,2}:\d{2}$/.test(trimmed)) {
-    const [h, m] = trimmed.split(':')
-    return `${h.padStart(2, '0')}:${m}`
-  }
-  const mins = parseTimeStrToMinutes(trimmed)
-  if (mins === null) return ''
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  return `${h < 10 ? '0' : ''}${h}:${m < 10 ? '0' : ''}${m}`
-}
-
-const onTimeInput = (cat: string, waveKey: string, time24: string) => {
-  if (!time24) return
-  const [hStr, mStr] = time24.split(':')
-  let h = parseInt(hStr, 10)
-  const m = parseInt(mStr, 10)
-  if (isNaN(h) || isNaN(m)) return
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  if (h > 12) h -= 12
-  if (h === 0) h = 12
-  const formatted12h = `${h}:${m < 10 ? '0' : ''}${m} ${ampm}`
-
+const onWaveStartChange = (cat: string, waveKey: string, newTime?: string) => {
   form.value.hasCustomWaveSchedule = true
   const wavesObj = getWavesForCategory(cat)
   if (wavesObj[waveKey]) {
-    wavesObj[waveKey].start = formatted12h
+    if (newTime) {
+      wavesObj[waveKey].start = newTime
+    }
     const stagingOffset = form.value.stagingOffsetMinutes || 15
-    const parsedMins = parseTimeStrToMinutes(formatted12h)
+    const parsedMins = parseTimeStrToMinutes(wavesObj[waveKey].start)
     if (parsedMins !== null) {
       wavesObj[waveKey].stage = formatMinutesToTimeStr(parsedMins - stagingOffset)
     }
@@ -2172,13 +2151,10 @@ const removePhoto = (idx: number) => {
 
                         <!-- Start time input -->
                         <td style="text-align:center;padding:6px;vertical-align:middle;">
-                          <input
-                            type="time"
-                            class="wave-time-input"
-                            :value="to24h(getWavesForCategory(cat)[wKey].start)"
-                            @input="onTimeInput(cat, wKey, ($event.target as HTMLInputElement).value)"
-                            @change="onTimeInput(cat, wKey, ($event.target as HTMLInputElement).value)"
-                          >
+                          <CustomTimePicker
+                            v-model="getWavesForCategory(cat)[wKey].start"
+                            @change="onWaveStartChange(cat, wKey, $event)"
+                          />
                         </td>
 
                         <!-- Staging Call-Up -->
