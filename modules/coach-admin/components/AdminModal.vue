@@ -1646,9 +1646,9 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
           <!-- Manage Coaches & Admins -->
           <div v-else-if="activeTab === 'coaches'" style="display:flex;flex-direction:column;gap:14px;">
             <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:10px;padding:14px;">
-              <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);">Add Team Coach / Admin</h4>
+              <h4 style="margin:0 0 4px;font-size:14px;font-weight:700;color:var(--text-main);">Manage Team Administrators & Roles</h4>
               <p style="margin:0 0 10px;font-size:11.5px;color:var(--text-muted);line-height:1.4;">
-                Grant team access to coaches. <strong>Coach:</strong> Signs in to claim ride leader/support slots on race sign-ups. <strong>Coach Admin:</strong> Full race editing and settings control.
+                All registered coaches and members can sign in and claim ride leader/support slots directly. Users added here as <strong>Coach Admin</strong> receive full race configuration, schedule editing, and settings control.
               </p>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                 <input
@@ -1670,8 +1670,8 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                   class="custom-minutes-input"
                   style="min-width:125px;height:34px;font-size:12px;padding:2px 6px;"
                 >
-                  <option value="coach">🚵 Coach</option>
                   <option value="admin">🛡️ Coach Admin</option>
+                  <option value="coach">🚵 Coach</option>
                 </select>
                 <button
                   type="button"
@@ -1680,7 +1680,7 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
                   :disabled="isAddingCoach"
                   @click="handleAddCoach"
                 >
-                  <span>{{ isAddingCoach ? 'Adding...' : '+ Add Coach' }}</span>
+                  <span>{{ isAddingCoach ? 'Adding...' : '+ Add Admin / Role' }}</span>
                 </button>
               </div>
             </div>

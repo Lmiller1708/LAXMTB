@@ -14,6 +14,7 @@ const emit = defineEmits<{
 const {
   user,
   userProfile,
+  userPhoto,
   profileLoading,
   isAdminCoach,
   isAuthorizedCoach,
@@ -136,7 +137,14 @@ const handleDeleteAccount = async () => {
       <div class="modal-body profile-modal-body">
         <!-- User Profile Banner Card -->
         <div class="profile-header-card">
-          <div class="profile-avatar">{{ initials }}</div>
+          <img
+            v-if="userPhoto"
+            :src="userPhoto"
+            alt="User avatar"
+            class="profile-avatar img"
+            referrerpolicy="no-referrer"
+          />
+          <div v-else class="profile-avatar">{{ initials }}</div>
           <div class="profile-meta">
             <div class="profile-name">{{ nameInput || 'Team Member' }}</div>
             <div class="profile-email">{{ user?.email }}</div>
@@ -323,6 +331,11 @@ const handleDeleteAccount = async () => {
   letter-spacing: 1px;
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
   flex-shrink: 0;
+}
+
+.profile-avatar.img {
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .profile-meta {

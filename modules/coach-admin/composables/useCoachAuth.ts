@@ -33,6 +33,7 @@ export interface UserProfile {
   email: string
   name: string
   phone: string
+  photoURL?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -91,6 +92,11 @@ export const useCoachAuth = () => {
     !!user.value && isAuthorizedCoach.value && isAdminCoach.value && isAdminUnlocked.value
   )
 
+  // User profile photo (e.g. from Google account)
+  const userPhoto = computed<string>(() => {
+    return user.value?.photoURL || userProfile.value?.photoURL || ''
+  })
+
   /**
    * Load or initialize the user's Firestore profile doc in `users/{uid}`
    */
@@ -105,13 +111,18 @@ export const useCoachAuth = () => {
       const userSnap = await getDoc(userRef)
       if (userSnap.exists()) {
         const data = userSnap.data() as UserProfile
+        const photo = firebaseUser.photoURL || data.photoURL || ''
         userProfile.value = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
           name: data.name || firebaseUser.displayName || '',
           phone: data.phone || '',
+          photoURL: photo,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt
+        }
+        if (firebaseUser.photoURL && data.photoURL !== firebaseUser.photoURL) {
+          setDoc(userRef, { photoURL: firebaseUser.photoURL }, { merge: true }).catch(() => {})
         }
       } else {
         const initialProfile: UserProfile = {
@@ -119,6 +130,7 @@ export const useCoachAuth = () => {
           email: firebaseUser.email || '',
           name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'MTB Member',
           phone: '',
+          photoURL: firebaseUser.photoURL || '',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }
@@ -131,7 +143,8 @@ export const useCoachAuth = () => {
         uid: firebaseUser.uid,
         email: firebaseUser.email || '',
         name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'MTB Member',
-        phone: ''
+        phone: '',
+        photoURL: firebaseUser.photoURL || ''
       }
     } finally {
       profileLoading.value = false
@@ -598,6 +611,7 @@ export const useCoachAuth = () => {
   return {
     user,
     userProfile,
+    userPhoto,
     profileLoading,
     canEditCoachSignups,
     isCoachAuth,

@@ -7,7 +7,7 @@ import { useNotificationSubscriptions } from '~/modules/notifications/composable
 
 const { isOnline } = useNetworkStatus()
 const { theme, toggleTheme } = useTheme()
-const { user, userProfile, isCoachAuth, isAdminCoach, isAuthorizedCoach, signOut } = useCoachAuth()
+const { user, userProfile, userPhoto, isCoachAuth, isAdminCoach, isAuthorizedCoach, signOut } = useCoachAuth()
 const { menuBadgeText } = useNotificationSubscriptions()
 
 const isMenuOpen = ref(false)
@@ -121,7 +121,14 @@ onMounted(() => {
             title="Manage My Account"
             @click="emit('openProfile')"
           >
-            <span class="header-user-avatar">{{ userInitials }}</span>
+            <img
+              v-if="userPhoto"
+              :src="userPhoto"
+              alt="Profile"
+              class="header-user-avatar img"
+              referrerpolicy="no-referrer"
+            />
+            <span v-else class="header-user-avatar">{{ userInitials }}</span>
           </button>
           <button
             v-else
@@ -168,10 +175,10 @@ onMounted(() => {
         <span class="mobile-menu-badge">{{ theme === 'dark' ? 'Light Mode' : 'Dark Mode' }}</span>
       </div>
 
-      <!-- Notifications (Modern SVG outline bell) -->
+      <!-- Notifications (Modern White Outline Bell) -->
       <div class="mobile-menu-item" @click="handleNotifications">
         <div class="mobile-menu-item-left">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-main);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
@@ -215,7 +222,14 @@ onMounted(() => {
         <!-- My Account / Profile -->
         <div class="mobile-menu-item" @click="handleProfile">
           <div class="mobile-menu-item-left">
-            <div class="header-user-avatar mini">{{ userInitials }}</div>
+            <img
+              v-if="userPhoto"
+              :src="userPhoto"
+              alt="Profile"
+              class="header-user-avatar mini img"
+              referrerpolicy="no-referrer"
+            />
+            <div v-else class="header-user-avatar mini">{{ userInitials }}</div>
             <div>
               <div class="mobile-menu-item-title">{{ userDisplayName }}</div>
               <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Edit details & cell number</div>
@@ -276,6 +290,11 @@ onMounted(() => {
   font-size: 11px;
   font-weight: 800;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.header-user-avatar.img {
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
 }
 
 .header-user-avatar.mini {
