@@ -11,12 +11,14 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "dompurify": "^3.4.15",
     "firebase": "^12.18.0",
     "nuxt-vuefire": "^1.1.2"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@pinia/nuxt": "^0.5.4",
+    "@types/dompurify": "^3.0.5",
     "@types/node": "^22.5.4",
     "@vite-pwa/nuxt": "^1.1.1",
     "nuxt": "^3.13.0",

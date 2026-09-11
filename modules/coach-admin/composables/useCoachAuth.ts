@@ -93,9 +93,17 @@ export const useCoachAuth = () => {
   // Primary bootstrap administrator(s)
   const DEFAULT_ADMINS = ['lmiller1708@gmail.com']
 
-  // Is the current user an admin (owner or admin role)
+  // Helper: Verify account has proved identity via email verification or Google OAuth
+  const isVerifiedAuth = (u: any): boolean => {
+    if (!u) return false
+    if (u.emailVerified === true) return true
+    if (u.providerData?.some((p: any) => p.providerId === 'google.com')) return true
+    return false
+  }
+
+  // Is the current user an admin (requires verified identity)
   const isAdminCoach = computed<boolean>(() => {
-    if (!user.value) return false
+    if (!user.value || !isVerifiedAuth(user.value)) return false
     const email = user.value.email?.toLowerCase().trim() || ''
     if (DEFAULT_ADMINS.includes(email)) return true
     return coachRole.value === 'admin' || coachRole.value === 'owner' || userProfile.value?.role === 'admin' || userProfile.value?.role === 'owner'
@@ -120,7 +128,16 @@ export const useCoachAuth = () => {
   })
 
   // Global map of coach name / email -> photoURL for displaying avatars in sign-up slots
-  const coachAvatarMap = useState<Record<string, string>>('coach_avatar_map', () => ({}))
+  // Initialized with localStorage cache so avatars remain visible when signed out
+  const coachAvatarMap = useState<Record<string, string>>('coach_avatar_map', () => {
+    if (import.meta.client) {
+      try {
+        const cached = localStorage.getItem('laxmtb_coach_avatars')
+        if (cached) return JSON.parse(cached)
+      } catch (e) {}
+    }
+    return {}
+  })
 
   const fetchCoachAvatars = async () => {
     if (!db) return
@@ -142,6 +159,11 @@ export const useCoachAuth = () => {
         if (user.value.email) map[user.value.email.toLowerCase().trim()] = user.value.photoURL
       }
       coachAvatarMap.value = map
+      if (import.meta.client) {
+        try {
+          localStorage.setItem('laxmtb_coach_avatars', JSON.stringify(map))
+        } catch (e) {}
+      }
     } catch (err) {
       console.warn('[useCoachAuth] Could not fetch coach avatars:', err)
     }
@@ -316,6 +338,12 @@ export const useCoachAuth = () => {
 
     // 1. Primary bootstrap admin check (Head Coach / Founder)
     if (DEFAULT_ADMINS.includes(clean)) {
+      if (!isVerifiedAuth(user.value)) {
+        console.warn('[useCoachAuth] Unverified email attempted bootstrap owner access')
+        coachRole.value = null
+        isAuthorizedCoach.value = false
+        return false
+      }
       isAuthorizedCoach.value = true
       coachRole.value = 'owner'
       if (db) {
@@ -586,6 +614,10 @@ export const useCoachAuth = () => {
   ): Promise<{ success: boolean; error?: string }> => {
     if (!auth) return { success: false, error: 'Firebase Auth not initialized' }
     if (!email || !email.includes('@')) return { success: false, error: 'Please enter a valid email address.' }
+    const cleanEmail = email.toLowerCase().trim()
+    if (DEFAULT_ADMINS.includes(cleanEmail)) {
+      return { success: false, error: 'Administrator accounts must sign in using verified Google Sign-In.' }
+    }
     if (!pass || pass.length < 6) return { success: false, error: 'Password must be at least 6 characters.' }
     if (!name || !name.trim()) return { success: false, error: 'Please enter your full name.' }
 
@@ -688,16 +720,27 @@ export const useCoachAuth = () => {
       }
 
       if (cleanPhoto) {
-        coachAvatarMap.value = {
+        const nextMap = {
           ...coachAvatarMap.value,
           [cleanName.toLowerCase()]: cleanPhoto,
           [(user.value.email || '').toLowerCase()]: cleanPhoto
+        }
+        coachAvatarMap.value = nextMap
+        if (import.meta.client) {
+          try {
+            localStorage.setItem('laxmtb_coach_avatars', JSON.stringify(nextMap))
+          } catch (e) {}
         }
       } else if (cleanPhoto === '') {
         const nextMap = { ...coachAvatarMap.value }
         delete nextMap[cleanName.toLowerCase()]
         if (user.value.email) delete nextMap[user.value.email.toLowerCase()]
         coachAvatarMap.value = nextMap
+        if (import.meta.client) {
+          try {
+            localStorage.setItem('laxmtb_coach_avatars', JSON.stringify(nextMap))
+          } catch (e) {}
+        }
       }
 
       return { success: true }

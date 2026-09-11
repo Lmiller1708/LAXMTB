@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useCoachAuth } from '../composables/useCoachAuth'
+import { useCurrentRace } from '../../races/composables/useCurrentRace'
 
 const props = defineProps<{
   isOpen: boolean
@@ -10,6 +11,8 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'toast', msg: string): void
 }>()
+
+const { currentRace, updateRace } = useCurrentRace()
 
 const {
   user,
@@ -160,6 +163,7 @@ const handleFileChange = async (e: Event) => {
     })
 
     if (res.success) {
+      await syncPhotoToRaceSlots(dataUrl)
       saveSuccess.value = true
       emit('toast', '📸 Profile photo updated!')
       setTimeout(() => {
@@ -177,6 +181,39 @@ const handleFileChange = async (e: Event) => {
   }
 }
 
+// Sync photo into any current race signups so avatar persists for all users
+const syncPhotoToRaceSlots = async (photoUrl?: string) => {
+  if (!currentRace.value || !nameInput.value) return
+  const cleanMyName = nameInput.value.toLowerCase().trim()
+  const updatedRace = JSON.parse(JSON.stringify(currentRace.value))
+  let changed = false
+
+  const updateList = (list: any[]) => {
+    if (!Array.isArray(list)) return
+    list.forEach(slot => {
+      ;['leaders', 'support'].forEach(role => {
+        if (Array.isArray(slot[role])) {
+          slot[role].forEach((item: any, idx: number) => {
+            const cName = typeof item === 'object' ? item.name : String(item)
+            if (cName && cName.toLowerCase().trim() === cleanMyName) {
+              slot[role][idx] = photoUrl ? { name: cName, photoURL: photoUrl } : { name: cName }
+              changed = true
+            }
+          })
+        }
+      })
+    })
+  }
+
+  if (updatedRace.coachSignups?.preRides) updateList(updatedRace.coachSignups.preRides)
+  if (updatedRace.coachSignups?.warmups) updateList(updatedRace.coachSignups.warmups)
+  if (updatedRace.warmupGroups) updateList(updatedRace.warmupGroups)
+
+  if (changed) {
+    await updateRace(updatedRace)
+  }
+}
+
 // Remove uploaded photo and revert to initials
 const handleRemovePhoto = async () => {
   photoInput.value = ''
@@ -189,6 +226,7 @@ const handleRemovePhoto = async () => {
   isSaving.value = false
 
   if (res.success) {
+    await syncPhotoToRaceSlots('')
     emit('toast', '🗑️ Profile photo removed')
   } else if (res.error) {
     errorMessage.value = res.error
@@ -213,6 +251,7 @@ const handleSaveProfile = async () => {
   isSaving.value = false
 
   if (res.success) {
+    await syncPhotoToRaceSlots(photoInput.value)
     saveSuccess.value = true
     emit('toast', '✅ Profile details updated successfully!')
     setTimeout(() => {

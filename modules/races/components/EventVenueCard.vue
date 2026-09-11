@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DOMPurify from 'dompurify'
 import type { Race } from '../types/race'
 
 const props = defineProps<{
@@ -17,6 +18,15 @@ const getNavigationUrl = computed(() => {
   if (props.race.googleMapsUrl?.trim()) return props.race.googleMapsUrl.trim()
   const dest = [props.race.exactTrailhead, props.race.venue, props.race.address].filter(Boolean).join(' ')
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest || props.race.address || props.race.name)}`
+})
+
+const sanitizedWarning = computed(() => {
+  if (!props.race.warning) return ''
+  if (import.meta.server) return props.race.warning
+  return DOMPurify.sanitize(props.race.warning, {
+    ALLOWED_TAGS: ['strong', 'em', 'b', 'i', 'span', 'br'],
+    ALLOWED_ATTR: []
+  })
 })
 </script>
 
@@ -45,8 +55,8 @@ const getNavigationUrl = computed(() => {
         {{ race.exactTrailhead || race.venue }}
       </div>
       <div class="location-address-text">{{ race.address }}</div>
-      <div v-if="race.warning" class="event-warning-banner" style="margin-top:10px;">
-        <span v-html="race.warning" />
+      <div v-if="sanitizedWarning" class="event-warning-banner" style="margin-top:10px;">
+        <span v-html="sanitizedWarning" />
       </div>
       <div class="event-action-buttons">
         <a :href="getNavigationUrl" target="_blank" rel="noopener noreferrer" class="btn-maps btn-navigation">
