@@ -1,7 +1,13 @@
 <script setup lang="ts">
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useNetworkStatus } from '../composables/useNetworkStatus'
+import { useTheme } from '../composables/useTheme'
+import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
+import { useNotificationSubscriptions } from '~/modules/notifications/composables/useNotificationSubscriptions'
+
 const { isOnline } = useNetworkStatus()
 const { theme, toggleTheme } = useTheme()
-const { user, isCoachAuth, isAuthorizedCoach, isAdminCoach, signInWithGoogle, signOut, authLoading } = useCoachAuth()
+const { user, userProfile, isCoachAuth, isAdminCoach, isAuthorizedCoach, signOut } = useCoachAuth()
 const { menuBadgeText } = useNotificationSubscriptions()
 
 const isMenuOpen = ref(false)
@@ -10,6 +16,8 @@ const emit = defineEmits<{
   (e: 'openWhatsNew'): void
   (e: 'openNotifications'): void
   (e: 'openAdmin'): void
+  (e: 'openAuth'): void
+  (e: 'openProfile'): void
   (e: 'syncData'): void
   (e: 'toast', msg: string): void
 }>()
@@ -22,18 +30,14 @@ const handleNotifications = () => { closeMenu(); emit('openNotifications') }
 const handleAdmin = () => { closeMenu(); emit('openAdmin') }
 const handleSync = () => { closeMenu(); emit('syncData') }
 
-const handleSignIn = async () => {
+const handleAuth = () => {
   closeMenu()
-  const result = await signInWithGoogle()
-  if (result.success) {
-    if (result.isAdmin) {
-      emit('toast', `🔓 Welcome, ${user.value?.displayName || user.value?.email}! Coach Admin unlocked.`)
-    } else {
-      emit('toast', `👋 Welcome, ${user.value?.displayName || user.value?.email}! Signed in as Team Coach.`)
-    }
-  } else if (result.error) {
-    emit('toast', `⛔ ${result.error}`)
-  }
+  emit('openAuth')
+}
+
+const handleProfile = () => {
+  closeMenu()
+  emit('openProfile')
 }
 
 const handleSignOut = async () => {
@@ -41,6 +45,18 @@ const handleSignOut = async () => {
   await signOut()
   emit('toast', '👋 Signed out')
 }
+
+// User display name & initials
+const userDisplayName = computed(() => {
+  return userProfile.value?.name || user.value?.displayName || user.value?.email?.split('@')[0] || 'My Account'
+})
+
+const userInitials = computed(() => {
+  const n = userDisplayName.value
+  const parts = n.trim().split(' ')
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return n.slice(0, 2).toUpperCase()
+})
 
 // Admin badge styling
 const adminBadgeLabel = computed(() => {
@@ -58,7 +74,7 @@ const adminBadgeStyle = computed(() => {
 const adminSubtext = computed(() => {
   if (!isOnline.value) return 'Editing unavailable while offline'
   if (isCoachAuth.value) return `Signed in as ${user.value?.email || ''}`
-  return 'Tap to unlock editing'
+  return 'Tap to manage team & race'
 })
 
 // Close dropdown on outside click
@@ -92,10 +108,29 @@ onMounted(() => {
             <span class="pulse-dot" :class="{ offline: !isOnline }" />
             <span>{{ isOnline ? 'Online' : 'Offline' }}</span>
           </span>
+
           <button class="theme-toggle-btn" aria-label="Toggle Theme" @click="toggleTheme">
             <span>{{ theme === 'dark' ? '☀️' : '🌙' }}</span>
             <span>{{ theme === 'dark' ? 'Light' : 'Dark' }}</span>
           </button>
+
+          <!-- Quick User Avatar / Sign-In Button -->
+          <button
+            v-if="user"
+            class="header-user-btn"
+            title="Manage My Account"
+            @click="emit('openProfile')"
+          >
+            <span class="header-user-avatar">{{ userInitials }}</span>
+          </button>
+          <button
+            v-else
+            class="header-signin-btn"
+            @click="emit('openAuth')"
+          >
+            <span>Sign In</span>
+          </button>
+
           <button
             class="mobile-menu-btn"
             aria-label="Toggle Navigation Menu"
@@ -133,10 +168,13 @@ onMounted(() => {
         <span class="mobile-menu-badge">{{ theme === 'dark' ? 'Light Mode' : 'Dark Mode' }}</span>
       </div>
 
-      <!-- Notifications -->
+      <!-- Notifications (Modern SVG outline bell) -->
       <div class="mobile-menu-item" @click="handleNotifications">
         <div class="mobile-menu-item-left">
-          <span>🔔</span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-main);">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
           <span class="mobile-menu-item-title">Race Notifications</span>
         </div>
         <span class="mobile-menu-badge">{{ menuBadgeText }}</span>
@@ -157,23 +195,36 @@ onMounted(() => {
       <!-- Divider -->
       <div style="height:1px;background:var(--border);margin:4px 14px;" />
 
-      <!-- CASE 1: NOT SIGNED IN -> "Coach Sign In" -->
-      <div v-if="!isAuthorizedCoach" class="mobile-menu-item" @click="handleSignIn">
+      <!-- USER AUTHENTICATION SECTION -->
+      <!-- Case 1: NOT SIGNED IN -> Sign In / Create Account -->
+      <div v-if="!user" class="mobile-menu-item" @click="handleAuth">
         <div class="mobile-menu-item-left">
           <span>🔑</span>
           <div>
-            <div class="mobile-menu-item-title">Coach Sign In</div>
-            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Sign in with Google account</div>
+            <div class="mobile-menu-item-title">Sign In / Register</div>
+            <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Sign up to claim coach slots</div>
           </div>
         </div>
         <span class="mobile-menu-badge" style="background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.3);color:#22c55e;">
-          {{ authLoading ? '...' : 'Sign In →' }}
+          Sign In →
         </span>
       </div>
 
-      <!-- CASE 2: SIGNED IN -->
+      <!-- Case 2: SIGNED IN -->
       <template v-else>
-        <!-- Coach Admin Modal (for Admin coaches) -->
+        <!-- My Account / Profile -->
+        <div class="mobile-menu-item" @click="handleProfile">
+          <div class="mobile-menu-item-left">
+            <div class="header-user-avatar mini">{{ userInitials }}</div>
+            <div>
+              <div class="mobile-menu-item-title">{{ userDisplayName }}</div>
+              <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">Edit details & cell number</div>
+            </div>
+          </div>
+          <span class="mobile-menu-badge" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.3);color:#60a5fa;">Profile</span>
+        </div>
+
+        <!-- Coach Admin (ONLY visible for users designated as Admin in Admin page) -->
         <div v-if="isAdminCoach" class="mobile-menu-item" @click="handleAdmin">
           <div class="mobile-menu-item-left">
             <span>{{ isCoachAuth ? '🔓' : '⚙️' }}</span>
@@ -183,18 +234,6 @@ onMounted(() => {
             </div>
           </div>
           <span class="mobile-menu-badge" :style="adminBadgeStyle">{{ adminBadgeLabel }}</span>
-        </div>
-
-        <!-- Coach Profile Status (for non-admin coaches) -->
-        <div v-else class="mobile-menu-item" style="cursor:default;">
-          <div class="mobile-menu-item-left">
-            <span>🚵</span>
-            <div>
-              <div class="mobile-menu-item-title">Team Coach</div>
-              <div style="font-size:11px;color:var(--text-muted);font-weight:400;margin-top:1px;">{{ user?.displayName || user?.email }}</div>
-            </div>
-          </div>
-          <span class="mobile-menu-badge" style="background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.3);color:#60a5fa;">Coach</span>
         </div>
 
         <!-- Sign Out -->
@@ -213,3 +252,55 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.header-user-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.header-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.header-user-avatar.mini {
+  width: 24px;
+  height: 24px;
+  font-size: 9.5px;
+}
+
+.header-signin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.header-signin-btn:hover {
+  background: var(--accent-red);
+  color: #ffffff;
+}
+</style>

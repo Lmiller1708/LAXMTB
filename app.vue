@@ -11,6 +11,8 @@ const currentTab = ref<TabType>('details')
 const isWhatsNewOpen = ref(false)
 const isNotifOpen = ref(false)
 const isAdminOpen = ref(false)
+const isAuthOpen = ref(false)
+const isProfileOpen = ref(false)
 const adminInitialTab = ref('venue')
 
 const { currentRace, currentRaceSlug, races, currentRaceIndex, selectRace, selectRaceBySlug, updateRace } = useCurrentRace()
@@ -93,10 +95,6 @@ const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
 }
 
 const setTab = (tab: TabType, pushToHistory = true) => {
-  // Guard: Coach Sign-Ups tab is restricted to authorized coaches only
-  if (tab === 'coach' && !isCoachAuth.value) {
-    tab = 'details'
-  }
   currentTab.value = tab
   if (tab === 'list' || tab === 'results') {
     if (currentRace.value?.isPublished && currentRace.value?.eventId) {
@@ -257,9 +255,9 @@ const handleSyncData = () => {
   }, 1000)
 }
 
-watch([isWhatsNewOpen, isNotifOpen, isAdminOpen], ([wn, notif, admin]) => {
+watch([isWhatsNewOpen, isNotifOpen, isAdminOpen, isAuthOpen, isProfileOpen], ([wn, notif, admin, auth, prof]) => {
   if (import.meta.client) {
-    document.body.classList.toggle('modal-open', Boolean(wn || notif || admin))
+    document.body.classList.toggle('modal-open', Boolean(wn || notif || admin || auth || prof))
   }
 })
 
@@ -282,6 +280,8 @@ const handlePrint = () => {
         @open-whats-new="isWhatsNewOpen = true"
         @open-notifications="isNotifOpen = true"
         @open-admin="openAdminWithTab('venue')"
+        @open-auth="isAuthOpen = true"
+        @open-profile="isProfileOpen = true"
         @sync-data="handleSyncData"
         @toast="showNotifToast"
       />
@@ -310,6 +310,18 @@ const handlePrint = () => {
       :initial-tab="adminInitialTab"
       @close="isAdminOpen = false"
       @save="handleSaveRace"
+      @toast="showNotifToast"
+    />
+
+    <AuthModal
+      :is-open="isAuthOpen"
+      @close="isAuthOpen = false"
+      @toast="showNotifToast"
+    />
+
+    <UserProfileModal
+      :is-open="isProfileOpen"
+      @close="isProfileOpen = false"
       @toast="showNotifToast"
     />
 
@@ -392,6 +404,7 @@ const handlePrint = () => {
         :race="currentRace"
         :is-coach-auth="isCoachAuth"
         @edit="openAdminWithTab('coach')"
+        @open-auth="isAuthOpen = true"
       />
 
       <!-- Tab 3 & 4: Start Lists & Results -->

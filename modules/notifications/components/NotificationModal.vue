@@ -78,7 +78,10 @@ const onSoundChange = () => {
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="notifModalTitle">
       <div class="modal-header">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:18px;">🔔</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-red);">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
           <h3 id="notifModalTitle" style="margin:0;font-size:16px;font-weight:700;color:var(--text-main);">Race Notifications</h3>
         </div>
         <button type="button" class="modal-close-btn" aria-label="Close modal" @click="handleClose">✕</button>

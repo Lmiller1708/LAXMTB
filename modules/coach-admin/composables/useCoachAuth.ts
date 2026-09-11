@@ -1,4 +1,13 @@
-import { GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth'
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  deleteUser,
+  sendPasswordResetEmail,
+  signOut as firebaseSignOut
+} from 'firebase/auth'
 import {
   doc,
   getDoc,
@@ -19,26 +28,42 @@ export interface CoachAdminItem {
 
 export type CoachItem = CoachAdminItem
 
+export interface UserProfile {
+  uid: string
+  email: string
+  name: string
+  phone: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 /**
- * useCoachAuth — Multi-tier security model:
- *  Layer 1: Firebase Auth (Identity)     — Google OAuth, who are you?
- *  Layer 2: Firestore coaches/admins     — Are you registered as a coach or admin?
- *  Layer 3: isAdminUnlocked (UX)         — For admins, is editing mode active?
+ * useCoachAuth — Multi-tier security and user management model:
+ *  - Identity: Firebase Auth (Email/Password or Google OAuth)
+ *  - User Profile: Firestore `users/{uid}` (name, cell phone number, locked email)
+ *  - Coach & Admin Authorization: Firestore `admins/{email}`
+ *  - Permissions:
+ *      * Authenticated users can edit Coach Sign-Ups and manage their profile
+ *      * Only registered Admins / Owners can open the Admin Modal & manage race configs
  */
 export const useCoachAuth = () => {
   const auth = useFirebaseAuth()
   const db = useFirestore()
   const user = useCurrentUser()
 
-  // Layer 2: Is the signed-in user on the Firestore authorized coaches list?
+  // Authenticated user profile loaded from Firestore `users/{uid}`
+  const userProfile = useState<UserProfile | null>('user_profile', () => null)
+  const profileLoading = useState<boolean>('user_profile_loading', () => false)
+
+  // Is the signed-in user registered as coach/admin in Firestore?
   const isAuthorizedCoach = useState<boolean>('coach_authorized', () => false)
   // Signed-in coach role: 'owner' | 'admin' | 'coach' | null
   const coachRole = useState<'admin' | 'coach' | 'owner' | null>('coach_role', () => null)
-  // Layer 3: Has the coach admin unlocked admin editing (vs just signed in)?
+  // Has the admin unlocked editing mode?
   const isAdminUnlocked = useState<boolean>('admin_unlocked', () => false)
-  // Auth error message (shown on sign-in screen)
+  // Auth error message (shown on sign-in / sign-up screen)
   const authError = useState<string>('auth_error', () => '')
-  // Loading state during sign-in verification
+  // Loading state during auth operations
   const authLoading = useState<boolean>('auth_loading', () => false)
 
   // List of all coaches and admins loaded from Firestore
@@ -56,15 +81,68 @@ export const useCoachAuth = () => {
     return coachRole.value === 'admin' || coachRole.value === 'owner'
   })
 
-  // The combined computed for editing: user must be signed in, authorized admin, AND unlocked
+  // Authenticated users can edit coach sign-ups
+  const canEditCoachSignups = computed<boolean>(() => {
+    return !!user.value
+  })
+
+  // Full admin editing active
   const isCoachAuth = computed(() =>
     !!user.value && isAuthorizedCoach.value && isAdminCoach.value && isAdminUnlocked.value
   )
+
+  /**
+   * Load or initialize the user's Firestore profile doc in `users/{uid}`
+   */
+  const syncUserProfile = async (firebaseUser: any) => {
+    if (!db || !firebaseUser?.uid) {
+      userProfile.value = null
+      return
+    }
+    profileLoading.value = true
+    try {
+      const userRef = doc(db, 'users', firebaseUser.uid)
+      const userSnap = await getDoc(userRef)
+      if (userSnap.exists()) {
+        const data = userSnap.data() as UserProfile
+        userProfile.value = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          name: data.name || firebaseUser.displayName || '',
+          phone: data.phone || '',
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt
+        }
+      } else {
+        const initialProfile: UserProfile = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'MTB Member',
+          phone: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+        await setDoc(userRef, initialProfile)
+        userProfile.value = initialProfile
+      }
+    } catch (err) {
+      console.warn('[useCoachAuth] Error syncing user profile from Firestore:', err)
+      userProfile.value = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'MTB Member',
+        phone: ''
+      }
+    } finally {
+      profileLoading.value = false
+    }
+  }
 
   // Watch for Firebase auth state changes — re-verify when user changes
   watch(user, async (newUser) => {
     if (!newUser) {
       // Signed out — reset all state
+      userProfile.value = null
       isAuthorizedCoach.value = false
       coachRole.value = null
       isAdminUnlocked.value = false
@@ -72,8 +150,13 @@ export const useCoachAuth = () => {
       adminsList.value = []
       return
     }
-    // User is signed in — check if they're an authorized coach or admin
+
+    // Sync profile
+    await syncUserProfile(newUser)
+
+    // Check if they are an authorized coach or admin
     await verifyCoachEmail(newUser.email || '')
+
     // Restore unlocked state from localStorage if they were previously unlocked and are an admin
     if (import.meta.client && isAuthorizedCoach.value && isAdminCoach.value) {
       const wasUnlocked = localStorage.getItem('laxmtb_admin_unlocked') === 'true'
@@ -81,6 +164,7 @@ export const useCoachAuth = () => {
     } else {
       isAdminUnlocked.value = false
     }
+
     if (isAuthorizedCoach.value) {
       await fetchAdmins()
     }
@@ -230,7 +314,7 @@ export const useCoachAuth = () => {
   }
 
   /**
-   * Sign in with Google OAuth popup → verify email in Firestore
+   * Sign in with Google OAuth popup — any user can sign in
    */
   const signInWithGoogle = async (): Promise<{ success: boolean; error?: string; isAdmin?: boolean }> => {
     if (!auth) return { success: false, error: 'Firebase Auth not initialized' }
@@ -242,32 +326,23 @@ export const useCoachAuth = () => {
       const result = await signInWithPopup(auth, provider)
       const email = result.user.email?.toLowerCase().trim() || ''
 
-      const isAuth = await verifyCoachEmail(email)
-      if (!isAuth) {
-        // Sign them out — not authorized
-        await firebaseSignOut(auth)
-        const errMsg = `Access denied: ${email} is not on the team coaches list. Contact the head coach to be added.`
-        authError.value = errMsg
-        authLoading.value = false
-        return { success: false, error: errMsg }
-      }
+      await verifyCoachEmail(email)
+      await syncUserProfile(result.user)
 
-      // Authorized
       if (isAdminCoach.value) {
         isAdminUnlocked.value = true
         if (import.meta.client) {
           localStorage.setItem('laxmtb_admin_unlocked', 'true')
         }
+        await fetchAdmins()
       } else {
         isAdminUnlocked.value = false
       }
 
-      await fetchAdmins()
       authLoading.value = false
       return { success: true, isAdmin: isAdminCoach.value }
     } catch (err: any) {
       authLoading.value = false
-      // User cancelled popup
       if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
         return { success: false }
       }
@@ -278,12 +353,213 @@ export const useCoachAuth = () => {
   }
 
   /**
+   * Sign in with Email & Password
+   */
+  const signInWithEmail = async (email: string, pass: string): Promise<{ success: boolean; error?: string; isAdmin?: boolean }> => {
+    if (!auth) return { success: false, error: 'Firebase Auth not initialized' }
+    authError.value = ''
+    authLoading.value = true
+
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), pass)
+      const userEmail = cred.user.email?.toLowerCase().trim() || ''
+      await verifyCoachEmail(userEmail)
+      await syncUserProfile(cred.user)
+
+      if (isAdminCoach.value) {
+        isAdminUnlocked.value = true
+        if (import.meta.client) {
+          localStorage.setItem('laxmtb_admin_unlocked', 'true')
+        }
+        await fetchAdmins()
+      } else {
+        isAdminUnlocked.value = false
+      }
+
+      authLoading.value = false
+      return { success: true, isAdmin: isAdminCoach.value }
+    } catch (err: any) {
+      authLoading.value = false
+      let errMsg = 'Sign-in failed. Please check your credentials.'
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        errMsg = 'Invalid email or password.'
+      } else if (err.code === 'auth/too-many-requests') {
+        errMsg = 'Too many failed login attempts. Please try again later or reset your password.'
+      } else if (err.message) {
+        errMsg = err.message
+      }
+      authError.value = errMsg
+      return { success: false, error: errMsg }
+    }
+  }
+
+  /**
+   * Create an Account with Email, Password, Name, and Cell Number
+   */
+  const signUpWithEmail = async (
+    email: string,
+    pass: string,
+    name: string,
+    phone: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!auth) return { success: false, error: 'Firebase Auth not initialized' }
+    if (!email || !email.includes('@')) return { success: false, error: 'Please enter a valid email address.' }
+    if (!pass || pass.length < 6) return { success: false, error: 'Password must be at least 6 characters.' }
+    if (!name || !name.trim()) return { success: false, error: 'Please enter your full name.' }
+
+    authError.value = ''
+    authLoading.value = true
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), pass)
+      
+      // Update Firebase Auth profile displayName
+      await updateProfile(cred.user, {
+        displayName: name.trim()
+      })
+
+      // Create profile doc in Firestore `users/{uid}`
+      if (db) {
+        const userRef = doc(db, 'users', cred.user.uid)
+        const profileData: UserProfile = {
+          uid: cred.user.uid,
+          email: cred.user.email?.toLowerCase().trim() || email.trim().toLowerCase(),
+          name: name.trim(),
+          phone: phone.trim(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+        await setDoc(userRef, profileData)
+        userProfile.value = profileData
+      }
+
+      await verifyCoachEmail(cred.user.email || '')
+      authLoading.value = false
+      return { success: true }
+    } catch (err: any) {
+      authLoading.value = false
+      let errMsg = 'Account creation failed.'
+      if (err.code === 'auth/email-already-in-use') {
+        errMsg = 'An account with this email address already exists. Please sign in instead.'
+      } else if (err.code === 'auth/invalid-email') {
+        errMsg = 'Invalid email address.'
+      } else if (err.code === 'auth/weak-password') {
+        errMsg = 'Password is too weak. Please use at least 6 characters.'
+      } else if (err.message) {
+        errMsg = err.message
+      }
+      authError.value = errMsg
+      return { success: false, error: errMsg }
+    }
+  }
+
+  /**
+   * Update User Profile Details (Name & Phone only — Email cannot be changed)
+   */
+  const updateUserProfile = async (details: { name: string; phone: string }): Promise<{ success: boolean; error?: string }> => {
+    if (!user.value || !user.value.uid) {
+      return { success: false, error: 'User not signed in.' }
+    }
+    const cleanName = details.name.trim()
+    const cleanPhone = details.phone.trim()
+
+    try {
+      // 1. Update Firebase Auth displayName
+      await updateProfile(user.value, {
+        displayName: cleanName
+      })
+
+      // 2. Update Firestore `users/{uid}`
+      if (db) {
+        const userRef = doc(db, 'users', user.value.uid)
+        await setDoc(userRef, {
+          name: cleanName,
+          phone: cleanPhone,
+          updatedAt: new Date().toISOString()
+        }, { merge: true })
+      }
+
+      // Update in-memory profile
+      if (userProfile.value) {
+        userProfile.value.name = cleanName
+        userProfile.value.phone = cleanPhone
+        userProfile.value.updatedAt = new Date().toISOString()
+      }
+
+      return { success: true }
+    } catch (err: any) {
+      console.error('[useCoachAuth] Error updating profile:', err)
+      return { success: false, error: err.message || 'Failed to update profile.' }
+    }
+  }
+
+  /**
+   * Permanently Delete User Account
+   */
+  const deleteUserAccount = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!user.value || !auth) {
+      return { success: false, error: 'No active session.' }
+    }
+    const currentUid = user.value.uid
+
+    try {
+      // 1. Delete profile doc from Firestore
+      if (db && currentUid) {
+        try {
+          await deleteDoc(doc(db, 'users', currentUid))
+        } catch (e) {
+          console.warn('[useCoachAuth] Error deleting user doc from Firestore:', e)
+        }
+      }
+
+      // 2. Delete user in Firebase Auth
+      await deleteUser(user.value)
+
+      // 3. Clear local states
+      userProfile.value = null
+      isAuthorizedCoach.value = false
+      coachRole.value = null
+      isAdminUnlocked.value = false
+      adminsList.value = []
+      if (import.meta.client) {
+        localStorage.removeItem('laxmtb_admin_unlocked')
+      }
+
+      return { success: true }
+    } catch (err: any) {
+      console.error('[useCoachAuth] Error deleting user account:', err)
+      if (err.code === 'auth/requires-recent-login') {
+        return {
+          success: false,
+          error: 'For security reasons, deleting your account requires recent authentication. Please sign out, log back in, and try again.'
+        }
+      }
+      return { success: false, error: err.message || 'Failed to delete account.' }
+    }
+  }
+
+  /**
+   * Send Password Reset Email
+   */
+  const sendResetEmail = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    if (!auth) return { success: false, error: 'Firebase Auth not initialized' }
+    if (!email || !email.includes('@')) return { success: false, error: 'Please enter a valid email address.' }
+    try {
+      await sendPasswordResetEmail(auth, email.trim())
+      return { success: true }
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to send reset email.' }
+    }
+  }
+
+  /**
    * Sign out fully — clears Firebase session and all state
    */
   const signOut = async () => {
     if (!auth) return
     try {
       await firebaseSignOut(auth)
+      userProfile.value = null
       isAuthorizedCoach.value = false
       coachRole.value = null
       isAdminUnlocked.value = false
@@ -321,6 +597,9 @@ export const useCoachAuth = () => {
 
   return {
     user,
+    userProfile,
+    profileLoading,
+    canEditCoachSignups,
     isCoachAuth,
     isAuthorizedCoach,
     isAdminCoach,
@@ -335,6 +614,11 @@ export const useCoachAuth = () => {
     updateCoachRole,
     removeCoachAdmin,
     signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    updateUserProfile,
+    deleteUserAccount,
+    sendResetEmail,
     signOut,
     lockAdmin,
     unlockAdmin
