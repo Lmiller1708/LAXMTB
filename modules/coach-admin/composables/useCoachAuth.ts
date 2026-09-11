@@ -719,36 +719,61 @@ export const useCoachAuth = () => {
       return { success: false, error: 'You cannot remove your own access' }
     }
     try {
-      if (db) {
-        await deleteDoc(doc(db, 'admins', cleanEmail)).catch((err) => {
+      if (!db) return { success: false, error: 'Database unavailable' }
+
+      let deleteError: any = null
+
+      // 1. Delete from admins collection if present
+      try {
+        await deleteDoc(doc(db, 'admins', cleanEmail))
+      } catch (err: any) {
+        if (err.code !== 'not-found') {
           console.warn('[useCoachAuth] deleteDoc admins error:', err)
-        })
-        if (uid) {
-          await deleteDoc(doc(db, 'users', uid)).catch((err) => {
-            console.warn('[useCoachAuth] deleteDoc users error:', err)
-          })
         }
-        // Also look for any user doc with matching email in case uid was different
-        try {
-          const snap = await getDocs(collection(db, 'users'))
-          for (const d of snap.docs) {
-            if (d.data().email?.toLowerCase().trim() === cleanEmail) {
-              await deleteDoc(doc(db, 'users', d.id)).catch(() => {})
-            }
-          }
-        } catch (e) {}
       }
 
-      // Optimistically remove from state immediately
-      allUsersList.value = allUsersList.value.filter(u => u.email.toLowerCase().trim() !== cleanEmail && (!uid || (u.uid !== uid && u.id !== uid)))
-      adminsList.value = adminsList.value.filter(a => a.email.toLowerCase().trim() !== cleanEmail)
+      // 2. Delete from users collection by UID
+      if (uid) {
+        try {
+          await deleteDoc(doc(db, 'users', uid))
+        } catch (err: any) {
+          console.warn('[useCoachAuth] deleteDoc users by uid error:', err)
+          deleteError = err
+        }
+      }
 
+      // 3. Also sweep users collection by email in case uid was different or multiple docs exist
+      try {
+        const snap = await getDocs(collection(db, 'users'))
+        for (const d of snap.docs) {
+          if (d.data().email?.toLowerCase().trim() === cleanEmail) {
+            try {
+              await deleteDoc(doc(db, 'users', d.id))
+            } catch (err: any) {
+              console.warn('[useCoachAuth] deleteDoc sweep user doc error:', err)
+              deleteError = err
+            }
+          }
+        }
+      } catch (err: any) {
+        console.warn('[useCoachAuth] sweep users error:', err)
+        deleteError = err
+      }
+
+      // Re-fetch from server to verify actual database state
       await fetchAdmins()
       await fetchAllUsers()
+
+      const stillPresent = allUsersList.value.some(u => u.email.toLowerCase().trim() === cleanEmail)
+      if (stillPresent) {
+        const reason = deleteError?.message || 'Firestore rules prevented deleting this user. Please publish the updated firestore.rules in Firebase Console.'
+        return { success: false, error: reason }
+      }
+
       return { success: true }
     } catch (e: any) {
-      console.error('[useCoachAuth] Error removing coach:', e)
-      return { success: false, error: e.message || 'Failed to remove coach' }
+      console.error('[useCoachAuth] Error removing user:', e)
+      return { success: false, error: e.message || 'Failed to remove user' }
     }
   }
 

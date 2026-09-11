@@ -12,14 +12,16 @@ service cloud.firestore {
 
     // Helper: Head Coach / Founder bootstrap owner check
     function isOwner() {
-      return isVerified() &&
+      return request.auth != null &&
+        request.auth.token.email != null &&
         request.auth.token.email.lower() == 'lmiller1708@gmail.com';
     }
 
-    // Helper: Administrator check — requires verified account AND 'admin' or 'owner' role in admins collection
+    // Helper: Administrator check — requires membership in admins collection or founder email
     function isAdmin() {
       return isOwner() || (
-        isVerified() &&
+        request.auth != null &&
+        request.auth.token.email != null &&
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) &&
         get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())).data.role in ['admin', 'owner']
       );
