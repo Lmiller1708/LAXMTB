@@ -17,24 +17,26 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   // 2. Check for updates on visibility change (e.g. user resumes app / unlocks mobile screen)
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
+    if (document.visibilityState === 'visible' && navigator.onLine) {
       checkForUpdate()
     }
   })
 
   // 3. Check for updates on window focus
   window.addEventListener('focus', () => {
-    checkForUpdate()
+    if (navigator.onLine) {
+      checkForUpdate()
+    }
   })
 
   // 4. Initial check after app mounts & periodic check every 10 minutes
   nuxtApp.hook('app:mounted', () => {
     setTimeout(() => {
-      checkForUpdate()
+      if (navigator.onLine) checkForUpdate()
     }, 2500)
 
     setInterval(() => {
-      checkForUpdate()
+      if (navigator.onLine) checkForUpdate()
     }, 10 * 60 * 1000)
   })
 
