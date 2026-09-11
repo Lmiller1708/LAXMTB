@@ -1,0 +1,1136 @@
+{
+  "list": {
+    "ListName": "07 - Participant Lists|Rider List - By Category & Field First - Print",
+    "BottomPicture": "",
+    "BottomPictureShow": 0,
+    "ColumnHeadsFontName": "",
+    "ColumnHeadsFontSize": 10,
+    "ColumnHeadsFontBold": true,
+    "ColumnHeadsFontItalic": false,
+    "ColumnHeadsFontUnderlined": false,
+    "ColumnHeadsColor": "",
+    "ColumnHeadsShow": 2,
+    "Columns": 1,
+    "ColumnSpacing": 5,
+    "CoverSheet": "",
+    "BackSheet": "",
+    "Design": "",
+    "DesignShow": 2,
+    "EveryOtherLineGray": true,
+    "FontName": "Arial",
+    "FontSize": 9,
+    "FooterFontName": "",
+    "FooterFontSize": 10,
+    "FooterFontBold": false,
+    "FooterFontItalic": false,
+    "FooterFontUnderlined": false,
+    "FooterColor": "",
+    "GrayLine": true,
+    "HeadLine1": "Cable Conquest (North Conference)",
+    "HeadLine1FontName": "",
+    "HeadLine1FontSize": 14,
+    "HeadLine1FontBold": false,
+    "HeadLine1FontItalic": false,
+    "HeadLine1FontUnderlined": true,
+    "HeadLine2": "RIDER LIST - BY CATEGORY",
+    "HeadLine1Color": "",
+    "HeadLine1Show": 0,
+    "HeadLine2FontName": "",
+    "HeadLine2FontSize": 10,
+    "HeadLine2FontBold": true,
+    "HeadLine2FontItalic": false,
+    "HeadLine2FontUnderlined": false,
+    "HeadLine2Color": "",
+    "HeadLine2Show": 0,
+    "HeightBottomPicture": 40,
+    "LineColor": "",
+    "LineBackColor": "",
+    "LineDynamicFormat": "if([placeInWave]%7=1;\"BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)\";\"\")",
+    "LineSpacing": 1,
+    "MaxRecords": 0,
+    "MultiplierField": "",
+    "PageFormat": 0,
+    "PageMarginBottom": 5,
+    "PageMarginLeft": 5,
+    "PageMarginRight": 10,
+    "PageMarginTop": 10,
+    "PageSize": 3,
+    "PageHeight": 297,
+    "PageWidth": 210,
+    "SepLine": true,
+    "TopRightPicture": "",
+    "TopRightPictureShow": 0,
+    "ListHeaderText": "",
+    "ListFooterText": "",
+    "ListHeaderFooterFontName": "",
+    "ListHeaderFooterFontSize": 10,
+    "ListHeaderFooterFontBold": false,
+    "ListHeaderFooterFontItalic": false,
+    "ListHeaderFooterFontUnderlined": false,
+    "ListHeaderFooterAlignment": 1,
+    "Remarks": "",
+    "LastChange": "2026-09-08 21:13:02",
+    "FooterText1": "",
+    "FooterText2": "",
+    "FooterText3": "[page]",
+    "Orders": [
+      {
+        "Expression": "[CONTEST.StartOrder]",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 0
+      },
+      {
+        "Expression": "[SexBG] & \" \" & [CONTEST.Category]",
+        "Descending": false,
+        "Grouping": 1,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 1,
+        "FontName": "",
+        "FontSize": 10,
+        "FontBold": true,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 2
+      },
+      {
+        "Expression": "\"Field: \"&[SplitField]",
+        "Descending": false,
+        "Grouping": 1,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 1,
+        "FontName": "",
+        "FontSize": 10,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "#ff8000",
+        "Spacing": 0
+      },
+      {
+        "Expression": "SeriesRank_Seeding",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 0
+      },
+      {
+        "Expression": "BIB",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 2
+      }
+    ],
+    "Filters": [
+      {
+        "OrConjunction": false,
+        "Expression1": "CONTEST",
+        "Operator": ">",
+        "Expression2": "0"
+      }
+    ],
+    "Fields": [
+      {
+        "Expression": "SeriesRank_Seeding",
+        "Label": "PL",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "BIB",
+        "Label": "NO",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "CorrectSpelling([LFNAME]) & iif([PetitionDown];\"*\")",
+        "Label": "Name",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "CLUB",
+        "Label": "Team",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "SplitField",
+        "Label": "FLD",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "FieldRank_Seeding",
+        "Label": "FLD Rank",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      }
+    ],
+    "SelectorResults": []
+  },
+  "data": {
+    "#1_Boys Varsity": {
+      "#1_Field: 1": [
+        [
+          "80",
+          "630",
+          "1",
+          "Rider_1, Anon_1",
+          "Rice Lake High School",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "71",
+          "631",
+          "2",
+          "Rider_2, Anon_2",
+          "Stevens Point Area Senior High",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "89",
+          "632",
+          "3",
+          "Rider_3, Anon_3",
+          "Vernon Trails Area Composite",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#2_Boys JV III": {
+      "#2_Field: 1": [
+        [
+          "3535",
+          "518",
+          "1",
+          "Rider_4, Anon_4",
+          "Green Bay Composite",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "3520",
+          "519",
+          "2",
+          "Rider_5, Anon_5",
+          "Rice Lake Composite",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "3534",
+          "520",
+          "3",
+          "Rider_6, Anon_6",
+          "Green Bay Composite",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#3_Girls Varsity": {
+      "#3_Field: 1": [
+        [
+          "171",
+          "676",
+          "1",
+          "Rider_7, Anon_7",
+          "Negaunee High School",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "175",
+          "677",
+          "2",
+          "Rider_8, Anon_8",
+          "MCIC Composite",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "173",
+          "678",
+          "3",
+          "Rider_9, Anon_9",
+          "Rice Lake Composite",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#4_Girls JV III": {
+      "#4_Field: 1": [
+        [
+          "3866",
+          "564",
+          "1",
+          "Rider_10, Anon_10",
+          "Duluth East High School",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "3864",
+          "565",
+          "2",
+          "Rider_11, Anon_11",
+          "Neenah High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "3869",
+          "566",
+          "3",
+          "Rider_12, Anon_12",
+          "Marquette Senior High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#5_Boys MS2": {
+      "#5_Field: 1": [
+        [
+          "5520",
+          "584",
+          "1",
+          "Rider_13, Anon_13",
+          "Fond du Lac Youth Cycling",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "5516",
+          "585",
+          "2",
+          "Rider_14, Anon_14",
+          "DC Everest High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "5506",
+          "586",
+          "3",
+          "Rider_15, Anon_15",
+          "Hayward High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#6_Boys Freshman": {
+      "#6_Field: 1": [
+        [
+          "9543",
+          "397",
+          "1",
+          "Rider_16, Anon_16",
+          "Green Bay Composite",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "9561",
+          "398",
+          "2",
+          "Rider_17, Anon_17",
+          "Hayward High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "9576",
+          "399",
+          "3",
+          "Rider_18, Anon_18",
+          "DC Everest High School",
+          "1",
+          "3",
+          ""
+        ]
+      ],
+      "#7_Field: 2": [
+        [
+          "9547",
+          "443",
+          "47",
+          "Rider_19, Anon_19",
+          "Stevens Point Area Senior High",
+          "2",
+          "1",
+          ""
+        ],
+        [
+          "9581",
+          "444",
+          "48",
+          "Rider_20, Anon_20",
+          "Wautoma Area Composite",
+          "2",
+          "2",
+          ""
+        ],
+        [
+          "9539",
+          "445",
+          "49",
+          "Rider_21, Anon_21",
+          "Sheboygan Composite",
+          "2",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#7_Boys 8th Grade": {
+      "#8_Field: 1": [
+        [
+          "8540",
+          "300",
+          "1",
+          "Rider_22, Anon_22",
+          "Hayward High School",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "8543",
+          "301",
+          "2",
+          "Rider_23, Anon_23",
+          "Hayward High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "8512",
+          "302",
+          "3",
+          "Rider_24, Anon_24",
+          "Eau Claire Memorial High School",
+          "1",
+          "3",
+          ""
+        ]
+      ],
+      "#9_Field: 2": [
+        [
+          "8549",
+          "328",
+          "29",
+          "Rider_25, Anon_25",
+          "Marshfield High School",
+          "2",
+          "1",
+          ""
+        ],
+        [
+          "8501",
+          "329",
+          "30",
+          "Rider_26, Anon_26",
+          "Fox Valley Composite",
+          "2",
+          "2",
+          ""
+        ],
+        [
+          "8528",
+          "330",
+          "31",
+          "Rider_27, Anon_27",
+          "Wautoma High School",
+          "2",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#8_Girls MS2": {
+      "#10_Field: 1": [
+        [
+          "5854",
+          "610",
+          "1",
+          "Rider_28, Anon_28",
+          "Eau Claire Composite",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "5860",
+          "611",
+          "2",
+          "Rider_29, Anon_29",
+          "Eau Claire Memorial High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "5859",
+          "612",
+          "3",
+          "Rider_30, Anon_30",
+          "Marquette Senior High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#9_Girls Freshman": {
+      "#11_Field: 1": [
+        [
+          "9855",
+          "464",
+          "1",
+          "Rider_31, Anon_31",
+          "Stevens Point Area Senior High",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "9870",
+          "465",
+          "2",
+          "Rider_32, Anon_32",
+          "Duluth East High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "9878",
+          "466",
+          "3",
+          "Rider_33, Anon_33",
+          "Eau Claire Composite",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#10_Girls JV II": {
+      "#12_Field: 1": [
+        [
+          "2877",
+          "495",
+          "1",
+          "Rider_34, Anon_34",
+          "Fox Valley Composite",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "2852",
+          "496",
+          "2",
+          "Rider_35, Anon_35",
+          "Chippewa Falls High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "2866",
+          "498",
+          "3",
+          "Rider_36, Anon_36",
+          "Stevens Point Area Senior High",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#11_Girls 8th Grade": {
+      "#13_Field: 1": [
+        [
+          "8866",
+          "347",
+          "1",
+          "Rider_37, Anon_37",
+          "Neenah High School",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "8871",
+          "348",
+          "2",
+          "Rider_38, Anon_38",
+          "Marquette Senior High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "8860",
+          "349",
+          "3",
+          "Rider_39, Anon_39",
+          "La Crosse Logan High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#12_Boys JV II": {
+      "#14_Field: 1": [
+        [
+          "2506",
+          "29",
+          "1",
+          "Rider_40, Anon_40",
+          "Hayward High School",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "2509",
+          "30",
+          "2",
+          "Rider_41, Anon_41",
+          "Chequamegon Bay Composite",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "2547",
+          "31",
+          "3",
+          "Rider_42, Anon_42",
+          "Chippewa Valley Composite",
+          "1",
+          "3",
+          ""
+        ]
+      ],
+      "#15_Field: 2": [
+        [
+          "2529",
+          "68",
+          "40",
+          "Rider_43, Anon_43",
+          "Stevens Point Area Senior High",
+          "2",
+          "1",
+          ""
+        ],
+        [
+          "2500",
+          "69",
+          "41",
+          "Rider_44, Anon_44",
+          "Fox Valley Composite",
+          "2",
+          "2",
+          ""
+        ],
+        [
+          "2572",
+          "70",
+          "42",
+          "Rider_45, Anon_45",
+          "Chippewa Valley Composite",
+          "2",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#13_Boys 7th Grade": {
+      "#16_Field: 1": [
+        [
+          "7559",
+          "196",
+          "1",
+          "Rider_46, Anon_46",
+          "Fond du Lac Youth Cycling",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "7572",
+          "197",
+          "2",
+          "Rider_47, Anon_47",
+          "Spooner",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "7560",
+          "198",
+          "3",
+          "Rider_48, Anon_48",
+          "Hayward High School",
+          "1",
+          "3",
+          ""
+        ]
+      ],
+      "#17_Field: 2": [
+        [
+          "7531",
+          "235",
+          "40",
+          "Rider_49, Anon_49",
+          "Stevens Point Area Senior High",
+          "2",
+          "1",
+          ""
+        ],
+        [
+          "7516",
+          "236",
+          "41",
+          "Rider_50, Anon_50",
+          "Stevens Point Area Senior High",
+          "2",
+          "2",
+          ""
+        ],
+        [
+          "7507",
+          "237",
+          "42",
+          "Rider_51, Anon_51",
+          "Sheboygan Composite",
+          "2",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#14_Boys 6th Grade": {
+      "#18_Field: 1": [
+        [
+          "6557",
+          "107",
+          "1",
+          "Rider_52, Anon_52",
+          "MCIC Composite",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "6526",
+          "108",
+          "2",
+          "Rider_53, Anon_53",
+          "Rhinelander High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "6520",
+          "109",
+          "3",
+          "Rider_54, Anon_54",
+          "Chippewa Falls High School",
+          "1",
+          "3",
+          ""
+        ]
+      ],
+      "#19_Field: 2": [
+        [
+          "6515",
+          "139",
+          "33",
+          "Rider_55, Anon_55",
+          "Green Bay Composite",
+          "2",
+          "1",
+          ""
+        ],
+        [
+          "6514",
+          "140",
+          "34",
+          "Rider_56, Anon_56",
+          "Fox Valley Composite",
+          "2",
+          "2",
+          ""
+        ],
+        [
+          "6505",
+          "141",
+          "35",
+          "Rider_57, Anon_57",
+          "Hayward High School",
+          "2",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#15_Girls 7th Grade": {
+      "#20_Field: 1": [
+        [
+          "7877",
+          "263",
+          "1",
+          "Rider_58, Anon_58",
+          "Marquette Senior High School",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "7865",
+          "264",
+          "2",
+          "Rider_59, Anon_59",
+          "Vernon Trails Area Composite",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "7855",
+          "265",
+          "3",
+          "Rider_60, Anon_60",
+          "Stevens Point Area Senior High",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#16_Girls 6th Grade": {
+      "#21_Field: 1": [
+        [
+          "6856",
+          "155",
+          "1",
+          "Rider_61, Anon_61",
+          "Fox Valley Composite",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "6857",
+          "156",
+          "2",
+          "Rider_62, Anon_62",
+          "Fox Valley Composite",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "6855",
+          "157",
+          "3",
+          "Rider_63, Anon_63",
+          "Viroqua Area School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#17_Boys HS Open": {
+      "#22_Field: 1": [
+        [
+          "1500",
+          "481",
+          "1",
+          "Rider_64, Anon_64",
+          "La Crosse Central High School",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "1501",
+          "482",
+          "2",
+          "Rider_65, Anon_65",
+          "Rice Lake High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "1502",
+          "699",
+          "3",
+          "Rider_66, Anon_66",
+          "Sauk Prairie Composite",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#18_Girls HS Open": {
+      "#23_Field: 1": [
+        [
+          "1851",
+          "484",
+          "1",
+          "Rider_67, Anon_67",
+          "Stevens Point Area Senior High",
+          "1",
+          "1",
+          ""
+        ],
+        [
+          "1850",
+          "483",
+          "2",
+          "Rider_68, Anon_68",
+          "Wautoma Area Composite",
+          "1",
+          "2",
+          ""
+        ]
+      ]
+    }
+  },
+  "DataFields": [
+    "BIB",
+    "ID",
+    "SeriesRank_Seeding",
+    "CorrectSpelling([LFNAME]) & iif([PetitionDown];\"*\")",
+    "CLUB",
+    "SplitField",
+    "FieldRank_Seeding",
+    "if([placeInWave]%7=1;\"BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)\";\"\")"
+  ],
+  "comments": {},
+  "mid": 85918,
+  "groupFilters": [
+    {
+      "Type": 0,
+      "Value": "",
+      "Values": null
+    },
+    {
+      "Type": 0,
+      "Value": "",
+      "Values": null
+    }
+  ],
+  "users": {
+    "55": {
+      "UserName": "LyndonU11",
+      "DisplayName": "Lyndon Uitenbroek",
+      "PPV": 147585,
+      "ViewerFollowStatus": 0
+    },
+    "76": {
+      "UserName": "BodenB08",
+      "DisplayName": "Boden Bruce",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "207": {
+      "UserName": "LiamE13",
+      "DisplayName": "Liam Edlbeck",
+      "PPV": 471322,
+      "ViewerFollowStatus": 0
+    },
+    "511": {
+      "UserName": "LilithL09",
+      "DisplayName": "Lilith Lind",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "524": {
+      "UserName": "JacobW10",
+      "DisplayName": "Jacob Wishart",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "529": {
+      "UserName": "AuggieO10",
+      "DisplayName": "Auggie Osiedacz",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "531": {
+      "UserName": "GrahamG10",
+      "DisplayName": "Graham Giffey",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "532": {
+      "UserName": "LeoM",
+      "DisplayName": "Leo Madura",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "567": {
+      "UserName": "NoraS11",
+      "DisplayName": "Nora Schwanz",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "615": {
+      "UserName": "AddysonH13",
+      "DisplayName": "AddysonH13",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "677": {
+      "UserName": "LeahR906",
+      "DisplayName": "Leah Robinson",
+      "PPV": 533870,
+      "ViewerFollowStatus": 0
+    }
+  },
+  "LiveUpdateInterval": 10,
+  "Favorites": null
+}

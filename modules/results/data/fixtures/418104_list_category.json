@@ -1,0 +1,1036 @@
+{
+  "list": {
+    "ListName": "07 - Participant Lists|Rider List - By Category & Wave First - Print",
+    "BottomPicture": "",
+    "BottomPictureShow": 0,
+    "ColumnHeadsFontName": "",
+    "ColumnHeadsFontSize": 10,
+    "ColumnHeadsFontBold": true,
+    "ColumnHeadsFontItalic": false,
+    "ColumnHeadsFontUnderlined": false,
+    "ColumnHeadsColor": "",
+    "ColumnHeadsShow": 2,
+    "Columns": 1,
+    "ColumnSpacing": 5,
+    "CoverSheet": "",
+    "BackSheet": "",
+    "Design": "",
+    "DesignShow": 2,
+    "EveryOtherLineGray": true,
+    "FontName": "Arial",
+    "FontSize": 9,
+    "FooterFontName": "",
+    "FooterFontSize": 10,
+    "FooterFontBold": false,
+    "FooterFontItalic": false,
+    "FooterFontUnderlined": false,
+    "FooterColor": "",
+    "GrayLine": true,
+    "HeadLine1": "Bluff Bash (North Conference)",
+    "HeadLine1FontName": "",
+    "HeadLine1FontSize": 14,
+    "HeadLine1FontBold": false,
+    "HeadLine1FontItalic": false,
+    "HeadLine1FontUnderlined": true,
+    "HeadLine2": "RIDER LIST - BY CATEGORY",
+    "HeadLine1Color": "",
+    "HeadLine1Show": 0,
+    "HeadLine2FontName": "",
+    "HeadLine2FontSize": 10,
+    "HeadLine2FontBold": true,
+    "HeadLine2FontItalic": false,
+    "HeadLine2FontUnderlined": false,
+    "HeadLine2Color": "",
+    "HeadLine2Show": 0,
+    "HeightBottomPicture": 40,
+    "LineColor": "",
+    "LineBackColor": "",
+    "LineDynamicFormat": "if([placeInWave]%7=1;\"BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)\";\"\")",
+    "LineSpacing": 1,
+    "MaxRecords": 0,
+    "MultiplierField": "",
+    "PageFormat": 0,
+    "PageMarginBottom": 5,
+    "PageMarginLeft": 5,
+    "PageMarginRight": 10,
+    "PageMarginTop": 10,
+    "PageSize": 3,
+    "PageHeight": 297,
+    "PageWidth": 210,
+    "SepLine": true,
+    "TopRightPicture": "",
+    "TopRightPictureShow": 0,
+    "ListHeaderText": "",
+    "ListFooterText": "",
+    "ListHeaderFooterFontName": "",
+    "ListHeaderFooterFontSize": 10,
+    "ListHeaderFooterFontBold": false,
+    "ListHeaderFooterFontItalic": false,
+    "ListHeaderFooterFontUnderlined": false,
+    "ListHeaderFooterAlignment": 1,
+    "Remarks": "",
+    "LastChange": "2026-09-03 04:42:13",
+    "FooterText1": "",
+    "FooterText2": "",
+    "FooterText3": "[page]",
+    "Orders": [
+      {
+        "Expression": "[CONTEST.StartOrder]",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 0
+      },
+      {
+        "Expression": "[SexBG] & \" \" & [CONTEST.Category]&\" \"&[SplitContest]",
+        "Descending": false,
+        "Grouping": 1,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 1,
+        "FontName": "",
+        "FontSize": 10,
+        "FontBold": true,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 2
+      },
+      {
+        "Expression": "\"Wave: \"&[SplitWave]",
+        "Descending": false,
+        "Grouping": 1,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 1,
+        "FontName": "",
+        "FontSize": 10,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "#ff8000",
+        "Spacing": 0
+      },
+      {
+        "Expression": "placeInWave",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 0
+      },
+      {
+        "Expression": "BIB",
+        "Descending": false,
+        "Grouping": 0,
+        "GroupFilterDefault": 1,
+        "GroupFilterLabel": "",
+        "PageBreak": 0,
+        "FontName": "",
+        "FontSize": 12,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Color": "",
+        "BackgroundColor": "",
+        "Spacing": 2
+      }
+    ],
+    "Filters": [
+      {
+        "OrConjunction": false,
+        "Expression1": "placeInWave",
+        "Operator": ">",
+        "Expression2": "0"
+      }
+    ],
+    "Fields": [
+      {
+        "Expression": "contestRank",
+        "Label": "PL",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "BIB",
+        "Label": "NO",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "CorrectSpelling([LFNAME]) & iif([PetitionDown];\"*\")",
+        "Label": "Name",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "CLUB",
+        "Label": "Team",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "SplitWave",
+        "Label": "WV",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      },
+      {
+        "Expression": "placeInWave",
+        "Label": "WV Rank",
+        "Label2": "",
+        "Alignment": 1,
+        "FontBold": false,
+        "FontItalic": false,
+        "FontUnderlined": false,
+        "Line": 1,
+        "Color": "",
+        "Link": "",
+        "ColSpan": 0,
+        "ColOffset": 0,
+        "Position": 0,
+        "DynamicFormat": "",
+        "PreviewOnly": false,
+        "ResponsiveHide": 0
+      }
+    ],
+    "SelectorResults": []
+  },
+  "data": {
+    "#1_Boys Varsity 0": {
+      "#1_Wave: 1": [
+        [
+          "74",
+          "584",
+          "1",
+          "Rider_1, Anon_1",
+          "La Crosse Central High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "80",
+          "585",
+          "2",
+          "Rider_2, Anon_2",
+          "Rice Lake High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "78",
+          "586",
+          "3",
+          "Rider_3, Anon_3",
+          "Marshfield High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#2_Boys JV III 0": {
+      "#2_Wave: 1": [
+        [
+          "3504",
+          "513",
+          "1",
+          "Rider_4, Anon_4",
+          "Chippewa Falls High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "3517",
+          "514",
+          "2",
+          "Rider_5, Anon_5",
+          "Wausau West High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "3510",
+          "515",
+          "3",
+          "Rider_6, Anon_6",
+          "Rice Lake High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#3_Girls Varsity 0": {
+      "#3_Wave: 1": [
+        [
+          "171",
+          "630",
+          "1",
+          "Rider_7, Anon_7",
+          "Negaunee High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "163",
+          "631",
+          "2",
+          "Rider_8, Anon_8",
+          "Eau Claire Memorial High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "174",
+          "632",
+          "3",
+          "Rider_9, Anon_9",
+          "Duluth East High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#4_Girls JV III 0": {
+      "#4_Wave: 1": [
+        [
+          "3866",
+          "559",
+          "1",
+          "Rider_10, Anon_10",
+          "Duluth East High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "3864",
+          "560",
+          "2",
+          "Rider_11, Anon_11",
+          "Neenah High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "3861",
+          "561",
+          "3",
+          "Rider_12, Anon_12",
+          "Duluth Composite Team",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#5_Boys MS2 0": {
+      "#5_Wave: 1": [
+        [
+          "5519",
+          "655",
+          "1",
+          "Rider_13, Anon_13",
+          "DC Everest High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "5516",
+          "656",
+          "2",
+          "Rider_14, Anon_14",
+          "DC Everest High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "5506",
+          "657",
+          "3",
+          "Rider_15, Anon_15",
+          "Hayward High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#6_Boys Freshman 0": {
+      "#6_Wave: 1": [
+        [
+          "9576",
+          "286",
+          "1",
+          "Rider_16, Anon_16",
+          "DC Everest High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "9575",
+          "287",
+          "2",
+          "Rider_17, Anon_17",
+          "Rhinelander-Northwoods Composite",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "9561",
+          "288",
+          "3",
+          "Rider_18, Anon_18",
+          "Hayward High School",
+          "1",
+          "3",
+          ""
+        ]
+      ],
+      "#7_Wave: 2": [
+        [
+          "9501",
+          "331",
+          "46",
+          "Rider_19, Anon_19",
+          "Spooner",
+          "2",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "9500",
+          "332",
+          "47",
+          "Rider_20, Anon_20",
+          "DC Everest High School",
+          "2",
+          "2",
+          ""
+        ],
+        [
+          "9504",
+          "333",
+          "48",
+          "Rider_21, Anon_21",
+          "La Crosse Composite",
+          "2",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#7_Boys 8th Grade 0": {
+      "#8_Wave: 1": [
+        [
+          "8540",
+          "205",
+          "1",
+          "Rider_22, Anon_22",
+          "Hayward High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "8541",
+          "231",
+          "30",
+          "Rider_23, Anon_23",
+          "Sheboygan Composite",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "8550",
+          "206",
+          "2",
+          "Rider_24, Anon_24",
+          "La Crosse Logan High School",
+          "1",
+          "2",
+          ""
+        ]
+      ]
+    },
+    "#8_Girls MS2 0": {
+      "#9_Wave: 1": [
+        [
+          "5854",
+          "681",
+          "1",
+          "Rider_25, Anon_25",
+          "Eau Claire Composite",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "5860",
+          "682",
+          "2",
+          "Rider_26, Anon_26",
+          "Eau Claire Memorial High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "5859",
+          "683",
+          "3",
+          "Rider_27, Anon_27",
+          "Marquette Senior High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#9_Girls Freshman 0": {
+      "#10_Wave: 1": [
+        [
+          "9874",
+          "376",
+          "1",
+          "Rider_28, Anon_28",
+          "La Crosse Central High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "9877",
+          "377",
+          "2",
+          "Rider_29, Anon_29",
+          "La Crosse Central High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "9850",
+          "378",
+          "3",
+          "Rider_30, Anon_30",
+          "Hayward High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#10_Girls JV II 0": {
+      "#11_Wave: 1": [
+        [
+          "2853",
+          "485",
+          "1",
+          "Rider_31, Anon_31",
+          "La Crosse Logan High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "2876",
+          "486",
+          "2",
+          "Rider_32, Anon_32",
+          "MCIC Composite",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "2865",
+          "487",
+          "3",
+          "Rider_33, Anon_33",
+          "Chequamegon Bay Composite",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#11_Girls 8th Grade 0": {
+      "#12_Wave: 1": [
+        [
+          "8862",
+          "262",
+          "1",
+          "Rider_34, Anon_34",
+          "DC Everest High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "8871",
+          "263",
+          "2",
+          "Rider_35, Anon_35",
+          "Marquette Senior High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "8866",
+          "264",
+          "3",
+          "Rider_36, Anon_36",
+          "Neenah High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#12_Boys JV II 0": {
+      "#13_Wave: 1": [
+        [
+          "2539",
+          "437",
+          "39",
+          "Rider_37, Anon_37",
+          "Wausau West High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "2554",
+          "409",
+          "1",
+          "Rider_38, Anon_38",
+          "Sauk Prairie Composite",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "2500",
+          "410",
+          "2",
+          "Rider_39, Anon_39",
+          "Fox Valley Composite",
+          "1",
+          "2",
+          ""
+        ]
+      ]
+    },
+    "#13_Boys 7th Grade 0": {
+      "#14_Wave: 1": [
+        [
+          "7564",
+          "92",
+          "1",
+          "Rider_40, Anon_40",
+          "La Crosse Composite",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "7560",
+          "93",
+          "2",
+          "Rider_41, Anon_41",
+          "Hayward High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "7559",
+          "94",
+          "3",
+          "Rider_42, Anon_42",
+          "Fond du Lac Youth Cycling",
+          "1",
+          "3",
+          ""
+        ]
+      ],
+      "#15_Wave: 2": [
+        [
+          "7515",
+          "118",
+          "41",
+          "Rider_43, Anon_43",
+          "Stevens Point Area Senior High",
+          "2",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "7578",
+          "113",
+          "42",
+          "Rider_44, Anon_44",
+          "Sauk Prairie High School",
+          "2",
+          "2",
+          ""
+        ],
+        [
+          "7574",
+          "157",
+          "43",
+          "Rider_45, Anon_45",
+          "Neenah High School",
+          "2",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#14_Boys 6th Grade 0": {
+      "#16_Wave: 1": [
+        [
+          "6518",
+          "39",
+          "1",
+          "Rider_46, Anon_46",
+          "Sauk Prairie High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "6521",
+          "18",
+          "33",
+          "Rider_47, Anon_47",
+          "La Crosse Central High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "6503",
+          "17",
+          "34",
+          "Rider_48, Anon_48",
+          "Green Bay Composite",
+          "1",
+          "2",
+          ""
+        ]
+      ]
+    },
+    "#15_Girls 7th Grade 0": {
+      "#17_Wave: 1": [
+        [
+          "7877",
+          "171",
+          "1",
+          "Rider_49, Anon_49",
+          "Marquette Senior High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "7855",
+          "172",
+          "2",
+          "Rider_50, Anon_50",
+          "Stevens Point Area Senior High",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "7857",
+          "173",
+          "3",
+          "Rider_51, Anon_51",
+          "Eau Claire Memorial High School",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#16_Girls 6th Grade 0": {
+      "#18_Wave: 1": [
+        [
+          "6867",
+          "79",
+          "1",
+          "Rider_52, Anon_52",
+          "Eau Claire Memorial High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "6863",
+          "82",
+          "2",
+          "Rider_53, Anon_53",
+          "Hayward High School",
+          "1",
+          "2",
+          ""
+        ],
+        [
+          "6850",
+          "87",
+          "3",
+          "Rider_54, Anon_54",
+          "North Marinette County Composite",
+          "1",
+          "3",
+          ""
+        ]
+      ]
+    },
+    "#17_Boys HS Open 0": {
+      "#19_Wave: 1": [
+        [
+          "1501",
+          "405",
+          "1",
+          "Rider_55, Anon_55",
+          "Rice Lake High School",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "1500",
+          "406",
+          "2",
+          "Rider_56, Anon_56",
+          "La Crosse Central High School",
+          "1",
+          "2",
+          ""
+        ]
+      ]
+    },
+    "#18_Girls HS Open 0": {
+      "#20_Wave: 1": [
+        [
+          "1850",
+          "407",
+          "1",
+          "Rider_57, Anon_57",
+          "Wautoma Area Composite",
+          "1",
+          "1",
+          "BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)"
+        ],
+        [
+          "1851",
+          "408",
+          "2",
+          "Rider_58, Anon_58",
+          "Stevens Point Area Senior High",
+          "1",
+          "2",
+          ""
+        ]
+      ]
+    }
+  },
+  "DataFields": [
+    "BIB",
+    "ID",
+    "contestRank",
+    "CorrectSpelling([LFNAME]) & iif([PetitionDown];\"*\")",
+    "CLUB",
+    "SplitWave",
+    "placeInWave",
+    "if([placeInWave]%7=1;\"BTC(2);BRC(2);BBC(2);BLC(2);U;B;BG(#DDDDDD)\";\"\")"
+  ],
+  "comments": {},
+  "mid": 85536,
+  "groupFilters": [
+    {
+      "Type": 0,
+      "Value": "",
+      "Values": null
+    },
+    {
+      "Type": 0,
+      "Value": "",
+      "Values": null
+    }
+  ],
+  "users": {
+    "112": {
+      "UserName": "LiamE13",
+      "DisplayName": "Liam Edlbeck",
+      "PPV": 471322,
+      "ViewerFollowStatus": 0
+    },
+    "422": {
+      "UserName": "BodenB08",
+      "DisplayName": "Boden Bruce",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "458": {
+      "UserName": "LyndonU11",
+      "DisplayName": "Lyndon Uitenbroek",
+      "PPV": 147585,
+      "ViewerFollowStatus": 0
+    },
+    "511": {
+      "UserName": "LilithL09",
+      "DisplayName": "Lilith Lind",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "534": {
+      "UserName": "GrantC",
+      "DisplayName": "Grant Campbell",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "538": {
+      "UserName": "AuggieO10",
+      "DisplayName": "Auggie Osiedacz",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "546": {
+      "UserName": "JacobW10",
+      "DisplayName": "Jacob Wishart",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "549": {
+      "UserName": "GrahamG10",
+      "DisplayName": "Graham Giffey",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "552": {
+      "UserName": "LeoM",
+      "DisplayName": "Leo Madura",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "575": {
+      "UserName": "NoraS11",
+      "DisplayName": "Nora Schwanz",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    },
+    "646": {
+      "UserName": "LeahR906",
+      "DisplayName": "Leah Robinson",
+      "PPV": 533870,
+      "ViewerFollowStatus": 0
+    },
+    "689": {
+      "UserName": "AddysonH13",
+      "DisplayName": "AddysonH13",
+      "PPV": 0,
+      "ViewerFollowStatus": 0
+    }
+  },
+  "LiveUpdateInterval": 10,
+  "Favorites": null
+}

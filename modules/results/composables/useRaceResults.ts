@@ -13,6 +13,65 @@ import {
   normalizeCategoryName,
   compareCategories
 } from '../services/raceresultService'
+import { getFallbackSeedResults, type CachedResultsEntry } from '../services/fallbackResultsService'
+
+const readFromStorageCache = (
+  eventId: string,
+  page: 'list' | 'results',
+  explicitListId?: string
+): CachedResultsEntry | null => {
+  if (!import.meta.client) return null
+
+  // 1. Check explicit list ID if requested
+  if (explicitListId) {
+    const raw = localStorage.getItem(`laxmtb_v2_cache_${eventId}_${page}_${explicitListId}`)
+    if (raw) {
+      try {
+        const p = JSON.parse(raw)
+        if (p.riders?.length > 0 || p.teamStandings?.length > 0) return p
+      } catch {}
+    }
+  }
+
+  // 2. Check primary tab cache
+  const primaryRaw = localStorage.getItem(`laxmtb_v2_cache_${eventId}_${page}`)
+  if (primaryRaw) {
+    try {
+      const p = JSON.parse(primaryRaw)
+      if (p.riders?.length > 0 || p.teamStandings?.length > 0) return p
+    } catch {}
+  }
+
+  // 3. Scan all keys for this event and tab
+  try {
+    const prefix = `laxmtb_v2_cache_${eventId}_${page}`
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(prefix)) {
+        const raw = localStorage.getItem(key)
+        if (raw) {
+          const p = JSON.parse(raw)
+          if (p.riders?.length > 0 || p.teamStandings?.length > 0) return p
+        }
+      }
+    }
+  } catch {}
+
+  // 4. Fall back to bundled offline seed results for known races
+  return getFallbackSeedResults(eventId, page)
+}
+
+const readReportsCache = (eventId: string, page: 'list' | 'results'): { ID: string; Name: string }[] => {
+  if (!import.meta.client) return []
+  try {
+    const raw = localStorage.getItem(`laxmtb_v2_reports_${eventId}_${page}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    }
+  } catch {}
+  return []
+}
 
 export const useRaceResults = () => {
   const riders = ref<Rider[]>([])
@@ -222,6 +281,27 @@ export const useRaceResults = () => {
     )
   }
 
+  const applyResultEntry = (entry: CachedResultsEntry, isOffline = false) => {
+    riders.value = entry.riders || []
+    teamStandings.value = entry.teamStandings || []
+    feedViewType.value = entry.viewType || (entry as any).feedViewType || 'category_start_list'
+    if (entry.availableReports && entry.availableReports.length > 0) {
+      availableReports.value = entry.availableReports
+    }
+    if (entry.selectedListId) {
+      selectedListId.value = entry.selectedListId
+    }
+    if (entry.listMode) {
+      listMode.value = entry.listMode
+    }
+    isLive.value = isOffline ? false : !!entry.isLive
+    const timeStr = entry.time || 'Cached'
+    lastUpdated.value = isOffline && !timeStr.includes('(Offline')
+      ? `${timeStr} (Offline Cache)`
+      : timeStr
+    error.value = null
+  }
+
   // Fetch from RACE RESULT API
   const fetchResults = async (
     eventId: string,
@@ -235,6 +315,36 @@ export const useRaceResults = () => {
     loading.value = true
     error.value = null
 
+    // 1. Immediately restore cached report list if available
+    const cachedReports = readReportsCache(eventId, page)
+    if (cachedReports.length > 0 && availableReports.value.length === 0) {
+      availableReports.value = cachedReports
+    }
+
+    // 2. Offline-first: restore cached data immediately so UI is never blank
+    const cached = readFromStorageCache(eventId, page, explicitListId)
+    if (cached && (cached.riders?.length > 0 || cached.teamStandings?.length > 0)) {
+      applyResultEntry(cached, !navigator.onLine)
+      // If offline, finish immediately! No waiting, no network errors
+      if (import.meta.client && !navigator.onLine) {
+        loading.value = false
+        return
+      }
+    }
+
+    // 3. If offline and no localStorage cache exists, check bundled seed data
+    if (import.meta.client && !navigator.onLine) {
+      const fallback = getFallbackSeedResults(eventId, page)
+      if (fallback) {
+        applyResultEntry(fallback, true)
+      } else {
+        error.value = 'Offline - No cached timing data available for this race'
+      }
+      loading.value = false
+      return
+    }
+
+    // 4. Live network fetch
     try {
       const configResp = await fetch(`https://my.raceresult.com/${eventId}/${page}/config?lang=en`)
       if (!configResp.ok) throw new Error(`Config HTTP ${configResp.status}`)
@@ -248,6 +358,11 @@ export const useRaceResults = () => {
         Name: l.Name
       }))
       availableReports.value = lists
+      if (import.meta.client && lists.length > 0) {
+        try {
+          localStorage.setItem(`laxmtb_v2_reports_${eventId}_${page}`, JSON.stringify(lists))
+        } catch {}
+      }
 
       const targetList = resolveTargetReport(lists, page, explicitListId, listMode.value)
       if (!targetList) {
@@ -256,24 +371,6 @@ export const useRaceResults = () => {
 
       selectedListId.value = targetList.ID
       listMode.value = (targetList.Name || '').toLowerCase().includes('by team') ? 'TEAM' : 'WAVE'
-
-      const cacheKey = `laxmtb_v2_cache_${eventId}_${page}_${targetList.ID}`
-
-      // Offline check
-      if (import.meta.client && !navigator.onLine) {
-        const cached = localStorage.getItem(cacheKey)
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached)
-            riders.value = parsed.riders || []
-            teamStandings.value = parsed.teamStandings || []
-            feedViewType.value = parsed.viewType || 'category_start_list'
-            lastUpdated.value = (parsed.time || '') + ' (Offline Cache)'
-            loading.value = false
-            return
-          } catch (e) {}
-        }
-      }
 
       const params = new URLSearchParams({
         key: key,
@@ -292,14 +389,14 @@ export const useRaceResults = () => {
 
       const parsed = parseUniversalData(resultData, targetList.ID, page)
 
-      const entry = {
+      const entry: CachedResultsEntry = {
         riders: parsed.riders,
         teamStandings: parsed.teamStandings,
-        feedViewType: parsed.viewType,
+        viewType: parsed.viewType,
         availableReports: lists,
         selectedListId: targetList.ID,
         listMode: (targetList.Name || '').toLowerCase().includes('by team') ? ('TEAM' as ResultsGroupMode) : ('WAVE' as ResultsGroupMode),
-        lastUpdated: isCompleted
+        time: isCompleted
           ? 'Final Results • ' + new Date().toLocaleTimeString()
           : 'Updated ' + new Date().toLocaleTimeString(),
         isLive: !isCompleted
@@ -310,47 +407,34 @@ export const useRaceResults = () => {
       }
       tabCache.value[eventId][page] = entry
 
-      riders.value = entry.riders
-      teamStandings.value = entry.teamStandings
-      feedViewType.value = entry.feedViewType
-      availableReports.value = entry.availableReports
-      selectedListId.value = entry.selectedListId
-      listMode.value = entry.listMode
-      isLive.value = entry.isLive
-      lastUpdated.value = entry.lastUpdated
+      applyResultEntry(entry, false)
 
+      // Persist to local storage: both specific list ID key and default tab key
       if (import.meta.client && (parsed.riders.length > 0 || parsed.teamStandings.length > 0)) {
         try {
-          localStorage.setItem(cacheKey, JSON.stringify({
-            time: new Date().toLocaleTimeString(),
-            riders: parsed.riders,
-            teamStandings: parsed.teamStandings,
-            viewType: parsed.viewType
-          }))
-        } catch (e) {}
+          const serialized = JSON.stringify(entry)
+          localStorage.setItem(`laxmtb_v2_cache_${eventId}_${page}_${targetList.ID}`, serialized)
+          localStorage.setItem(`laxmtb_v2_cache_${eventId}_${page}`, serialized)
+        } catch {}
       }
     } catch (err: any) {
       if (requestId !== activeRequestId) return
-      console.error('[RACE RESULT fetch error]:', err)
-      error.value = err.message || 'Failed to connect to timing feed'
+      console.warn('[RACE RESULT live fetch error]:', err?.message || err)
       isLive.value = false
-      riders.value = []
-      teamStandings.value = []
 
-      // Try reading local storage cache
-      if (import.meta.client && selectedListId.value) {
-        const cacheKey = `laxmtb_v2_cache_${eventId}_${page}_${selectedListId.value}`
-        const cached = localStorage.getItem(cacheKey)
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached)
-            riders.value = parsed.riders || []
-            teamStandings.value = parsed.teamStandings || []
-            feedViewType.value = parsed.viewType || 'category_start_list'
-            lastUpdated.value = (parsed.time || '') + ' (Offline Cache)'
-            error.value = null
-          } catch (e) {}
+      // Fallback: If we don't have riders in memory, recover from cache or seed data
+      if (riders.value.length === 0 && teamStandings.value.length === 0) {
+        const fallback = readFromStorageCache(eventId, page, explicitListId) || getFallbackSeedResults(eventId, page)
+        if (fallback) {
+          applyResultEntry(fallback, true)
+        } else {
+          error.value = 'Failed to connect to timing feed and no offline data cached'
         }
+      } else {
+        if (!lastUpdated.value.includes('(Offline')) {
+          lastUpdated.value += ' (Offline Cache)'
+        }
+        error.value = null
       }
     } finally {
       if (requestId === activeRequestId) {
@@ -365,20 +449,35 @@ export const useRaceResults = () => {
     isCompleted?: boolean
   ) => {
     if (!eventId) return
+
+    // 1. Check in-memory tabCache
     const cached = tabCache.value[eventId]?.[page]
-    if (cached) {
-      riders.value = cached.riders
-      teamStandings.value = cached.teamStandings
-      feedViewType.value = cached.feedViewType
-      availableReports.value = cached.availableReports
-      selectedListId.value = cached.selectedListId
-      listMode.value = cached.listMode
-      lastUpdated.value = cached.lastUpdated
-      isLive.value = cached.isLive
-      error.value = null
-      return
+    if (cached && (cached.riders?.length > 0 || cached.teamStandings?.length > 0)) {
+      applyResultEntry(cached, !navigator.onLine)
+      if (import.meta.client && !navigator.onLine) {
+        return
+      }
     }
-    // Fetch if not yet loaded in memory
+
+    // 2. Check localStorage cache
+    const localCached = readFromStorageCache(eventId, page)
+    if (localCached && (localCached.riders?.length > 0 || localCached.teamStandings?.length > 0)) {
+      applyResultEntry(localCached, !navigator.onLine)
+      if (import.meta.client && !navigator.onLine) {
+        return
+      }
+    }
+
+    // 3. Check fallback seed data if offline
+    if (import.meta.client && !navigator.onLine) {
+      const fallback = getFallbackSeedResults(eventId, page)
+      if (fallback) {
+        applyResultEntry(fallback, true)
+        return
+      }
+    }
+
+    // 4. Fetch live data
     await fetchResults(eventId, page, undefined, isCompleted)
   }
 
