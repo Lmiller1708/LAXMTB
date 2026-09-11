@@ -30,6 +30,17 @@ const isSaving = ref(false)
 const saveSuccess = ref(false)
 const errorMessage = ref('')
 
+// Image upload state
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const isUploadingPhoto = ref(false)
+
+// Is current user logged in via Google OAuth?
+const isGoogleAccount = computed(() => {
+  if (!user.value) return false
+  const providers = user.value.providerData || []
+  return providers.some(p => p.providerId === 'google.com') || (user.value as any).providerId === 'google.com'
+})
+
 // Danger zone confirmation state
 const isConfirmingDelete = ref(false)
 const isDeleting = ref(false)
@@ -45,6 +56,7 @@ watch([() => props.isOpen, userProfile, user], ([open]) => {
     errorMessage.value = ''
     isConfirmingDelete.value = false
     isDeleting.value = false
+    isUploadingPhoto.value = false
   }
 }, { immediate: true })
 
@@ -82,6 +94,105 @@ const roleBadgeStyle = computed(() => {
 
 const handleClose = () => {
   emit('close')
+}
+
+// Trigger native file picker
+const triggerPhotoUpload = () => {
+  if (isGoogleAccount.value || isUploadingPhoto.value) return
+  fileInputRef.value?.click()
+}
+
+// Center-crop and resize uploaded image into an avatar JPEG data URL
+const resizeImageFile = (file: File, maxSize = 200): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const size = Math.min(img.width, img.height)
+        const startX = (img.width - size) / 2
+        const startY = (img.height - size) / 2
+
+        const targetSize = Math.min(size, maxSize)
+        canvas.width = targetSize
+        canvas.height = targetSize
+
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(e.target?.result as string)
+          return
+        }
+
+        ctx.drawImage(img, startX, startY, size, size, 0, 0, targetSize, targetSize)
+        resolve(canvas.toDataURL('image/jpeg', 0.85))
+      }
+      img.onerror = () => reject(new Error('Failed to load image file.'))
+      img.src = e.target?.result as string
+    }
+    reader.onerror = () => reject(new Error('Failed to read image file.'))
+    reader.readAsDataURL(file)
+  })
+}
+
+// Handle file input change
+const handleFileChange = async (e: Event) => {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    errorMessage.value = 'Please select a valid image file (.jpg, .png, .webp).'
+    return
+  }
+
+  isUploadingPhoto.value = true
+  errorMessage.value = ''
+
+  try {
+    const dataUrl = await resizeImageFile(file, 200)
+    photoInput.value = dataUrl
+
+    const res = await updateUserProfile({
+      name: nameInput.value,
+      phone: phoneInput.value,
+      photoURL: dataUrl
+    })
+
+    if (res.success) {
+      saveSuccess.value = true
+      emit('toast', '📸 Profile photo updated!')
+      setTimeout(() => {
+        saveSuccess.value = false
+      }, 3000)
+    } else if (res.error) {
+      errorMessage.value = res.error
+    }
+  } catch (err: any) {
+    console.error('[UserProfileModal] Image upload error:', err)
+    errorMessage.value = err.message || 'Failed to process image.'
+  } finally {
+    isUploadingPhoto.value = false
+    if (target) target.value = ''
+  }
+}
+
+// Remove uploaded photo and revert to initials
+const handleRemovePhoto = async () => {
+  photoInput.value = ''
+  isSaving.value = true
+  const res = await updateUserProfile({
+    name: nameInput.value,
+    phone: phoneInput.value,
+    photoURL: ''
+  })
+  isSaving.value = false
+
+  if (res.success) {
+    emit('toast', '🗑️ Profile photo removed')
+  } else if (res.error) {
+    errorMessage.value = res.error
+  }
 }
 
 const handleSaveProfile = async () => {
@@ -151,20 +262,62 @@ const handleDeleteAccount = async () => {
       <div class="modal-body profile-modal-body">
         <!-- User Profile Banner Card -->
         <div class="profile-header-card">
-          <img
-            v-if="displayAvatar && !avatarLoadError"
-            :src="displayAvatar"
-            alt="User avatar"
-            class="profile-avatar img"
-            referrerpolicy="no-referrer"
-            @error="avatarLoadError = true"
-          />
-          <div v-else class="profile-avatar">{{ initials }}</div>
+          <!-- Avatar with hover edit for non-Google users -->
+          <div
+            class="profile-avatar-wrapper"
+            :class="{ 'can-edit': !isGoogleAccount }"
+            :title="!isGoogleAccount ? (displayAvatar ? 'Click to change profile picture' : 'Click to upload profile picture') : 'Google Account Photo'"
+            @click="triggerPhotoUpload"
+          >
+            <img
+              v-if="displayAvatar && !avatarLoadError"
+              :src="displayAvatar"
+              alt="User avatar"
+              class="profile-avatar img"
+              referrerpolicy="no-referrer"
+              @error="avatarLoadError = true"
+            />
+            <div v-else class="profile-avatar">{{ initials }}</div>
+
+            <!-- Hover overlay for non-Google accounts -->
+            <div v-if="!isGoogleAccount" class="avatar-hover-overlay">
+              <span v-if="isUploadingPhoto" class="hover-icon">⏳</span>
+              <template v-else>
+                <span class="hover-icon">📷</span>
+                <span class="hover-label">{{ displayAvatar ? 'Edit' : 'Upload' }}</span>
+              </template>
+            </div>
+
+            <!-- Camera badge indicator for non-Google accounts -->
+            <div v-if="!isGoogleAccount && !isUploadingPhoto" class="avatar-edit-badge">
+              <span>📷</span>
+            </div>
+
+            <!-- Hidden file input -->
+            <input
+              v-if="!isGoogleAccount"
+              ref="fileInputRef"
+              type="file"
+              accept="image/png, image/jpeg, image/jpg, image/webp"
+              style="display: none;"
+              @change="handleFileChange"
+            />
+          </div>
+
           <div class="profile-meta">
             <div class="profile-name">{{ nameInput || 'Team Member' }}</div>
             <div class="profile-email">{{ user?.email }}</div>
-            <div style="margin-top:4px;">
+            <div style="margin-top:4px;display:flex;align-items:center;gap:8px;">
               <span class="role-badge" :style="roleBadgeStyle">{{ roleBadgeLabel }}</span>
+              <button
+                v-if="!isGoogleAccount && displayAvatar"
+                type="button"
+                class="remove-photo-btn"
+                title="Remove uploaded photo"
+                @click.stop="handleRemovePhoto"
+              >
+                ✕ Remove
+              </button>
             </div>
           </div>
         </div>
@@ -203,18 +356,6 @@ const handleDeleteAccount = async () => {
               class="profile-input"
             >
             <small class="profile-hint">Used for day-of-race coach updates and team communication.</small>
-          </div>
-
-          <!-- Profile Photo URL Field -->
-          <div class="profile-field">
-            <label class="profile-label">Profile Photo URL</label>
-            <input
-              v-model="photoInput"
-              type="url"
-              placeholder="https://example.com/photo.jpg"
-              class="profile-input"
-            >
-            <small class="profile-hint">(Optional) Direct link to a picture or avatar (.png, .jpg). Pulled automatically if you sign in with Google.</small>
           </div>
 
           <!-- Email Address (Locked / Read-Only) -->
@@ -344,9 +485,21 @@ const handleDeleteAccount = async () => {
   border-radius: 8px;
 }
 
+.profile-avatar-wrapper {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.profile-avatar-wrapper.can-edit {
+  cursor: pointer;
+}
+
 .profile-avatar {
-  width: 46px;
-  height: 46px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--accent-red);
   color: #ffffff;
@@ -358,11 +511,92 @@ const handleDeleteAccount = async () => {
   letter-spacing: 1px;
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .profile-avatar.img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.avatar-hover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.profile-avatar-wrapper.can-edit:hover .avatar-hover-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hover-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.hover-label {
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1e1e1e;
+  border: 1.5px solid #404040;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 3;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-avatar-wrapper.can-edit:hover .avatar-edit-badge {
+  transform: scale(1.15);
+  background: var(--accent-red);
+  border-color: #ffffff;
+}
+
+.remove-photo-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.remove-photo-btn:hover {
+  color: #f87171;
 }
 
 .profile-meta {

@@ -658,7 +658,10 @@ export const useCoachAuth = () => {
     try {
       const authUpdates: any = { displayName: cleanName }
       if (cleanPhoto !== undefined) {
-        authUpdates.photoURL = cleanPhoto
+        // Firebase Auth updateProfile rejects photoURL longer than 2048 chars
+        if (!cleanPhoto || cleanPhoto.length <= 2048) {
+          authUpdates.photoURL = cleanPhoto
+        }
       }
       await updateProfile(user.value, authUpdates)
 
@@ -690,6 +693,11 @@ export const useCoachAuth = () => {
           [cleanName.toLowerCase()]: cleanPhoto,
           [(user.value.email || '').toLowerCase()]: cleanPhoto
         }
+      } else if (cleanPhoto === '') {
+        const nextMap = { ...coachAvatarMap.value }
+        delete nextMap[cleanName.toLowerCase()]
+        if (user.value.email) delete nextMap[user.value.email.toLowerCase()]
+        coachAvatarMap.value = nextMap
       }
 
       return { success: true }
