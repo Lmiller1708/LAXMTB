@@ -119,6 +119,34 @@ export const useCoachAuth = () => {
     return user.value?.photoURL || userProfile.value?.photoURL || ''
   })
 
+  // Global map of coach name / email -> photoURL for displaying avatars in sign-up slots
+  const coachAvatarMap = useState<Record<string, string>>('coach_avatar_map', () => ({}))
+
+  const fetchCoachAvatars = async () => {
+    if (!db) return
+    try {
+      const snap = await getDocs(collection(db, 'users'))
+      const map: Record<string, string> = { ...coachAvatarMap.value }
+      snap.forEach((d) => {
+        const data = d.data()
+        if (data.photoURL) {
+          if (data.name) map[data.name.toLowerCase().trim()] = data.photoURL
+          if (data.email) map[data.email.toLowerCase().trim()] = data.photoURL
+        }
+      })
+      if (userProfile.value?.photoURL) {
+        if (userProfile.value.name) map[userProfile.value.name.toLowerCase().trim()] = userProfile.value.photoURL
+        if (userProfile.value.email) map[userProfile.value.email.toLowerCase().trim()] = userProfile.value.photoURL
+      } else if (user.value?.photoURL) {
+        if (user.value.displayName) map[user.value.displayName.toLowerCase().trim()] = user.value.photoURL
+        if (user.value.email) map[user.value.email.toLowerCase().trim()] = user.value.photoURL
+      }
+      coachAvatarMap.value = map
+    } catch (err) {
+      console.warn('[useCoachAuth] Could not fetch coach avatars:', err)
+    }
+  }
+
   /**
    * Fetch invite settings from Firestore `settings/invites`
    */
@@ -772,6 +800,8 @@ export const useCoachAuth = () => {
     fetchInviteSettings,
     validateInviteCode,
     updateInviteCodes,
+    coachAvatarMap,
+    fetchCoachAvatars,
     addCoachAdmin,
     updateCoachRole,
     removeCoachAdmin,

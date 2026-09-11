@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import type { Race, CoachSlot, WarmupGroup } from '../types/race'
 import { useCurrentRace } from '../composables/useCurrentRace'
 import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
@@ -19,7 +19,18 @@ const emit = defineEmits<{
 }>()
 
 const { updateRace } = useCurrentRace()
-const { user, userProfile, canEditCoachSignups } = useCoachAuth()
+const {
+  user,
+  userProfile,
+  userPhoto,
+  canEditCoachSignups,
+  coachAvatarMap,
+  fetchCoachAvatars
+} = useCoachAuth()
+
+onMounted(() => {
+  fetchCoachAvatars()
+})
 const {
   subscribeRideGroup,
   unsubscribeRideGroup,
@@ -126,10 +137,60 @@ const getMyName = computed(() => {
   return userProfile.value?.name || user.value?.displayName || user.value?.email?.split('@')[0] || 'Coach'
 })
 
+const userInitials = computed(() => {
+  const n = getMyName.value || 'C'
+  const parts = n.trim().split(' ')
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return n.slice(0, 2).toUpperCase()
+})
+
+const getCoachName = (item: any): string => {
+  if (!item) return ''
+  return typeof item === 'object' ? (item.name || '') : String(item)
+}
+
+const getCoachPhoto = (item: any): string => {
+  if (typeof item === 'object' && item.photoURL) return item.photoURL
+  const name = getCoachName(item).toLowerCase().trim()
+  if (!name) return ''
+  if (name === getMyName.value.toLowerCase().trim() && userPhoto.value) {
+    return userPhoto.value
+  }
+  if (coachAvatarMap.value[name]) {
+    return coachAvatarMap.value[name]
+  }
+  return ''
+}
+
+const getCoachInitials = (item: any): string => {
+  const name = getCoachName(item)
+  if (!name) return 'C'
+  const parts = name.trim().split(' ')
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
+}
+
+const hasCoach = (list: any[] | undefined, name: string): boolean => {
+  if (!list || !name) return false
+  const clean = name.toLowerCase().trim()
+  return list.some(item => getCoachName(item).toLowerCase().trim() === clean)
+}
+
+const isMeSignedUp = (slot: any, role: 'leader' | 'support'): boolean => {
+  if (!user.value) return false
+  const myName = getMyName.value.toLowerCase().trim()
+  if (!myName) return false
+  const list = role === 'leader' ? (slot.leaders || []) : (slot.support || [])
+  return hasCoach(list, myName)
+}
+
 const addMeQuick = async (slot: any, role: 'leader' | 'support') => {
   const name = getMyName.value
   if (!name) return
-  await saveCoachName(slot, role, name)
+  await saveCoachName(slot, role, {
+    name,
+    photoURL: userPhoto.value || undefined
+  })
   cancelInlineInput()
 }
 
@@ -139,11 +200,15 @@ const submitInlineName = async (slot: any, role: 'leader' | 'support') => {
     cancelInlineInput()
     return
   }
-  await saveCoachName(slot, role, val)
+  const photo = val.toLowerCase() === getMyName.value.toLowerCase()
+    ? (userPhoto.value || undefined)
+    : (coachAvatarMap.value[val.toLowerCase()] || undefined)
+  await saveCoachName(slot, role, photo ? { name: val, photoURL: photo } : val)
   cancelInlineInput()
 }
 
-const saveCoachName = async (slot: any, role: 'leader' | 'support', name: string) => {
+const saveCoachName = async (slot: any, role: 'leader' | 'support', itemToSave: any) => {
+  const name = getCoachName(itemToSave)
   const updatedRace = JSON.parse(JSON.stringify(props.race)) as Race
   if (!updatedRace.coachSignups) {
     updatedRace.coachSignups = { policy: '', preRides: [], warmups: [] }
@@ -158,13 +223,13 @@ const saveCoachName = async (slot: any, role: 'leader' | 'support', name: string
   if (targetSlot) {
     if (role === 'leader') {
       if (!targetSlot.leaders) targetSlot.leaders = []
-      if (!targetSlot.leaders.includes(name)) {
-        targetSlot.leaders.push(name)
+      if (!hasCoach(targetSlot.leaders, name)) {
+        targetSlot.leaders.push(itemToSave)
       }
     } else {
       if (!targetSlot.support) targetSlot.support = []
-      if (!targetSlot.support.includes(name)) {
-        targetSlot.support.push(name)
+      if (!hasCoach(targetSlot.support, name)) {
+        targetSlot.support.push(itemToSave)
       }
     }
   }
@@ -175,10 +240,10 @@ const saveCoachName = async (slot: any, role: 'leader' | 'support', name: string
     if (wgSlot) {
       if (role === 'leader') {
         if (!wgSlot.leaders) wgSlot.leaders = []
-        if (!wgSlot.leaders.includes(name)) wgSlot.leaders.push(name)
+        if (!hasCoach(wgSlot.leaders, name)) wgSlot.leaders.push(itemToSave)
       } else {
         if (!wgSlot.support) wgSlot.support = []
-        if (!wgSlot.support.includes(name)) wgSlot.support.push(name)
+        if (!hasCoach(wgSlot.support, name)) wgSlot.support.push(itemToSave)
       }
     }
   }
@@ -244,8 +309,8 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
   )?.find(s => s.id === slot.id)
 
   const stillSignedUp = slotAfter && (
-    (slotAfter.leaders && slotAfter.leaders.includes(myName)) ||
-    (slotAfter.support && slotAfter.support.includes(myName))
+    hasCoach(slotAfter.leaders, myName) ||
+    hasCoach(slotAfter.support, myName)
   )
   if (!stillSignedUp && isRideGroupSubscribed(slot.id)) {
     unsubscribeRideGroup(slot.id)
@@ -444,13 +509,23 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                     </div>
 
                     <div class="coach-role-content">
-                      <!-- Leader Names -->
+                      <!-- Leader Names with Avatars -->
                       <div
-                        v-for="(name, idx) in (slot.leaders || [])"
+                        v-for="(coachItem, idx) in (slot.leaders || [])"
                         :key="idx"
                         class="coach-chip"
                       >
-                        <span>{{ name }}</span>
+                        <img
+                          v-if="getCoachPhoto(coachItem)"
+                          :src="getCoachPhoto(coachItem)"
+                          class="coach-chip-avatar img"
+                          alt=""
+                          referrerpolicy="no-referrer"
+                        />
+                        <span v-else class="coach-chip-avatar initials">
+                          {{ getCoachInitials(coachItem) }}
+                        </span>
+                        <span class="coach-chip-name">{{ getCoachName(coachItem) }}</span>
                         <!-- ✕ Remove button only visible if user can edit -->
                         <button
                           v-if="canEditCoachSignups"
@@ -471,15 +546,39 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                         Open slot (Sign in to claim)
                       </span>
 
-                      <!-- Add Leader Button (only if can edit) -->
-                      <button
-                        v-if="canEditCoachSignups && !(activeInputSlotId === slot.id && activeInputRole === 'leader')"
-                        type="button"
-                        class="coach-add-btn"
-                        @click="startInlineInput(slot.id, 'leader')"
-                      >
-                        <span>+</span> {{ (slot.leaders && slot.leaders.length > 0) ? 'Add' : 'Add Leader' }}
-                      </button>
+                      <!-- Add Leader Buttons -->
+                      <template v-if="canEditCoachSignups && !(activeInputSlotId === slot.id && activeInputRole === 'leader')">
+                        <!-- Quick 1-click Add Me button with photo and name -->
+                        <button
+                          v-if="user && !isMeSignedUp(slot, 'leader')"
+                          type="button"
+                          class="coach-add-btn coach-add-me-btn"
+                          title="Claim this leader slot"
+                          @click="addMeQuick(slot, 'leader')"
+                        >
+                          <img
+                            v-if="userPhoto"
+                            :src="userPhoto"
+                            class="coach-btn-avatar img"
+                            alt=""
+                            referrerpolicy="no-referrer"
+                          />
+                          <span v-else class="coach-btn-avatar initials">{{ userInitials }}</span>
+                          <span>+ Add {{ getMyName }}</span>
+                        </button>
+
+                        <!-- Add Other Coach button -->
+                        <button
+                          type="button"
+                          class="coach-add-btn"
+                          :class="{ 'coach-add-other-btn': user && !isMeSignedUp(slot, 'leader') }"
+                          title="Add another coach by name"
+                          @click="startInlineInput(slot.id, 'leader')"
+                        >
+                          <span v-if="user && !isMeSignedUp(slot, 'leader')">+ Other</span>
+                          <span v-else>+ {{ (slot.leaders && slot.leaders.length > 0) ? 'Add' : 'Add Leader' }}</span>
+                        </button>
+                      </template>
 
                       <!-- Inline Leader Input -->
                       <div
@@ -503,7 +602,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                           Add
                         </button>
                         <button
-                          v-if="user"
+                          v-if="user && !isMeSignedUp(slot, 'leader')"
                           type="button"
                           class="action-mini-btn inline-btn btn-quick-me"
                           title="Add your signed-in name"
@@ -530,13 +629,23 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                     </div>
 
                     <div class="coach-role-content">
-                      <!-- Support Names -->
+                      <!-- Support Names with Avatars -->
                       <div
-                        v-for="(name, idx) in (slot.support || [])"
+                        v-for="(coachItem, idx) in (slot.support || [])"
                         :key="idx"
                         class="coach-chip"
                       >
-                        <span>{{ name }}</span>
+                        <img
+                          v-if="getCoachPhoto(coachItem)"
+                          :src="getCoachPhoto(coachItem)"
+                          class="coach-chip-avatar img"
+                          alt=""
+                          referrerpolicy="no-referrer"
+                        />
+                        <span v-else class="coach-chip-avatar initials">
+                          {{ getCoachInitials(coachItem) }}
+                        </span>
+                        <span class="coach-chip-name">{{ getCoachName(coachItem) }}</span>
                         <!-- ✕ Remove button only visible if user can edit -->
                         <button
                           v-if="canEditCoachSignups"
@@ -557,15 +666,39 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                         Open slot (Sign in to claim)
                       </span>
 
-                      <!-- Add Support Button (only if can edit) -->
-                      <button
-                        v-if="canEditCoachSignups && !(activeInputSlotId === slot.id && activeInputRole === 'support')"
-                        type="button"
-                        class="coach-add-btn btn-support"
-                        @click="startInlineInput(slot.id, 'support')"
-                      >
-                        <span>+</span> {{ (slot.support && slot.support.length > 0) ? 'Add' : 'Add Support' }}
-                      </button>
+                      <!-- Add Support Buttons -->
+                      <template v-if="canEditCoachSignups && !(activeInputSlotId === slot.id && activeInputRole === 'support')">
+                        <!-- Quick 1-click Add Me button with photo and name -->
+                        <button
+                          v-if="user && !isMeSignedUp(slot, 'support')"
+                          type="button"
+                          class="coach-add-btn btn-support coach-add-me-btn"
+                          title="Claim this support slot"
+                          @click="addMeQuick(slot, 'support')"
+                        >
+                          <img
+                            v-if="userPhoto"
+                            :src="userPhoto"
+                            class="coach-btn-avatar img"
+                            alt=""
+                            referrerpolicy="no-referrer"
+                          />
+                          <span v-else class="coach-btn-avatar initials">{{ userInitials }}</span>
+                          <span>+ Add {{ getMyName }}</span>
+                        </button>
+
+                        <!-- Add Other Support button -->
+                        <button
+                          type="button"
+                          class="coach-add-btn btn-support"
+                          :class="{ 'coach-add-other-btn': user && !isMeSignedUp(slot, 'support') }"
+                          title="Add another coach by name"
+                          @click="startInlineInput(slot.id, 'support')"
+                        >
+                          <span v-if="user && !isMeSignedUp(slot, 'support')">+ Other</span>
+                          <span v-else>+ {{ (slot.support && slot.support.length > 0) ? 'Add' : 'Add Support' }}</span>
+                        </button>
+                      </template>
 
                       <!-- Inline Support Input -->
                       <div
@@ -589,7 +722,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                           Add
                         </button>
                         <button
-                          v-if="user"
+                          v-if="user && !isMeSignedUp(slot, 'support')"
                           type="button"
                           class="action-mini-btn inline-btn btn-quick-me"
                           title="Add your signed-in name"
@@ -836,14 +969,89 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
 .coach-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1px 8px;
-  font-size: 11px;
+  border-radius: 999px;
+  padding: 2px 8px 2px 3px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--text-main);
+  line-height: 1;
+}
+
+.coach-chip-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8.5px;
+  font-weight: 800;
+}
+
+.coach-chip-avatar.initials {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.coach-chip-name {
+  line-height: 1.2;
+}
+
+.coach-btn-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.coach-btn-avatar.initials {
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+}
+
+.coach-add-me-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 3px !important;
+  border-radius: 999px !important;
+  background: rgba(245, 158, 11, 0.15) !important;
+  border: 1px solid rgba(245, 158, 11, 0.45) !important;
+  color: #fbbf24 !important;
+  font-weight: 700 !important;
+}
+
+.coach-add-me-btn.btn-support {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border: 1px solid rgba(59, 130, 246, 0.45) !important;
+  color: #60a5fa !important;
+}
+
+.coach-add-me-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.15);
+}
+
+.coach-add-other-btn {
+  font-size: 10px !important;
+  opacity: 0.75;
+  padding: 2px 6px !important;
+}
+
+.coach-add-other-btn:hover {
+  opacity: 1;
 }
 
 .coach-chip-remove {
