@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import type { Race, CoachSlot } from '../types/race'
+import type { Race, CoachSlot, WarmupGroup } from '../types/race'
 import { useCurrentRace } from '../composables/useCurrentRace'
 import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
+import { getCategoryStartTime, getCategoryStageTime } from '~/modules/results/services/raceresultService'
+import { useNotificationSubscriptions } from '~/modules/notifications/composables/useNotificationSubscriptions'
 
 type SessionKey = 'pr' | 'wu'
 
@@ -16,6 +18,12 @@ const emit = defineEmits<{
 
 const { updateRace } = useCurrentRace()
 const { user } = useCoachAuth()
+const {
+  subscribeRideGroup,
+  unsubscribeRideGroup,
+  toggleRideGroupSubscription,
+  isRideGroupSubscribed
+} = useNotificationSubscriptions()
 
 const isOpen = ref(true)
 const activeSession = ref<SessionKey>('pr')
@@ -32,16 +40,27 @@ const preRideSlots = computed<CoachSlot[]>(() => {
   return coachData.value?.preRides || []
 })
 
-const warmupSlots = computed<CoachSlot[]>(() => {
+const warmupSlots = computed<any[]>(() => {
+  if (props.race.warmupGroups && props.race.warmupGroups.length > 0) {
+    return props.race.warmupGroups
+  }
   return coachData.value?.warmups || []
 })
+
+const getSlotCategories = (slot: any): string[] => {
+  if (Array.isArray(slot.categories)) return slot.categories
+  return []
+}
+
+const getCatStart = (cat: string) => getCategoryStartTime(props.race, cat)
+const getCatStage = (cat: string) => getCategoryStageTime(props.race, cat)
 
 interface DayGroup {
   day: string
   date: string
   subtitle: string
   isRaceDay: boolean
-  slots: CoachSlot[]
+  slots: any[]
 }
 
 const activeDayGroups = computed<DayGroup[]>(() => {
@@ -101,14 +120,14 @@ const getMyName = computed(() => {
   return user.value?.displayName || user.value?.email?.split('@')[0] || 'Coach'
 })
 
-const addMeQuick = async (slot: CoachSlot, role: 'leader' | 'support') => {
+const addMeQuick = async (slot: any, role: 'leader' | 'support') => {
   const name = getMyName.value
   if (!name) return
   await saveCoachName(slot, role, name)
   cancelInlineInput()
 }
 
-const submitInlineName = async (slot: CoachSlot, role: 'leader' | 'support') => {
+const submitInlineName = async (slot: any, role: 'leader' | 'support') => {
   const val = inlineNameInput.value.trim()
   if (!val) {
     cancelInlineInput()
@@ -118,12 +137,13 @@ const submitInlineName = async (slot: CoachSlot, role: 'leader' | 'support') => 
   cancelInlineInput()
 }
 
-const saveCoachName = async (slot: CoachSlot, role: 'leader' | 'support', name: string) => {
+const saveCoachName = async (slot: any, role: 'leader' | 'support', name: string) => {
   const updatedRace = JSON.parse(JSON.stringify(props.race)) as Race
   if (!updatedRace.coachSignups) {
     updatedRace.coachSignups = { policy: '', preRides: [], warmups: [] }
   }
 
+  // Update in coachSignups.preRides / coachSignups.warmups
   const list = activeSession.value === 'pr'
     ? updatedRace.coachSignups.preRides
     : updatedRace.coachSignups.warmups
@@ -141,11 +161,39 @@ const saveCoachName = async (slot: CoachSlot, role: 'leader' | 'support', name: 
         targetSlot.support.push(name)
       }
     }
-    await updateRace(updatedRace)
   }
+
+  // Also update in updatedRace.warmupGroups if applicable
+  if (activeSession.value === 'wu' && updatedRace.warmupGroups) {
+    const wgSlot = updatedRace.warmupGroups.find(w => w.id === slot.id)
+    if (wgSlot) {
+      if (role === 'leader') {
+        if (!wgSlot.leaders) wgSlot.leaders = []
+        if (!wgSlot.leaders.includes(name)) wgSlot.leaders.push(name)
+      } else {
+        if (!wgSlot.support) wgSlot.support = []
+        if (!wgSlot.support.includes(name)) wgSlot.support.push(name)
+      }
+    }
+  }
+
+  await updateRace(updatedRace)
+
+  // Automatically subscribe coach to notifications for this ride group
+  subscribeRideGroup({
+    id: slot.id,
+    name: slot.name || (activeSession.value === 'wu' ? 'Warm-up Group' : 'Pre-Ride Wave'),
+    sessionType: activeSession.value,
+    meetingTime: slot.meetingTime || '8:00 AM',
+    stagingTime: slot.stagingTime,
+    day: slot.day,
+    date: slot.date,
+    categories: getSlotCategories(slot),
+    raceId: props.race.id
+  })
 }
 
-const removeCoachName = async (slot: CoachSlot, role: 'leader' | 'support', index: number) => {
+const removeCoachName = async (slot: any, role: 'leader' | 'support', index: number) => {
   const updatedRace = JSON.parse(JSON.stringify(props.race)) as Race
   const list = activeSession.value === 'pr'
     ? updatedRace.coachSignups?.preRides
@@ -158,7 +206,34 @@ const removeCoachName = async (slot: CoachSlot, role: 'leader' | 'support', inde
     } else {
       targetSlot.support?.splice(index, 1)
     }
-    await updateRace(updatedRace)
+  }
+
+  if (activeSession.value === 'wu' && updatedRace.warmupGroups) {
+    const wgSlot = updatedRace.warmupGroups.find(w => w.id === slot.id)
+    if (wgSlot) {
+      if (role === 'leader') {
+        wgSlot.leaders?.splice(index, 1)
+      } else {
+        wgSlot.support?.splice(index, 1)
+      }
+    }
+  }
+
+  await updateRace(updatedRace)
+
+  // Check if current coach is still signed up for this slot; if not, remove subscription
+  const myName = getMyName.value
+  const slotAfter = (activeSession.value === 'pr'
+    ? updatedRace.coachSignups?.preRides
+    : (updatedRace.warmupGroups || updatedRace.coachSignups?.warmups)
+  )?.find(s => s.id === slot.id)
+
+  const stillSignedUp = slotAfter && (
+    (slotAfter.leaders && slotAfter.leaders.includes(myName)) ||
+    (slotAfter.support && slotAfter.support.includes(myName))
+  )
+  if (!stillSignedUp && isRideGroupSubscribed(slot.id)) {
+    unsubscribeRideGroup(slot.id)
   }
 }
 </script>
@@ -248,8 +323,8 @@ const removeCoachName = async (slot: CoachSlot, role: 'leader' | 'support', inde
                     <span v-if="slot.tag" class="schedule-tag" :class="slot.tagClass" style="font-size:9.5px;padding:1px 5px;">{{ slot.tag }}</span>
                   </div>
 
-                  <!-- Time Badges -->
-                  <div class="coach-slot-time-group">
+                  <!-- Time Badges & Alert Status -->
+                  <div class="coach-slot-time-group" style="display:flex;align-items:center;gap:6px;">
                     <template v-if="slot.stagingTime">
                       <span class="time-badge" style="font-size:10.5px;padding:1px 6px;">
                         <span style="font-size:9px;color:var(--text-muted);font-weight:700;margin-right:2px;">MEET</span>{{ slot.meetingTime }}
@@ -266,13 +341,50 @@ const removeCoachName = async (slot: CoachSlot, role: 'leader' | 'support', inde
                         </template>
                       </span>
                     </template>
+
+                    <!-- Ride Group Alert Toggle Button -->
+                    <button
+                      type="button"
+                      class="action-mini-btn"
+                      style="font-size:10px;padding:1px 6px;height:22px;display:inline-flex;align-items:center;gap:3px;border-radius:6px;transition:all 0.15s ease;cursor:pointer;"
+                      :style="isRideGroupSubscribed(slot.id) ? 'border-color:var(--accent-red);background:rgba(239,68,68,0.12);color:var(--accent-red);font-weight:700;' : 'border-color:var(--border);background:var(--bg-subtle);color:var(--text-muted);'"
+                      :title="isRideGroupSubscribed(slot.id) ? 'Notifications active for this ride group! Click to toggle' : 'Enable notifications for this ride group'"
+                      @click.stop="toggleRideGroupSubscription({
+                        id: slot.id,
+                        name: slot.name || (activeSession === 'wu' ? 'Warm-up Group' : 'Pre-Ride Wave'),
+                        sessionType: activeSession,
+                        meetingTime: slot.meetingTime || '8:00 AM',
+                        stagingTime: slot.stagingTime,
+                        day: slot.day,
+                        date: slot.date,
+                        categories: getSlotCategories(slot),
+                        raceId: race.id
+                      })"
+                    >
+                      <span style="font-size:10.5px;">{{ isRideGroupSubscribed(slot.id) ? '🔔' : '🔕' }}</span>
+                      <span>{{ isRideGroupSubscribed(slot.id) ? 'Alerts On' : 'Alerts' }}</span>
+                    </button>
                   </div>
                 </div>
 
                 <!-- Slot Body -->
                 <div class="coach-slot-body">
-                  <div v-if="slot.ridersAllowed" class="coach-slot-desc">
+                  <div v-if="activeSession === 'pr' && slot.ridersAllowed" class="coach-slot-desc">
                     {{ slot.ridersAllowed }}
+                  </div>
+
+                  <!-- Grouped Categories Breakdown (with individual staging & start times) -->
+                  <div v-if="getSlotCategories(slot).length > 0" style="display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 4px;">
+                    <span
+                      v-for="cName in getSlotCategories(slot)"
+                      :key="cName"
+                      style="font-size:10.5px;background:rgba(255,255,255,0.05);border:1px solid var(--border);padding:1px 6px;border-radius:4px;color:var(--text-main);font-weight:600;"
+                    >
+                      <span style="color:var(--accent-red);">🚩</span> {{ cName }}
+                      <span v-if="getCatStage(cName)" style="color:var(--text-muted);font-size:9.5px;margin-left:2px;">
+                        (Stage {{ getCatStage(cName) }} • Start {{ getCatStart(cName) }})
+                      </span>
+                    </span>
                   </div>
 
                   <div class="coach-roles-container">

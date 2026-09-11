@@ -13,9 +13,11 @@ const {
   notifConfig,
   subscribedCategories,
   subscribedWaves,
+  subscribedRideGroups,
   permissionStatus,
   saveConfig,
   removeSubByIndex,
+  removeRideGroupByIndex,
   clearAllSubscriptions,
   requestBrowserPermission,
   triggerTestNotification
@@ -206,10 +208,14 @@ const onSoundChange = () => {
         <div class="modal-section">
           <label class="modal-label">Active Subscriptions</label>
           <div class="active-subs-box">
-            <template v-if="subscribedCategories.length === 0 && subscribedWaves.length === 0">
-              <span style="color:var(--text-muted);font-size:12px;">No active alerts. Tap 🔔 on any category or wave to subscribe.</span>
+            <template v-if="subscribedCategories.length === 0 && subscribedWaves.length === 0 && subscribedRideGroups.length === 0">
+              <span style="color:var(--text-muted);font-size:12px;">No active alerts. Tap 🔔 on any category, wave, or sign up for a ride group to subscribe.</span>
             </template>
             <template v-else>
+              <div v-for="(grp, idx) in subscribedRideGroups" :key="`grp-${idx}`" class="active-sub-item">
+                <span><strong>{{ grp.sessionType === 'wu' ? '🔥 Warm-up Group:' : '🚵 Pre-Ride:' }}</strong> {{ grp.name }} ({{ grp.meetingTime }})</span>
+                <button type="button" class="remove-sub-btn" style="background:none;border:none;color:var(--accent-red);cursor:pointer;font-size:14px;padding:0 4px;" title="Remove alert" @click="removeRideGroupByIndex(idx)">✕</button>
+              </div>
               <div v-for="(cat, idx) in subscribedCategories" :key="`cat-${idx}`" class="active-sub-item">
                 <span><strong>Category:</strong> {{ cat }}</span>
                 <button type="button" class="remove-sub-btn" style="background:none;border:none;color:var(--accent-red);cursor:pointer;font-size:14px;padding:0 4px;" title="Remove alert" @click="removeSubByIndex(idx, false)">✕</button>
@@ -221,7 +227,7 @@ const onSoundChange = () => {
             </template>
           </div>
           <button
-            v-if="subscribedCategories.length > 0 || subscribedWaves.length > 0"
+            v-if="subscribedCategories.length > 0 || subscribedWaves.length > 0 || subscribedRideGroups.length > 0"
             type="button"
             class="clear-subs-btn"
             style="margin-top:8px;background:none;border:none;color:var(--accent-red);font-size:11.5px;font-weight:600;cursor:pointer;padding:0;"

@@ -2,7 +2,51 @@ import type { Rider } from '../types/results'
 
 export const targetTeamKeywords = ['holmen', 'la crescent', 'la crosse', 'lacrosse', 'lacrescent', 'lax']
 
-export const categoryOrder = [
+export const gradeAscCategoryOrder = [
+  '6th Grade Boys',
+  '6th Grade Girls',
+  '7th Grade Boys',
+  '7th Grade Girls',
+  '8th Grade Boys',
+  '8th Grade Girls',
+  'MS2 Boys',
+  'MS2 Girls',
+  'Freshman Boys',
+  'Freshman Girls',
+  'HS Open Boys',
+  'HS Open Girls',
+  'JV II Boys',
+  'JV II Girls',
+  'JV III Boys',
+  'JV III Girls',
+  'Varsity Boys',
+  'Varsity Girls'
+]
+
+export const gradeDescCategoryOrder = [
+  'Varsity Boys',
+  'Varsity Girls',
+  'JV III Boys',
+  'JV III Girls',
+  'JV II Boys',
+  'JV II Girls',
+  'Freshman Boys',
+  'Freshman Girls',
+  'HS Open Boys',
+  'HS Open Girls',
+  'MS2 Boys',
+  'MS2 Girls',
+  '8th Grade Boys',
+  '8th Grade Girls',
+  '7th Grade Boys',
+  '7th Grade Girls',
+  '6th Grade Boys',
+  '6th Grade Girls'
+]
+
+export const gradeCategoryOrder = gradeDescCategoryOrder
+
+export const timeCategoryOrder = [
   'Varsity Boys',
   'JV III Boys',
   'Varsity Girls',
@@ -22,6 +66,45 @@ export const categoryOrder = [
   'HS Open Boys',
   'HS Open Girls'
 ]
+
+export const categoryOrder = timeCategoryOrder
+
+function getCategoryOrderIndex(name: string, list: string[]): number {
+  if (!name) return 999
+  const clean = normalizeCategoryName(name)
+  let idx = list.findIndex(c => c.toLowerCase() === clean.toLowerCase())
+  if (idx !== -1) return idx
+  idx = list.findIndex(c => c.toLowerCase() === name.toLowerCase())
+  if (idx !== -1) return idx
+  idx = list.findIndex(c => clean.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(clean.toLowerCase()))
+  if (idx !== -1) return idx
+  return 999
+}
+
+export function compareCategories(a: string, b: string, sortOrder: string, race: any): number {
+  if (sortOrder === 'TIME') {
+    const timeA = getCategoryStartTimeMinutes(race, a)
+    const timeB = getCategoryStartTimeMinutes(race, b)
+    if (timeA !== timeB) return timeA - timeB
+    const ta = getCategoryOrderIndex(a, timeCategoryOrder)
+    const tb = getCategoryOrderIndex(b, timeCategoryOrder)
+    if (ta !== tb) return ta - tb
+    return a.localeCompare(b)
+  }
+
+  if (sortOrder === 'GRADE_ASC') {
+    const ga = getCategoryOrderIndex(a, gradeAscCategoryOrder)
+    const gb = getCategoryOrderIndex(b, gradeAscCategoryOrder)
+    if (ga !== gb) return ga - gb
+    return a.localeCompare(b)
+  }
+
+  // GRADE (Varsity -> 6th Grade)
+  const ga = getCategoryOrderIndex(a, gradeDescCategoryOrder)
+  const gb = getCategoryOrderIndex(b, gradeDescCategoryOrder)
+  if (ga !== gb) return ga - gb
+  return a.localeCompare(b)
+}
 
 export const defaultWaveSchedule: Record<string, Record<string, { start: string; stage?: string }>> = {
   'Varsity Boys': { '1': { start: '8:00 AM', stage: '7:45 AM' } },
@@ -92,6 +175,29 @@ export function formatMinutesToTimeStr(totalMinutes?: number | null): string {
   return `${hours}:${m < 10 ? '0' : ''}${m} ${meridiem}`
 }
 
+export function getWarmupGroupForCategory(race: any, category: string): any | null {
+  if (!race || !category) return null
+  const normCat = normalizeCategoryName(category).toLowerCase()
+
+  const groups = race.warmupGroups || (race.coachSignups?.warmups) || []
+  for (const grp of groups) {
+    if (Array.isArray(grp.categories) && grp.categories.length > 0) {
+      const found = grp.categories.some((c: string) => {
+        const normC = normalizeCategoryName(c).toLowerCase()
+        return normC === normCat || normC.includes(normCat) || normCat.includes(normC)
+      })
+      if (found) return grp
+    } else if (typeof grp.name === 'string') {
+      // Fallback matching by name if categories array is not explicitly populated
+      const grpNameLower = grp.name.toLowerCase()
+      if (grpNameLower.includes(normCat) || normCat.includes(grpNameLower)) {
+        return grp
+      }
+    }
+  }
+  return null
+}
+
 export function getWaveScheduleEntry(race: any, category: string, waveStr: string): { start?: string; stage?: string } | null {
   if (!category) return null
   const normCat = category.trim().toLowerCase()
@@ -118,22 +224,34 @@ export function getWaveScheduleEntry(race: any, category: string, waveStr: strin
     const val = catObj[waveNum] || catObj['Wave: ' + waveNum] || catObj['Field: ' + waveNum] || catObj['FIELD: ' + waveNum] || catObj['1'] || (catObj as any).default || null
     if (!val) return null
     if (typeof val === 'object') {
-      return val
+      return { ...val }
     }
     return { start: val, stage: undefined }
   }
 
   // Check defaultWaveSchedule first (authoritative official 2026 wave schedule)
-  const defaultEntry = findInSched(defaultWaveSchedule)
-  if (defaultEntry) return defaultEntry
+  let entry: { start?: string; stage?: string } | null = findInSched(defaultWaveSchedule)
 
   // Check custom race.waveSchedule if category not in standard schedule
-  if (race && race.waveSchedule) {
-    const raceEntry = findInSched(race.waveSchedule)
-    if (raceEntry) return raceEntry
+  if (!entry && race && race.waveSchedule) {
+    entry = findInSched(race.waveSchedule)
   }
 
-  return null
+  if (!entry) return null
+
+  // Calculate staging time using adjustable staging offset (default 15 minutes before start)
+  const stagingOffset = (race && typeof race.stagingOffsetMinutes === 'number' && !isNaN(race.stagingOffsetMinutes))
+    ? race.stagingOffsetMinutes
+    : 15
+
+  if (entry.start) {
+    const startMins = parseTimeStrToMinutes(entry.start)
+    if (startMins !== null) {
+      entry.stage = formatMinutesToTimeStr(startMins - stagingOffset)
+    }
+  }
+
+  return entry
 }
 
 export function getCategoryStartTime(race: any, category: string): string | null {
@@ -153,30 +271,47 @@ export function getCategoryStartTimeMinutes(race: any, category: string): number
   return mins !== null ? mins : 9999
 }
 
-export function getWaveWarmupTime(race: any, category: string, waveStr: string, customWarmupOffset = 45): string | null {
+export function calculateDefaultGroupWarmupTime(race: any, categories: string[]): string | null {
+  if (!Array.isArray(categories) || categories.length === 0) return null
+  let earliestStageMins: number | null = null
+  for (const cat of categories) {
+    const stageStr = getCategoryStageTime(race, cat)
+    if (stageStr) {
+      const mins = parseTimeStrToMinutes(stageStr)
+      if (mins !== null && (earliestStageMins === null || mins < earliestStageMins)) {
+        earliestStageMins = mins
+      }
+    }
+  }
+  if (earliestStageMins === null) return null
+  const warmupOffset = (race && typeof race.warmupOffsetMinutes === 'number' && !isNaN(race.warmupOffsetMinutes))
+    ? race.warmupOffsetMinutes
+    : 45
+  return formatMinutesToTimeStr(earliestStageMins - warmupOffset)
+}
+
+export function getWaveWarmupTime(race: any, category: string, waveStr: string, customWarmupOffset?: number): string | null {
+  // 1. Check if category is assigned to a Warm-up Group in race.warmupGroups
+  const group = getWarmupGroupForCategory(race, category)
+  if (group && group.meetingTime) {
+    return group.meetingTime
+  }
+
+  // 2. Fallback to calculating warm-up from staging time with adjustable warmupOffsetMinutes (default 45 min)
   const entry = getWaveScheduleEntry(race, category, waveStr)
   if (!entry) return null
   let stageMins = parseTimeStrToMinutes(entry.stage)
   if (stageMins === null) {
     const startMins = parseTimeStrToMinutes(entry.start)
-    if (startMins !== null) stageMins = startMins - 15
+    const stagingOffset = (race && typeof race.stagingOffsetMinutes === 'number') ? race.stagingOffsetMinutes : 15
+    if (startMins !== null) stageMins = startMins - stagingOffset
   }
   if (stageMins === null) return null
-  const warmupMins = stageMins - customWarmupOffset
+  const warmupOffset = (typeof customWarmupOffset === 'number' && !isNaN(customWarmupOffset))
+    ? customWarmupOffset
+    : ((race && typeof race.warmupOffsetMinutes === 'number' && !isNaN(race.warmupOffsetMinutes)) ? race.warmupOffsetMinutes : 45)
+  const warmupMins = stageMins - warmupOffset
   return formatMinutesToTimeStr(warmupMins)
-}
-
-export function compareCategories(a: string, b: string, sortOrder: string, race: any): number {
-  if (sortOrder === 'TIME') {
-    const timeA = getCategoryStartTimeMinutes(race, a)
-    const timeB = getCategoryStartTimeMinutes(race, b)
-    if (timeA !== timeB) return timeA - timeB
-  }
-  let ia = categoryOrder.indexOf(a)
-  let ib = categoryOrder.indexOf(b)
-  if (ia === -1) ia = 99
-  if (ib === -1) ib = 99
-  return ia - ib
 }
 
 export function normalizeCategoryName(name: string): string {

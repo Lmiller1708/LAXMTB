@@ -10,7 +10,8 @@ import {
   parseUniversalData,
   targetTeamKeywords,
   categoryOrder,
-  normalizeCategoryName
+  normalizeCategoryName,
+  compareCategories
 } from '../services/raceresultService'
 
 export const useRaceResults = () => {
@@ -33,7 +34,8 @@ export const useRaceResults = () => {
 
   // Initialize sortOrder from localStorage if available, default to 'TIME'
   const initialSortOrder = (import.meta.client && localStorage.getItem('laxmtb_sortOrder')) as ResultsSortOrder | null
-  const sortOrder = ref<ResultsSortOrder>(initialSortOrder === 'GRADE' || initialSortOrder === 'TIME' ? initialSortOrder : 'TIME')
+  const validSortOrders: ResultsSortOrder[] = ['TIME', 'GRADE', 'GRADE_ASC', 'GRADE_DESC']
+  const sortOrder = ref<ResultsSortOrder>(initialSortOrder && validSortOrders.includes(initialSortOrder) ? initialSortOrder : 'TIME')
 
   if (import.meta.client) {
     watch(sortOrder, (newVal) => {
@@ -93,12 +95,7 @@ export const useRaceResults = () => {
       if (r.category) set.add(r.category)
     })
     return Array.from(set).sort((a, b) => {
-      const ia = categoryOrder.indexOf(a)
-      const ib = categoryOrder.indexOf(b)
-      if (ia !== -1 && ib !== -1) return ia - ib
-      if (ia !== -1) return -1
-      if (ib !== -1) return 1
-      return a.localeCompare(b)
+      return compareCategories(a, b, sortOrder.value, null)
     })
   })
 
