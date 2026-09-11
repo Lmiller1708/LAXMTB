@@ -1032,15 +1032,18 @@
 
     /* Fix the ENTIRE header together as one solid block (Brand bar, Race switcher, Navigation tabs) */
     .site-header {
-      position: sticky;
+      position: fixed;
       top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
       z-index: 100;
       background: var(--bg-header);
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
     }
 
     .site-header-fixed {
-      position: static;
+      position: relative;
       box-shadow: none;
     }
 
@@ -1247,8 +1250,8 @@
     /* Main Container */
     .main-container {
       max-width: 1220px;
-      margin: 10px auto 0 auto;
-      padding: 0 10px;
+      margin: 0 auto;
+      padding: calc(var(--site-header-height, 148px) + 12px) 10px 0 10px;
     }
 
     /* Ultra-Compact Sticky Search & Filter Toolbar (Docks under sticky sub-nav) */
