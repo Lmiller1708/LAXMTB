@@ -106,7 +106,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      appVersion: '1.2.5',
+      appVersion: '1.2.6',
       buildDate: new Date().toISOString()
     }
   },

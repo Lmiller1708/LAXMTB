@@ -27,7 +27,11 @@ export const usePwaUpdate = () => {
         if (registration.waiting || registration.installing) {
           hasUpdate.value = true
           return true
+        } else {
+          hasUpdate.value = false
         }
+      } else {
+        hasUpdate.value = false
       }
       lastChecked.value = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
       return false
@@ -41,8 +45,22 @@ export const usePwaUpdate = () => {
 
   const applyUpdate = async () => {
     if (!import.meta.client) return
+    isChecking.value = true
+    hasUpdate.value = false
     try {
-      // Clear legacy SW caches except persistent Firestore data
+      // 1. Tell waiting service worker to skip waiting and activate immediately
+      const reg = await navigator.serviceWorker.getRegistration()
+      if (reg?.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' })
+      }
+
+      // 2. Unregister active workers so browser loads fresh build from network
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      for (const r of registrations) {
+        await r.unregister()
+      }
+
+      // 3. Purge cached assets (preserving offline Firestore database)
       if ('caches' in window) {
         const cacheNames = await caches.keys()
         for (const name of cacheNames) {
@@ -52,10 +70,12 @@ export const usePwaUpdate = () => {
         }
       }
     } catch (e) {
-      console.warn('[PWA] Error clearing cache:', e)
+      console.warn('[PWA] Error during applyUpdate:', e)
     }
-    // Hard reload to activate newest precached assets
-    window.location.reload()
+
+    // 4. Force hard reload bypassing browser disk cache
+    const cleanUrl = window.location.origin + window.location.pathname
+    window.location.replace(`${cleanUrl}?v=${Date.now()}`)
   }
 
   return {
