@@ -211,6 +211,12 @@ const onScheduleDayDateChange = (day: ScheduleDay, isoDate: string) => {
 function syncFormFromRace(raceData: Race | null) {
   if (!raceData) return
   form.value = JSON.parse(JSON.stringify(raceData))
+  if (typeof form.value.stagingOffsetMinutes !== 'number' || isNaN(form.value.stagingOffsetMinutes)) {
+    form.value.stagingOffsetMinutes = 15
+  }
+  if (typeof form.value.warmupOffsetMinutes !== 'number' || isNaN(form.value.warmupOffsetMinutes)) {
+    form.value.warmupOffsetMinutes = 45
+  }
   if (!form.value.schedule) {
     form.value.schedule = []
   }
@@ -222,6 +228,28 @@ function syncFormFromRace(raceData: Race | null) {
   }
   updateDateRangeFromForm()
   initWarmupGroups()
+}
+
+const setStagingOffset = (val: number | 'custom') => {
+  if (val === 'custom') {
+    if (!form.value.stagingOffsetMinutes || [15, 20, 30].includes(form.value.stagingOffsetMinutes)) {
+      form.value.stagingOffsetMinutes = 15
+    }
+  } else {
+    form.value.stagingOffsetMinutes = val
+  }
+  autoConfigureAllGroups()
+}
+
+const setWarmupOffset = (val: number | 'custom') => {
+  if (val === 'custom') {
+    if (!form.value.warmupOffsetMinutes || [60, 45, 30].includes(form.value.warmupOffsetMinutes)) {
+      form.value.warmupOffsetMinutes = 45
+    }
+  } else {
+    form.value.warmupOffsetMinutes = val
+  }
+  autoConfigureAllGroups()
 }
 
 syncFormFromRace(currentRace.value)
@@ -1522,6 +1550,122 @@ const removePhoto = (idx: number) => {
               </div>
             </div>
 
+            <!-- Global Staging & Warm-up Schedule Lead Times -->
+            <div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.22);border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <span style="font-size:16px;">⏱️</span>
+                  <strong style="font-size:13px;color:var(--text-main);letter-spacing:0.3px;">SCHEDULE LEAD TIMES</strong>
+                  <span style="font-size:10px;color:var(--accent-red);background:rgba(239,68,68,0.12);padding:1px 6px;border-radius:4px;font-weight:700;">Admin Calculation</span>
+                </div>
+                <div style="font-size:11px;color:var(--text-muted);">
+                  Staging: <strong style="color:var(--accent-red);">{{ form.stagingOffsetMinutes || 15 }}m</strong> before start • Warm-up: <strong style="color:#f59e0b;">{{ form.warmupOffsetMinutes || 45 }}m</strong> before staging
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(270px, 1fr));gap:16px;">
+                <!-- 1. Staging Schedule (Before Gun Start) -->
+                <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;">
+                  <label class="modal-label" style="font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:8px;letter-spacing:0.4px;">
+                    <span>🚩</span>
+                    <span>STAGING SCHEDULE (BEFORE START)</span>
+                  </label>
+                  <div class="lead-time-buttons" style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button
+                      type="button"
+                      class="lead-time-btn"
+                      :class="{ active: (form.stagingOffsetMinutes || 15) === 15 }"
+                      @click="setStagingOffset(15)"
+                    >15 mins</button>
+                    <button
+                      type="button"
+                      class="lead-time-btn"
+                      :class="{ active: form.stagingOffsetMinutes === 20 }"
+                      @click="setStagingOffset(20)"
+                    >20 mins</button>
+                    <button
+                      type="button"
+                      class="lead-time-btn"
+                      :class="{ active: form.stagingOffsetMinutes === 30 }"
+                      @click="setStagingOffset(30)"
+                    >30 mins</button>
+                    <button
+                      type="button"
+                      class="lead-time-btn"
+                      :class="{ active: ![15, 20, 30].includes(form.stagingOffsetMinutes || 15) }"
+                      @click="setStagingOffset('custom')"
+                    >Custom</button>
+                  </div>
+                  <div v-show="![15, 20, 30].includes(form.stagingOffsetMinutes || 15)" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+                    <input
+                      v-model.number="form.stagingOffsetMinutes"
+                      type="number"
+                      min="5"
+                      max="60"
+                      placeholder="Minutes"
+                      class="custom-minutes-input"
+                      style="width:75px;text-align:center;font-weight:700;"
+                      @change="autoConfigureAllGroups"
+                    >
+                    <span style="font-size:12px;color:var(--text-muted);">mins before start</span>
+                  </div>
+                  <div style="margin-top:6px;font-size:11px;color:var(--text-muted);line-height:1.35;">
+                    Automatically schedules call-up staging time relative to gun start (default 15 mins).
+                  </div>
+                </div>
+
+                <!-- 2. Warm-up Schedule (Before Staging) -->
+                <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:8px;padding:12px;">
+                  <label class="modal-label" style="font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px;margin-bottom:8px;letter-spacing:0.4px;">
+                    <span>🔥</span>
+                    <span>WARM-UP SCHEDULE (BEFORE STAGING)</span>
+                  </label>
+                  <div class="lead-time-buttons" style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button
+                      type="button"
+                      class="lead-time-btn"
+                      :class="{ active: (form.warmupOffsetMinutes || 45) === 60 }"
+                      @click="setWarmupOffset(60)"
+                    >60 mins</button>
+                    <button
+                      type="button"
+                      class="lead-time-btn"
+                      :class="{ active: (form.warmupOffsetMinutes || 45) === 45 }"
+                      @click="setWarmupOffset(45)"
+                    >45 mins</button>
+                    <button
+                      type="button"
+                      class="lead-time-btn"
+                      :class="{ active: (form.warmupOffsetMinutes || 45) === 30 }"
+                      @click="setWarmupOffset(30)"
+                    >30 mins</button>
+                    <button
+                      type="button"
+                      class="lead-time-btn"
+                      :class="{ active: ![60, 45, 30].includes(form.warmupOffsetMinutes || 45) }"
+                      @click="setWarmupOffset('custom')"
+                    >Custom</button>
+                  </div>
+                  <div v-show="![60, 45, 30].includes(form.warmupOffsetMinutes || 45)" style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+                    <input
+                      v-model.number="form.warmupOffsetMinutes"
+                      type="number"
+                      min="15"
+                      max="120"
+                      placeholder="Minutes"
+                      class="custom-minutes-input"
+                      style="width:75px;text-align:center;font-weight:700;"
+                      @change="autoConfigureAllGroups"
+                    >
+                    <span style="font-size:12px;color:var(--text-muted);">mins before staging</span>
+                  </div>
+                  <div style="margin-top:6px;font-size:11px;color:var(--text-muted);line-height:1.35;">
+                    Automatically schedules rider warm-up for every race & category relative to staging time.
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div
                 v-for="(grp, grpIdx) in form.warmupGroups"
@@ -1572,6 +1716,27 @@ const removePhoto = (idx: number) => {
                       <span>{{ isCategoryInWarmupGroup(grp, cat) ? '✓' : isCategoryInOtherWarmupGroup(grp, cat) ? '🔒' : '+' }}</span>
                       <span>{{ cat }}</span>
                     </span>
+                  </div>
+
+                  <!-- Category Staging & Gun Start Breakdown -->
+                  <div v-if="grp.categories && grp.categories.length > 0" style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-top:8px;">
+                    <div style="font-size:10.5px;font-weight:700;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.4px;">
+                      Assigned Waves Schedule
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                      <div
+                        v-for="cName in grp.categories"
+                        :key="cName"
+                        style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:2px 0;border-bottom:1px dashed var(--border);flex-wrap:wrap;gap:4px;"
+                      >
+                        <span style="font-weight:700;color:var(--text-main);">🚩 {{ cName }}</span>
+                        <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+                          <span style="color:#f87171;font-weight:600;">Stage: {{ getCatStage(cName) || 'TBD' }} (-{{ form.stagingOffsetMinutes || 15 }}m)</span>
+                          <span style="color:var(--text-muted);">•</span>
+                          <span style="color:var(--text-main);font-weight:700;">Start: {{ getCatStart(cName) || 'TBD' }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

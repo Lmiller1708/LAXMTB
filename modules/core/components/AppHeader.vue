@@ -104,9 +104,9 @@ onMounted(() => {
 
         <!-- Controls -->
         <div class="header-controls">
-          <span class="live-status-badge" :class="{ offline: !isOnline }">
+          <span class="live-status-badge" :class="{ offline: !isOnline }" :title="isOnline ? 'Network: Online' : 'Network: Offline'">
             <span class="pulse-dot" :class="{ offline: !isOnline }" />
-            <span>{{ isOnline ? 'Online' : 'Offline' }}</span>
+            <span class="live-status-text">{{ isOnline ? 'Online' : 'Offline' }}</span>
           </span>
 
           <button class="theme-toggle-btn" aria-label="Toggle Theme" @click="toggleTheme">
@@ -318,5 +318,31 @@ onMounted(() => {
 .header-signin-btn:hover {
   background: var(--accent-red);
   color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  :deep(.live-status-text),
+  .live-status-text {
+    display: none !important;
+  }
+  :deep(.live-status-badge),
+  .live-status-badge {
+    padding: 0 !important;
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    border-radius: 50% !important;
+    justify-content: center !important;
+    gap: 0 !important;
+  }
+  :deep(.pulse-dot),
+  .pulse-dot {
+    margin: 0 !important;
+  }
+  :deep(.header-controls),
+  .header-controls {
+    gap: 6px !important;
+  }
 }
 </style>
