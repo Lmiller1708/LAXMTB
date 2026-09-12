@@ -91,10 +91,11 @@ const showNotifToast = (msg: string, body?: string) => {
 }
 
 const refreshData = () => {
-  if (currentTab.value === 'list' || currentTab.value === 'results') {
+  if (currentTab.value === 'list' || currentTab.value === 'results' || currentTab.value === 'coach') {
     if (currentRace.value?.isPublished && currentRace.value?.eventId) {
       const completed = isRaceCompleted(currentRace.value)
-      fetchResults(String(currentRace.value.eventId), currentTab.value, selectedListId.value, completed)
+      const tabToFetch = currentTab.value === 'coach' ? 'list' : currentTab.value
+      fetchResults(String(currentRace.value.eventId), tabToFetch, selectedListId.value, completed)
     }
   }
 }
@@ -137,10 +138,10 @@ const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
 
 const setTab = (tab: TabType, pushToHistory = true) => {
   currentTab.value = tab
-  if (tab === 'list' || tab === 'results') {
+  if (tab === 'list' || tab === 'results' || tab === 'coach') {
     if (currentRace.value?.isPublished && currentRace.value?.eventId) {
       const completed = isRaceCompleted(currentRace.value)
-      loadOrSwitchTab(String(currentRace.value.eventId), tab, completed)
+      loadOrSwitchTab(String(currentRace.value.eventId), tab === 'coach' ? 'list' : tab, completed)
     }
   }
 
@@ -281,10 +282,10 @@ const syncFromRoute = () => {
         else if (lower === 'details' || lower === 'detail' || lower === 'info') currentTab.value = 'details'
       }
 
-      if (currentTab.value === 'list' || currentTab.value === 'results') {
+      if (currentTab.value === 'list' || currentTab.value === 'results' || currentTab.value === 'coach') {
         if (currentRace.value?.isPublished && currentRace.value?.eventId) {
           const completed = isRaceCompleted(currentRace.value)
-          loadOrSwitchTab(String(currentRace.value.eventId), currentTab.value, completed)
+          loadOrSwitchTab(String(currentRace.value.eventId), currentTab.value === 'coach' ? 'list' : currentTab.value, completed)
         }
       }
     } else {
@@ -561,6 +562,7 @@ const handlePrint = () => {
       <EventCoachCard
         v-else-if="currentTab === 'coach'"
         :race="currentRace"
+        :riders="filteredRiders"
         :is-coach-auth="isCoachAuth"
         :initial-session="coachSession"
         @change-session="handleCoachSessionChange"

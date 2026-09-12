@@ -15,7 +15,7 @@ import {
 } from '../services/raceresultService'
 import { getFallbackSeedResults, type CachedResultsEntry } from '../services/fallbackResultsService'
 
-const readFromStorageCache = (
+export const readFromStorageCache = (
   eventId: string,
   page: 'list' | 'results',
   explicitListId?: string
