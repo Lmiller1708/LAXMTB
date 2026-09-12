@@ -18,6 +18,7 @@ import {
   getCategoryStageTime,
   getWaveWarmupTime,
   calculateDefaultGroupWarmupTime,
+  calculateEarliestGroupStageTime,
   formatWarmupGroupTitle,
   parseDateRange,
   formatDateRange,
@@ -353,6 +354,25 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
       // MS2 Boys (stage 10:33 AM), Freshman Boys (stage 11:15 AM) -> 45 min before 10:33 AM = 9:48 AM
       const msWarmup = calculateDefaultGroupWarmupTime(race, ['MS2 Boys', 'Freshman Boys'])
       expect(msWarmup).toBe('9:48 AM')
+    })
+
+    it('calculates earliest group stage time dynamically across grouped categories', () => {
+      const race = {
+        id: 'test-race',
+        stagingOffsetMinutes: 15
+      }
+
+      // 8th Grade Girls (stage 1:43 PM), 7th Grade Girls (stage 1:48 PM), 6th Grade Girls (stage 1:54 PM)
+      const earliestStage = calculateEarliestGroupStageTime(race, [
+        '8th Grade Girls',
+        '7th Grade Girls',
+        '6th Grade Girls'
+      ])
+      expect(earliestStage).toBe('1:43 PM')
+
+      // MS2 Boys (stage 10:33 AM) and Freshman Boys (stage 11:15 AM)
+      const msEarliestStage = calculateEarliestGroupStageTime(race, ['MS2 Boys', 'Freshman Boys'])
+      expect(msEarliestStage).toBe('10:33 AM')
     })
 
     it('formats warm-up group title dynamically based on assigned categories', () => {

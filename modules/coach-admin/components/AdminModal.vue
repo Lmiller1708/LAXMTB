@@ -382,6 +382,28 @@ const handleUnlockAdmin = () => {
 }
 
 const handleSave = () => {
+  // Sync schedule day date and subtitle down to warmupGroups and preRides
+  if (form.value.schedule) {
+    if (form.value.warmupGroups) {
+      form.value.warmupGroups.forEach(wg => {
+        const sDay = form.value.schedule?.find(s => s.day && wg.day && s.day.toLowerCase().trim() === wg.day.toLowerCase().trim())
+        if (sDay) {
+          if (sDay.date) wg.date = sDay.date
+          if (sDay.subtitle !== undefined) wg.subtitle = sDay.subtitle
+        }
+      })
+    }
+    if (form.value.coachSignups?.preRides) {
+      form.value.coachSignups.preRides.forEach(pr => {
+        const sDay = form.value.schedule?.find(s => s.day && pr.day && s.day.toLowerCase().trim() === pr.day.toLowerCase().trim())
+        if (sDay) {
+          if (sDay.date) pr.date = sDay.date
+          if (sDay.subtitle !== undefined) pr.subtitle = sDay.subtitle
+        }
+      })
+    }
+  }
+
   // Sync warmupGroups and coachSignups.warmups
   if (form.value.warmupGroups) {
     if (!form.value.coachSignups) {
@@ -855,6 +877,10 @@ const addWarmupGroup = () => {
     ? (calculateDefaultGroupWarmupTime(form.value, defaultCats) || '7:00 AM')
     : '7:00 AM'
 
+  const matchingSchedule = (form.value.schedule || []).find(s => s.day?.toLowerCase().includes('sun'))
+  const defaultDate = matchingSchedule?.date || ''
+  const defaultSubtitle = matchingSchedule?.subtitle || ''
+
   form.value.warmupGroups!.push({
     id: newId,
     name: defaultCats.length > 0 ? defaultCats.join(', ') : 'New Warm-up Group',
@@ -862,8 +888,8 @@ const addWarmupGroup = () => {
     stagingTime: '',
     startTime: '',
     day: 'Sunday',
-    date: 'Sept 6',
-    subtitle: 'North Conference • Race Day',
+    date: defaultDate,
+    subtitle: defaultSubtitle,
     categories: [...defaultCats],
     ridersAllowed: '',
     duration: '60 min',
@@ -972,19 +998,22 @@ const addCoachSlot = (type: 'pr' | 'wu') => {
   const list = type === 'pr' ? form.value.coachSignups!.preRides! : form.value.coachSignups!.warmups!
   const newId = `${type}-${Date.now()}`
   if (type === 'pr') {
+    const satDay = (form.value.schedule || []).find(s => s.day?.toLowerCase().includes('sat'))
     list.push({
       id: newId,
       name: 'All Team Pre-Ride Wave',
       meetingTime: '2:00 PM - 3:00 PM',
       ridersAllowed: 'Registered Riders & Coaches',
       day: 'Saturday',
-      subtitle: 'South Conference',
+      date: satDay?.date || '',
+      subtitle: satDay?.subtitle || '',
       tag: 'Pre-Ride',
       tagClass: 'tag-preride',
       leaders: [],
       support: []
     })
   } else {
+    const sunDay = (form.value.schedule || []).find(s => s.day?.toLowerCase().includes('sun'))
     list.push({
       id: newId,
       name: 'New Warm-up Session',
@@ -992,7 +1021,8 @@ const addCoachSlot = (type: 'pr' | 'wu') => {
       stagingTime: '9:45 AM',
       ridersAllowed: 'Wave Participants',
       day: 'Sunday',
-      subtitle: 'North Conference • Race Day',
+      date: sunDay?.date || '',
+      subtitle: sunDay?.subtitle || '',
       tag: 'Warm-up',
       tagClass: 'tag-special',
       leaders: [],

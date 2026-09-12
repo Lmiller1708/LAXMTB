@@ -7,15 +7,21 @@ import {
   getCategoryStartTime,
   getCategoryStageTime,
   getCategoryStartTimeMinutes,
+  calculateEarliestGroupStageTime,
   parseTimeStrToMinutes,
-  formatMinutesToTimeStr
+  formatMinutesToTimeStr,
+  normalizeCategoryName,
+  targetTeamKeywords
 } from '~/modules/results/services/raceresultService'
+import { readFromStorageCache } from '~/modules/results/composables/useRaceResults'
+import { getFallbackSeedResults } from '~/modules/results/services/fallbackResultsService'
 import { useNotificationSubscriptions } from '~/modules/notifications/composables/useNotificationSubscriptions'
 
 type SessionKey = 'pr' | 'wu'
 
 const props = defineProps<{
   race: Race
+  riders?: any[]
   isCoachAuth?: boolean
   initialSession?: 'pr' | 'wu'
 }>()
@@ -96,6 +102,99 @@ const getSlotCategories = (slot: any): string[] => {
   return []
 }
 
+// Effective riders resolved from props or offline storage/fixtures
+const effectiveRiders = computed(() => {
+  if (props.riders && props.riders.length > 0) {
+    return props.riders
+  }
+  if (!props.race?.eventId) return []
+  const eventId = String(props.race.eventId)
+  const cached = readFromStorageCache(eventId, 'list') || getFallbackSeedResults(eventId, 'list')
+  if (cached?.riders && cached.riders.length > 0) {
+    const teamOnly = cached.riders.filter((r: any) =>
+      targetTeamKeywords.some((kw: string) => (r.team || '').toLowerCase().includes(kw))
+    )
+    return teamOnly.length > 0 ? teamOnly : cached.riders
+  }
+  return []
+})
+
+const canonicalCategoryName = (name: string): string => {
+  if (!name) return ''
+  const lower = name.toLowerCase().trim()
+  const isGirl = lower.includes('girl')
+  const isBoy = lower.includes('boy')
+  const gender = isGirl ? 'Girls' : (isBoy ? 'Boys' : '')
+
+  let div = ''
+  if (lower.includes('varsity')) div = 'Varsity'
+  else if (/\bjv\s*(iii|3)\b/i.test(lower)) div = 'JV III'
+  else if (/\bjv\s*(ii|2)\b/i.test(lower)) div = 'JV II'
+  else if (/\b(freshman|9th)\b/i.test(lower)) div = 'Freshman'
+  else if (/\bms2\b/i.test(lower)) div = 'MS2'
+  else if (/\b8th\b/i.test(lower)) div = '8th Grade'
+  else if (/\b7th\b/i.test(lower)) div = '7th Grade'
+  else if (/\b6th\b/i.test(lower)) div = '6th Grade'
+  else if (/\b(hs\s*open|hso)\b/i.test(lower)) div = 'HS Open'
+
+  return div && gender ? `${div} ${gender}` : normalizeCategoryName(name).trim()
+}
+
+const getSlotCanonicalCategories = (slot: any): string[] => {
+  if (Array.isArray(slot.categories) && slot.categories.length > 0) {
+    return slot.categories.map((c: string) => canonicalCategoryName(c)).filter(Boolean)
+  }
+
+  // Fallback parsing from name / ridersAllowed only if slot.categories is empty
+  const text = `${slot.ridersAllowed || ''} ${slot.name || ''}`.toLowerCase()
+  const isGirl = text.includes('girl')
+  const isBoy = text.includes('boy')
+  const genders: string[] = []
+  if (isGirl) genders.push('Girls')
+  if (isBoy) genders.push('Boys')
+  if (genders.length === 0) genders.push('Boys', 'Girls')
+
+  const divs: string[] = []
+  if (text.includes('varsity')) divs.push('Varsity')
+  if (/\bjv\s*(iii|3)\b/i.test(text)) divs.push('JV III')
+  if (/\bjv\s*(ii|2)\b/i.test(text)) divs.push('JV II')
+  if (/\b(freshman|9th)\b/i.test(text)) divs.push('Freshman')
+  if (/\bms2\b/i.test(text)) divs.push('MS2')
+  if (/\b8th\b/i.test(text)) divs.push('8th Grade')
+  if (/\b7th\b/i.test(text)) divs.push('7th Grade')
+  if (/\b6th\b/i.test(text)) divs.push('6th Grade')
+  if (/\b(hs\s*open|hso)\b/i.test(text)) divs.push('HS Open')
+
+  const result: string[] = []
+  for (const d of divs) {
+    for (const g of genders) {
+      result.push(`${d} ${g}`)
+    }
+  }
+  return result
+}
+
+const matchCategoryToSlot = (catName: string, slot: any): boolean => {
+  if (!catName || !slot) return false
+  const riderCat = canonicalCategoryName(catName).toLowerCase()
+  const slotCats = getSlotCanonicalCategories(slot)
+  return slotCats.some(sc => sc.toLowerCase() === riderCat)
+}
+
+const getSlotRiders = (slot: any): any[] => {
+  if (!slot || !effectiveRiders.value || effectiveRiders.value.length === 0) return []
+  return effectiveRiders.value.filter((r: any) => matchCategoryToSlot(r.category, slot))
+}
+
+const getSlotRiderCount = (slot: any): number => {
+  return getSlotRiders(slot).length
+}
+
+const getSlotRiderTooltip = (slot: any): string => {
+  const count = getSlotRiderCount(slot)
+  return `${count} team rider${count === 1 ? '' : 's'}`
+}
+
 const getCatStart = (cat: string) => getCategoryStartTime(props.race, cat)
 const getCatStage = (cat: string) => getCategoryStageTime(props.race, cat)
 
@@ -132,6 +231,31 @@ const getSlotStartTime = (slot: any): string | null => {
   return null
 }
 
+const getSlotStagingTime = (slot: any): string | null => {
+  const cats = getSlotCategories(slot)
+  if (cats && cats.length > 0) {
+    const earliestCatStage = calculateEarliestGroupStageTime(props.race, cats)
+    if (earliestCatStage) return earliestCatStage
+  }
+
+  if (slot.stagingTime && typeof slot.stagingTime === 'string' && slot.stagingTime.trim() !== '') {
+    return slot.stagingTime
+  }
+
+  const startStr = getSlotStartTime(slot)
+  if (startStr) {
+    const startMins = parseTimeStrToMinutes(startStr)
+    if (startMins !== null) {
+      const offset = (props.race && typeof props.race.stagingOffsetMinutes === 'number')
+        ? props.race.stagingOffsetMinutes
+        : 15
+      return formatMinutesToTimeStr(startMins - offset)
+    }
+  }
+
+  return null
+}
+
 interface DayGroup {
   day: string
   date: string
@@ -149,15 +273,22 @@ const activeDayGroups = computed<DayGroup[]>(() => {
 
   rawSlots.forEach((slot) => {
     const dayKey = slot.day || (activeSession.value === 'pr' ? 'Saturday' : 'Sunday')
-    const dateKey = slot.date || (dayKey.toLowerCase().includes('sun') ? 'Sept 6' : 'Sept 5')
-    const isRaceDay = dayKey.toLowerCase().includes('sun')
-    const subtitle = slot.subtitle || (isRaceDay ? 'North Conference • Race Day' : 'South Conference')
+
+    // Dynamically look up matching day from props.race.schedule so edits in Admin Schedule are immediately reflected
+    const matchingDay = (props.race?.schedule || []).find((d: any) =>
+      d.day && d.day.toLowerCase().trim() === dayKey.toLowerCase().trim()
+    )
+
+    const dateKey = matchingDay?.date || slot.date || ''
+    // NEVER fall back to hardcoded "North Conference • Race Day" or "South Conference"
+    const subtitle = (matchingDay?.subtitle !== undefined ? matchingDay.subtitle : slot.subtitle) || ''
+    const isRaceDay = matchingDay?.isRaceDay ?? (dayKey.toLowerCase().includes('sun'))
 
     if (!groupMap[dayKey]) {
       groupMap[dayKey] = {
         day: dayKey,
         date: dateKey,
-        subtitle,
+        subtitle: subtitle.trim(),
         isRaceDay,
         slots: []
       }
@@ -178,12 +309,42 @@ const splitTime = (timeStr?: string) => {
   return { start: timeStr.trim(), end: '' }
 }
 
+// Collapsible state for individual slot cards (collapsed by default for clean scannable view)
+const expandedSlotIds = ref<Record<string, boolean>>({})
+
+const isSlotExpanded = (slotId: string): boolean => {
+  if (activeInputSlotId.value === slotId) return true
+  return !!expandedSlotIds.value[slotId]
+}
+
+const toggleSlotCollapse = (slotId: string) => {
+  expandedSlotIds.value[slotId] = !isSlotExpanded(slotId)
+}
+
+const areAllSlotsExpanded = computed(() => {
+  const currentSlots = activeSession.value === 'pr' ? preRideSlots.value : warmupSlots.value
+  if (!currentSlots || currentSlots.length === 0) return false
+  return currentSlots.every(s => expandedSlotIds.value[s.id])
+})
+
+const toggleAllSlots = () => {
+  const currentSlots = activeSession.value === 'pr' ? preRideSlots.value : warmupSlots.value
+  if (!currentSlots || currentSlots.length === 0) return
+  const nextState = !areAllSlotsExpanded.value
+  const map: Record<string, boolean> = {}
+  currentSlots.forEach(s => {
+    map[s.id] = nextState
+  })
+  expandedSlotIds.value = map
+}
+
 const startInlineInput = (slotId: string, role: 'leader' | 'support') => {
   if (isSignupsClosed.value) return
   if (!canEditCoachSignups.value) {
     emit('openAuth')
     return
   }
+  expandedSlotIds.value[slotId] = true
   activeInputSlotId.value = slotId
   activeInputRole.value = role
   inlineNameInput.value = ''
@@ -253,6 +414,10 @@ const isMeSignedUp = (slot: any, role: 'leader' | 'support'): boolean => {
   if (!myName) return false
   const list = role === 'leader' ? (slot.leaders || []) : (slot.support || [])
   return hasCoach(list, myName)
+}
+
+const isCurrentUserSignedUpForSlot = (slot: any): boolean => {
+  return isMeSignedUp(slot, 'leader') || isMeSignedUp(slot, 'support')
 }
 
 const addMeQuick = async (slot: any, role: 'leader' | 'support') => {
@@ -436,121 +601,191 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
 </script>
 
 <template>
-  <div class="signup-hub-section" :class="{ 'card-collapsed': !isOpen }" id="coachSignupHub">
-    <!-- Collapsible Header -->
-    <div class="signup-hub-header collapsible-header" @click="isOpen = !isOpen">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="signup-hub-title">
-          <span>🚵</span> Coach Sign-Ups
-          <span v-if="isSignupsClosed" class="signup-badge-closed">🔒 Sign-Ups Closed</span>
-          <span v-else-if="canEditCoachSignups" class="signup-badge-active">✏️ Editing Enabled</span>
-        </span>
+  <div class="coach-signups-page" id="coachSignupHub">
+    <!-- Closed banner if race date range has passed -->
+    <div v-if="isSignupsClosed" class="signups-closed-banner">
+      <span>🔒</span>
+      <span>This event has concluded ({{ race.dateStr }}). Coach sign-ups are closed.</span>
+    </div>
+
+    <!-- Session Pills Toolbar with Expand/Collapse All -->
+    <div class="signup-tabs-toolbar">
+      <div class="signup-pills-group">
+        <button
+          type="button"
+          class="signup-tab-pill"
+          :class="{ active: activeSession === 'pr' }"
+          @click="selectSession('pr')"
+        >
+          <span>🚵</span> Pre-Rides
+        </button>
+        <button
+          type="button"
+          class="signup-tab-pill pill-league"
+          :class="{ active: activeSession === 'wu' }"
+          @click="selectSession('wu')"
+        >
+          <span>🔥</span> Warm-ups
+        </button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
+
+      <div class="signup-toolbar-actions">
         <button
           v-if="isCoachAuth"
           type="button"
-          class="card-inline-edit-btn"
+          class="btn-action-pill"
           title="Edit Coach Sign-ups Config in Admin"
-          @click.stop="emit('edit')"
+          @click="emit('edit')"
         >
           <span>⚙️</span>
+          <span>Edit Config</span>
         </button>
-        <span class="card-toggle-icon" :class="{ collapsed: !isOpen }" title="Toggle Coach Sign-Ups">▼</span>
+
+        <button
+          type="button"
+          class="btn-action-pill"
+          :title="areAllSlotsExpanded ? 'Collapse all wave cards' : 'Expand all wave cards'"
+          @click="toggleAllSlots"
+        >
+          <span>↕️</span>
+          <span>{{ areAllSlotsExpanded ? 'Collapse All' : 'Expand All' }}</span>
+        </button>
       </div>
     </div>
 
-    <div v-show="isOpen" class="collapsible-body">
-      <!-- Closed banner if race date range has passed -->
-      <div v-if="isSignupsClosed" class="signups-closed-banner">
-        <span>🔒</span>
-        <span>This event has concluded ({{ race.dateStr }}). Coach sign-ups are closed.</span>
+    <!-- Schedule Days Container -->
+    <div class="coach-days-container">
+      <div v-if="activeDayGroups.length === 0" class="no-results" style="padding:24px;text-align:center;">
+        <p style="margin:0;color:var(--text-muted);font-size:13px;">No {{ activeSession === 'pr' ? 'pre-ride' : 'warm-up' }} slots scheduled.</p>
       </div>
-
-      <!-- Session Pills Toolbar -->
-      <div class="signup-tabs-toolbar" style="margin-bottom:8px;">
-        <div class="signup-pills-group">
-          <button
-            type="button"
-            class="signup-tab-pill"
-            :class="{ active: activeSession === 'pr' }"
-            @click="selectSession('pr')"
-          >
-            <span>🚵</span> Pre-Rides
-          </button>
-          <button
-            type="button"
-            class="signup-tab-pill pill-league"
-            :class="{ active: activeSession === 'wu' }"
-            @click="selectSession('wu')"
-          >
-            <span>🔥</span> Warm-ups
-          </button>
-        </div>
-      </div>
-
-      <!-- Schedule Days Container -->
-      <div class="detail-section-body" style="padding-top:0;">
-        <div v-if="activeDayGroups.length === 0" class="no-results" style="padding:16px;text-align:center;">
-          <p style="margin:0;color:var(--text-muted);font-size:13px;">No {{ activeSession === 'pr' ? 'pre-ride' : 'warm-up' }} slots scheduled.</p>
-        </div>
 
         <div
           v-for="grp in activeDayGroups"
           :key="grp.day"
           class="schedule-day-group"
-          style="margin-bottom:8px;"
         >
           <!-- Day Header -->
-          <div class="schedule-day-header" :class="{ 'day-raceday': grp.isRaceDay }" style="padding:6px 10px;">
-            <div style="display:flex;align-items:center;gap:6px;">
+          <div class="schedule-day-header" :class="{ 'day-raceday': grp.isRaceDay }">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;">
               <span>{{ grp.isRaceDay ? '🏁' : '🚵' }}</span>
-              <span style="font-weight:800;font-size:12.5px;">{{ grp.day }}</span>
-              <span v-if="grp.date" class="schedule-date-badge" style="font-size:10.5px;">📅 {{ grp.date }}</span>
+              <span style="font-weight:800;font-size:12.5px;white-space:nowrap;">{{ grp.day }}</span>
+              <span v-if="grp.date" class="schedule-date-badge" style="font-size:10.5px;white-space:nowrap;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.8;margin-right:2px;">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                {{ grp.date }}
+              </span>
             </div>
-            <span class="schedule-day-badge" style="font-size:10px;">{{ grp.subtitle }}</span>
+            <span v-if="grp.subtitle && grp.subtitle.trim()" class="schedule-day-badge" style="font-size:10px;white-space:nowrap;">{{ grp.subtitle }}</span>
           </div>
 
-          <!-- Slots in Day -->
+          <!-- Slots in Day (Collapsible Cards - exactly matching list cards) -->
           <div class="coach-slot-list">
             <div
               v-for="slot in grp.slots"
               :key="slot.id"
-              class="coach-slot-card"
+              class="coach-slot-card table-card"
+              :class="{ 'card-collapsed': !isSlotExpanded(slot.id) }"
             >
-              <!-- Slot Header (Title & Time) -->
-              <div class="coach-slot-header">
-                <div class="coach-slot-title-group">
-                  <span class="coach-slot-title">{{ slot.name }}</span>
-                  <span v-if="slot.tag" class="schedule-tag" :class="slot.tagClass" style="font-size:9.5px;padding:1px 5px;">{{ slot.tag }}</span>
+              <!-- Slot Header (Clickable to Toggle Collapse) - styled exactly like the lists -->
+              <div
+                class="coach-slot-header category-header collapsible-header"
+                title="Click to expand/collapse"
+                @click="toggleSlotCollapse(slot.id)"
+              >
+                <!-- Main Info Area (Title on Left, Badges on Right) -->
+                <div class="coach-slot-main-info">
+                  <div class="coach-slot-title-row">
+                    <span
+                      v-if="isCurrentUserSignedUpForSlot(slot)"
+                      class="user-signed-up-indicator"
+                      title="You are signed up for this ride"
+                    >
+                      <svg
+                        class="signed-up-bookmark-icon"
+                        viewBox="0 0 24 24"
+                        width="13"
+                        height="13"
+                        fill="currentColor"
+                        fill-opacity="0.25"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                    </span>
+                    <span class="coach-slot-title">{{ slot.name }}</span>
+                    <!-- Warm-up Riders Count Badge (Matching exact design from list category headers) -->
+                    <span
+                      v-if="activeSession === 'wu'"
+                      class="category-badge warmup-riders-badge"
+                      :title="getSlotRiderTooltip(slot)"
+                    >
+                      {{ getSlotRiderCount(slot) }} {{ getSlotRiderCount(slot) === 1 ? 'RIDER' : 'RIDERS' }}
+                    </span>
+                  </div>
+
+                  <!-- Badges Row: Status Badges (Needed) & Time Strip -->
+                  <div class="coach-slot-badges-row">
+                    <!-- Leader & Support Needed Badges -->
+                    <span
+                      v-if="(!slot.leaders || slot.leaders.length === 0)"
+                      class="role-status-badge badge-needed"
+                    >
+                      ⚠️ Leader Needed
+                    </span>
+                    <span
+                      v-if="(!slot.support || slot.support.length === 0)"
+                      class="role-status-badge badge-support-needed"
+                    >
+                      ⚠️ Support Needed
+                    </span>
+
+                    <!-- Unified Schedule Strip (Warm › Stage › Start) matching list cards -->
+                    <div v-if="slot.meetingTime || getSlotStagingTime(slot) || getSlotStartTime(slot)" class="wave-schedule-strip slot-schedule-strip">
+                      <template v-if="getSlotStagingTime(slot) || getSlotStartTime(slot)">
+                        <span v-if="slot.meetingTime" class="wave-schedule-step step-warmup" :title="activeSession === 'wu' ? 'Warm-up meeting time' : 'Meeting time'">
+                          <span class="step-lbl">{{ activeSession === 'wu' ? 'Warm:' : 'Meet:' }}</span>
+                          <span class="step-time">{{ slot.meetingTime }}</span>
+                        </span>
+                        <span v-if="slot.meetingTime && (getSlotStagingTime(slot) || getSlotStartTime(slot))" class="wave-schedule-sep">›</span>
+                        <span v-if="getSlotStagingTime(slot)" class="wave-schedule-step step-stage" title="Staging grid call-up">
+                          <span class="step-lbl">Stage:</span>
+                          <span class="step-time">{{ getSlotStagingTime(slot) }}</span>
+                        </span>
+                        <span v-if="getSlotStagingTime(slot) && getSlotStartTime(slot)" class="wave-schedule-sep">›</span>
+                        <span v-if="getSlotStartTime(slot)" class="wave-schedule-step step-start" title="Official wave start">
+                          <span class="step-lbl">Start:</span>
+                          <span class="step-time">{{ getSlotStartTime(slot) }}</span>
+                        </span>
+                      </template>
+                      <template v-else>
+                        <span class="wave-schedule-step">
+                          <span class="step-lbl">{{ activeSession === 'wu' ? 'Warm:' : 'Time:' }}</span>
+                          <span class="step-time">
+                            {{ splitTime(slot.meetingTime).start }}
+                            <template v-if="splitTime(slot.meetingTime).end">
+                              to {{ splitTime(slot.meetingTime).end }}
+                            </template>
+                          </span>
+                        </span>
+                      </template>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Time Badges & Alert Status -->
-                <div class="coach-slot-time-group" style="display:flex;align-items:center;gap:6px;">
-                  <template v-if="slot.stagingTime || getSlotStartTime(slot)">
-                    <span v-if="slot.meetingTime" class="time-badge" style="font-size:10.5px;padding:1px 6px;">
-                      <span style="font-size:9px;color:var(--text-muted);font-weight:700;margin-right:2px;">MEET</span>{{ slot.meetingTime }}
-                    </span>
-                    <span v-if="slot.stagingTime" class="time-badge" style="border-color:rgba(239,68,68,0.4);color:#f87171;font-size:10.5px;padding:1px 6px;">
-                      <span style="font-size:9px;opacity:0.8;font-weight:700;margin-right:2px;">STAGE</span>{{ slot.stagingTime }}
-                    </span>
-                    <span v-if="getSlotStartTime(slot)" class="time-badge" style="border-color:rgba(34,197,94,0.4);color:#4ade80;font-size:10.5px;padding:1px 6px;">
-                      <span style="font-size:9px;opacity:0.8;font-weight:700;margin-right:2px;">START</span>{{ getSlotStartTime(slot) }}
-                    </span>
-                  </template>
-                  <template v-else>
-                    <span class="time-badge" style="font-size:10.5px;padding:1px 6px;">
-                      {{ splitTime(slot.meetingTime).start }}
-                      <template v-if="splitTime(slot.meetingTime).end">
-                        <span class="time-to-badge">to</span>{{ splitTime(slot.meetingTime).end }}
-                      </template>
-                    </span>
-                  </template>
-
-                  <!-- Ride Group Alert Toggle Button with Sleek Outline Bell SVG -->
+                <!-- Actions Area (Fixed to Far Right) -->
+                <div class="coach-slot-actions">
+                  <!-- Ride Group Alert Toggle Button with Sleek Outline Bell SVG (Icon Only) -->
                   <button
                     type="button"
-                    class="action-mini-btn notif-bell-btn"
+                    class="action-mini-btn notif-bell-btn slot-bell-btn"
                     :class="{ active: isRideGroupSubscribed(slot.id) }"
                     :title="isRideGroupSubscribed(slot.id) ? 'Notifications active for this ride group! Click to toggle' : 'Enable notifications for this ride group'"
                     @click.stop="toggleRideGroupSubscription({
@@ -558,7 +793,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                       name: slot.name || (activeSession === 'wu' ? 'Warm-up Group' : 'Pre-Ride Wave'),
                       sessionType: activeSession,
                       meetingTime: slot.meetingTime || '8:00 AM',
-                      stagingTime: slot.stagingTime,
+                      stagingTime: getSlotStagingTime(slot) || undefined,
                       startTime: getSlotStartTime(slot) || undefined,
                       day: slot.day,
                       date: slot.date,
@@ -566,35 +801,34 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                       raceId: race.id
                     })"
                   >
-                    <!-- Modern outline bell SVG matching reference -->
+                    <!-- Bell icon matching user screenshot and cat-notif-btn -->
                     <svg
                       width="14"
                       height="14"
                       viewBox="0 0 24 24"
-                      fill="none"
+                      :fill="isRideGroupSubscribed(slot.id) ? 'currentColor' : 'none'"
                       stroke="currentColor"
-                      stroke-width="2.2"
+                      stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
                       class="bell-icon"
                     >
-                      <path
-                        d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
-                        :fill="isRideGroupSubscribed(slot.id) ? 'rgba(239, 68, 68, 0.25)' : 'none'"
-                      />
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                       <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                     </svg>
-                    <span class="bell-text">{{ isRideGroupSubscribed(slot.id) ? 'Alerts On' : 'Alerts' }}</span>
                   </button>
+
+                  <!-- Smaller List-style Toggle Chevron fixed on far right -->
+                  <span
+                    class="card-toggle-icon slot-toggle-icon"
+                    :class="{ collapsed: !isSlotExpanded(slot.id) }"
+                    title="Toggle card"
+                  >▼</span>
                 </div>
               </div>
 
-              <!-- Slot Body -->
-              <div class="coach-slot-body">
-                <div v-if="activeSession === 'pr' && slot.ridersAllowed" class="coach-slot-desc">
-                  {{ slot.ridersAllowed }}
-                </div>
-
+              <!-- Slot Body (Collapsible) -->
+              <div v-show="isSlotExpanded(slot.id)" class="coach-slot-body collapsible-body">
                 <!-- Grouped Categories Breakdown -->
                 <div v-if="getSlotCategories(slot).length > 0" style="display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 4px;">
                   <span
@@ -609,201 +843,260 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
                   </span>
                 </div>
 
-                <div class="coach-roles-container">
-                  <!-- 1. Ride Leaders Row -->
-                  <div class="coach-role-row">
-                    <div class="coach-role-label">
-                      <span class="role-bullet bullet-leader">•</span>
-                      <span>Leader <span class="role-req">(L2+)</span>:</span>
-                    </div>
-
-                    <div class="coach-role-content">
-                      <!-- Leader Names with Avatars -->
-                      <div
-                        v-for="(coachItem, idx) in (slot.leaders || [])"
-                        :key="idx"
-                        class="coach-chip"
-                      >
-                        <img
-                          v-if="getCoachPhoto(coachItem)"
-                          :src="getCoachPhoto(coachItem)"
-                          class="coach-chip-avatar img"
-                          alt=""
-                          referrerpolicy="no-referrer"
-                        />
-                        <span v-else class="coach-chip-avatar initials">
-                          {{ getCoachInitials(coachItem) }}
+                <!-- Coaching Staff Section (Clean Neutral Cards, No Icons, No Yellow/Blue) -->
+                <div class="coach-staff-section">
+                  <div class="coach-roles-grid">
+                    <!-- 1. Ride Leader Bay -->
+                    <div
+                      class="coach-role-bay bay-leader"
+                      :class="{
+                        'is-needed': !slot.leaders || slot.leaders.length === 0
+                      }"
+                    >
+                      <div class="role-bay-header">
+                        <div class="role-bay-title-wrap">
+                          <span class="role-bay-dot dot-leader">●</span>
+                          <span class="role-bay-name">Ride Leader</span>
+                          <span class="role-req-tag tag-leader">L2+ Req</span>
+                        </div>
+                        <span
+                          v-if="!slot.leaders || slot.leaders.length === 0"
+                          class="role-status-badge badge-needed"
+                        >
+                          ⚠️ Leader Needed
                         </span>
-                        <span class="coach-chip-name">{{ getCoachName(coachItem) }}</span>
-                        <!-- ✕ Remove button only visible if user can edit and event is active -->
-                        <button
-                          v-if="canEditSignupsActive"
-                          type="button"
-                          class="coach-chip-remove"
-                          title="Remove coach"
-                          @click="removeCoachName(slot, 'leader', idx)"
+                        <span
+                          v-else
+                          class="role-status-badge badge-assigned"
                         >
-                          ✕
-                        </button>
-                      </div>
-
-                      <!-- Empty slot notice when locked or closed -->
-                      <span
-                        v-if="!canEditSignupsActive && (!slot.leaders || slot.leaders.length === 0)"
-                        class="coach-empty-slot"
-                      >
-                        {{ isSignupsClosed ? 'No coaches signed up' : 'Open slot (Sign in to claim)' }}
-                      </span>
-
-                      <!-- Add Leader Button -->
-                      <template v-if="canEditSignupsActive && !(activeInputSlotId === slot.id && activeInputRole === 'leader')">
-                        <button
-                          type="button"
-                          class="coach-add-btn"
-                          title="Add a coach leader"
-                          @click="startInlineInput(slot.id, 'leader')"
-                        >
-                          + Add
-                        </button>
-                      </template>
-
-                      <!-- Inline Leader Input -->
-                      <div
-                        v-if="canEditSignupsActive && activeInputSlotId === slot.id && activeInputRole === 'leader'"
-                        class="inline-name-box"
-                      >
-                        <input
-                          ref="inlineInputRef"
-                          :class="['custom-minutes-input inline-name-field', `inline-field-${slot.id}-leader`]"
-                          v-model="inlineNameInput"
-                          type="text"
-                          placeholder="Coach name..."
-                          autofocus
-                          @keydown.enter="submitInlineName(slot, 'leader')"
-                          @keydown.esc="cancelInlineInput"
-                        >
-                        <button
-                          type="button"
-                          class="done-modal-btn admin-save-btn inline-btn"
-                          @click="submitInlineName(slot, 'leader')"
-                        >
-                          Add
-                        </button>
-                        <button
-                          v-if="user && !isMeSignedUp(slot, 'leader')"
-                          type="button"
-                          class="action-mini-btn inline-btn btn-quick-me"
-                          title="Add your signed-in name"
-                          @click="addMeQuick(slot, 'leader')"
-                        >
-                          + Me ({{ getMyName }})
-                        </button>
-                        <button
-                          type="button"
-                          class="action-mini-btn inline-btn"
-                          @click="cancelInlineInput"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- 2. Ride Support Row -->
-                  <div class="coach-role-row">
-                    <div class="coach-role-label">
-                      <span class="role-bullet bullet-support">•</span>
-                      <span>Support <span class="role-req">(L1–L3)</span>:</span>
-                    </div>
-
-                    <div class="coach-role-content">
-                      <!-- Support Names with Avatars -->
-                      <div
-                        v-for="(coachItem, idx) in (slot.support || [])"
-                        :key="idx"
-                        class="coach-chip"
-                      >
-                        <img
-                          v-if="getCoachPhoto(coachItem)"
-                          :src="getCoachPhoto(coachItem)"
-                          class="coach-chip-avatar img"
-                          alt=""
-                          referrerpolicy="no-referrer"
-                        />
-                        <span v-else class="coach-chip-avatar initials">
-                          {{ getCoachInitials(coachItem) }}
+                          ✓ {{ slot.leaders.length > 1 ? `${slot.leaders.length} Assigned` : 'Assigned' }}
                         </span>
-                        <span class="coach-chip-name">{{ getCoachName(coachItem) }}</span>
-                        <!-- ✕ Remove button only visible if user can edit and event is active -->
-                        <button
-                          v-if="canEditSignupsActive"
-                          type="button"
-                          class="coach-chip-remove"
-                          title="Remove coach"
-                          @click="removeCoachName(slot, 'support', idx)"
-                        >
-                          ✕
-                        </button>
                       </div>
 
-                      <!-- Empty slot notice when locked or closed -->
-                      <span
-                        v-if="!canEditSignupsActive && (!slot.support || slot.support.length === 0)"
-                        class="coach-empty-slot"
-                      >
-                        {{ isSignupsClosed ? 'No coaches signed up' : 'Open slot (Sign in to claim)' }}
-                      </span>
+                      <div class="role-bay-body">
+                        <!-- Leader Names with Avatars -->
+                        <div
+                          v-if="slot.leaders && slot.leaders.length > 0"
+                          class="coach-chips-wrap"
+                        >
+                          <div
+                            v-for="(coachItem, idx) in slot.leaders"
+                            :key="idx"
+                            class="coach-chip"
+                          >
+                            <img
+                              v-if="getCoachPhoto(coachItem)"
+                              :src="getCoachPhoto(coachItem)"
+                              class="coach-chip-avatar img"
+                              alt=""
+                              referrerpolicy="no-referrer"
+                            />
+                            <span v-else class="coach-chip-avatar initials">
+                              {{ getCoachInitials(coachItem) }}
+                            </span>
+                            <span class="coach-chip-name">{{ getCoachName(coachItem) }}</span>
+                            <!-- ✕ Remove button only visible if user can edit and event is active -->
+                            <button
+                              v-if="canEditSignupsActive"
+                              type="button"
+                              class="coach-chip-remove"
+                              title="Remove coach"
+                              @click="removeCoachName(slot, 'leader', idx)"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
 
-                      <!-- Add Support Button -->
-                      <template v-if="canEditSignupsActive && !(activeInputSlotId === slot.id && activeInputRole === 'support')">
-                        <button
-                          type="button"
-                          class="coach-add-btn btn-support"
-                          title="Add ride support"
-                          @click="startInlineInput(slot.id, 'support')"
+                        <!-- Empty slot notice when locked or closed -->
+                        <div
+                          v-else-if="!canEditSignupsActive"
+                          class="coach-unassigned-notice"
                         >
-                          + Add
-                        </button>
-                      </template>
+                          {{ isSignupsClosed ? 'No leader signed up' : 'Open slot' }}
+                        </div>
 
-                      <!-- Inline Support Input -->
-                      <div
-                        v-if="canEditSignupsActive && activeInputSlotId === slot.id && activeInputRole === 'support'"
-                        class="inline-name-box"
-                      >
-                        <input
-                          ref="inlineInputRef"
-                          :class="['custom-minutes-input inline-name-field', `inline-field-${slot.id}-support`]"
-                          v-model="inlineNameInput"
-                          type="text"
-                          placeholder="Coach name..."
-                          autofocus
-                          @keydown.enter="submitInlineName(slot, 'support')"
-                          @keydown.esc="cancelInlineInput"
+                        <!-- Add Coach Action -->
+                        <div
+                          v-if="canEditSignupsActive && !(activeInputSlotId === slot.id && activeInputRole === 'leader')"
+                          class="role-actions-wrap"
                         >
-                        <button
-                          type="button"
-                          class="done-modal-btn admin-save-btn inline-btn"
-                          @click="submitInlineName(slot, 'support')"
+                          <button
+                            type="button"
+                            class="coach-add-btn"
+                            title="Add a coach leader"
+                            @click="startInlineInput(slot.id, 'leader')"
+                          >
+                            + Add Coach
+                          </button>
+                        </div>
+
+                        <!-- Inline Leader Input -->
+                        <div
+                          v-if="canEditSignupsActive && activeInputSlotId === slot.id && activeInputRole === 'leader'"
+                          class="inline-name-box"
                         >
-                          Add
-                        </button>
-                        <button
-                          v-if="user && !isMeSignedUp(slot, 'support')"
-                          type="button"
-                          class="action-mini-btn inline-btn btn-quick-me"
-                          title="Add your signed-in name"
-                          @click="addMeQuick(slot, 'support')"
+                          <input
+                            ref="inlineInputRef"
+                            :class="['custom-minutes-input inline-name-field', `inline-field-${slot.id}-leader`]"
+                            v-model="inlineNameInput"
+                            type="text"
+                            placeholder="Coach name..."
+                            autofocus
+                            @keydown.enter="submitInlineName(slot, 'leader')"
+                            @keydown.esc="cancelInlineInput"
+                          >
+                          <button
+                            type="button"
+                            class="done-modal-btn admin-save-btn inline-btn"
+                            @click="submitInlineName(slot, 'leader')"
+                          >
+                            Add
+                          </button>
+                          <button
+                            v-if="user && !isMeSignedUp(slot, 'leader')"
+                            type="button"
+                            class="action-mini-btn inline-btn btn-quick-me"
+                            title="Add your signed-in name"
+                            @click="addMeQuick(slot, 'leader')"
+                          >
+                            + Me ({{ getMyName }})
+                          </button>
+                          <button
+                            type="button"
+                            class="action-mini-btn inline-btn"
+                            @click="cancelInlineInput"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 2. Ride Support Bay -->
+                    <div
+                      class="coach-role-bay bay-support"
+                      :class="{
+                        'is-needed': !slot.support || slot.support.length === 0
+                      }"
+                    >
+                      <div class="role-bay-header">
+                        <div class="role-bay-title-wrap">
+                          <span class="role-bay-dot dot-support">●</span>
+                          <span class="role-bay-name">Ride Support</span>
+                          <span class="role-req-tag tag-support">L1–L3</span>
+                        </div>
+                        <span
+                          v-if="!slot.support || slot.support.length === 0"
+                          class="role-status-badge badge-support-needed"
                         >
-                          + Me ({{ getMyName }})
-                        </button>
-                        <button
-                          type="button"
-                          class="action-mini-btn inline-btn"
-                          @click="cancelInlineInput"
+                          ⚠️ Support Needed
+                        </span>
+                        <span
+                          v-else
+                          class="role-status-badge badge-assigned"
                         >
-                          ✕
-                        </button>
+                          ✓ {{ slot.support.length }} Assigned
+                        </span>
+                      </div>
+
+                      <div class="role-bay-body">
+                        <!-- Support Names with Avatars -->
+                        <div
+                          v-if="slot.support && slot.support.length > 0"
+                          class="coach-chips-wrap"
+                        >
+                          <div
+                            v-for="(coachItem, idx) in slot.support"
+                            :key="idx"
+                            class="coach-chip"
+                          >
+                            <img
+                              v-if="getCoachPhoto(coachItem)"
+                              :src="getCoachPhoto(coachItem)"
+                              class="coach-chip-avatar img"
+                              alt=""
+                              referrerpolicy="no-referrer"
+                            />
+                            <span v-else class="coach-chip-avatar initials">
+                              {{ getCoachInitials(coachItem) }}
+                            </span>
+                            <span class="coach-chip-name">{{ getCoachName(coachItem) }}</span>
+                            <!-- ✕ Remove button only visible if user can edit and event is active -->
+                            <button
+                              v-if="canEditSignupsActive"
+                              type="button"
+                              class="coach-chip-remove"
+                              title="Remove coach"
+                              @click="removeCoachName(slot, 'support', idx)"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Empty slot notice when locked or closed -->
+                        <div
+                          v-else-if="!canEditSignupsActive"
+                          class="coach-unassigned-notice"
+                        >
+                          {{ isSignupsClosed ? 'No support signed up' : 'Open slot' }}
+                        </div>
+
+                        <!-- Add Coach Action -->
+                        <div
+                          v-if="canEditSignupsActive && !(activeInputSlotId === slot.id && activeInputRole === 'support')"
+                          class="role-actions-wrap"
+                        >
+                          <button
+                            type="button"
+                            class="coach-add-btn"
+                            title="Add ride support"
+                            @click="startInlineInput(slot.id, 'support')"
+                          >
+                            + Add Coach
+                          </button>
+                        </div>
+
+                        <!-- Inline Support Input -->
+                        <div
+                          v-if="canEditSignupsActive && activeInputSlotId === slot.id && activeInputRole === 'support'"
+                          class="inline-name-box"
+                        >
+                          <input
+                            ref="inlineInputRef"
+                            :class="['custom-minutes-input inline-name-field', `inline-field-${slot.id}-support`]"
+                            v-model="inlineNameInput"
+                            type="text"
+                            placeholder="Coach name..."
+                            autofocus
+                            @keydown.enter="submitInlineName(slot, 'support')"
+                            @keydown.esc="cancelInlineInput"
+                          >
+                          <button
+                            type="button"
+                            class="done-modal-btn admin-save-btn inline-btn"
+                            @click="submitInlineName(slot, 'support')"
+                          >
+                            Add
+                          </button>
+                          <button
+                            v-if="user && !isMeSignedUp(slot, 'support')"
+                            type="button"
+                            class="action-mini-btn inline-btn btn-quick-me"
+                            title="Add your signed-in name"
+                            @click="addMeQuick(slot, 'support')"
+                          >
+                            + Me ({{ getMyName }})
+                          </button>
+                          <button
+                            type="button"
+                            class="action-mini-btn inline-btn"
+                            @click="cancelInlineInput"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -814,7 +1107,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
         </div>
 
         <!-- Policy Banner -->
-        <div class="event-warning-banner" style="margin-top:8px;padding:7px 10px;font-size:11px;">
+        <div class="event-warning-banner" style="margin-top:12px;padding:8px 12px;font-size:11px;">
           <span>⚠️</span>
           <span>
             <strong>Policy:</strong>
@@ -823,8 +1116,7 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
         </div>
       </div>
     </div>
-  </div>
-</template>
+  </template>
 
 <style scoped>
 .coach-locked-banner {
@@ -965,42 +1257,268 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
   letter-spacing: 0.2px;
 }
 
+/* Compact toolbar styled like the lists controls toolbar */
+.coach-signups-page .signup-tabs-toolbar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.signup-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.coach-signups-page .signup-tab-pill {
+  padding: 5px 12px;
+  min-height: 28px;
+  font-size: 11.5px;
+}
+
+/* Day Groups: Remove outer nested container border and shadow */
+.coach-days-container .schedule-day-group {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+  margin-bottom: 16px;
+  padding: 0;
+}
+
+/* Day Header: Standalone card matching list design with equal 8px spacing to the first card */
+.coach-days-container .schedule-day-header {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.coach-days-container .schedule-day-header.day-raceday {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.35);
+  color: var(--accent-red);
+}
+
 .coach-slot-list {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding: 5px;
+  gap: 8px;
+  padding: 0;
 }
 
-.coach-slot-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.coach-slot-list .coach-slot-card {
+  margin-bottom: 0 !important;
 }
 
 .coach-slot-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
 }
 
-.coach-slot-title-group {
+.coach-slot-main-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.coach-slot-title-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.user-signed-up-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-red, #ef4444);
+  flex-shrink: 0;
+  line-height: 1;
+  cursor: help;
+}
+
+:root[data-theme="dark"] .user-signed-up-indicator {
+  color: #f87171;
+}
+
+:root[data-theme="light"] .user-signed-up-indicator {
+  color: #dc2626;
+}
+
+.signed-up-bookmark-icon {
+  display: block;
 }
 
 .coach-slot-title {
-  font-weight: 700;
-  font-size: 12.5px;
+  font-weight: 800;
+  font-size: 13px;
   color: var(--text-main);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.warmup-riders-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  cursor: help;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.warmup-riders-badge:hover {
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.coach-slot-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+  gap: 4px 6px;
+}
+
+.coach-slot-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: flex-start;
+  padding-top: 1px;
+}
+
+/* Smaller Collapse Toggle Chevron (Fixed to Far Right) */
+.card-toggle-icon.slot-toggle-icon {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  font-size: 8px;
+  border-radius: 4px;
+  margin-left: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.15s ease, color 0.15s ease;
+}
+
+.card-toggle-icon.slot-toggle-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.category-header:hover .card-toggle-icon.slot-toggle-icon {
+  color: var(--text-main);
+  border-color: var(--border-strong);
+}
+
+.slot-bell-btn {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+@media (min-width: 860px) {
+  .coach-slot-header {
+    align-items: center;
+    padding: 9px 12px;
+  }
+  .coach-slot-main-info {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+  .coach-slot-title {
+    font-size: 13.5px;
+  }
+  .coach-slot-actions {
+    align-self: center;
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 859px) {
+  .coach-slot-main-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .coach-slot-badges-row {
+    margin-left: 0;
+    justify-content: flex-start;
+    width: 100%;
+  }
+  .coach-slot-badges-row .slot-schedule-strip {
+    order: 1;
+  }
+  .coach-slot-badges-row .role-status-badge {
+    order: 2;
+  }
+  .coach-slot-actions {
+    align-self: flex-start;
+    padding-top: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .coach-slot-header {
+    padding: 7px 9px;
+    gap: 6px;
+  }
+}
+
+.coach-slot-body {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .coach-slot-desc {
@@ -1009,55 +1527,257 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
   margin-bottom: 2px;
 }
 
-.coach-roles-container {
+.coach-staff-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
-.coach-role-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.coach-role-label {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--text-muted);
-  min-width: 115px;
+.coach-staff-header {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding-top: 2px;
+  gap: 6px;
 }
 
-.role-bullet {
-  font-size: 14px;
+.coach-staff-title {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.coach-staff-divider {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme="light"] .coach-staff-divider {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.coach-roles-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (max-width: 620px) {
+  .coach-roles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.coach-role-bay {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+:root[data-theme="light"] .coach-role-bay {
+  background: transparent;
+  border-color: #e2e8f0;
+}
+
+/* Default border color for assigned bays (uses standard theme border) */
+.coach-role-bay.bay-leader,
+.coach-role-bay.bay-support {
+  border: 1px solid var(--border);
+  background: transparent;
+}
+
+:root[data-theme="light"] .coach-role-bay.bay-leader,
+:root[data-theme="light"] .coach-role-bay.bay-support {
+  border-color: #e2e8f0;
+}
+
+/* ONLY when needed: highlighted with distinct colors for leader vs. support */
+.coach-role-bay.bay-leader.is-needed {
+  border: 1px dashed rgba(245, 158, 11, 0.6);
+  border-left: 3.5px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.coach-role-bay.bay-support.is-needed {
+  border: 1px dashed rgba(56, 189, 248, 0.6);
+  border-left: 3.5px solid #38bdf8;
+  background: rgba(56, 189, 248, 0.04);
+}
+
+:root[data-theme="light"] .coach-role-bay.bay-leader.is-needed {
+  border-color: #f59e0b;
+  border-left-color: #d97706;
+  background: #fffbeb;
+}
+
+:root[data-theme="light"] .coach-role-bay.bay-support.is-needed {
+  border-color: #38bdf8;
+  border-left-color: #0284c7;
+  background: #f0f9ff;
+}
+
+.role-bay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.role-bay-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.role-bay-dot {
+  font-size: 10px;
   line-height: 1;
 }
 
-.bullet-leader {
+.dot-leader {
   color: #f59e0b;
 }
 
-.bullet-support {
-  color: #60a5fa;
+.dot-support {
+  color: #38bdf8;
 }
 
-.role-req {
+.role-bay-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.2;
+  letter-spacing: 0.2px;
+}
+
+.role-req-tag {
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+}
+
+.tag-leader {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+:root[data-theme="light"] .tag-leader {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.tag-support {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+}
+
+:root[data-theme="light"] .tag-support {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0369a1;
+}
+
+.role-status-badge {
   font-size: 9.5px;
-  font-weight: 400;
-  opacity: 0.7;
+  font-weight: 700;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.coach-role-content {
+.badge-needed {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #fbbf24;
+}
+
+:root[data-theme="light"] .badge-needed {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(217, 119, 6, 0.4);
+  color: #b45309;
+}
+
+.badge-support-needed {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  color: #38bdf8;
+}
+
+:root[data-theme="light"] .badge-support-needed {
+  background: rgba(14, 165, 233, 0.12);
+  border-color: rgba(2, 132, 199, 0.4);
+  color: #0284c7;
+}
+
+.badge-assigned {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #4ade80;
+}
+
+:root[data-theme="light"] .badge-assigned {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #15803d;
+}
+
+.badge-neutral {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+:root[data-theme="light"] .badge-neutral {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.role-bay-body {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.coach-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
+}
+
+.coach-unassigned-notice {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 2px 0;
+}
+
+.role-actions-wrap {
+  display: flex;
   flex-wrap: wrap;
-  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 4px;
+  width: 100%;
 }
 
 .coach-chip {
@@ -1091,6 +1811,18 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
   background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
   border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.bay-leader .coach-chip-avatar.initials {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.bay-support .coach-chip-avatar.initials {
+  background: rgba(56, 189, 248, 0.18);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
 }
 
 .coach-chip-name {
@@ -1149,16 +1881,14 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
 }
 
 .coach-chip-remove {
-  background: none;
+  background: transparent;
   border: none;
   color: var(--text-muted);
+  font-size: 10px;
   cursor: pointer;
-  font-size: 9px;
   padding: 0 1px;
   line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transition: color 0.15s ease;
 }
 
 .coach-chip-remove:hover {
@@ -1166,9 +1896,9 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
 }
 
 .coach-add-btn {
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px dashed rgba(245, 158, 11, 0.35);
-  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
   border-radius: 12px;
   padding: 1px 8px;
   font-size: 10.5px;
@@ -1181,30 +1911,34 @@ const removeCoachName = async (slot: any, role: 'leader' | 'support', index: num
 }
 
 .coach-add-btn:hover {
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.18);
   border-color: #f59e0b;
 }
 
-.coach-add-btn.btn-support {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.35);
-  color: #60a5fa;
+.bay-support .coach-add-btn {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
 }
 
-:root[data-theme="light"] .coach-add-btn.btn-support {
-  color: #2563eb;
+:root[data-theme="light"] .bay-support .coach-add-btn {
+  color: #0284c7;
 }
 
-.coach-add-btn.btn-support:hover {
-  background: rgba(59, 130, 246, 0.18);
-  border-color: #3b82f6;
+.bay-support .coach-add-btn:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
 }
 
 .inline-name-box {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
   flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 4px;
+  width: 100%;
 }
 
 .inline-name-field {

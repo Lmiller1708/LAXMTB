@@ -364,6 +364,23 @@ export function calculateDefaultGroupWarmupTime(race: any, categories: string[])
   return formatMinutesToTimeStr(earliestStageMins - warmupOffset)
 }
 
+export function calculateEarliestGroupStageTime(race: any, categories: string[]): string | null {
+  if (!Array.isArray(categories) || categories.length === 0) return null
+  let earliestStageMins: number | null = null
+  let earliestStageStr: string | null = null
+  for (const cat of categories) {
+    const stageStr = getCategoryStageTime(race, cat)
+    if (stageStr) {
+      const mins = parseTimeStrToMinutes(stageStr)
+      if (mins !== null && (earliestStageMins === null || mins < earliestStageMins)) {
+        earliestStageMins = mins
+        earliestStageStr = stageStr
+      }
+    }
+  }
+  return earliestStageStr
+}
+
 export function getWaveWarmupTime(race: any, category: string, waveStr: string, customWarmupOffset?: number): string | null {
   // 1. Check if category is assigned to a Warm-up Group in race.warmupGroups
   const group = getWarmupGroupForCategory(race, category)
