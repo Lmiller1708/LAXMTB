@@ -161,7 +161,8 @@ export const defaultEvents: Race[] = [
     "signups": {
       "food": "502983656067",
       "volunteer": "81287266078",
-      "league": "773733678034"
+      "league": "773733678034",
+      "camping": "https://signup.com/go/laxmtb-camping"
     },
     "name": "Bluff Bash Festival",
     "isPublished": true,

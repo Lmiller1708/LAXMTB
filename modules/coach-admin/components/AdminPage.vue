@@ -224,7 +224,7 @@ function syncFormFromRace(raceData: Race | null) {
     form.value.schedule = []
   }
   if (!form.value.signups) {
-    form.value.signups = { volunteer: '', food: '', league: '', photos: '' }
+    form.value.signups = { volunteer: '', food: '', league: '', photos: '', camping: '' }
   }
   if (!form.value.guidelines) {
     form.value.guidelines = []
@@ -1333,7 +1333,7 @@ const removePhoto = (idx: number) => {
             <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'venue' }" @click="selectTab('venue')">📍 Venue Info</button>
             <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'schedule' }" @click="selectTab('schedule')">⏱️ Schedule</button>
             <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'waves' || activeTab === 'coach' }" @click="selectTab('waves')">⏱️ Waves & Warm-ups</button>
-            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'signups' }" @click="selectTab('signups')">🤝 Volunteers & Food</button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'signups' }" @click="selectTab('signups')">🤝 Volunteers, Food & Camping</button>
             <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'photos' }" @click="selectTab('photos')">📸 Photos Album</button>
             <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'maps' }" @click="selectTab('maps')">🗺️ Course Maps</button>
             <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'announcements' }" @click="selectTab('announcements')">📢 Guidelines</button>
@@ -2193,7 +2193,7 @@ const removePhoto = (idx: number) => {
 
           <!-- 4. Volunteers & Food Tab -->
           <div v-else-if="activeTab === 'signups'" class="admin-section-card">
-            <h3 class="admin-card-title">🤝 Volunteer Signups & Meal Planning</h3>
+            <h3 class="admin-card-title">🤝 Volunteer, Hospitality & Camping Sign-Ups</h3>
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div>
                 <label class="modal-label">Team Volunteers Signup Code or URL</label>
@@ -2202,6 +2202,10 @@ const removePhoto = (idx: number) => {
               <div>
                 <label class="modal-label">Food & Hospitality Signup Code or URL</label>
                 <input v-model="form.signups!.food" type="text" placeholder="https://signup.com/client/invitation2/secure/..." class="custom-minutes-input" style="width:100%;">
+              </div>
+              <div>
+                <label class="modal-label">Camping Sign-Up Code or URL</label>
+                <input v-model="form.signups!.camping" type="text" placeholder="https://... or SignUp.com invitation code" class="custom-minutes-input" style="width:100%;">
               </div>
               <div>
                 <label class="modal-label">Wisconsin League Volunteer Code or URL</label>

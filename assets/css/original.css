@@ -1222,6 +1222,18 @@
       transform: translateY(-1px);
     }
 
+    .btn-camping {
+      background: #15803d;
+      border: 1px solid #15803d;
+      color: #ffffff !important;
+    }
+
+    .btn-camping:hover {
+      background: #166534;
+      border-color: #166534;
+      transform: translateY(-1px);
+    }
+
     .btn-league-page {
       background: #1c1c1c;
       border: 1px solid #383838;
@@ -2843,6 +2855,23 @@
       background: #eff6ff;
     }
 
+    .signup-badge-camping {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 12px;
+      background: rgba(22, 163, 74, 0.15);
+      border: 1px solid #16a34a;
+      color: #4ade80;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    :root[data-theme="light"] .signup-badge-camping {
+      color: #15803d;
+      background: #f0fdf4;
+    }
+
     .signup-card-desc {
       font-size: 12px;
       color: var(--text-muted);
@@ -2919,6 +2948,12 @@
       box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
     }
 
+    .signup-tab-pill.active.pill-camping {
+      background: #16a34a;
+      border-color: #16a34a;
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+    }
+
     /* Shift Summary Sub-Bar */
     .signup-shift-summary {
       padding: 10px 16px;
@@ -2965,6 +3000,15 @@
 
     .btn-viewer-direct.btn-league-direct:hover {
       background: #1d4ed8;
+    }
+
+    .btn-viewer-direct.btn-camping-direct {
+      background: #16a34a;
+      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+    }
+
+    .btn-viewer-direct.btn-camping-direct:hover {
+      background: #15803d;
     }
 
     .signup-iframe-wrapper {
@@ -3112,6 +3156,56 @@
       border: 1px solid var(--border);
       border-radius: 6px;
       color: var(--text-muted);
+    }
+
+    .signup-direct-container {
+      padding: 44px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--bg-card);
+    }
+
+    .signup-direct-card {
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      padding: 32px 24px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .signup-direct-icon-bubble {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: rgba(22, 163, 74, 0.12);
+      border: 1px solid rgba(22, 163, 74, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .signup-direct-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin: 0 0 8px 0;
+    }
+
+    .signup-direct-desc {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text-muted);
+      margin: 0 0 16px 0;
+      max-width: 440px;
     }
 
     @media (max-width: 700px) {

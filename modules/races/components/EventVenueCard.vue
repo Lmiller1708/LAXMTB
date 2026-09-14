@@ -22,11 +22,19 @@ const getNavigationUrl = computed(() => {
 
 const sanitizedWarning = computed(() => {
   if (!props.race.warning) return ''
-  if (import.meta.server) return props.race.warning
+  if (import.meta.server || typeof DOMPurify?.sanitize !== 'function') return props.race.warning
   return DOMPurify.sanitize(props.race.warning, {
     ALLOWED_TAGS: ['strong', 'em', 'b', 'i', 'span', 'br'],
     ALLOWED_ATTR: []
   })
+})
+
+const getCampingUrl = computed(() => {
+  const c = props.race.signups?.camping || props.race.campingUrl
+  if (!c || !c.trim()) return ''
+  const trimmed = c.trim()
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+  return `https://signup.com/client/invitation2/secure/${trimmed}/false#/invitation`
 })
 </script>
 
@@ -61,6 +69,15 @@ const sanitizedWarning = computed(() => {
       <div class="event-action-buttons">
         <a :href="getNavigationUrl" target="_blank" rel="noopener noreferrer" class="btn-maps btn-navigation">
           <span>🧭</span> Navigation Directions
+        </a>
+        <a
+          v-if="getCampingUrl"
+          :href="getCampingUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-maps btn-camping"
+        >
+          <span>🏕️</span> Camping Sign-Up
         </a>
       </div>
     </div>
