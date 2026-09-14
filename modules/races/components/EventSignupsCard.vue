@@ -150,7 +150,8 @@ const selectSignUpTab = (tab: 'volunteer' | 'food' | 'league') => {
             :class="{ 'btn-league-direct': activeSignUpTab === 'league' }"
             :style="currentCode ? '' : 'opacity:0.6;pointer-events:none;box-shadow:none;'"
           >
-            <span>{{ currentCode ? '✍️' : '⏳' }}</span> {{ currentCode ? 'Open in SignUp.com ↗' : 'Shifts Opening Soon' }}
+            <span>{{ currentCode ? '✍️' : '⏳' }}</span>
+            {{ currentCode ? 'Open in SignUp.com ↗' : 'Shifts Opening Soon' }}
           </a>
         </div>
 

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import DOMPurify from 'dompurify'
+
 defineProps<{
   guidelines?: string[]
   isCoachAuth?: boolean
@@ -9,6 +11,15 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = ref(true)
+
+const sanitizeGuideline = (text: string) => {
+  if (!text) return ''
+  if (import.meta.server || typeof DOMPurify?.sanitize !== 'function') return text
+  return DOMPurify.sanitize(text, {
+    ALLOWED_TAGS: ['strong', 'em', 'b', 'i', 'span', 'br', 'a'],
+    ALLOWED_ATTR: ['href', 'target', 'rel']
+  })
+}
 </script>
 
 <template>
@@ -40,7 +51,7 @@ const isOpen = ref(true)
           :key="idx"
           class="guideline-item"
         >
-          • {{ g }}
+          • <span v-html="sanitizeGuideline(g)" />
         </p>
       </div>
     </div>

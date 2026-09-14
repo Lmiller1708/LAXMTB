@@ -66,6 +66,9 @@ watch(() => props.initialTab, (newTab) => {
 
 // Local editable copy of current race
 const form = ref<Race>({ ...currentRace.value })
+if (!form.value.signups) {
+  form.value.signups = { volunteer: '', food: '', league: '', photos: '', camping: '' }
+}
 
 // Date Range Picker State
 const dateRangeStart = ref('')
@@ -169,6 +172,9 @@ updateDateRangeFromForm()
 
 watch(currentRace, (newRace) => {
   form.value = JSON.parse(JSON.stringify(newRace))
+  if (!form.value.signups) {
+    form.value.signups = { volunteer: '', food: '', league: '', photos: '', camping: '' }
+  }
   updateDateRangeFromForm()
 }, { deep: true })
 
@@ -1240,7 +1246,7 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'venue' }" @click="activeTab = 'venue'">📍 Venue Info</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'schedule' }" @click="activeTab = 'schedule'">⏱️ Schedule</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'waves' || activeTab === 'coach' }" @click="activeTab = 'waves'">⏱️ Waves & Warm-ups</button>
-          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'signups' }" @click="activeTab = 'signups'">🤝 Volunteers & Food</button>
+          <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'signups' }" @click="activeTab = 'signups'">🤝 Volunteers, Food & Camping</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'photos' }" @click="activeTab = 'photos'">📸 Photos Album</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'maps' }" @click="activeTab = 'maps'">🗺️ Course Maps</button>
           <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'announcements' }" @click="activeTab = 'announcements'">📢 Guidelines</button>
@@ -2092,6 +2098,10 @@ const onSlotEndChange = (slot: CoachSlot, newEnd: string) => {
             <div>
               <label class="modal-label">Food & Hospitality SignUp Code or URL</label>
               <input v-model="form.signups!.food" type="text" class="custom-minutes-input" style="width:100%;">
+            </div>
+            <div>
+              <label class="modal-label">Camping Sign-Up Code or URL</label>
+              <input v-model="form.signups!.camping" type="text" placeholder="https://... or SignUp.com invitation code" class="custom-minutes-input" style="width:100%;">
             </div>
             <div>
               <label class="modal-label">Wisconsin League Volunteer Code or URL</label>

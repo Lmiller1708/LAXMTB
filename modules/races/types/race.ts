@@ -20,6 +20,7 @@ export interface SignUpLinks {
   food?: string | null;
   league?: string | null;
   photos?: string | null;
+  camping?: string | null;
 }
 
 export interface WaveTime {
@@ -105,6 +106,7 @@ export interface Race {
   waveSchedule?: WaveSchedule;
   warmupGroups?: WarmupGroup[];
   photosUrl?: string;
+  campingUrl?: string;
   photos?: PhotoItem[];
   coachSignups?: CoachSignupsData;
 }
