@@ -7,11 +7,17 @@ const props = withDefaults(
     modelValue?: string
     disabled?: boolean
     placeholder?: string
+    allowClear?: boolean
+    fullWidth?: boolean
+    title?: string
   }>(),
   {
-    modelValue: '8:00 AM',
+    modelValue: '',
     disabled: false,
-    placeholder: 'e.g. 8:00 AM'
+    placeholder: 'Select time',
+    allowClear: false,
+    fullWidth: false,
+    title: ''
   }
 )
 
@@ -137,6 +143,12 @@ const handleConfirm = () => {
 
 const handleCancel = () => {
   parseValue(props.modelValue)
+  closeModal()
+}
+
+const handleClear = () => {
+  emit('update:modelValue', '')
+  emit('change', '')
   closeModal()
 }
 
@@ -289,18 +301,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="m2-timepicker-wrapper">
-    <!-- Trigger Button in Table Cell -->
+  <div class="m2-timepicker-wrapper" :class="{ 'full-width': fullWidth }">
+    <!-- Trigger Button -->
     <button
       type="button"
       class="m2-time-trigger"
+      :class="{ 'full-width': fullWidth, 'has-placeholder': !modelValue }"
       :disabled="disabled"
-      title="Click to edit wave time"
+      :title="title || (modelValue ? `Time: ${modelValue}` : 'Click to select time')"
       @click="openModal"
     >
-      <span class="m2-trigger-text">{{ modelValue || '8:00 AM' }}</span>
+      <span class="m2-trigger-text" :class="{ 'is-placeholder': !modelValue }">
+        {{ modelValue || placeholder || 'Select time' }}
+      </span>
       <span class="m2-trigger-icon">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
@@ -478,8 +493,17 @@ onBeforeUnmount(() => {
                 </svg>
               </button>
 
-              <!-- Cancel & OK Action Buttons -->
+              <!-- Clear, Cancel & OK Action Buttons -->
               <div class="m2-actions-group">
+                <button
+                  v-if="allowClear"
+                  type="button"
+                  class="m2-action-btn clear"
+                  title="Clear time"
+                  @click="handleClear"
+                >
+                  CLEAR
+                </button>
                 <button type="button" class="m2-action-btn" @click="handleCancel">
                   CANCEL
                 </button>
@@ -498,9 +522,15 @@ onBeforeUnmount(() => {
 <style scoped>
 .m2-timepicker-wrapper {
   display: inline-block;
+  vertical-align: middle;
 }
 
-/* Trigger Button in Table Cell */
+.m2-timepicker-wrapper.full-width {
+  display: block;
+  width: 100%;
+}
+
+/* Trigger Button */
 .m2-time-trigger {
   display: inline-flex;
   align-items: center;
@@ -509,14 +539,25 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 4px 8px;
+  padding: 3px 8px;
   color: var(--text-main);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   cursor: pointer;
-  width: 108px;
+  width: 104px;
+  height: 28px;
   box-sizing: border-box;
   transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.m2-time-trigger.full-width {
+  width: 100%;
+}
+
+.m2-time-trigger.has-placeholder {
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 :root.theme-light .m2-time-trigger,
@@ -527,6 +568,12 @@ onBeforeUnmount(() => {
   color: #0f172a;
 }
 
+:root.theme-light .m2-time-trigger.has-placeholder,
+.theme-light .m2-time-trigger.has-placeholder,
+:root[data-theme="light"] .m2-time-trigger.has-placeholder {
+  background: #f8fafc;
+}
+
 .m2-time-trigger:hover {
   border-color: #ef4444;
   background: rgba(239, 68, 68, 0.08);
@@ -535,12 +582,22 @@ onBeforeUnmount(() => {
 .m2-trigger-text {
   flex: 1;
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m2-trigger-text.is-placeholder {
+  color: var(--text-muted, #9ca3af);
+  font-weight: 500;
+  font-size: 11px;
 }
 
 .m2-trigger-icon {
   color: var(--text-muted);
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 /* Modal Backdrop */
@@ -940,6 +997,16 @@ onBeforeUnmount(() => {
 .m2-action-btn.confirm:hover {
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
+}
+
+.m2-action-btn.clear {
+  color: #9ca3af;
+  margin-right: auto;
+}
+
+.m2-action-btn.clear:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
 }
 
 /* Dialog Transitions */
