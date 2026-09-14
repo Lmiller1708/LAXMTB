@@ -91,6 +91,22 @@ const onPopState = () => {
   }
 }
 
+const adminStickyHeaderRef = ref<HTMLElement | null>(null)
+let adminHeaderResizeObserver: ResizeObserver | null = null
+
+const updateAdminHeaderHeight = () => {
+  if (adminStickyHeaderRef.value) {
+    const h = adminStickyHeaderRef.value.getBoundingClientRect().height
+    if (h > 0) {
+      document.documentElement.style.setProperty('--admin-header-height', `${Math.round(h)}px`)
+    }
+  }
+}
+
+watch(activeTab, () => {
+  nextTick(updateAdminHeaderHeight)
+})
+
 onMounted(() => {
   if (import.meta.client && typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search)
@@ -101,10 +117,21 @@ onMounted(() => {
       activeTab.value = normalizeTab(props.initialTab)
     }
     window.addEventListener('popstate', onPopState)
+
+    nextTick(() => {
+      updateAdminHeaderHeight()
+      if (typeof ResizeObserver !== 'undefined' && adminStickyHeaderRef.value) {
+        adminHeaderResizeObserver = new ResizeObserver(updateAdminHeaderHeight)
+        adminHeaderResizeObserver.observe(adminStickyHeaderRef.value)
+      }
+    })
   }
 })
 
 onUnmounted(() => {
+  if (adminHeaderResizeObserver) {
+    adminHeaderResizeObserver.disconnect()
+  }
   if (import.meta.client && typeof window !== 'undefined') {
     window.removeEventListener('popstate', onPopState)
   }
@@ -1264,7 +1291,7 @@ const removePhoto = (idx: number) => {
     <div v-else class="admin-dashboard-layout">
       
       <!-- Combined Sticky Header (Nav + Tabs) -->
-      <div class="admin-sticky-header">
+      <div class="admin-sticky-header" ref="adminStickyHeaderRef">
         <!-- Top Sticky Navigation Bar -->
         <header class="admin-top-nav">
           <div class="admin-nav-inner">
@@ -1566,32 +1593,21 @@ const removePhoto = (idx: number) => {
 
                       <template v-if="!isEventTbd(ev.time)">
                         <span style="font-size:10.5px;color:var(--text-muted);margin-left:2px;">Start:</span>
-                        <select
-                          :value="getEventStart(ev.time)"
-                          class="custom-minutes-input"
-                          style="padding:2px 4px;font-size:11px;height:26px;width:94px;background:var(--bg-subtle);"
-                          @change="onStartChange(ev, ($event.target as HTMLSelectElement).value)"
-                        >
-                          <option value="TBD">TBD</option>
-                          <option v-if="getEventStart(ev.time) && !TIME_OPTIONS.includes(getEventStart(ev.time)) && getEventStart(ev.time) !== 'TBD'" :value="getEventStart(ev.time)">
-                            {{ getEventStart(ev.time) }}
-                          </option>
-                          <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
-                        </select>
+                        <CustomTimePicker
+                          :model-value="getEventStart(ev.time)"
+                          placeholder="Start time"
+                          title="Event start time"
+                          @update:model-value="onStartChange(ev, $event)"
+                        />
 
                         <span style="font-size:10.5px;color:var(--text-muted);">to</span>
-                        <select
-                          :value="getEventEnd(ev.time)"
-                          class="custom-minutes-input"
-                          style="padding:2px 4px;font-size:11px;height:26px;width:94px;background:var(--bg-subtle);"
-                          @change="onEndChange(ev, ($event.target as HTMLSelectElement).value)"
-                        >
-                          <option value="">-- None --</option>
-                          <option v-if="getEventEnd(ev.time) && !TIME_OPTIONS.includes(getEventEnd(ev.time))" :value="getEventEnd(ev.time)">
-                            {{ getEventEnd(ev.time) }}
-                          </option>
-                          <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
-                        </select>
+                        <CustomTimePicker
+                          :model-value="getEventEnd(ev.time)"
+                          placeholder="-- None --"
+                          allow-clear
+                          title="Event end time (optional)"
+                          @update:model-value="onEndChange(ev, $event)"
+                        />
                       </template>
                     </div>
                     <input
@@ -1843,9 +1859,11 @@ const removePhoto = (idx: number) => {
                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;" draggable="false" @dragstart.stop>
                       <div style="display:flex;align-items:center;gap:4px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);padding:2px 6px;border-radius:6px;flex-wrap:wrap;">
                         <span style="font-size:11px;font-weight:700;color:#f59e0b;">🔥 Warm-up Time:</span>
-                        <select v-model="grp.meetingTime" class="custom-minutes-input" style="font-size:11px;height:26px;padding:1px 4px;font-weight:700;color:#f59e0b;">
-                          <option v-for="t in getWarmupTimeOptions(grp)" :key="t" :value="t">{{ t }}</option>
-                        </select>
+                        <CustomTimePicker
+                          v-model="grp.meetingTime"
+                          placeholder="Select time"
+                          title="Warm-up meeting time"
+                        />
                         <button v-if="getAutoWarmupTime(grp)" type="button" class="action-mini-btn" style="font-size:10px;padding:1px 5px;height:22px;" @click="applyAutoWarmupTime(grp)">
                           ⚡ Auto ({{ getAutoWarmupTime(grp) }})
                         </button>
@@ -2017,30 +2035,20 @@ const removePhoto = (idx: number) => {
                     <div style="flex:1;min-width:210px;">
                       <label class="modal-label" style="font-size:10.5px;">Meeting Time</label>
                       <div style="display:flex;align-items:center;gap:4px;">
-                        <select
-                          :value="getSlotStart(slot.meetingTime)"
-                          class="custom-minutes-input"
-                          style="flex:1;font-size:11px;height:30px;padding:2px 4px;"
-                          @change="onSlotStartChange(slot, ($event.target as HTMLSelectElement).value)"
-                        >
-                          <option v-if="getSlotStart(slot.meetingTime) && !TIME_OPTIONS.includes(getSlotStart(slot.meetingTime))" :value="getSlotStart(slot.meetingTime)">
-                            {{ getSlotStart(slot.meetingTime) }}
-                          </option>
-                          <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
-                        </select>
+                        <CustomTimePicker
+                          :model-value="getSlotStart(slot.meetingTime)"
+                          placeholder="Start time"
+                          title="Meeting start time"
+                          @update:model-value="onSlotStartChange(slot, $event)"
+                        />
                         <span style="font-size:10.5px;color:var(--text-muted);">to</span>
-                        <select
-                          :value="getSlotEnd(slot.meetingTime)"
-                          class="custom-minutes-input"
-                          style="flex:1;font-size:11px;height:30px;padding:2px 4px;"
-                          @change="onSlotEndChange(slot, ($event.target as HTMLSelectElement).value)"
-                        >
-                          <option value="">-- Single Time --</option>
-                          <option v-if="getSlotEnd(slot.meetingTime) && !TIME_OPTIONS.includes(getSlotEnd(slot.meetingTime))" :value="getSlotEnd(slot.meetingTime)">
-                            {{ getSlotEnd(slot.meetingTime) }}
-                          </option>
-                          <option v-for="t in TIME_OPTIONS" :key="t" :value="t">{{ t }}</option>
-                        </select>
+                        <CustomTimePicker
+                          :model-value="getSlotEnd(slot.meetingTime)"
+                          placeholder="-- Single Time --"
+                          allow-clear
+                          title="Meeting end time (optional)"
+                          @update:model-value="onSlotEndChange(slot, $event)"
+                        />
                       </div>
                     </div>
                   </div>
@@ -2627,18 +2635,19 @@ const removePhoto = (idx: number) => {
   min-height: 100vh;
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden;
   box-sizing: border-box;
 }
 
-/* Combined Sticky Header (Nav + Tabs) */
+/* Combined Fixed Top Header (Nav + Tabs) - Locked to top like main page */
 .admin-sticky-header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
+  left: 0;
+  right: 0;
   width: 100%;
-  max-width: 100vw;
+  z-index: 100;
   box-sizing: border-box;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .admin-top-nav {
@@ -2805,7 +2814,7 @@ const removePhoto = (idx: number) => {
 
 .admin-page-body {
   flex: 1;
-  padding: 24px 16px;
+  padding: calc(var(--admin-header-height, 108px) + 20px) 16px 40px 16px;
   width: 100%;
   max-width: 100vw;
   box-sizing: border-box;
@@ -2912,7 +2921,7 @@ const removePhoto = (idx: number) => {
     padding: 6px 10px;
   }
   .admin-page-body {
-    padding: 14px 8px;
+    padding: calc(var(--admin-header-height, 130px) + 14px) 8px 30px 8px;
   }
   .admin-section-card {
     padding: 14px 10px;
