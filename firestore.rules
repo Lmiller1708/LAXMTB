@@ -43,6 +43,21 @@ service cloud.firestore {
       );
     }
 
+    // Helper: Minimum Guardian access check (guardian, coach, admin, owner)
+    function isGuardianOrAbove() {
+      return isAuthorizedCoach() || (
+        request.auth != null && (
+          (
+            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['guardian', 'coach', 'admin', 'owner']
+          ) || (
+            exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+            !('role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data)
+          )
+        )
+      );
+    }
+
     // Race data:
     // - Public read for race participants, parents, and coaches
     // - Admins can create, delete, and modify all race fields
@@ -58,9 +73,9 @@ service cloud.firestore {
       );
     }
 
-    // Photo gallery collection — public read, admin write
+    // Photo gallery collection — guardian+ read, admin write
     match /photos/{raceId} {
-      allow read: if true;
+      allow read: if isGuardianOrAbove();
       allow write: if isAdmin();
     }
 

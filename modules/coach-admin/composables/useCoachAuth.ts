@@ -152,6 +152,25 @@ export const useCoachAuth = () => {
     return isAdminCoach.value || isAuthorizedCoach.value
   })
 
+  // Minimum access check: Guardian or above (guardian, coach, admin, owner)
+  // Required to view student athlete and race weekend photos.
+  const isGuardianOrAbove = computed<boolean>(() => {
+    if (!user.value) return false
+    if (isAdminCoach.value || isAuthorizedCoach.value) return true
+    const role = userProfile.value?.role
+    if (role === 'owner' || role === 'admin' || role === 'coach' || role === 'guardian') return true
+    if (role === 'member') return false
+    // If authenticated and no role explicitly set on userProfile yet, default registered accounts have guardian access
+    if (!role && user.value) {
+      if (coachRole.value) return true
+      return true
+    }
+    return false
+  })
+
+  // Permission to view team photo galleries and Google Drive albums
+  const canViewPhotos = computed<boolean>(() => isGuardianOrAbove.value)
+
   // Full admin editing active
   const isCoachAuth = computed(() =>
     !!user.value && isAuthorizedCoach.value && isAdminCoach.value && isAdminUnlocked.value
@@ -1310,6 +1329,8 @@ export const useCoachAuth = () => {
     profileLoading,
     inviteSettings,
     canEditCoachSignups,
+    isGuardianOrAbove,
+    canViewPhotos,
     isCoachAuth,
     isAuthorizedCoach,
     isAdminCoach,

@@ -324,7 +324,7 @@ const handleResetPassword = async () => {
                 <input
                   v-model="manualCodeInput"
                   type="text"
-                  placeholder="e.g. lax-coach-2026"
+                  placeholder="Enter access code"
                   class="auth-input"
                   style="font-size:12px;padding:6px 10px;"
                   @keyup.enter.prevent="handleValidateEnteredCode"

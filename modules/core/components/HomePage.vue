@@ -10,12 +10,13 @@ import EditSponsorModal from './EditSponsorModal.vue'
 const emit = defineEmits<{
   (e: 'navigate', route: 'race' | 'practice' | 'about'): void
   (e: 'selectRace', slug: string): void
+  (e: 'openAuth', mode?: 'login' | 'signup'): void
   (e: 'toast', msg: string): void
 }>()
 
 const { races } = useCurrentRace()
 const { media, updateMediaItem } = useSiteMedia()
-const { isCoachAuth } = useCoachAuth()
+const { isCoachAuth, canViewPhotos } = useCoachAuth()
 const { sponsors, addSponsor, updateSponsor, removeSponsor } = useSiteSponsors()
 
 const isEditPhotoOpen = ref(false)
@@ -763,6 +764,7 @@ onMounted(() => {
                 </p>
                 <div class="drive-action-row">
                   <a
+                    v-if="canViewPhotos"
                     :href="media.practiceDriveUrl || 'https://drive.google.com'"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -771,6 +773,17 @@ onMounted(() => {
                     <span>📁 Open Practice Photos on Google Drive</span>
                     <span class="external-arrow">↗</span>
                   </a>
+                  <button
+                    v-else
+                    type="button"
+                    class="btn-drive-link"
+                    style="cursor: pointer;"
+                    title="Guardian access required to view practice photos"
+                    @click="emit('openAuth', 'login')"
+                  >
+                    <span>🔒 Log In to Access Photos</span>
+                    <span class="external-arrow">↗</span>
+                  </button>
                   <button
                     v-if="isCoachAuth"
                     type="button"
