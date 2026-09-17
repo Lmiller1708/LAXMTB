@@ -4,10 +4,14 @@ import type { Race } from '~/modules/races/types/race'
 import { isRaceCompleted, slugifyRaceId } from '~/modules/races/composables/useCurrentRace'
 import EventCoachCard from '~/modules/races/components/EventCoachCard.vue'
 import PwaUpdateBanner from '~/modules/core/components/PwaUpdateBanner.vue'
+import SiteAnnouncementBanner from '~/modules/core/components/SiteAnnouncementBanner.vue'
+import HomePage from '~/modules/core/components/HomePage.vue'
+import AboutPage from '~/modules/core/components/AboutPage.vue'
 
 const route = useRoute()
 const router = useRouter()
 
+const currentNav = ref<'home' | 'practice' | 'about' | 'race'>('home')
 const currentTab = ref<TabType>('details')
 const isWhatsNewOpen = ref(false)
 const isNotifOpen = ref(false)
@@ -136,7 +140,53 @@ const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
   }
 }
 
+const navigateTo = (target: 'home' | 'practice' | 'about' | 'race', pushToHistory = true) => {
+  isAdminRoute.value = false
+
+  if (target === 'practice') {
+    currentNav.value = 'home'
+    if (!import.meta.client) return
+    if (window.location.pathname !== '/' || window.location.hash !== '#practice') {
+      if (pushToHistory) window.history.pushState({ nav: 'home' }, '', '/#practice')
+      else window.history.replaceState({ nav: 'home' }, '', '/#practice')
+      router.push('/#practice').catch(() => {})
+    }
+    nextTick(() => {
+      const el = document.getElementById('practice')
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    })
+    return
+  }
+
+  currentNav.value = target
+
+  if (!import.meta.client) return
+
+  if (target === 'home') {
+    if (window.location.pathname !== '/' || window.location.hash) {
+      if (pushToHistory) window.history.pushState({ nav: 'home' }, '', '/')
+      else window.history.replaceState({ nav: 'home' }, '', '/')
+      router.push('/').catch(() => {})
+    }
+  } else if (target === 'about') {
+    if (window.location.pathname !== '/about') {
+      if (pushToHistory) window.history.pushState({ nav: 'about' }, '', '/about')
+      else window.history.replaceState({ nav: 'about' }, '', '/about')
+      router.push('/about').catch(() => {})
+    }
+  } else if (target === 'race') {
+    const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
+    const slug = slugifyRaceId(race?.id || 'race')
+    const tabUrl = currentTab.value === 'coach' ? `coach/${coachSession.value === 'wu' ? 'warm-ups' : 'pre-ride'}` : currentTab.value
+    updateUrl(slug, tabUrl, pushToHistory)
+    refreshData()
+  }
+}
+
 const setTab = (tab: TabType, pushToHistory = true) => {
+  currentNav.value = 'race'
   currentTab.value = tab
   if (tab === 'list' || tab === 'results' || tab === 'coach') {
     if (currentRace.value?.isPublished && currentRace.value?.eventId) {
@@ -154,6 +204,7 @@ const setTab = (tab: TabType, pushToHistory = true) => {
 }
 
 const setRace = (index: number) => {
+  currentNav.value = 'race'
   selectRace(index)
   const race = races.value[index]
   if (race && import.meta.client && !isSyncingRoute) {
@@ -163,7 +214,24 @@ const setRace = (index: number) => {
   refreshData()
 }
 
-// Synchronize state from route path (e.g. /race/bluffbash/results or hash redirect)
+const handleSelectRaceFromHome = (raceIdOrSlug: string) => {
+  const cleanTarget = slugifyRaceId(raceIdOrSlug)
+  const idx = races.value.findIndex(r => r.id === raceIdOrSlug || slugifyRaceId(r.id) === cleanTarget)
+  if (idx !== -1) {
+    selectRace(idx)
+  }
+  currentNav.value = 'race'
+  currentTab.value = 'details'
+
+  const race = idx !== -1 ? races.value[idx] : (currentRace.value || races.value[0])
+  if (race && import.meta.client) {
+    const slug = slugifyRaceId(race.id)
+    updateUrl(slug, 'details', true)
+  }
+  refreshData()
+}
+
+// Synchronize state from route path (e.g. /race/bluffbash/results, /practice, /about or hash redirect)
 const syncFromRoute = () => {
   if (!import.meta.client) return
   isSyncingRoute = true
@@ -229,8 +297,27 @@ const syncFromRoute = () => {
       }
     }
 
+    // Check if on /practice route or #practice
+    if (path === '/practice' || path.startsWith('/practice') || route.path === '/practice' || window.location.hash === '#practice') {
+      currentNav.value = 'home'
+      nextTick(() => {
+        const el = document.getElementById('practice')
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      })
+      return
+    }
+
+    // Check if on /about route
+    if (path === '/about' || path.startsWith('/about') || route.path === '/about') {
+      currentNav.value = 'about'
+      return
+    }
+
     const tabParam = params.get('tab') || window.location.hash.replace(/^#/, '')
     if (tabParam && !tabParam.startsWith('/')) {
+      currentNav.value = 'race'
       const slug = tabParam.toLowerCase().replace(/[^a-z0-9]/g, '')
       if (slug.includes('list') || slug.includes('start')) setTab('list', false)
       else if (slug.includes('result')) setTab('results', false)
@@ -247,6 +334,7 @@ const syncFromRoute = () => {
     // Direct /coach, /coach/pre-ride, or /coach/warm-ups
     const directCoachMatch = path.match(/^\/coach(?:\/([^\/]+))?/i)
     if (directCoachMatch) {
+      currentNav.value = 'race'
       currentTab.value = 'coach'
       const sub = (directCoachMatch[1] || '').toLowerCase()
       if (sub.includes('warm')) coachSession.value = 'wu'
@@ -260,6 +348,7 @@ const syncFromRoute = () => {
     // Parse path: /race/:slug/:tab (and optional sub-tab: /race/:slug/coach/pre-ride or /race/:slug/coach/warm-ups)
     const match = path.match(/\/race\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/)
     if (match) {
+      currentNav.value = 'race'
       const raceSlug = match[1]
       const tabSlug = match[2]
       const subSlug = match[3]
@@ -288,11 +377,14 @@ const syncFromRoute = () => {
           loadOrSwitchTab(String(currentRace.value.eventId), currentTab.value === 'coach' ? 'list' : currentTab.value, completed)
         }
       }
-    } else {
-      // Landed on root / or /race -> push canonical path
+    } else if (path === '/race' || path.startsWith('/race')) {
+      currentNav.value = 'race'
       const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
       const raceSlug = slugifyRaceId(race?.id || 'race')
       updateUrl(raceSlug, currentTab.value, false)
+    } else {
+      // Landed on root / -> Home Page!
+      currentNav.value = 'home'
     }
   } finally {
     nextTick(() => {
@@ -313,7 +405,9 @@ watch(currentRaceIndex, (newIdx) => {
       updateUrl(slug, currentTab.value, true)
     }
   }
-  refreshData()
+  if (currentNav.value === 'race') {
+    refreshData()
+  }
 })
 
 // Re-fetch whenever Firestore pushes an updated eventId or isPublished flag
@@ -324,7 +418,9 @@ watch(
     if (!newEventId || !newIsPublished) return
     // Only re-fetch if something actually changed
     if (newEventId !== oldEventId || newIsPublished !== oldIsPublished) {
-      refreshData()
+      if (currentNav.value === 'race') {
+        refreshData()
+      }
     }
   }
 )
@@ -337,7 +433,9 @@ let headerResizeObserver: ResizeObserver | null = null
 
 onMounted(() => {
   syncFromRoute()
-  refreshData()
+  if (currentNav.value === 'race') {
+    refreshData()
+  }
   startAlertScheduler(() => races.value as Race[])
 
   if (import.meta.client) {
@@ -355,9 +453,11 @@ onMounted(() => {
       headerResizeObserver.observe(siteHeaderRef.value)
     }
 
-    // 30-second update timer for live timing feeds
+    // 30-second update timer for live timing feeds (only when on race view)
     updateTimer = setInterval(() => {
-      refreshData()
+      if (currentNav.value === 'race') {
+        refreshData()
+      }
     }, 30000)
 
     window.addEventListener('popstate', syncFromRoute)
@@ -389,9 +489,13 @@ const openAdminWithTab = (tab: string) => {
 const navigateBackFromAdmin = () => {
   isAdminRoute.value = false
   if (import.meta.client) {
-    const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
-    const slug = slugifyRaceId(race?.id || 'race')
-    updateUrl(slug, currentTab.value, true)
+    if (currentNav.value === 'race') {
+      const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
+      const slug = slugifyRaceId(race?.id || 'race')
+      updateUrl(slug, currentTab.value, true)
+    } else {
+      navigateTo(currentNav.value, true)
+    }
   }
 }
 
@@ -428,6 +532,9 @@ const handlePrint = () => {
     <!-- PWA Service Worker Update Banner -->
     <PwaUpdateBanner />
 
+    <!-- Site-wide Urgent Announcement Banner (hidden on dedicated admin page) -->
+    <SiteAnnouncementBanner v-if="!isAdminRoute" />
+
     <!-- DEDICATED COACH ADMIN PAGE -->
     <AdminPage
       v-if="isAdminRoute"
@@ -437,12 +544,14 @@ const handlePrint = () => {
       @toast="showNotifToast"
     />
 
-    <!-- PUBLIC RACE CENTRAL VIEW -->
+    <!-- PUBLIC SITE VIEWS -->
     <div v-else>
       <!-- Site Header -->
       <header class="site-header" ref="siteHeaderRef">
-        <!-- 1. Fixed Brand Header & Controls -->
+        <!-- 1. Fixed Brand Header & Controls with Top Navigation -->
         <AppHeader
+          :active-nav="currentNav"
+          @navigate="navigateTo"
           @open-whats-new="isWhatsNewOpen = true"
           @open-notifications="isNotifOpen = true"
           @open-admin="openAdminWithTab('venue')"
@@ -452,11 +561,11 @@ const handlePrint = () => {
           @toast="showNotifToast"
         />
 
-        <!-- 2. Season Race Switcher Bar -->
-        <RaceSwitcherBar @select-race="setRace" />
-
-        <!-- 3. Navigation Tabs -->
-        <NavigationTabs :current-tab="currentTab" :is-coach-auth="isCoachAuth" @change-tab="setTab" />
+        <!-- 2. Race Central Subnav (Only visible on Race Central) -->
+        <template v-if="currentNav === 'race'">
+          <RaceSwitcherBar @select-race="setRace" @toast="showNotifToast" />
+          <NavigationTabs :current-tab="currentTab" :is-coach-auth="isCoachAuth" @change-tab="setTab" />
+        </template>
       </header>
 
       <!-- Modals -->
@@ -472,21 +581,37 @@ const handlePrint = () => {
       />
 
       <AuthModal
-      :is-open="isAuthOpen"
-      :initial-mode="initialAuthMode"
-      :initial-invite-code="activeInviteCode"
-      @close="isAuthOpen = false"
-      @toast="showNotifToast"
-    />
+        :is-open="isAuthOpen"
+        :initial-mode="initialAuthMode"
+        :initial-invite-code="activeInviteCode"
+        @close="isAuthOpen = false"
+        @toast="showNotifToast"
+      />
 
-    <UserProfileModal
-      :is-open="isProfileOpen"
-      @close="isProfileOpen = false"
-      @toast="showNotifToast"
-    />
+      <UserProfileModal
+        :is-open="isProfileOpen"
+        @close="isProfileOpen = false"
+        @toast="showNotifToast"
+      />
 
-    <!-- Main Content Container -->
-    <main class="main-container">
+      <!-- View 1: Overview Page (Includes Practice & Trails Accordion) -->
+      <HomePage
+        v-if="currentNav === 'home' || currentNav === 'practice'"
+        @navigate="navigateTo"
+        @select-race="handleSelectRaceFromHome"
+        @selectRace="handleSelectRaceFromHome"
+        @toast="showNotifToast"
+      />
+
+      <!-- View 2: About Us Page -->
+      <AboutPage
+        v-else-if="currentNav === 'about'"
+        @navigate="navigateTo"
+        @toast="showNotifToast"
+      />
+
+      <!-- View 4: Race Central Main Content Container -->
+      <main v-else-if="currentNav === 'race'" class="main-container">
       <!-- Dedicated High-Quality Printable Header (Paper / PDF export only) -->
       <div class="print-header" id="printHeader">
         <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2pt solid #dc2626;padding-bottom:6pt;margin-bottom:12pt;">

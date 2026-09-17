@@ -10,6 +10,7 @@ import type { Race } from '~/modules/races/types/race'
 import {
   targetTeamKeywords,
   categoryOrder,
+  normalizeCategoryName,
   getWaveScheduleEntry,
   getWaveWarmupTime,
   getWarmupGroupForCategory,
@@ -18,6 +19,7 @@ import {
   compareCategories
 } from '../services/raceresultService'
 import { useNotificationSubscriptions } from '~/modules/notifications/composables/useNotificationSubscriptions'
+import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
 
 const props = defineProps<{
   race: Race
@@ -43,11 +45,12 @@ const {
   toggleCategorySubscription
 } = useNotificationSubscriptions()
 
+const { savedStudents, isStudentSaved, toggleSaveStudent } = useCoachAuth()
+
 const selectedRiderKeys = ref<Set<string>>(new Set())
 const cardStateOverrides = ref<Record<string, boolean>>({})
 
 const toggleRiderSelection = (riderKey: string) => {
-  if (props.currentTab !== 'results') return
   const next = new Set(selectedRiderKeys.value)
   if (next.has(riderKey)) {
     next.delete(riderKey)
@@ -55,6 +58,18 @@ const toggleRiderSelection = (riderKey: string) => {
     next.add(riderKey)
   }
   selectedRiderKeys.value = next
+}
+
+const hasSavedStudentInCat = (catGroup: { waves: Array<{ riders: Rider[] }> }): boolean => {
+  return catGroup.waves.some(w => w.riders.some(r => isStudentSaved(r)))
+}
+
+const hasSavedStudentInTeam = (teamGroup: { riders: Rider[] }): boolean => {
+  return teamGroup.riders.some(r => isStudentSaved(r))
+}
+
+const hasSavedStudentInWave = (riders: Rider[]): boolean => {
+  return riders.some(r => isStudentSaved(r))
 }
 
 const toggleRiderKeySet = (keys: string[]) => {
@@ -121,7 +136,7 @@ const groupedTeamStandings = computed(() => {
 const groupedByCategory = computed(() => {
   const grouped: Record<string, Record<string, Rider[]>> = {}
   props.riders.forEach(r => {
-    const cat = r.category || 'General'
+    const cat = normalizeCategoryName(r.category) || 'General'
     let wave = r.wave || 'Wave: 1'
     if (/^field/i.test(wave)) {
       const match = wave.match(/\d+/)
@@ -308,6 +323,7 @@ function formatWaveLabel(wKey?: string): string {
       >
         <div class="category-header collapsible-header" @click="toggleCard(`cat:${catGroup.category}`)">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;">
+            <span v-if="hasSavedStudentInCat(catGroup)" class="card-saved-star" title="Saved student in this category">⭐</span>
             <span>{{ catGroup.category }}</span>
             <span class="category-badge">{{ catGroup.totalInCat }} RIDERS</span>
             <span
@@ -349,6 +365,7 @@ function formatWaveLabel(wKey?: string): string {
             <!-- Wave Header -->
             <div class="wave-divider">
               <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">
+                <span v-if="hasSavedStudentInWave(w.riders)" class="wave-saved-star" title="Saved student in this wave">⭐</span>
                 <span>🚩 {{ formatWaveLabel(w.waveKey) }}</span>
               </div>
               <div class="wave-schedule-wrap" style="display:inline-flex;align-items:center;gap:4px;margin-left:auto;flex-shrink:0;">
@@ -408,18 +425,29 @@ function formatWaveLabel(wKey?: string): string {
                 <tbody>
                   <template v-for="r in w.riders" :key="getRiderKey(r)">
                     <tr
-                      :class="[
-                        currentTab === 'results' ? 'selectable-rider-row' : '',
-                        selectedRiderKeys.has(getRiderKey(r)) ? 'selected' : ''
-                      ]"
-                      :title="currentTab === 'results' ? 'Tap to toggle lap splits' : undefined"
+                      class="selectable-rider-row"
+                      :class="{ selected: selectedRiderKeys.has(getRiderKey(r)) }"
+                      :title="currentTab === 'results' ? 'Tap to toggle lap splits' : 'Tap to toggle racer details'"
                       @click="toggleRiderSelection(getRiderKey(r))"
                     >
                       <td style="text-align:center;font-weight:700;color:var(--text-muted);">
                         {{ currentTab === 'results' ? (r.pl || '-') : (r.seedingRank || r.pl || '-') }}
                       </td>
                       <td style="text-align:center;"><span class="plate-number">#{{ r.no || r.bib }}</span></td>
-                      <td><span class="rider-name">{{ r.name }}</span></td>
+                      <td>
+                        <div style="display:inline-flex;align-items:center;gap:6px;">
+                          <button
+                            type="button"
+                            class="star-student-btn"
+                            :class="{ active: isStudentSaved(r) }"
+                            :title="isStudentSaved(r) ? `Saved ${r.name} to profile (tap to remove)` : `Save ${r.name} to profile`"
+                            @click.stop="toggleSaveStudent(r)"
+                          >
+                            {{ isStudentSaved(r) ? '★' : '☆' }}
+                          </button>
+                          <span class="rider-name">{{ r.name }}</span>
+                        </div>
+                      </td>
 
                       <!-- Results Mode Columns -->
                       <template v-if="currentTab === 'results'">
@@ -455,8 +483,71 @@ function formatWaveLabel(wKey?: string): string {
                         </td>
                         <td style="text-align:center;white-space:nowrap;">
                           <span class="div-tag">D{{ r.div || '1' }}</span>
+                          <span class="rider-expand-icon mobile-only" style="margin-left:4px;">{{ selectedRiderKeys.has(getRiderKey(r)) ? '▲' : '▼' }}</span>
                         </td>
                       </template>
+                    </tr>
+
+                    <!-- Expanded Details Row (Lists Page) -->
+                    <tr
+                      v-if="currentTab === 'list' && selectedRiderKeys.has(getRiderKey(r))"
+                      class="rider-list-detail-row"
+                    >
+                      <td colspan="5">
+                        <div class="list-detail-card">
+                          <div class="list-detail-grid">
+                            <div class="detail-item">
+                              <span class="detail-label">School / Team</span>
+                              <span class="detail-val">
+                                <span :class="isTargetTeam(r.team) ? 'team-name-lax' : 'team-name'">{{ r.team || 'Independent' }}</span>
+                              </span>
+                            </div>
+                            <div class="detail-item">
+                              <span class="detail-label">Category</span>
+                              <span class="detail-val">
+                                <span class="category-pill">{{ r.category || catGroup.category }}</span>
+                              </span>
+                            </div>
+                            <div class="detail-item">
+                              <span class="detail-label">Division</span>
+                              <span class="detail-val">
+                                <span class="div-tag">Division {{ r.div || '1' }}</span>
+                              </span>
+                            </div>
+                            <div class="detail-item">
+                              <span class="detail-label">Plate / Bib #</span>
+                              <span class="detail-val">
+                                <span class="plate-number">#{{ r.no || r.bib }}</span>
+                              </span>
+                            </div>
+                            <div class="detail-item">
+                              <span class="detail-label">Wave & Call-Up</span>
+                              <span class="detail-val">
+                                {{ formatWaveLabel(w.waveKey) }} • Seed: #{{ r.seedingRank || r.pl || '-' }}
+                              </span>
+                            </div>
+                            <div v-if="w.waveWarmupTime || w.stageTime || w.waveTime || catGroup.catStartTime" class="detail-item">
+                              <span class="detail-label">Schedule Times</span>
+                              <span class="detail-val schedule-chips">
+                                <span v-if="w.waveWarmupTime" class="sched-chip warmup" title="Warm-up time">Warm: {{ w.waveWarmupTime }}</span>
+                                <span v-if="w.stageTime" class="sched-chip stage" title="Staging call-up">Stage: {{ w.stageTime }}</span>
+                                <span v-if="w.waveTime || catGroup.catStartTime" class="sched-chip start" title="Race start">Start: {{ w.waveTime || catGroup.catStartTime }}</span>
+                              </span>
+                            </div>
+                          </div>
+                          <div class="list-detail-actions">
+                            <button
+                              type="button"
+                              class="btn-save-toggle"
+                              :class="{ active: isStudentSaved(r) }"
+                              @click.stop="toggleSaveStudent(r)"
+                            >
+                              <span>{{ isStudentSaved(r) ? '★' : '☆' }}</span>
+                              <span>{{ isStudentSaved(r) ? 'Saved to Profile' : 'Save Student' }}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </td>
                     </tr>
 
                     <!-- Expanded Lap Splits Row -->
@@ -509,6 +600,7 @@ function formatWaveLabel(wKey?: string): string {
       >
         <div class="category-header collapsible-header" @click="toggleCard(`team:${teamGroup.team}`)">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0;">
+            <span v-if="hasSavedStudentInTeam(teamGroup)" class="card-saved-star" title="Saved student on this team">⭐</span>
             <span :class="teamGroup.isTarget ? 'team-name-lax' : ''">{{ teamGroup.team }}</span>
             <span class="category-badge">{{ teamGroup.riders.length }} RIDERS</span>
           </div>
@@ -531,24 +623,98 @@ function formatWaveLabel(wKey?: string): string {
               <tbody>
                 <template v-for="r in teamGroup.riders" :key="getRiderKey(r)">
                   <tr
-                    :class="[
-                      currentTab === 'results' ? 'selectable-rider-row' : '',
-                      selectedRiderKeys.has(getRiderKey(r)) ? 'selected' : ''
-                    ]"
-                    :title="currentTab === 'results' ? 'Tap to toggle lap splits' : undefined"
-                    @click="currentTab === 'results' && toggleRiderSelection(getRiderKey(r))"
+                    class="selectable-rider-row"
+                    :class="{ selected: selectedRiderKeys.has(getRiderKey(r)) }"
+                    :title="currentTab === 'results' ? 'Tap to toggle lap splits' : 'Tap to toggle racer details'"
+                    @click="toggleRiderSelection(getRiderKey(r))"
                   >
                     <td style="text-align:center;font-weight:700;color:var(--text-muted);">
                       {{ currentTab === 'results' ? (r.pl || '-') : (r.seedingRank || r.pl || '-') }}
                     </td>
                     <td style="text-align:center;"><span class="plate-number">#{{ r.no || r.bib }}</span></td>
-                    <td><span class="rider-name">{{ r.name }}</span></td>
+                    <td>
+                      <div style="display:inline-flex;align-items:center;gap:6px;">
+                        <button
+                          type="button"
+                          class="star-student-btn"
+                          :class="{ active: isStudentSaved(r) }"
+                          :title="isStudentSaved(r) ? `Saved ${r.name} to profile (tap to remove)` : `Save ${r.name} to profile`"
+                          @click.stop="toggleSaveStudent(r)"
+                        >
+                          {{ isStudentSaved(r) ? '★' : '☆' }}
+                        </button>
+                        <span class="rider-name">{{ r.name }}</span>
+                      </div>
+                    </td>
                     <td><span class="category-pill">{{ r.category }}</span></td>
-                    <td style="text-align:center;"><span class="div-tag">D{{ r.div || '1' }}</span></td>
+                    <td style="text-align:center;">
+                      <span class="div-tag">D{{ r.div || '1' }}</span>
+                      <span class="rider-expand-icon mobile-only" style="margin-left:4px;">{{ selectedRiderKeys.has(getRiderKey(r)) ? '▲' : '▼' }}</span>
+                    </td>
                     <td v-if="currentTab === 'results'" class="col-time" style="text-align:right;white-space:nowrap;">
                       <span v-if="r.status && r.status !== 'OK'" class="status-badge" :class="r.status.toLowerCase()">{{ r.status }}</span>
                       <span v-else>{{ r.totalTime || r.return_val || '-' }}</span>
                       <span v-if="r.laps && r.laps.length > 0" class="rider-expand-icon">▼</span>
+                    </td>
+                  </tr>
+
+                  <!-- Expanded Details Row (Lists Page - Team Mode) -->
+                  <tr
+                    v-if="currentTab === 'list' && selectedRiderKeys.has(getRiderKey(r))"
+                    class="rider-list-detail-row"
+                  >
+                    <td :colspan="currentTab === 'results' ? 6 : 5">
+                      <div class="list-detail-card">
+                        <div class="list-detail-grid">
+                          <div class="detail-item">
+                            <span class="detail-label">School / Team</span>
+                            <span class="detail-val">
+                              <span :class="teamGroup.isTarget ? 'team-name-lax' : 'team-name'">{{ teamGroup.team }}</span>
+                            </span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="detail-label">Category</span>
+                            <span class="detail-val">
+                              <span class="category-pill">{{ r.category }}</span>
+                            </span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="detail-label">Division</span>
+                            <span class="detail-val">
+                              <span class="div-tag">Division {{ r.div || '1' }}</span>
+                            </span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="detail-label">Plate / Bib #</span>
+                            <span class="detail-val">
+                              <span class="plate-number">#{{ r.no || r.bib }}</span>
+                            </span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="detail-label">Call-Up / Seed</span>
+                            <span class="detail-val">
+                              Seed: #{{ r.seedingRank || r.pl || '-' }}
+                            </span>
+                          </div>
+                          <div v-if="r.wave" class="detail-item">
+                            <span class="detail-label">Wave</span>
+                            <span class="detail-val">
+                              {{ formatWaveLabel(r.wave) }}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="list-detail-actions">
+                          <button
+                            type="button"
+                            class="btn-save-toggle"
+                            :class="{ active: isStudentSaved(r) }"
+                            @click.stop="toggleSaveStudent(r)"
+                          >
+                            <span>{{ isStudentSaved(r) ? '★' : '☆' }}</span>
+                            <span>{{ isStudentSaved(r) ? 'Saved to Profile' : 'Save Student' }}</span>
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                   <tr

@@ -199,7 +199,8 @@ export function getWarmupGroupForCategory(race: any, category: string): any | nu
 
 export function getWaveScheduleEntry(race: any, category: string, waveStr: string): { start?: string; stage?: string } | null {
   if (!category) return null
-  const normCat = category.trim().toLowerCase()
+  const cleanCat = normalizeCategoryName(category)
+  const normCat = cleanCat.trim().toLowerCase()
     .replace(/^9th grade/, 'freshman')
     .replace(/\bjviii\b/i, 'jv iii')
     .replace(/\bjvii\b/i, 'jv ii')
@@ -214,7 +215,7 @@ export function getWaveScheduleEntry(race: any, category: string, waveStr: strin
         .replace(/\bjvii\b/i, 'jv ii')
         .replace(/\bhso\b/i, 'hs open')
       return kNorm === normCat
-    }) || Object.keys(sched).find(k => k.toLowerCase() === category.toLowerCase()) || category
+    }) || Object.keys(sched).find(k => k.toLowerCase() === cleanCat.toLowerCase()) || cleanCat
 
     const catObj = sched[cKey]
     if (!catObj) return null
@@ -263,7 +264,8 @@ export function getWaveScheduleEntry(race: any, category: string, waveStr: strin
 
 export function getCategoryWaves(race: any, category: string): Array<{ wave: string; start: string; stage: string }> {
   if (!category) return []
-  const normCat = category.trim().toLowerCase()
+  const cleanCat = normalizeCategoryName(category)
+  const normCat = cleanCat.trim().toLowerCase()
     .replace(/^9th grade/, 'freshman')
     .replace(/\bjviii\b/i, 'jv iii')
     .replace(/\bjvii\b/i, 'jv ii')
@@ -550,15 +552,52 @@ export function formatDateRange(startIso: string, endIso: string): string {
 
 export function normalizeCategoryName(name: string): string {
   if (!name) return ''
-  let clean = String(name).replace(/^(\d+_)+/, '').replace(/^Category:\s*/i, '').replace(/\s+\d+$/, '').trim()
+  let clean = String(name)
+    // Remove leading symbols, star emojis, hashes, or digits_ like 1_ or #1_
+    .replace(/^[\s⭐*#]+/, '')
+    .replace(/^(\d+_)+/, '')
+    .replace(/^Category:\s*/i, '')
+
+  // Strip embedded timing and wave labels e.g. "//////Start Time: 2:09 PM//////Staging Time: 1:54 PM"
+  clean = clean.replace(/(?:Start|Staging|Warmup)\s*Time:?\s*[\d:]+\s*(?:AM|PM)?/gi, '')
+  clean = clean.replace(/\b(?:Start|Staging|Warmup)\s*Time:?/gi, '')
+  clean = clean.replace(/\bWave:?\s*\d+\b/gi, '')
+
+  // Strip standalone times like "2:09 PM" or "14:09" that might be embedded or delimited
+  clean = clean.replace(/\b\d{1,2}:\d{2}\s*(?:AM|PM)?\b/gi, '')
+
+  // Replace delimiters (slashes, multi-dashes, pipes) with single space
+  clean = clean.replace(/\/+/g, ' ')
+  clean = clean.replace(/[-|]{2,}/g, ' ')
+  clean = clean.replace(/\s*[-–—|]\s*$/, '')
+
+  // Clean up empty parentheses
+  clean = clean.replace(/\(\s*\)/g, ' ')
+
+  // Collapse multiple whitespaces
+  clean = clean.replace(/\s+/g, ' ').trim()
+
+  // Remove trailing numbers (e.g. "Boys Varsity 0" -> "Boys Varsity")
+  clean = clean.replace(/\s+\d+$/, '').trim()
+
+  // Reorder "Boys / Girls <Category>" to "<Category> Boys / Girls"
   const m = clean.match(/^(Boys|Girls)\s+(.*)$/i)
   if (m) {
     clean = `${m[2].trim()} ${m[1].trim()}`
   }
+
+  // Remove trailing numbers again if exposed after gender swap (e.g. "Varsity 0 Boys")
+  clean = clean.replace(/\s+\d+\s+(Boys|Girls)$/i, ' $1').trim()
+  clean = clean.replace(/\s+\d+$/, '').trim()
+
+  // Standardize aliases
   clean = clean.replace(/^9th grade/i, 'Freshman')
   clean = clean.replace(/\bjviii\b/i, 'JV III')
   clean = clean.replace(/\bjvii\b/i, 'JV II')
+  clean = clean.replace(/\bjv\s*3\b/i, 'JV III')
+  clean = clean.replace(/\bjv\s*2\b/i, 'JV II')
   clean = clean.replace(/\bhso\b/i, 'HS Open')
+
   return clean
 }
 
@@ -595,10 +634,10 @@ export function resolveColumnIndices(fields: any[], rowLength: number): ColumnIn
   const map: ColumnIndexMap = {}
   if (!Array.isArray(fields) || fields.length === 0) return map
 
-  // row[1] is always the Bib/Plate number or entity ID in RACE RESULT export
-  if (rowLength >= 2) {
-    map.bib = 1
-    map.no = 1
+  // row[0] is the Bib/Plate number in RACE RESULT exports; row[1] is the internal ID
+  if (rowLength >= 1) {
+    map.bib = 0
+    map.no = 0
   }
 
   const lapIndices: number[] = []
@@ -616,14 +655,15 @@ export function resolveColumnIndices(fields: any[], rowLength: number): ColumnIn
     let colIdx: number
 
     if (firstIsBib) {
-      // e.g. Fields = [Bib, Name, Gender, Category, FLD]
-      // row = [ID, Bib, Name, Gender, Category, FLD]
-      colIdx = 1 + idx
+      // Fields = [Bib (idx 0), Name (idx 1), Gender (idx 2), Category (idx 3), ...]
+      // row = [Bib (0), Internal ID (1), Name (2), Gender (3), Category (4), ...]
+      if (idx === 0) colIdx = 0
+      else colIdx = 1 + idx
     } else if (secondIsBib) {
-      // e.g. Fields = [PL/PLC, NO, NAME, TEAM, FLD, ...]
-      // row = [ID, Bib, PL/PLC, NAME, TEAM, FLD, ...]
+      // Fields = [PL/PLC (idx 0), NO (idx 1), NAME (idx 2), TEAM (idx 3), FLD (idx 4), ...]
+      // row = [Bib (0), Internal ID (1), PL/PLC (2), NAME (3), TEAM (4), FLD (5), ...]
       if (idx === 0) colIdx = 2 // PL / PLC
-      else if (idx === 1) colIdx = 1 // NO / BIB
+      else if (idx === 1) colIdx = 0 // NO / BIB (points to row[0] plate number)
       else colIdx = 1 + idx // NAME at 3, TEAM at 4, etc.
     } else {
       // e.g. Fields = [PLC, TEAM, PENALTY PTS, PTS]
@@ -898,7 +938,7 @@ export function parseUniversalData(
     }
 
     // Rider fields
-    const bib = String((map.bib !== undefined ? row[map.bib] : '') || '').trim()
+    const bib = String((map.bib !== undefined ? row[map.bib] : '') || row[0] || '').trim()
     const no = String((map.no !== undefined ? row[map.no] : '') || bib).trim()
     const name = String((map.name !== undefined ? row[map.name] : '') || '').trim()
     const team = String((map.team !== undefined ? row[map.team] : '') || ctx.team || '').trim()

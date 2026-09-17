@@ -34,6 +34,8 @@ const emailInput = ref('')
 const passwordInput = ref('')
 const confirmPasswordInput = ref('')
 const inviteCodeInput = ref('')
+const manualCodeInput = ref('')
+const showCodePrompt = ref(false)
 const localError = ref('')
 const resetSent = ref(false)
 
@@ -44,6 +46,21 @@ const activeInviteCheck = computed(() => {
 const hasValidInvite = computed(() => {
   return !!activeInviteCheck.value.valid
 })
+
+const handleValidateEnteredCode = () => {
+  localError.value = ''
+  const chk = validateInviteCode(manualCodeInput.value)
+  if (chk.valid) {
+    inviteCodeInput.value = manualCodeInput.value.trim()
+    if (import.meta.client) {
+      sessionStorage.setItem('laxmtb_invite_token', inviteCodeInput.value)
+    }
+    mode.value = 'signup'
+    showCodePrompt.value = false
+  } else {
+    localError.value = chk.error || 'Invalid access code.'
+  }
+}
 
 const loadStoredInviteToken = () => {
   if (props.initialInviteCode && props.initialInviteCode.trim()) {
@@ -278,7 +295,7 @@ const handleResetPassword = async () => {
             <span v-else>Sign In</span>
           </button>
 
-          <!-- Prompt to switch to Create Account only if invite link is active -->
+          <!-- Prompt to switch to Create Account or unlock with invite code -->
           <div v-if="hasValidInvite" class="auth-footer-prompt" style="margin-top:12px;text-align:center;">
             <span>Need an account?</span>
             <button
@@ -288,6 +305,40 @@ const handleResetPassword = async () => {
             >
               Complete Registration
             </button>
+          </div>
+          <div v-else class="auth-footer-prompt" style="margin-top:12px;text-align:center;">
+            <div v-if="!showCodePrompt">
+              <span style="font-size:12px;color:var(--text-muted);">Coach or Guardian with an access code?</span>
+              <button
+                type="button"
+                class="auth-text-link"
+                style="display:block;margin:4px auto 0;"
+                @click="showCodePrompt = true"
+              >
+                Enter Access Code to Register
+              </button>
+            </div>
+            <div v-else style="margin-top:8px;padding:10px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;text-align:left;">
+              <label class="auth-label" style="font-size:11px;">Team Access Code</label>
+              <div style="display:flex;gap:6px;margin-top:4px;">
+                <input
+                  v-model="manualCodeInput"
+                  type="text"
+                  placeholder="e.g. lax-coach-2026"
+                  class="auth-input"
+                  style="font-size:12px;padding:6px 10px;"
+                  @keyup.enter.prevent="handleValidateEnteredCode"
+                >
+                <button
+                  type="button"
+                  class="auth-primary-btn"
+                  style="padding:6px 12px;font-size:12px;white-space:nowrap;width:auto;"
+                  @click="handleValidateEnteredCode"
+                >
+                  Unlock
+                </button>
+              </div>
+            </div>
           </div>
         </form>
 

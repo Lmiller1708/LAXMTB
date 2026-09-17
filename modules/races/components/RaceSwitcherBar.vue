@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const emit = defineEmits<{
   (e: 'selectRace', index: number): void
+  (e: 'toast', msg: string): void
 }>()
 
 const { races, currentRaceIndex, selectRace } = useCurrentRace()
@@ -32,3 +33,7 @@ const onRaceClick = (index: number) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Race switcher layout styles are in assets/css/original.css */
+</style>

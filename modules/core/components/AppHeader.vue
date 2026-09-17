@@ -6,6 +6,15 @@ import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
 import { useNotificationSubscriptions } from '~/modules/notifications/composables/useNotificationSubscriptions'
 import { usePwaUpdate } from '../composables/usePwaUpdate'
 
+const props = withDefaults(
+  defineProps<{
+    activeNav?: 'home' | 'practice' | 'race' | 'about'
+  }>(),
+  {
+    activeNav: 'race'
+  }
+)
+
 const { isOnline } = useNetworkStatus()
 const { theme, toggleTheme } = useTheme()
 const { user, userProfile, userPhoto, isCoachAuth, isAdminCoach, isAuthorizedCoach, signOut } = useCoachAuth()
@@ -23,10 +32,16 @@ const emit = defineEmits<{
   (e: 'openProfile'): void
   (e: 'syncData'): void
   (e: 'toast', msg: string): void
+  (e: 'navigate', route: 'home' | 'practice' | 'race' | 'about'): void
 }>()
 
 const toggleMenu = () => { isMenuOpen.value = !isMenuOpen.value }
 const closeMenu = () => { isMenuOpen.value = false }
+
+const handleNavigate = (route: 'home' | 'practice' | 'race' | 'about') => {
+  closeMenu()
+  emit('navigate', route)
+}
 
 const handleWhatsNew = () => { closeMenu(); emit('openWhatsNew') }
 const handleNotifications = () => { closeMenu(); emit('openNotifications') }
@@ -113,12 +128,37 @@ onMounted(() => {
     <div class="header-top-container">
       <div class="header-top">
         <!-- Brand -->
-        <div class="brand-box">
+        <div class="brand-box" @click="handleNavigate('home')">
           <img src="/logo.png" alt="La Crosse Area MTB Team" class="team-logo" onerror="this.style.display='none'">
           <div class="brand-text">
-            <h1>LAX MTB <span class="brand-slash">//</span> <span class="brand-sub">RACE CENTRAL</span></h1>
+            <h1>LAX MTB <template v-if="activeNav && activeNav !== 'home'"><span class="brand-slash">//</span> <span class="brand-sub">{{ activeNav === 'race' ? 'RACE CENTRAL' : (activeNav === 'practice' ? 'PRACTICE' : 'ABOUT US') }}</span></template></h1>
           </div>
         </div>
+
+        <!-- Desktop Navigation Center Pills (Sleek, No Icons, Mathematically Centered) -->
+        <nav class="desktop-nav-bar" aria-label="Main Navigation">
+          <button
+            class="top-nav-tab"
+            :class="{ active: activeNav === 'home' }"
+            @click="handleNavigate('home')"
+          >
+            Team Overview
+          </button>
+          <button
+            class="top-nav-tab"
+            :class="{ active: activeNav === 'race' }"
+            @click="handleNavigate('race')"
+          >
+            Race Central
+          </button>
+          <button
+            class="top-nav-tab"
+            :class="{ active: activeNav === 'about' }"
+            @click="handleNavigate('about')"
+          >
+            About Us
+          </button>
+        </nav>
 
         <!-- Controls -->
         <div class="header-controls">
@@ -173,8 +213,72 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Mobile Secondary Quick-Bar (Always visible 1-tap navigation on smaller screens, sleek no-icon pills) -->
+    <div class="mobile-nav-pills-bar">
+      <div class="mobile-nav-pills-container">
+        <button
+          class="mobile-pill-btn"
+          :class="{ active: activeNav === 'home' }"
+          @click="handleNavigate('home')"
+        >
+          Team Overview
+        </button>
+        <button
+          class="mobile-pill-btn race"
+          :class="{ active: activeNav === 'race' }"
+          @click="handleNavigate('race')"
+        >
+          Race Central
+        </button>
+        <button
+          class="mobile-pill-btn"
+          :class="{ active: activeNav === 'about' }"
+          @click="handleNavigate('about')"
+        >
+          About Us
+        </button>
+      </div>
+    </div>
+
     <!-- Dropdown Menu -->
     <div class="mobile-menu-dropdown" :class="{ show: isMenuOpen }">
+
+      <!-- Navigation Links in Dropdown -->
+      <div class="dropdown-section-title">NAVIGATION</div>
+      <div
+        class="mobile-menu-item"
+        :class="{ 'item-active': activeNav === 'home' }"
+        @click="handleNavigate('home')"
+      >
+        <div class="mobile-menu-item-left">
+          <span class="mobile-menu-item-title">Team Overview</span>
+        </div>
+        <span v-if="activeNav === 'home'" class="mobile-menu-badge active">Current</span>
+      </div>
+
+      <div
+        class="mobile-menu-item"
+        :class="{ 'item-active': activeNav === 'race' }"
+        @click="handleNavigate('race')"
+      >
+        <div class="mobile-menu-item-left">
+          <span class="mobile-menu-item-title">Race Central</span>
+        </div>
+        <span class="mobile-menu-badge" style="background:rgba(239,68,68,0.18);border-color:rgba(239,68,68,0.4);color:var(--accent-red);font-weight:700;">Live Feed</span>
+      </div>
+
+      <div
+        class="mobile-menu-item"
+        :class="{ 'item-active': activeNav === 'about' }"
+        @click="handleNavigate('about')"
+      >
+        <div class="mobile-menu-item-left">
+          <span class="mobile-menu-item-title">About Us</span>
+        </div>
+        <span v-if="activeNav === 'about'" class="mobile-menu-badge active">Current</span>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:6px 14px;" />
 
       <!-- What's New -->
       <div class="mobile-menu-item" @click="handleWhatsNew">
@@ -300,7 +404,7 @@ onMounted(() => {
 
       <!-- App Version Footer -->
       <div style="padding:10px 14px 8px;font-size:10px;color:var(--text-muted);text-align:center;border-top:1px solid var(--border);margin-top:4px;">
-        LAX MTB Race Central v{{ config.public?.appVersion || '1.2.5' }}
+        LAX MTB Portal v{{ config.public?.appVersion || '1.3.0' }}
       </div>
 
     </div>
@@ -308,6 +412,127 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.brand-box {
+  cursor: pointer;
+  user-select: none;
+}
+
+.header-top {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Desktop Navigation Center Pills (Mathematically Centered) */
+.desktop-nav-bar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  padding: 3px 6px;
+  border-radius: 9999px;
+  margin: 0;
+  z-index: 10;
+}
+
+.top-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.25px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.top-nav-tab:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.top-nav-tab.active {
+  color: #ffffff;
+  background: var(--accent-red);
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);
+}
+
+/* Mobile Quick Bar */
+.mobile-nav-pills-bar {
+  display: none;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+  padding: 6px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.mobile-nav-pills-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-nav-pills-container {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.mobile-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex: 1;
+  text-align: center;
+}
+
+.mobile-pill-btn.active {
+  background: var(--accent-red);
+  color: #ffffff;
+  border-color: var(--accent-red);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+}
+
+@media (max-width: 920px) {
+  .desktop-nav-bar {
+    display: none;
+  }
+  .mobile-nav-pills-bar {
+    display: block;
+  }
+}
+
+.dropdown-section-title {
+  padding: 8px 16px 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--accent-red);
+}
+
 .header-user-btn {
   display: flex;
   align-items: center;
