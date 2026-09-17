@@ -23,7 +23,9 @@ const {
   isAuthorizedCoach,
   updateUserProfile,
   deleteUserAccount,
-  signOut
+  signOut,
+  savedStudents,
+  removeSavedStudent
 } = useCoachAuth()
 
 const nameInput = ref('')
@@ -426,6 +428,49 @@ const handleDeleteAccount = async () => {
             <span v-else>Save Changes</span>
           </button>
         </form>
+
+        <!-- Saved Students / Athletes Section -->
+        <div class="profile-divider" />
+        <div class="profile-saved-section">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:15px;">⭐</span>
+              <h4 style="margin:0;font-size:13px;font-weight:700;color:var(--text-main);">
+                Saved Athletes ({{ savedStudents.length }})
+              </h4>
+            </div>
+          </div>
+          <p v-if="savedStudents.length === 0" style="margin:0;font-size:12px;color:var(--text-muted);font-style:italic;line-height:1.4;">
+            No athletes saved yet. Tap the star icon (☆) next to any student on the race start lists or results page to save them here.
+          </p>
+          <div v-else style="display:flex;flex-direction:column;gap:6px;">
+            <div
+              v-for="s in savedStudents"
+              :key="s.bib + s.name"
+              style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg-subtle);border:1px solid var(--border);border-radius:6px;"
+            >
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                <span class="plate-number" style="font-size:11px;flex-shrink:0;">#{{ s.bib }}</span>
+                <div style="min-width:0;">
+                  <div style="font-size:13px;font-weight:700;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ s.name }}
+                  </div>
+                  <div v-if="s.team || s.category" style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ [s.team, s.category].filter(Boolean).join(' • ') }}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:4px;flex-shrink:0;"
+                title="Remove from saved athletes"
+                @click="removeSavedStudent(s.bib || s.name)"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        </div>
 
         <!-- Account Actions Divider -->
         <div class="profile-divider" />

@@ -138,4 +138,39 @@ describe('Team Invite Gatekeeping & Role Permissions', () => {
       expect(inviteCheck.valid).toBe(false)
     })
   })
+
+  describe('Saved Students (Favorites) Matching Logic', () => {
+    const savedList = [
+      { bib: '3504', name: 'Alexander Miller', team: 'La Crosse Composite', category: 'Freshman Boys' },
+      { bib: '9552', name: 'Sophia Chen', team: 'Winona MTB', category: 'Varsity Girls' }
+    ]
+
+    const isStudentSavedHelper = (
+      r: { bib?: string | number; no?: string | number; name?: string },
+      list: typeof savedList
+    ): boolean => {
+      const bibStr = String(r.bib || r.no || '').trim()
+      const nameStr = String(r.name || '').trim().toLowerCase()
+      return list.some(s => {
+        if (bibStr && s.bib && s.bib === bibStr) return true
+        if (nameStr && s.name && s.name.trim().toLowerCase() === nameStr) return true
+        return false
+      })
+    }
+
+    it('matches saved student by bib number', () => {
+      expect(isStudentSavedHelper({ bib: '3504', name: 'Different Name' }, savedList)).toBe(true)
+      expect(isStudentSavedHelper({ bib: 3504 }, savedList)).toBe(true)
+    })
+
+    it('matches saved student by name case-insensitively', () => {
+      expect(isStudentSavedHelper({ bib: '9999', name: 'alexander miller' }, savedList)).toBe(true)
+      expect(isStudentSavedHelper({ name: 'SOPHIA CHEN' }, savedList)).toBe(true)
+    })
+
+    it('returns false for unsaved students', () => {
+      expect(isStudentSavedHelper({ bib: '1111', name: 'Unknown Rider' }, savedList)).toBe(false)
+      expect(isStudentSavedHelper({}, savedList)).toBe(false)
+    })
+  })
 })

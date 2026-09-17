@@ -125,10 +125,10 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
         { Label: 'Name', Expression: 'CorrectSpelling([LFNAME])' },
         { Label: 'Team', Expression: 'CLUB' }
       ]
-      // In RACE RESULT: row[0]=ID, row[1]=BIB, row[2]=PL, row[3]=Name, row[4]=Team
+      // In RACE RESULT: row[0]=BIB (Plate #), row[1]=ID (internal participant ID), row[2]=PL, row[3]=Name, row[4]=Team
       const map = resolveColumnIndices(mockFields, 6)
       expect(map.seriesRank).toBe(2)
-      expect(map.bib).toBe(1)
+      expect(map.bib).toBe(0)
       expect(map.name).toBe(3)
       expect(map.team).toBe(4)
     })
@@ -138,6 +138,40 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
       expect(normalizeCategoryName('2_Girls JV III')).toBe('JV III Girls')
       expect(normalizeCategoryName('9th Grade Boys')).toBe('Freshman Boys')
       expect(normalizeCategoryName('HS Open Girls')).toBe('HS Open Girls')
+      // Corrupted RACE RESULT export headers with embedded timing delimiters
+      expect(normalizeCategoryName('6th Grade//////Start Time: 2:09 PM//////Staging Time: 1:54 PM Girls')).toBe('6th Grade Girls')
+      expect(normalizeCategoryName('Girls 6th Grade//////Start Time: 2:09 PM//////Staging Time: 1:54 PM')).toBe('6th Grade Girls')
+      expect(normalizeCategoryName('7th Grade//////Start Time: 1:36 PM//////Staging Time: 1:21 PM Boys')).toBe('7th Grade Boys')
+      expect(normalizeCategoryName('Boys 7th Grade//////Start Time: 1:36 PM//////Staging Time: 1:21 PM')).toBe('7th Grade Boys')
+      expect(normalizeCategoryName('⭐ 7th Grade//////Start Time: 1:36 PM//////Staging Time: 1:21 PM Boys')).toBe('7th Grade Boys')
+      expect(normalizeCategoryName('8th Grade Boys//////Start Time: 1:30 PM//////Staging Time: 1:15 PM')).toBe('8th Grade Boys')
+      expect(normalizeCategoryName('JV II Boys ////// Start Time: 12:45 PM ////// Staging Time: 12:30 PM')).toBe('JV II Boys')
+      expect(normalizeCategoryName('Boys 9th Grade//////Start Time: 10:53 AM')).toBe('Freshman Boys')
+      expect(normalizeCategoryName('Category: Boys 6th Grade 1')).toBe('6th Grade Boys')
+      expect(normalizeCategoryName('JV3 Girls')).toBe('JV III Girls')
+      expect(normalizeCategoryName('JV2 Boys')).toBe('JV II Boys')
+    })
+
+    it('cleans category names with embedded delimiter timing strings in start list groups', () => {
+      const mockListObj = {
+        ListName: '01 - Start Lists|Category Start List',
+        Fields: [
+          { Label: 'BIB', Expression: 'BIB' },
+          { Label: 'NAME', Expression: 'DisplayName' },
+          { Label: 'TEAM', Expression: 'CLUB' }
+        ]
+      }
+      const mockData = {
+        '1_6th Grade//////Start Time: 2:09 PM//////Staging Time: 1:54 PM Girls': [
+          ['1001', '10', 'Rider A', 'Holmen High School']
+        ],
+        '2_Boys 7th Grade//////Start Time: 1:36 PM//////Staging Time: 1:21 PM': [
+          ['2001', '20', 'Rider B', 'La Crosse Central']
+        ]
+      }
+      const parsed = parseUniversalData({ list: mockListObj, data: mockData }, '', 'list')
+      expect(parsed.riders[0].category).toBe('6th Grade Girls')
+      expect(parsed.riders[1].category).toBe('7th Grade Boys')
     })
 
     it('handles null, undefined, or empty objects safely', () => {
@@ -191,7 +225,7 @@ describe('RACE RESULT Metadata-Aware Parsing', () => {
           ]
         },
         data: [
-          ['201', '99', 'Jane Doe', 'ExtraValue', 'Varsity Girls', 'Custom Club']
+          ['99', '201', 'Jane Doe', 'ExtraValue', 'Varsity Girls', 'Custom Club']
         ]
       }
 

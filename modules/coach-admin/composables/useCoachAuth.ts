@@ -28,6 +28,15 @@ export interface CoachAdminItem {
 
 export type CoachItem = CoachAdminItem
 
+export type UserRole = 'owner' | 'admin' | 'coach' | 'guardian' | 'member'
+
+export interface SavedStudentItem {
+  bib: string
+  name: string
+  team?: string
+  category?: string
+}
+
 export interface TeamUserItem {
   id: string
   uid?: string
@@ -35,7 +44,7 @@ export interface TeamUserItem {
   name: string
   phone?: string
   photoURL?: string
-  role: 'owner' | 'admin' | 'coach' | 'guardian' | 'member'
+  role: UserRole
   createdAt?: string
   lastLoginAt?: string
   isPendingAdmin?: boolean
@@ -47,9 +56,10 @@ export interface UserProfile {
   name: string
   phone: string
   photoURL?: string
-  role?: 'admin' | 'coach' | 'guardian' | 'owner'
+  role?: UserRole
   createdAt?: string
   updatedAt?: string
+  savedStudents?: SavedStudentItem[]
   notificationSubscriptions?: {
     categories?: string[]
     waves?: string[]
@@ -94,6 +104,9 @@ export const useCoachAuth = () => {
     coachCode: DEFAULT_COACH_CODE,
     guardianCode: DEFAULT_GUARDIAN_CODE
   }))
+
+  // Saved students/athletes
+  const savedStudents = useState<SavedStudentItem[]>('user_saved_students', () => [])
 
   // Is the signed-in user registered as coach/admin in Firestore?
   const isAuthorizedCoach = useState<boolean>('coach_authorized', () => false)
@@ -215,7 +228,7 @@ export const useCoachAuth = () => {
   /**
    * Validate an invite code or link token
    */
-  const validateInviteCode = (rawCode?: string): { valid: boolean; role?: 'coach' | 'guardian'; label?: string; error?: string } => {
+  const validateInviteCode = (rawCode?: string): { valid: boolean; role?: UserRole; label?: string; error?: string } => {
     if (!rawCode || !rawCode.trim()) {
       return { valid: false, error: 'Registration is by team invitation only. Please enter a valid team access code or use an invite link.' }
     }
@@ -311,6 +324,97 @@ export const useCoachAuth = () => {
   }
 
   /**
+   * Saved Students / Athletes helpers
+   */
+  const loadLocalSavedStudents = (): SavedStudentItem[] => {
+    if (!import.meta.client) return []
+    try {
+      const raw = localStorage.getItem('laxmtb_saved_students')
+      return raw ? JSON.parse(raw) : []
+    } catch {
+      return []
+    }
+  }
+
+  const persistSavedStudents = async (list: SavedStudentItem[]) => {
+    savedStudents.value = list
+    if (import.meta.client) {
+      try {
+        localStorage.setItem('laxmtb_saved_students', JSON.stringify(list))
+      } catch {}
+    }
+    if (user.value?.uid && db) {
+      try {
+        await setDoc(doc(db, 'users', user.value.uid), {
+          savedStudents: list,
+          updatedAt: new Date().toISOString()
+        }, { merge: true })
+        if (userProfile.value) {
+          userProfile.value.savedStudents = list
+        }
+      } catch (err) {
+        console.warn('[useCoachAuth] Could not save students to user profile:', err)
+      }
+    }
+  }
+
+  const isStudentSaved = (r: { bib?: string | number; no?: string | number; name?: string }): boolean => {
+    const bibStr = String(r.bib || r.no || '').trim()
+    const nameStr = String(r.name || '').trim().toLowerCase()
+    return savedStudents.value.some(s => {
+      if (bibStr && s.bib && s.bib === bibStr) return true
+      if (nameStr && s.name && s.name.trim().toLowerCase() === nameStr) return true
+      return false
+    })
+  }
+
+  const toggleSaveStudent = async (rider: { bib?: string | number; no?: string | number; name?: string; team?: string; category?: string }): Promise<boolean> => {
+    const bibStr = String(rider.bib || rider.no || '').trim()
+    const nameStr = String(rider.name || '').trim()
+    if (!nameStr && !bibStr) return false
+
+    const existingIdx = savedStudents.value.findIndex(s => {
+      if (bibStr && s.bib && s.bib === bibStr) return true
+      if (nameStr && s.name && s.name.trim().toLowerCase() === nameStr.toLowerCase()) return true
+      return false
+    })
+
+    let next: SavedStudentItem[]
+    let nowSaved: boolean
+    if (existingIdx >= 0) {
+      next = savedStudents.value.filter((_, idx) => idx !== existingIdx)
+      nowSaved = false
+    } else {
+      next = [
+        ...savedStudents.value,
+        {
+          bib: bibStr,
+          name: nameStr,
+          team: rider.team?.trim() || '',
+          category: rider.category?.trim() || ''
+        }
+      ]
+      nowSaved = true
+    }
+    await persistSavedStudents(next)
+    return nowSaved
+  }
+
+  const removeSavedStudent = async (bibOrName: string) => {
+    const target = bibOrName.trim().toLowerCase()
+    const next = savedStudents.value.filter(s => s.bib.toLowerCase() !== target && s.name.trim().toLowerCase() !== target)
+    await persistSavedStudents(next)
+  }
+
+  // Initialize saved students from localStorage on startup
+  if (import.meta.client && savedStudents.value.length === 0) {
+    const local = loadLocalSavedStudents()
+    if (local.length > 0) {
+      savedStudents.value = local
+    }
+  }
+
+  /**
    * Load or initialize the user's Firestore profile doc in `users/{uid}`
    */
   const syncUserProfile = async (firebaseUser: any) => {
@@ -325,6 +429,13 @@ export const useCoachAuth = () => {
       if (userSnap.exists()) {
         const data = userSnap.data() as UserProfile
         const photo = firebaseUser.photoURL || data.photoURL || ''
+        const profileSaved = Array.isArray(data.savedStudents) ? data.savedStudents : loadLocalSavedStudents()
+        savedStudents.value = profileSaved
+        if (import.meta.client && profileSaved.length > 0) {
+          try {
+            localStorage.setItem('laxmtb_saved_students', JSON.stringify(profileSaved))
+          } catch {}
+        }
         userProfile.value = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
@@ -333,7 +444,8 @@ export const useCoachAuth = () => {
           photoURL: photo,
           role: data.role || (isAdminCoach.value ? 'admin' : (isAuthorizedCoach.value ? 'coach' : undefined)),
           createdAt: data.createdAt,
-          updatedAt: data.updatedAt
+          updatedAt: data.updatedAt,
+          savedStudents: profileSaved
         }
         if (firebaseUser.photoURL && data.photoURL !== firebaseUser.photoURL) {
           setDoc(userRef, { photoURL: firebaseUser.photoURL }, { merge: true }).catch(() => {})
@@ -655,7 +767,7 @@ export const useCoachAuth = () => {
    */
   const updateUserRole = async (
     email: string,
-    newRole: 'admin' | 'coach' | 'guardian',
+    newRole: 'admin' | 'coach' | 'guardian' | 'member',
     uid?: string
   ): Promise<{ success: boolean; error?: string }> => {
     const cleanEmail = email.toLowerCase().trim()
@@ -688,10 +800,10 @@ export const useCoachAuth = () => {
           await setDoc(doc(db, 'users', uid), { role: 'coach' }, { merge: true })
         }
       } else {
-        // Demote to guardian: delete from admins collection
+        // Demote/assign non-admin role: delete from admins collection
         await deleteDoc(doc(db, 'admins', cleanEmail)).catch(() => {})
         if (uid) {
-          await setDoc(doc(db, 'users', uid), { role: 'guardian' }, { merge: true })
+          await setDoc(doc(db, 'users', uid), { role: newRole }, { merge: true })
         }
       }
 
@@ -1230,6 +1342,10 @@ export const useCoachAuth = () => {
     sendResetEmail,
     signOut,
     lockAdmin,
-    unlockAdmin
+    unlockAdmin,
+    savedStudents,
+    isStudentSaved,
+    toggleSaveStudent,
+    removeSavedStudent
   }
 }

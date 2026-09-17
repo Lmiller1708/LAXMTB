@@ -57,37 +57,148 @@ const {
   unlockAdmin
 } = useCoachAuth()
 
-const normalizeTab = (tab?: string) => {
-  if (!tab) return 'venue'
-  if (tab === 'coach') return 'waves'
-  if (tab === 'users') return 'coaches'
-  return tab
+export type AdminScope = 'race' | 'site'
+
+const currentScope = ref<AdminScope>('race')
+const activeRaceTab = ref('venue')
+const activeSiteTab = ref('site-alert')
+
+const resolveScopeAndTab = (inputTabOrScope?: string) => {
+  if (!inputTabOrScope) {
+    return { scope: 'race' as AdminScope, raceTab: 'venue', siteTab: 'site-alert' }
+  }
+  const clean = inputTabOrScope.trim().toLowerCase()
+
+  if (clean === 'site' || clean === 'site-admin') {
+    return { scope: 'site' as AdminScope, raceTab: activeRaceTab.value || 'venue', siteTab: activeSiteTab.value || 'site-alert' }
+  }
+  if (clean === 'race' || clean === 'race-admin') {
+    return { scope: 'race' as AdminScope, raceTab: activeRaceTab.value || 'venue', siteTab: activeSiteTab.value || 'site-alert' }
+  }
+
+  // Site tabs
+  if (['alert', 'announcement', 'site-alert', 'urgent'].includes(clean)) {
+    return { scope: 'site' as AdminScope, raceTab: activeRaceTab.value || 'venue', siteTab: 'site-alert' }
+  }
+  if (['media', 'photos-site', 'site-photos', 'site-media', 'banners'].includes(clean)) {
+    return { scope: 'site' as AdminScope, raceTab: activeRaceTab.value || 'venue', siteTab: 'site-media' }
+  }
+  if (['leadership', 'leaders', 'site-leaders', 'team-leaders'].includes(clean)) {
+    return { scope: 'site' as AdminScope, raceTab: activeRaceTab.value || 'venue', siteTab: 'site-leaders' }
+  }
+  if (['sponsors', 'site-sponsors', 'partners'].includes(clean)) {
+    return { scope: 'site' as AdminScope, raceTab: activeRaceTab.value || 'venue', siteTab: 'site-sponsors' }
+  }
+  if (['users', 'coaches', 'admins', 'permissions'].includes(clean)) {
+    return { scope: 'site' as AdminScope, raceTab: activeRaceTab.value || 'venue', siteTab: 'coaches' }
+  }
+
+  // Race tabs
+  let rTab = clean
+  if (rTab === 'coach') rTab = 'waves'
+  if (rTab === 'photos') rTab = 'signups'
+  if (!['venue', 'schedule', 'waves', 'signups', 'maps', 'announcements'].includes(rTab)) {
+    rTab = 'venue'
+  }
+  return { scope: 'race' as AdminScope, raceTab: rTab, siteTab: activeSiteTab.value || 'site-alert' }
 }
 
-const activeTab = ref(normalizeTab(props.initialTab))
+const normalizeTab = (tab?: string): string => {
+  if (!tab) return 'venue'
+  const res = resolveScopeAndTab(tab)
+  return res.scope === 'race' ? res.raceTab : res.siteTab
+}
 
-const selectTab = (tab: string) => {
-  const clean = normalizeTab(tab)
-  activeTab.value = clean
+const initNav = resolveScopeAndTab(props.initialTab)
+currentScope.value = initNav.scope
+activeRaceTab.value = initNav.raceTab
+activeSiteTab.value = initNav.siteTab
+
+// activeTab computed for backward compatibility
+const activeTab = computed({
+  get: () => currentScope.value === 'race' ? activeRaceTab.value : activeSiteTab.value,
+  set: (val: string) => {
+    selectTab(val)
+  }
+})
+
+const updateAdminUrl = (scope: AdminScope, tab: string) => {
   if (import.meta.client && typeof window !== 'undefined') {
-    const target = `/admin?tab=${encodeURIComponent(clean)}`
+    const target = `/admin?scope=${encodeURIComponent(scope)}&tab=${encodeURIComponent(tab)}`
     if (window.location.pathname + window.location.search !== target) {
-      window.history.pushState({ admin: true, tab: clean }, '', target)
+      window.history.replaceState({ admin: true, scope, tab }, '', target)
     }
   }
 }
 
+const selectScope = (scope: AdminScope) => {
+  currentScope.value = scope
+  const tab = scope === 'race' ? activeRaceTab.value : activeSiteTab.value
+  updateAdminUrl(scope, tab)
+  nextTick(updateAdminHeaderHeight)
+}
+
+const selectRaceTab = (tab: string) => {
+  currentScope.value = 'race'
+  activeRaceTab.value = tab
+  updateAdminUrl('race', tab)
+  nextTick(updateAdminHeaderHeight)
+}
+
+const selectSiteTab = (tab: string) => {
+  currentScope.value = 'site'
+  activeSiteTab.value = tab
+  updateAdminUrl('site', tab)
+  nextTick(updateAdminHeaderHeight)
+}
+
+const selectTab = (tab: string) => {
+  const res = resolveScopeAndTab(tab)
+  currentScope.value = res.scope
+  if (res.scope === 'race') {
+    activeRaceTab.value = res.raceTab
+    updateAdminUrl('race', res.raceTab)
+  } else {
+    activeSiteTab.value = res.siteTab
+    updateAdminUrl('site', res.siteTab)
+  }
+  nextTick(updateAdminHeaderHeight)
+}
+
+const handleSiteHeaderSave = () => {
+  if (activeSiteTab.value === 'site-alert') handlePublishAlert()
+  else if (activeSiteTab.value === 'site-media') handleSaveSiteMedia()
+  else if (activeSiteTab.value === 'site-leaders') handleSaveAdminLeaders()
+  else if (activeSiteTab.value === 'site-sponsors') handleSaveAdminSponsors()
+}
+
+const siteSaveButtonText = computed(() => {
+  if (activeSiteTab.value === 'site-alert') return isSavingAlert.value ? 'Publishing...' : 'Publish Alert'
+  if (activeSiteTab.value === 'site-media') return isSavingMedia.value ? 'Saving...' : 'Save Photos'
+  if (activeSiteTab.value === 'site-leaders') return isSavingLeaders.value ? 'Saving...' : 'Save Leaders'
+  if (activeSiteTab.value === 'site-sponsors') return isSavingSponsors.value ? 'Saving...' : 'Save Sponsors'
+  return ''
+})
+
 watch(() => props.initialTab, (newTab) => {
-  if (newTab) activeTab.value = normalizeTab(newTab)
+  if (newTab) selectTab(newTab)
 })
 
 const onPopState = () => {
   if (import.meta.client && typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search)
+    const scopeParam = params.get('scope') || params.get('page')
     const tabParam = params.get('tab')
-    if (tabParam && tabParam !== activeTab.value) {
-      activeTab.value = normalizeTab(tabParam)
+    if (scopeParam === 'site' || scopeParam === 'race') {
+      currentScope.value = scopeParam
     }
+    if (tabParam) {
+      const res = resolveScopeAndTab(tabParam)
+      if (!scopeParam) currentScope.value = res.scope
+      if (currentScope.value === 'race') activeRaceTab.value = res.raceTab
+      else activeSiteTab.value = res.siteTab
+    }
+    nextTick(updateAdminHeaderHeight)
   }
 }
 
@@ -103,18 +214,22 @@ const updateAdminHeaderHeight = () => {
   }
 }
 
-watch(activeTab, () => {
+watch([currentScope, activeRaceTab, activeSiteTab], () => {
   nextTick(updateAdminHeaderHeight)
 })
 
 onMounted(() => {
   if (import.meta.client && typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search)
+    const scopeParam = params.get('scope') || params.get('page')
     const tabParam = params.get('tab')
+    if (scopeParam === 'site' || scopeParam === 'race') {
+      currentScope.value = scopeParam
+    }
     if (tabParam) {
-      activeTab.value = normalizeTab(tabParam)
+      selectTab(tabParam)
     } else if (props.initialTab) {
-      activeTab.value = normalizeTab(props.initialTab)
+      selectTab(props.initialTab)
     }
     window.addEventListener('popstate', onPopState)
 
@@ -304,13 +419,6 @@ watch(currentRace, (newRace) => {
 watch(activeTab, (newTab) => {
   if (newTab === 'waves' || newTab === 'coach') {
     initWarmupGroups()
-  }
-  if (import.meta.client && typeof window !== 'undefined') {
-    const clean = normalizeTab(newTab)
-    const target = `/admin?tab=${encodeURIComponent(clean)}`
-    if (window.location.search !== `?tab=${clean}`) {
-      window.history.replaceState({ admin: true, tab: clean }, '', target)
-    }
   }
 })
 
@@ -1213,6 +1321,374 @@ const addPhoto = () => {
 const removePhoto = (idx: number) => {
   form.value.photos?.splice(idx, 1)
 }
+
+// --- Site-Wide Urgent Announcements Manager ---
+import { useSiteAnnouncement, type SiteAnnouncement } from '~/modules/core/composables/useSiteAnnouncement'
+import { useSiteMedia, defaultSiteMedia, type SiteMediaConfig } from '~/modules/core/composables/useSiteMedia'
+import { useSiteLeadership, type LeaderMember } from '~/modules/core/composables/useSiteLeadership'
+import { useSiteSponsors, type Sponsor } from '~/modules/core/composables/useSiteSponsors'
+import { compressImage } from '~/modules/core/utils/imageCompressor'
+import { uploadMediaFile } from '~/modules/core/utils/mediaUploader'
+import ImageCropperModal, { type AspectPreset } from '~/modules/core/components/ImageCropperModal.vue'
+
+const isCropperModalOpen = ref(false)
+const cropperModalSrc = ref('')
+const cropperModalAspect = ref<AspectPreset>('16:9')
+const cropperModalTitle = ref('Crop & Reposition Image')
+let onCropperApplyCallback: ((result: string) => void) | null = null
+
+const openAdminCropper = (
+  src: string,
+  aspect: AspectPreset = '16:9',
+  title = 'Crop & Reposition Image',
+  onApply: (res: string) => void
+) => {
+  if (!src) return
+  cropperModalSrc.value = src
+  cropperModalAspect.value = aspect
+  cropperModalTitle.value = title
+  onCropperApplyCallback = onApply
+  isCropperModalOpen.value = true
+}
+
+const handleAdminCropperResult = (croppedUrl: string) => {
+  if (onCropperApplyCallback) {
+    onCropperApplyCallback(croppedUrl)
+    onCropperApplyCallback = null
+  }
+}
+
+const { announcement, saveAnnouncement, formatExpiresAt } = useSiteAnnouncement()
+
+const toLocalDatetimeInput = (iso: string) => {
+  try {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return ''
+    const offset = d.getTimezoneOffset() * 60000
+    const local = new Date(d.getTime() - offset)
+    return local.toISOString().slice(0, 16)
+  } catch {
+    return ''
+  }
+}
+
+const getDefaultPracticeEndTime = () => {
+  const d = new Date()
+  d.setHours(19, 30, 0, 0)
+  if (d.getTime() < Date.now()) {
+    d.setTime(Date.now() + 2 * 60 * 60 * 1000)
+  }
+  const offset = d.getTimezoneOffset() * 60000
+  const local = new Date(d.getTime() - offset)
+  return local.toISOString().slice(0, 16)
+}
+
+const alertForm = ref({
+  title: 'PRACTICE UPDATE',
+  message: '',
+  type: 'danger' as 'danger' | 'warning' | 'info',
+  location: '',
+  hasExpiration: true,
+  expiresAt: getDefaultPracticeEndTime(),
+  active: false
+})
+
+const setExpirationPreset = (preset: 'practice730' | 'practice800' | '2h' | '4h' | 'endOfDay' | 'none') => {
+  alertForm.value.hasExpiration = preset !== 'none'
+  const d = new Date()
+
+  if (preset === 'practice730') {
+    d.setHours(19, 30, 0, 0)
+    if (d.getTime() < Date.now()) d.setDate(d.getDate() + 1)
+  } else if (preset === 'practice800') {
+    d.setHours(20, 0, 0, 0)
+    if (d.getTime() < Date.now()) d.setDate(d.getDate() + 1)
+  } else if (preset === '2h') {
+    d.setTime(Date.now() + 2 * 3600 * 1000)
+  } else if (preset === '4h') {
+    d.setTime(Date.now() + 4 * 3600 * 1000)
+  } else if (preset === 'endOfDay') {
+    d.setHours(23, 59, 0, 0)
+  }
+
+  const offset = d.getTimezoneOffset() * 60000
+  const local = new Date(d.getTime() - offset)
+  alertForm.value.expiresAt = local.toISOString().slice(0, 16)
+}
+
+const alertExpirationStatusText = computed(() => {
+  if (!alertForm.value.hasExpiration || !alertForm.value.expiresAt) {
+    return 'No auto-expiration set (will stay active until manually cleared).'
+  }
+  const expDate = new Date(alertForm.value.expiresAt)
+  if (isNaN(expDate.getTime())) return ''
+  const diffMs = expDate.getTime() - Date.now()
+  if (diffMs <= 0) {
+    return `⚠️ Time passed (${formatExpiresAt(alertForm.value.expiresAt)}). The banner is automatically hidden.`
+  }
+  const diffMins = Math.round(diffMs / (60 * 1000))
+  const hours = Math.floor(diffMins / 60)
+  const mins = diffMins % 60
+  const durationStr = hours > 0 ? `${hours}h ${mins}m` : `${mins} mins`
+  return `⏳ Auto-expires at ${formatExpiresAt(alertForm.value.expiresAt)} (in ${durationStr}) — no need to manually turn off!`
+})
+
+watch(announcement, (newAnn) => {
+  if (newAnn) {
+    alertForm.value = {
+      title: newAnn.title || 'PRACTICE UPDATE',
+      message: newAnn.message || '',
+      type: newAnn.type || 'danger',
+      location: newAnn.location || '',
+      hasExpiration: Boolean(newAnn.expiresAt),
+      expiresAt: newAnn.expiresAt ? toLocalDatetimeInput(newAnn.expiresAt) : getDefaultPracticeEndTime(),
+      active: Boolean(newAnn.active)
+    }
+  }
+}, { immediate: true, deep: true })
+
+const isSavingAlert = ref(false)
+
+const applyAlertPreset = (preset: { title: string; message: string; type: 'danger' | 'warning' | 'info'; location?: string }) => {
+  alertForm.value.title = preset.title
+  alertForm.value.message = preset.message
+  alertForm.value.type = preset.type
+  alertForm.value.location = preset.location || ''
+  alertForm.value.hasExpiration = true
+  alertForm.value.expiresAt = getDefaultPracticeEndTime()
+  alertForm.value.active = true
+}
+
+const handlePublishAlert = async () => {
+  if (!alertForm.value.message.trim()) {
+    emit('toast', '⚠️ Please enter an alert message before publishing.')
+    return
+  }
+  isSavingAlert.value = true
+  try {
+    const finalExpiresAt = alertForm.value.hasExpiration && alertForm.value.expiresAt
+      ? new Date(alertForm.value.expiresAt).toISOString()
+      : ''
+
+    await saveAnnouncement({
+      title: alertForm.value.title.trim() || 'ANNOUNCEMENT',
+      message: alertForm.value.message.trim(),
+      type: alertForm.value.type,
+      location: alertForm.value.location.trim(),
+      expiresAt: finalExpiresAt,
+      active: true
+    }, user.value?.email || undefined)
+    
+    if (finalExpiresAt) {
+      emit('toast', `🚨 Urgent Alert published! Auto-expires at ${formatExpiresAt(finalExpiresAt)}`)
+    } else {
+      emit('toast', '🚨 Urgent Announcement published live to all visitors!')
+    }
+  } catch (e: any) {
+    emit('toast', `❌ Error saving announcement: ${e?.message || e}`)
+  } finally {
+    isSavingAlert.value = false
+  }
+}
+
+const handleClearAlert = async () => {
+  isSavingAlert.value = true
+  try {
+    await saveAnnouncement({
+      active: false
+    }, user.value?.email || undefined)
+    alertForm.value.active = false
+    emit('toast', '✅ Urgent Announcement cleared and hidden.')
+  } catch (e: any) {
+    emit('toast', `❌ Error clearing announcement: ${e?.message || e}`)
+  } finally {
+    isSavingAlert.value = false
+  }
+}
+
+// --- Site Photos & Google Drive Album Manager ---
+const { media, updateAllMedia } = useSiteMedia()
+
+const siteMediaForm = ref<SiteMediaConfig>({
+  ...defaultSiteMedia,
+  ...media.value
+})
+
+watch(media, (newMed) => {
+  if (newMed) {
+    siteMediaForm.value = { ...defaultSiteMedia, ...newMed }
+  }
+}, { immediate: true, deep: true })
+
+const isSavingMedia = ref(false)
+
+const handleSaveSiteMedia = async () => {
+  isSavingMedia.value = true
+  try {
+    await updateAllMedia(siteMediaForm.value)
+    emit('toast', '🖼️ Site photos and Google Drive album link updated!')
+  } catch (e: any) {
+    emit('toast', `❌ Error saving photos: ${e?.message || e}`)
+  } finally {
+    isSavingMedia.value = false
+  }
+}
+
+const handleResetPhotoDefault = (key: keyof SiteMediaConfig) => {
+  siteMediaForm.value[key] = defaultSiteMedia[key]
+}
+
+const handlePhotoUpload = async (key: keyof SiteMediaConfig, event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  try {
+    const url = await uploadMediaFile(file, 'site-media', key)
+    siteMediaForm.value[key] = url
+    openAdminCropper(
+      url,
+      key === 'teamPhoto' ? '4:3' : '16:9',
+      `Crop & Reposition: ${key}`,
+      (cropped) => {
+        siteMediaForm.value[key] = cropped
+        emit('toast', '✂️ Photo cropped and updated! Click "Save All Photos & Links" to publish.')
+      }
+    )
+    emit('toast', `📷 Photo loaded! Adjust framing and position in the cropper.`)
+  } catch (err: any) {
+    emit('toast', `⚠️ ${err?.message || 'Failed to process photo.'}`)
+  } finally {
+    target.value = ''
+  }
+}
+
+// --- Leadership Team Admin Manager ---
+const { leaders: leadershipList, saveLeaders } = useSiteLeadership()
+const adminLeadersForm = ref<LeaderMember[]>([])
+
+watch(leadershipList, (newVal) => {
+  if (newVal) {
+    adminLeadersForm.value = JSON.parse(JSON.stringify(newVal))
+  }
+}, { immediate: true, deep: true })
+
+const isSavingLeaders = ref(false)
+const handleSaveAdminLeaders = async () => {
+  isSavingLeaders.value = true
+  try {
+    await saveLeaders(adminLeadersForm.value)
+    emit('toast', '👥 Leadership team updated successfully!')
+  } catch (e: any) {
+    emit('toast', `❌ Error saving leadership: ${e?.message || e}`)
+  } finally {
+    isSavingLeaders.value = false
+  }
+}
+
+const handleAddAdminLeader = () => {
+  adminLeadersForm.value.push({
+    id: `leader_${Date.now()}`,
+    name: '',
+    role: '',
+    image: '',
+    desc: ''
+  })
+}
+
+const handleRemoveAdminLeader = (idx: number) => {
+  adminLeadersForm.value.splice(idx, 1)
+}
+
+const handleLeaderPhotoUpload = async (leader: LeaderMember, event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  try {
+    const url = await uploadMediaFile(file, 'leadership', leader.id)
+    leader.image = url
+    openAdminCropper(
+      url,
+      '1:1',
+      `Crop Portrait: ${leader.name || 'Team Leader'}`,
+      (cropped) => {
+        leader.image = cropped
+        emit('toast', '✂️ Portrait cropped and updated! Click "Save Leadership Team".')
+      }
+    )
+    emit('toast', '📷 Photo loaded! Adjust framing and position in the cropper.')
+  } catch (err: any) {
+    emit('toast', `⚠️ ${err?.message || 'Failed to process photo.'}`)
+  } finally {
+    target.value = ''
+  }
+}
+
+// --- Sponsors Admin Manager ---
+const { sponsors: sponsorsList, saveSponsors } = useSiteSponsors()
+const adminSponsorsForm = ref<Sponsor[]>([])
+
+watch(sponsorsList, (newVal) => {
+  if (newVal) {
+    adminSponsorsForm.value = JSON.parse(JSON.stringify(newVal))
+  }
+}, { immediate: true, deep: true })
+
+const isSavingSponsors = ref(false)
+const handleSaveAdminSponsors = async () => {
+  isSavingSponsors.value = true
+  try {
+    await saveAdminSponsors()
+  } catch (e: any) {
+    emit('toast', `❌ Error saving sponsors: ${e?.message || e}`)
+  } finally {
+    isSavingSponsors.value = false
+  }
+}
+
+const saveAdminSponsors = async () => {
+  await saveSponsors(adminSponsorsForm.value)
+  emit('toast', '🌟 Sponsors updated successfully!')
+}
+
+const handleAddAdminSponsor = () => {
+  adminSponsorsForm.value.push({
+    id: `sponsor_${Date.now()}`,
+    name: '',
+    logoUrl: '',
+    websiteUrl: ''
+  })
+}
+
+const handleRemoveAdminSponsor = (idx: number) => {
+  adminSponsorsForm.value.splice(idx, 1)
+}
+
+const handleSponsorLogoUpload = async (sponsor: Sponsor, event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  try {
+    const url = await uploadMediaFile(file, 'sponsors', sponsor.id)
+    sponsor.logoUrl = url
+    openAdminCropper(
+      url,
+      'free',
+      `Crop Logo: ${sponsor.name || 'Sponsor'}`,
+      (cropped) => {
+        sponsor.logoUrl = cropped
+        emit('toast', '✂️ Sponsor logo cropped! Click "Save Sponsors".')
+      }
+    )
+    emit('toast', '🌟 Sponsor logo loaded! Adjust framing and position in the cropper.')
+  } catch (err: any) {
+    emit('toast', `⚠️ ${err?.message || 'Failed to process logo.'}`)
+  } finally {
+    target.value = ''
+  }
+}
 </script>
 
 <template>
@@ -1295,6 +1771,7 @@ const removePhoto = (idx: number) => {
         <!-- Top Sticky Navigation Bar -->
         <header class="admin-top-nav">
           <div class="admin-nav-inner">
+            <!-- Left: Back Button & Admin Title -->
             <div class="admin-nav-left">
               <button
                 type="button"
@@ -1303,7 +1780,7 @@ const removePhoto = (idx: number) => {
                 @click="emit('back')"
               >
                 <span>←</span>
-                <span class="back-text">Back to Race Central</span>
+                <span class="back-text">Back to Site</span>
               </button>
 
               <div class="admin-brand-separator">|</div>
@@ -1311,26 +1788,58 @@ const removePhoto = (idx: number) => {
               <div class="admin-brand-box">
                 <span class="admin-brand-icon">⚙️</span>
                 <div class="admin-brand-text">
-                  <span class="admin-brand-title">COACH ADMIN PORTAL</span>
+                  <span class="admin-brand-title">COACH ADMIN</span>
                   <span class="admin-brand-sub">{{ user?.email }}</span>
                 </div>
               </div>
             </div>
 
-            <!-- Active Race Switcher -->
+            <!-- Center Scope Switcher (Race Admin vs Site Admin) -->
             <div class="admin-nav-center">
-              <label class="admin-race-label">Active Race:</label>
-              <select
-                :value="currentRaceIndex"
-                class="admin-race-select"
-                @change="selectRace(Number(($event.target as HTMLSelectElement).value))"
-              >
-                <option v-for="(r, idx) in races" :key="r.id" :value="idx">{{ r.name }}</option>
-              </select>
+              <div class="admin-scope-switcher" role="tablist" aria-label="Admin Scope Switcher">
+                <button
+                  type="button"
+                  class="scope-pill-btn"
+                  :class="{ active: currentScope === 'race' }"
+                  role="tab"
+                  :aria-selected="currentScope === 'race'"
+                  @click="selectScope('race')"
+                >
+                  <span class="scope-icon">🏁</span>
+                  <span>Race Admin</span>
+                </button>
+                <button
+                  type="button"
+                  class="scope-pill-btn"
+                  :class="{ active: currentScope === 'site' }"
+                  role="tab"
+                  :aria-selected="currentScope === 'site'"
+                  @click="selectScope('site')"
+                >
+                  <span class="scope-icon">🌐</span>
+                  <span>Site Admin</span>
+                </button>
+              </div>
             </div>
 
-            <!-- Top Actions (Lock + Save) -->
+            <!-- Top Actions (Race Picker in Race mode, Lock + Save) -->
             <div class="admin-nav-right">
+              <!-- Active Race Switcher (Shown ONLY in Race Admin) -->
+              <div v-if="currentScope === 'race'" class="admin-race-picker">
+                <label class="admin-race-label">Event:</label>
+                <select
+                  :value="currentRaceIndex"
+                  class="admin-race-select"
+                  @change="selectRace(Number(($event.target as HTMLSelectElement).value))"
+                >
+                  <option v-for="(r, idx) in races" :key="r.id" :value="idx">{{ r.name }}</option>
+                </select>
+              </div>
+              <div v-else class="admin-site-badge">
+                <span>🌐 Global Settings</span>
+              </div>
+
+              <!-- Lock Admin -->
               <button
                 type="button"
                 class="admin-lock-btn"
@@ -1338,34 +1847,74 @@ const removePhoto = (idx: number) => {
                 @click="handleLockAdmin"
               >
                 <span>🔒</span>
-                <span class="action-btn-text">Lock Admin</span>
+                <span class="action-btn-text">Lock</span>
               </button>
 
+              <!-- Save Changes Button (Context-Sensitive) -->
               <button
+                v-if="currentScope === 'race'"
                 type="button"
                 class="done-modal-btn admin-save-btn"
                 style="padding:7px 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;"
                 @click="handleSave"
               >
                 <span>💾</span>
-                <span>Save Changes</span>
+                <span>Save Race</span>
+              </button>
+              <button
+                v-else-if="siteSaveButtonText"
+                type="button"
+                class="done-modal-btn admin-save-btn"
+                style="padding:7px 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;"
+                @click="handleSiteHeaderSave"
+              >
+                <span>💾</span>
+                <span>{{ siteSaveButtonText }}</span>
               </button>
             </div>
           </div>
         </header>
 
-        <!-- Tab Navigation Strip -->
+        <!-- Subnav Tabs Strip -->
         <nav class="admin-subnav-tabs">
-          <div class="admin-tabs-scroller">
-            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'venue' }" @click="selectTab('venue')">📍 Venue Info</button>
-            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'schedule' }" @click="selectTab('schedule')">⏱️ Schedule</button>
-            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'waves' || activeTab === 'coach' }" @click="selectTab('waves')">⏱️ Waves & Warm-ups</button>
-            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'signups' }" @click="selectTab('signups')">🤝 Volunteers, Food & Camping</button>
-            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'photos' }" @click="selectTab('photos')">📸 Photos Album</button>
-            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'maps' }" @click="selectTab('maps')">🗺️ Course Maps</button>
-            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'announcements' }" @click="selectTab('announcements')">📢 Guidelines</button>
-            <button type="button" class="admin-tab-btn" :class="{ active: activeTab === 'coaches' || activeTab === 'users' }" @click="selectTab('coaches')">
-              👥 Team Admins & Users ({{ allUsersList.length }})
+          <!-- RACE ADMIN TABS -->
+          <div v-if="currentScope === 'race'" class="admin-tabs-scroller">
+            <button type="button" class="admin-tab-btn" :class="{ active: activeRaceTab === 'venue' }" @click="selectRaceTab('venue')">
+              📍 Venue & Info
+            </button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeRaceTab === 'schedule' }" @click="selectRaceTab('schedule')">
+              ⏱️ Weekend Schedule
+            </button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeRaceTab === 'waves' }" @click="selectRaceTab('waves')">
+              🚵 Waves & Warm-ups
+            </button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeRaceTab === 'signups' }" @click="selectRaceTab('signups')">
+              🤝 Volunteers, Food & Camping
+            </button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeRaceTab === 'maps' }" @click="selectRaceTab('maps')">
+              🗺️ Course Maps
+            </button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeRaceTab === 'announcements' }" @click="selectRaceTab('announcements')">
+              📢 Guidelines
+            </button>
+          </div>
+
+          <!-- SITE ADMIN TABS -->
+          <div v-else class="admin-tabs-scroller">
+            <button type="button" class="admin-tab-btn" :class="{ active: activeSiteTab === 'site-alert' }" @click="selectSiteTab('site-alert')">
+              🚨 Urgent Site Alert
+            </button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeSiteTab === 'site-media' }" @click="selectSiteTab('site-media')">
+              🖼️ Photos & Banners
+            </button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeSiteTab === 'site-leaders' }" @click="selectSiteTab('site-leaders')">
+              👥 Leadership Team ({{ adminLeadersForm.length }})
+            </button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeSiteTab === 'site-sponsors' }" @click="selectSiteTab('site-sponsors')">
+              🌟 Sponsors & Partners ({{ adminSponsorsForm.length }})
+            </button>
+            <button type="button" class="admin-tab-btn" :class="{ active: activeSiteTab === 'coaches' }" @click="selectSiteTab('coaches')">
+              🛡️ Team Admins & Users ({{ allUsersList.length }})
             </button>
           </div>
         </nav>
@@ -1374,6 +1923,27 @@ const removePhoto = (idx: number) => {
       <!-- Main Body Container -->
       <main class="admin-page-body">
         <div class="admin-body-container">
+
+          <!-- Clean Context Breadcrumb Banner -->
+          <div class="admin-context-bar">
+            <div class="admin-context-left">
+              <span class="context-scope-tag" :class="currentScope">
+                {{ currentScope === 'race' ? '🏁 RACE ADMIN' : '🌐 SITE ADMIN' }}
+              </span>
+              <span class="context-separator">/</span>
+              <span class="context-target-name">
+                {{ currentScope === 'race' ? currentRace.name : 'LA CROSSE AREA MTB TEAM // GLOBAL WEBSITE SETTINGS' }}
+              </span>
+            </div>
+            <div class="admin-context-right">
+              <span v-if="currentScope === 'race'" class="context-pill race">
+                📅 {{ currentRace.dateStr || 'No dates set' }}
+              </span>
+              <span v-else class="context-pill site">
+                Settings apply sitewide across all pages
+              </span>
+            </div>
+          </div>
 
           <!-- 1. Venue Info Tab -->
           <div v-if="activeTab === 'venue'" class="admin-section-card">
@@ -2199,10 +2769,10 @@ const removePhoto = (idx: number) => {
             </div>
           </div>
 
-          <!-- 4. Volunteers & Food Tab -->
+          <!-- 4. Volunteers & Logistics Tab -->
           <div v-else-if="activeTab === 'signups'" class="admin-section-card">
-            <h3 class="admin-card-title">🤝 Volunteer, Hospitality & Camping Sign-Ups</h3>
-            <div style="display:flex;flex-direction:column;gap:12px;">
+            <h3 class="admin-card-title">🤝 Volunteer, Hospitality, Camping & Photos</h3>
+            <div style="display:flex;flex-direction:column;gap:14px;">
               <div>
                 <label class="modal-label">Team Volunteers Signup Code or URL</label>
                 <input v-model="form.signups!.volunteer" type="text" placeholder="https://signup.com/client/invitation2/secure/..." class="custom-minutes-input" style="width:100%;">
@@ -2219,16 +2789,33 @@ const removePhoto = (idx: number) => {
                 <label class="modal-label">Wisconsin League Volunteer Code or URL</label>
                 <input v-model="form.signups!.league" type="text" placeholder="https://signup.com/client/invitation2/secure/..." class="custom-minutes-input" style="width:100%;">
               </div>
-            </div>
-          </div>
-
-          <!-- 5. Photos Album Tab -->
-          <div v-else-if="activeTab === 'photos'" class="admin-section-card">
-            <h3 class="admin-card-title">📸 Photos Album</h3>
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <div>
-                <label class="modal-label">Google Photos Shared Album URL</label>
-                <input v-model="form.photosUrl" type="text" placeholder="https://photos.app.goo.gl/..." class="custom-minutes-input" style="width:100%;">
+              <!-- Official Race Photos Album Section -->
+              <div style="margin-top:4px;padding-top:14px;border-top:1px solid var(--border);">
+                <label class="modal-label" style="display:flex;align-items:center;gap:6px;">
+                  <span>📸 Google Photos Shared Album URL</span>
+                </label>
+                <div style="display:flex;gap:10px;">
+                  <input
+                    v-model="form.photosUrl"
+                    type="text"
+                    placeholder="https://photos.app.goo.gl/..."
+                    class="custom-minutes-input"
+                    style="flex:1;"
+                  />
+                  <a
+                    v-if="form.photosUrl"
+                    :href="form.photosUrl"
+                    target="_blank"
+                    rel="noopener"
+                    class="admin-tab-btn"
+                    style="display:inline-flex;align-items:center;padding:0 14px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;text-decoration:none;"
+                  >
+                    Open ↗
+                  </a>
+                </div>
+                <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block;">
+                  Athletes and families can tap the Photos tab on this event's page to view and contribute their race weekend photos.
+                </span>
               </div>
             </div>
           </div>
@@ -2574,11 +3161,633 @@ const removePhoto = (idx: number) => {
 
           </div>
 
+          <!-- 9. Urgent Site Announcement Tab -->
+          <div v-else-if="activeTab === 'site-alert'" class="admin-section-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+              <div>
+                <h3 class="admin-card-title" style="margin-bottom:4px;">🚨 Site-Wide Urgent Announcement Banner</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin:0;max-width:700px;line-height:1.5;">
+                  Broadcast instant cancellations, weather delays, or practice relocations across the entire portal. The banner renders boldly at the top of every page and updates in real-time for all athletes and parents.
+                </p>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span
+                  v-if="alertForm.active"
+                  style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;color:#22c55e;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);padding:4px 10px;border-radius:20px;"
+                >
+                  <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+                  LIVE BANNER ACTIVE
+                </span>
+                <span
+                  v-else
+                  style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--text-muted);background:var(--bg-subtle);border:1px solid var(--border);padding:4px 10px;border-radius:20px;"
+                >
+                  ⚪ BANNER INACTIVE
+                </span>
+              </div>
+            </div>
+
+            <!-- Quick One-Click Presets -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;">
+              <span style="font-size:11.5px;font-weight:800;color:var(--accent-red);letter-spacing:0.6px;text-transform:uppercase;display:block;margin-bottom:8px;">
+                ⚡ Fast 1-Click Practice Presets
+              </span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button
+                  type="button"
+                  class="admin-tab-btn"
+                  style="background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.3);color:#f87171;font-size:12px;padding:6px 12px;"
+                  @click="applyAlertPreset({
+                    title: 'PRACTICE CANCELED',
+                    message: 'Practice today is cancelled due to rain and muddy trail conditions. To protect the trails, we never ride when muddy. See you Thursday!',
+                    type: 'danger'
+                  })"
+                >
+                  🌧️ Practice Canceled (Mud / Rain)
+                </button>
+                <button
+                  type="button"
+                  class="admin-tab-btn"
+                  style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.3);color:#fbbf24;font-size:12px;padding:6px 12px;"
+                  @click="applyAlertPreset({
+                    title: 'PRACTICE RELOCATED',
+                    message: 'Practice today is moved to Forest Hills as an alternative location from 5:30 to 6:30 PM. Helmets and full gear required.',
+                    location: 'Forest Hills',
+                    type: 'warning'
+                  })"
+                >
+                  📍 Move to Forest Hills
+                </button>
+                <button
+                  type="button"
+                  class="admin-tab-btn"
+                  style="background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:#60a5fa;font-size:12px;padding:6px 12px;"
+                  @click="applyAlertPreset({
+                    title: 'PRACTICE AT CTF',
+                    message: 'Practice tonight meets at Community Trail Farm (W5723 HWY 33). All-weather loop and trail ride!',
+                    location: 'Community Trail Farm (CTF)',
+                    type: 'info'
+                  })"
+                >
+                  🌲 Meet at Trail Farm (CTF)
+                </button>
+              </div>
+            </div>
+
+            <!-- Form -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <div>
+                  <label class="modal-label">Alert Headline</label>
+                  <input
+                    v-model="alertForm.title"
+                    type="text"
+                    placeholder="e.g. PRACTICE CANCELED"
+                    class="custom-minutes-input"
+                    style="width:100%;font-weight:700;"
+                  />
+                </div>
+                <div>
+                  <label class="modal-label">Alert Severity Style</label>
+                  <select
+                    v-model="alertForm.type"
+                    class="custom-minutes-input"
+                    style="width:100%;font-weight:600;"
+                  >
+                    <option value="danger">🔴 Red / Danger (Cancellations, Storms, Mud)</option>
+                    <option value="warning">🟡 Amber / Warning (Relocations, Delays)</option>
+                    <option value="info">🔵 Blue / Info (General Updates, Reminders)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="modal-label">Relocation / Venue (Optional)</label>
+                <input
+                  v-model="alertForm.location"
+                  type="text"
+                  placeholder="e.g. Forest Hills or Community Trail Farm"
+                  class="custom-minutes-input"
+                  style="width:100%;"
+                />
+              </div>
+
+              <div>
+                <label class="modal-label">Detailed Notification Message</label>
+                <textarea
+                  v-model="alertForm.message"
+                  rows="3"
+                  placeholder="e.g. Due to heavy rainfall, practice tonight is moved to the pump track. Please bring helmets and full hydration..."
+                  class="custom-minutes-input"
+                  style="width:100%;height:auto;padding:10px 12px;line-height:1.5;resize:vertical;"
+                ></textarea>
+              </div>
+
+              <!-- Timeframe & Auto-Expiration -->
+              <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:16px;">⏱️</span>
+                    <strong style="font-size:12.5px;color:var(--text-main);">Auto-Expire Timeframe</strong>
+                    <span style="font-size:11px;color:#10b981;background:rgba(16,185,129,0.12);padding:1px 6px;border-radius:4px;font-weight:700;">
+                      Auto-Turn Off
+                    </span>
+                  </div>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;">
+                    <input type="checkbox" v-model="alertForm.hasExpiration" style="accent-color:#10b981;" />
+                    <span style="font-weight:600;color:var(--text-main);">Enable Auto-Expiration</span>
+                  </label>
+                </div>
+
+                <p style="font-size:11.5px;color:var(--text-muted);margin:0;line-height:1.4;">
+                  Set a timeframe so the alert turns off automatically (e.g. at 7:30 PM after practice). You won't have to remember to log in and turn it off!
+                </p>
+
+                <!-- Quick Presets -->
+                <div v-if="alertForm.hasExpiration" style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11px;padding:4px 9px;"
+                    @click="setExpirationPreset('practice730')"
+                  >
+                    ⏰ Tonight at 7:30 PM (End of Practice)
+                  </button>
+                  <button
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11px;padding:4px 9px;"
+                    @click="setExpirationPreset('practice800')"
+                  >
+                    ⏰ Tonight at 8:00 PM
+                  </button>
+                  <button
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11px;padding:4px 9px;"
+                    @click="setExpirationPreset('2h')"
+                  >
+                    ⏱️ In 2 Hours
+                  </button>
+                  <button
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11px;padding:4px 9px;"
+                    @click="setExpirationPreset('4h')"
+                  >
+                    ⏱️ In 4 Hours
+                  </button>
+                  <button
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11px;padding:4px 9px;"
+                    @click="setExpirationPreset('endOfDay')"
+                  >
+                    🌙 End of Day (11:59 PM)
+                  </button>
+                </div>
+
+                <!-- Datetime input -->
+                <div v-if="alertForm.hasExpiration" style="display:grid;grid-template-columns:1fr;gap:8px;">
+                  <div>
+                    <label class="modal-label" style="font-size:11px;">Expires On Date & Time</label>
+                    <input
+                      v-model="alertForm.expiresAt"
+                      type="datetime-local"
+                      class="custom-minutes-input"
+                      style="width:100%;font-size:12px;padding:6px 10px;"
+                    />
+                  </div>
+                  <div style="font-size:11.5px;font-weight:600;color:#34d399;display:flex;align-items:center;gap:6px;">
+                    <span>{{ alertExpirationStatusText }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Preview Card -->
+              <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:14px;">
+                <span style="font-size:11px;font-weight:800;color:var(--text-muted);letter-spacing:0.6px;text-transform:uppercase;display:block;margin-bottom:8px;">
+                  Banner Live Preview
+                </span>
+                <div
+                  :style="{
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    background: alertForm.type === 'danger' ? 'rgba(239, 68, 68, 0.15)' : (alertForm.type === 'warning' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(59, 130, 246, 0.15)'),
+                    border: '1px solid ' + (alertForm.type === 'danger' ? 'rgba(239, 68, 68, 0.4)' : (alertForm.type === 'warning' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(59, 130, 246, 0.4)')),
+                    color: alertForm.type === 'danger' ? '#fca5a5' : (alertForm.type === 'warning' ? '#fde68a' : '#bfdbfe')
+                  }"
+                >
+                  <strong style="color:#fff;margin-right:8px;">{{ alertForm.title || 'ALERT' }}:</strong>
+                  <span>{{ alertForm.message || '(Enter alert message above)' }}</span>
+                  <span v-if="alertForm.location" style="display:inline-block;margin-left:8px;font-weight:700;color:#fff;background:rgba(0,0,0,0.3);padding:1px 6px;border-radius:4px;font-size:11px;">
+                    📍 {{ alertForm.location }}
+                  </span>
+                  <span v-if="alertForm.hasExpiration && alertForm.expiresAt" style="display:inline-block;margin-left:8px;font-weight:700;color:#fff;background:rgba(0,0,0,0.35);padding:1px 8px;border-radius:9999px;font-size:11px;border:1px solid rgba(255,255,255,0.25);">
+                    ⏳ Until {{ formatExpiresAt(alertForm.expiresAt) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+                <button
+                  type="button"
+                  class="done-modal-btn admin-save-btn"
+                  style="padding:10px 20px;"
+                  :disabled="isSavingAlert"
+                  @click="handlePublishAlert"
+                >
+                  <span>🚀</span>
+                  <span>{{ isSavingAlert ? 'Publishing...' : 'Publish Live Alert Banner' }}</span>
+                </button>
+                <button
+                  v-if="alertForm.active || announcement.active"
+                  type="button"
+                  class="admin-back-text-btn"
+                  style="color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:8px 16px;border-radius:8px;background:rgba(239,68,68,0.08);"
+                  :disabled="isSavingAlert"
+                  @click="handleClearAlert"
+                >
+                  <span>✕ Turn Off / Clear Banner</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 10. Site Photos & Links Manager Tab -->
+          <div v-else-if="activeTab === 'site-media'" class="admin-section-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+              <div>
+                <h3 class="admin-card-title" style="margin-bottom:4px;">🖼️ Site Photos & Team Links</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin:0;max-width:700px;line-height:1.5;">
+                  Change any image across the site (Home page team photo, Practice page coaches photo, Leadership portraits, Coach Carey) and configure the Google Drive practice album link.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="done-modal-btn admin-save-btn"
+                style="padding:10px 20px;"
+                :disabled="isSavingMedia"
+                @click="handleSaveSiteMedia"
+              >
+                <span>💾</span>
+                <span>{{ isSavingMedia ? 'Saving...' : 'Save All Photos & Links' }}</span>
+              </button>
+            </div>
+
+            <!-- Google Drive Section -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:24px;">
+              <span style="font-size:11.5px;font-weight:800;color:#3b82f6;letter-spacing:0.6px;text-transform:uppercase;display:block;margin-bottom:8px;">
+                📁 Practice Photos Google Drive Link
+              </span>
+              <div>
+                <label class="modal-label">Google Drive Public Folder URL</label>
+                <div style="display:flex;gap:10px;">
+                  <input
+                    v-model="siteMediaForm.practiceDriveUrl"
+                    type="url"
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    class="custom-minutes-input"
+                    style="flex:1;"
+                  />
+                  <a
+                    v-if="siteMediaForm.practiceDriveUrl"
+                    :href="siteMediaForm.practiceDriveUrl"
+                    target="_blank"
+                    rel="noopener"
+                    class="admin-tab-btn"
+                    style="display:inline-flex;align-items:center;padding:0 14px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;text-decoration:none;"
+                  >
+                    Open ↗
+                  </a>
+                </div>
+                <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block;">
+                  This link is displayed prominently on the Practice Page for athletes and parents to access and view practice photos.
+                </span>
+              </div>
+            </div>
+
+            <!-- Photos Grid -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;">
+              <!-- 1. Team Hero Photo -->
+              <div class="admin-photo-card" style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <strong style="font-size:13px;color:var(--text-main);">📸 Team Hero Photo (Home)</strong>
+                  <button type="button" class="admin-back-text-btn" style="font-size:11px;" @click="handleResetPhotoDefault('teamPhoto')">Reset</button>
+                </div>
+                <div style="height:140px;background:#000;border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative;">
+                  <img :src="siteMediaForm.teamPhoto" alt="Preview" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;" />
+                  <span v-if="siteMediaForm.teamPhoto && siteMediaForm.teamPhoto.startsWith('/images/')" style="position:absolute;top:6px;left:6px;background:rgba(16,185,129,0.9);color:#fff;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:4px;">
+                    📁 /images (Lossless)
+                  </span>
+                </div>
+                <div>
+                  <label class="modal-label" style="font-size:11px;">Image URL (e.g. /images/... or https://...)</label>
+                  <input v-model="siteMediaForm.teamPhoto" type="text" class="custom-minutes-input" style="width:100%;font-size:11.5px;" />
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <label class="admin-tab-btn" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;cursor:pointer;">
+                    <span>📁 Upload</span>
+                    <input type="file" accept="image/*" class="sr-only" @change="handlePhotoUpload('teamPhoto', $event)" />
+                  </label>
+                  <button
+                    v-if="siteMediaForm.teamPhoto"
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11.5px;padding:6px 10px;"
+                    title="Crop and position this photo"
+                    @click="openAdminCropper(siteMediaForm.teamPhoto, '4:3', 'Crop & Reposition: Team Photo', (c) => siteMediaForm.teamPhoto = c)"
+                  >
+                    ✂️ Crop
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. Coaches Photo -->
+              <div class="admin-photo-card" style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <strong style="font-size:13px;color:var(--text-main);">📸 Coaches Photo (Practice)</strong>
+                  <button type="button" class="admin-back-text-btn" style="font-size:11px;" @click="handleResetPhotoDefault('coachesPhoto')">Reset</button>
+                </div>
+                <div style="height:140px;background:#000;border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative;">
+                  <img :src="siteMediaForm.coachesPhoto" alt="Preview" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;" />
+                  <span v-if="siteMediaForm.coachesPhoto && siteMediaForm.coachesPhoto.startsWith('/images/')" style="position:absolute;top:6px;left:6px;background:rgba(16,185,129,0.9);color:#fff;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:4px;">
+                    📁 /images (Lossless)
+                  </span>
+                </div>
+                <div>
+                  <label class="modal-label" style="font-size:11px;">Image URL (e.g. /images/... or https://...)</label>
+                  <input v-model="siteMediaForm.coachesPhoto" type="text" class="custom-minutes-input" style="width:100%;font-size:11.5px;" />
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <label class="admin-tab-btn" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;cursor:pointer;">
+                    <span>📁 Upload</span>
+                    <input type="file" accept="image/*" class="sr-only" @change="handlePhotoUpload('coachesPhoto', $event)" />
+                  </label>
+                  <button
+                    v-if="siteMediaForm.coachesPhoto"
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11.5px;padding:6px 10px;"
+                    title="Crop and position this photo"
+                    @click="openAdminCropper(siteMediaForm.coachesPhoto, '16:9', 'Crop & Reposition: Coaches Photo', (c) => siteMediaForm.coachesPhoto = c)"
+                  >
+                    ✂️ Crop
+                  </button>
+                </div>
+              </div>
+
+              <!-- 3. Carey Falkenberry Photo -->
+              <div class="admin-photo-card" style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <strong style="font-size:13px;color:var(--text-main);">👤 Coach Carey (Testimonial Portrait)</strong>
+                  <button type="button" class="admin-back-text-btn" style="font-size:11px;" @click="handleResetPhotoDefault('careyPhoto')">Reset</button>
+                </div>
+                <div style="height:140px;background:#000;border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative;">
+                  <img :src="siteMediaForm.careyPhoto" alt="Preview" style="width:100%;height:100%;object-fit:cover;object-position:top center;" />
+                  <span v-if="siteMediaForm.careyPhoto && siteMediaForm.careyPhoto.startsWith('/images/')" style="position:absolute;top:6px;left:6px;background:rgba(16,185,129,0.9);color:#fff;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:4px;">
+                    📁 /images (Lossless)
+                  </span>
+                </div>
+                <div>
+                  <label class="modal-label" style="font-size:11px;">Image URL</label>
+                  <input v-model="siteMediaForm.careyPhoto" type="text" class="custom-minutes-input" style="width:100%;font-size:11.5px;" />
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <label class="admin-tab-btn" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;cursor:pointer;">
+                    <span>📁 Upload</span>
+                    <input type="file" accept="image/*" class="sr-only" @change="handlePhotoUpload('careyPhoto', $event)" />
+                  </label>
+                  <button
+                    v-if="siteMediaForm.careyPhoto"
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11.5px;padding:6px 10px;"
+                    title="Crop and position portrait"
+                    @click="openAdminCropper(siteMediaForm.careyPhoto, '1:1', 'Crop Portrait: Coach Carey', (c) => siteMediaForm.careyPhoto = c)"
+                  >
+                    ✂️ Crop
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:20px;">
+              <button
+                type="button"
+                class="done-modal-btn admin-save-btn"
+                style="padding:10px 24px;"
+                :disabled="isSavingMedia"
+                @click="handleSaveSiteMedia"
+              >
+                <span>💾</span>
+                <span>{{ isSavingMedia ? 'Saving...' : 'Save All Photos & Links' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 11. Leadership Team Management Tab -->
+          <div v-else-if="activeTab === 'site-leaders' || activeTab === 'leadership'" class="admin-section-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+              <div>
+                <h3 class="admin-card-title" style="margin-bottom:4px;">👥 Team Leadership & Coaches</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin:0;max-width:700px;line-height:1.5;">
+                  Manage head coaches, assistant coaches, ride leaders, and team directors displayed on the About & Leadership page.
+                </p>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button
+                  type="button"
+                  class="admin-tab-btn"
+                  style="background:#2563eb;color:#fff;border:none;font-weight:700;padding:8px 14px;"
+                  @click="handleAddAdminLeader"
+                >
+                  ➕ Add Member
+                </button>
+                <button
+                  type="button"
+                  class="done-modal-btn admin-save-btn"
+                  style="padding:8px 18px;"
+                  :disabled="isSavingLeaders"
+                  @click="handleSaveAdminLeaders"
+                >
+                  <span>💾</span>
+                  <span>{{ isSavingLeaders ? 'Saving...' : 'Save Leadership Team' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Leaders List -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div
+                v-for="(leader, idx) in adminLeadersForm"
+                :key="leader.id"
+                style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;"
+              >
+                <div style="width:100px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+                  <div style="width:100px;height:110px;background:#000;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+                    <img v-if="leader.image" :src="leader.image" alt="Preview" style="width:100%;height:100%;object-fit:cover;object-position:top center;" />
+                    <div v-else style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:11px;">No Photo</div>
+                  </div>
+                  <label class="admin-tab-btn" style="font-size:11px;padding:4px 6px;text-align:center;cursor:pointer;">
+                    <span>📁 Upload</span>
+                    <input type="file" accept="image/*" class="sr-only" @change="handleLeaderPhotoUpload(leader, $event)" />
+                  </label>
+                  <button
+                    v-if="leader.image"
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11px;padding:4px 6px;"
+                    title="Crop portrait"
+                    @click="openAdminCropper(leader.image, '1:1', `Crop Portrait: ${leader.name || 'Leader'}`, (c) => leader.image = c)"
+                  >
+                    ✂️ Crop
+                  </button>
+                </div>
+
+                <div style="flex:1;min-width:260px;display:flex;flex-direction:column;gap:10px;">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div>
+                      <label class="modal-label" style="font-size:11px;">Full Name</label>
+                      <input v-model="leader.name" type="text" placeholder="e.g. Ben Wilde" class="custom-minutes-input" style="width:100%;font-size:12px;" />
+                    </div>
+                    <div>
+                      <label class="modal-label" style="font-size:11px;">Role / Title</label>
+                      <input v-model="leader.role" type="text" placeholder="e.g. Head Coach" class="custom-minutes-input" style="width:100%;font-size:12px;" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="modal-label" style="font-size:11px;">Image Location in /images/ or URL</label>
+                    <input v-model="leader.image" type="text" placeholder="/images/ben-wilde.jpg or https://..." class="custom-minutes-input" style="width:100%;font-size:12px;" />
+                  </div>
+
+                  <div>
+                    <label class="modal-label" style="font-size:11px;">Bio & Background</label>
+                    <textarea v-model="leader.desc" rows="2" placeholder="Brief bio..." class="custom-minutes-input" style="width:100%;font-size:12px;height:auto;padding:6px 10px;line-height:1.4;resize:vertical;"></textarea>
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    type="button"
+                    class="admin-back-text-btn"
+                    style="color:#ef4444;font-size:12px;padding:6px 10px;border:1px solid rgba(239,68,68,0.25);border-radius:6px;background:rgba(239,68,68,0.06);"
+                    title="Remove leader from roster"
+                    @click="handleRemoveAdminLeader(idx)"
+                  >
+                    🗑️ Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 12. Sponsor Management Tab -->
+          <div v-else-if="activeTab === 'site-sponsors' || activeTab === 'sponsors'" class="admin-section-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+              <div>
+                <h3 class="admin-card-title" style="margin-bottom:4px;">🤝 Team Sponsors & Community Champions</h3>
+                <p style="font-size:13px;color:var(--text-muted);margin:0;max-width:700px;line-height:1.5;">
+                  Manage community partners, local bike shops, and corporate champions displayed on the home page and throughout the website.
+                </p>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button
+                  type="button"
+                  class="admin-tab-btn"
+                  style="background:#2563eb;color:#fff;border:none;font-weight:700;padding:8px 14px;"
+                  @click="handleAddAdminSponsor"
+                >
+                  ➕ Add Sponsor
+                </button>
+                <button
+                  type="button"
+                  class="done-modal-btn admin-save-btn"
+                  style="padding:8px 18px;"
+                  :disabled="isSavingSponsors"
+                  @click="handleSaveAdminSponsors"
+                >
+                  <span>💾</span>
+                  <span>{{ isSavingSponsors ? 'Saving...' : 'Save All Sponsors' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Sponsor Grid -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;">
+              <div
+                v-for="(sp, idx) in adminSponsorsForm"
+                :key="sp.id"
+                style="background:var(--bg-subtle);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;"
+              >
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <strong style="font-size:13px;color:var(--text-main);">{{ sp.name || 'New Sponsor' }}</strong>
+                  <button
+                    type="button"
+                    class="admin-back-text-btn"
+                    style="color:#ef4444;font-size:11px;"
+                    @click="handleRemoveAdminSponsor(idx)"
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                <div style="height:90px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:8px;">
+                  <img v-if="sp.logoUrl" :src="sp.logoUrl" alt="Logo" style="max-width:100%;max-height:100%;object-fit:contain;" />
+                  <span v-else style="color:#6b7280;font-size:11px;">No Logo</span>
+                </div>
+
+                <div>
+                  <label class="modal-label" style="font-size:11px;">Company Name</label>
+                  <input v-model="sp.name" type="text" placeholder="e.g. Trek Bicycle Store" class="custom-minutes-input" style="width:100%;font-size:12px;" />
+                </div>
+
+                <div>
+                  <label class="modal-label" style="font-size:11px;">Logo Location in /images/ or URL</label>
+                  <input v-model="sp.logoUrl" type="text" placeholder="/images/your-logo.png or https://..." class="custom-minutes-input" style="width:100%;font-size:12px;" />
+                </div>
+
+                <div>
+                  <label class="modal-label" style="font-size:11px;">Website URL (Optional)</label>
+                  <input v-model="sp.websiteUrl" type="url" placeholder="https://example.com" class="custom-minutes-input" style="width:100%;font-size:12px;" />
+                </div>
+
+                <div style="display:flex;gap:6px;">
+                  <label class="admin-tab-btn" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:11px;cursor:pointer;">
+                    <span>📁 Upload</span>
+                    <input type="file" accept="image/*" class="sr-only" @change="handleSponsorLogoUpload(sp, $event)" />
+                  </label>
+                  <button
+                    v-if="sp.logoUrl"
+                    type="button"
+                    class="admin-tab-btn"
+                    style="font-size:11px;padding:6px 8px;"
+                    title="Crop logo"
+                    @click="openAdminCropper(sp.logoUrl, 'free', `Crop Logo: ${sp.name || 'Sponsor'}`, (c) => sp.logoUrl = c)"
+                  >
+                    ✂️ Crop
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </main>
 
     </div>
 
+    <!-- Interactive Admin Image Cropper Modal -->
+    <ImageCropperModal
+      :is-open="isCropperModalOpen"
+      :image-src="cropperModalSrc"
+      :aspect-ratio-preset="cropperModalAspect"
+      :title="cropperModalTitle"
+      @crop="handleAdminCropperResult"
+      @close="isCropperModalOpen = false"
+    />
   </div>
 </template>
 
@@ -2736,6 +3945,62 @@ const removePhoto = (idx: number) => {
   min-width: 220px;
   justify-content: center;
 }
+
+.admin-scope-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  border-radius: 9999px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.scope-pill-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #9ca3af);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.scope-pill-btn:hover {
+  color: var(--text-main, #ffffff);
+  background: rgba(255, 255, 255, 0.06);
+}
+.scope-pill-btn.active {
+  background: var(--accent-red, #dc2626);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
+
+.admin-race-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-site-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #60a5fa;
+  white-space: nowrap;
+}
+
 .admin-race-label {
   font-size: 11px;
   font-weight: 800;
@@ -2826,6 +4091,83 @@ const removePhoto = (idx: number) => {
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
+}
+
+.admin-context-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.admin-context-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.context-scope-tag {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.context-scope-tag.race {
+  background: rgba(220, 38, 38, 0.16);
+  color: #f87171;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+.context-scope-tag.site {
+  background: rgba(59, 130, 246, 0.16);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.context-separator {
+  color: var(--border, rgba(255, 255, 255, 0.2));
+  font-weight: 300;
+}
+
+.context-target-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #ffffff);
+}
+
+.admin-context-right {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.context-pill {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.context-pill.race {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted, #9ca3af);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.context-pill.site {
+  background: rgba(59, 130, 246, 0.1);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .admin-section-card {
@@ -2936,6 +4278,23 @@ const removePhoto = (idx: number) => {
   .admin-section-card textarea {
     max-width: 100%;
     box-sizing: border-box;
+  }
+  .admin-scope-switcher {
+    width: 100%;
+    justify-content: center;
+  }
+  .scope-pill-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 6px 10px;
+    font-size: 11.5px;
+  }
+  .admin-context-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
   }
 }
 
