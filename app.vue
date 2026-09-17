@@ -600,6 +600,7 @@ const handlePrint = () => {
         @navigate="navigateTo"
         @select-race="handleSelectRaceFromHome"
         @selectRace="handleSelectRaceFromHome"
+        @open-auth="openAuthWithMode($event || 'login')"
         @toast="showNotifToast"
       />
 
@@ -718,6 +719,7 @@ const handlePrint = () => {
         :race="currentRace"
         :is-coach-auth="isCoachAuth"
         @edit="openAdminWithTab('photos')"
+        @open-auth="openAuthWithMode($event || 'login')"
       />
     </main>
     </div>

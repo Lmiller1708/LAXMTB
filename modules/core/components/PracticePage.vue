@@ -6,11 +6,12 @@ import EditPhotoModal from './EditPhotoModal.vue'
 
 const emit = defineEmits<{
   (e: 'navigate', route: 'race' | 'practice' | 'about' | 'home'): void
+  (e: 'openAuth', mode?: 'login' | 'signup'): void
   (e: 'toast', msg: string): void
 }>()
 
 const { media, updateMediaItem } = useSiteMedia()
-const { isCoachAuth } = useCoachAuth()
+const { isCoachAuth, canViewPhotos } = useCoachAuth()
 
 const isEditPhotoOpen = ref(false)
 const isEditDriveOpen = ref(false)
@@ -388,6 +389,7 @@ const openEmail = () => {
           </p>
           <div class="drive-action-row">
             <a
+              v-if="canViewPhotos"
               :href="media.practiceDriveUrl || 'https://drive.google.com'"
               target="_blank"
               rel="noopener noreferrer"
@@ -396,6 +398,17 @@ const openEmail = () => {
               <span>📁 Open Practice Photos on Google Drive</span>
               <span class="external-arrow">↗</span>
             </a>
+            <button
+              v-else
+              type="button"
+              class="btn-drive-link"
+              style="cursor: pointer;"
+              title="Guardian access required to view practice photos"
+              @click="emit('openAuth', 'login')"
+            >
+              <span>🔒 Log In to Access Photos</span>
+              <span class="external-arrow">↗</span>
+            </button>
             <button
               v-if="isCoachAuth"
               type="button"

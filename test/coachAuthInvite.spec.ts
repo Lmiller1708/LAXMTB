@@ -36,6 +36,29 @@ function canEditCoachSignups(user: any, userProfile: any, isAuthorizedCoach: boo
   return isAdminCoach || isAuthorizedCoach
 }
 
+/**
+ * Pure permission helper matching useCoachAuth.canViewPhotos / isGuardianOrAbove logic
+ * Requires minimum access of guardian (guardian, coach, admin, owner).
+ */
+function canViewPhotos(
+  user: any,
+  userProfile: any,
+  isAuthorizedCoach: boolean,
+  isAdminCoach: boolean,
+  coachRole?: 'admin' | 'coach' | 'owner' | null
+): boolean {
+  if (!user) return false
+  if (isAdminCoach || isAuthorizedCoach) return true
+  const role = userProfile?.role
+  if (role === 'owner' || role === 'admin' || role === 'coach' || role === 'guardian') return true
+  if (role === 'member') return false
+  if (!role && user) {
+    if (coachRole) return true
+    return true
+  }
+  return false
+}
+
 describe('Team Invite Gatekeeping & Role Permissions', () => {
   describe('Invite Code Validation', () => {
     it('rejects empty or missing invite codes', () => {
@@ -115,6 +138,47 @@ describe('Team Invite Gatekeeping & Role Permissions', () => {
     it('authorizes coach based strictly on admin/coach membership even if profile is absent', () => {
       const coachUser = { uid: 'u5', email: 'verifiedcoach@laxmtb.org' }
       expect(canEditCoachSignups(coachUser, null, true, false)).toBe(true)
+    })
+  })
+
+  describe('Role-based Permissions (canViewPhotos - Minimum Guardian Access)', () => {
+    it('disallows unauthenticated visitors on the internet from viewing photos', () => {
+      expect(canViewPhotos(null, null, false, false)).toBe(false)
+    })
+
+    it('disallows accounts with member role from viewing photos', () => {
+      const memberUser = { uid: 'u_mem', email: 'member@example.com' }
+      expect(canViewPhotos(memberUser, { role: 'member' }, false, false)).toBe(false)
+    })
+
+    it('allows accounts with guardian role to view photos', () => {
+      const guardianUser = { uid: 'u_guard', email: 'parent@example.com' }
+      expect(canViewPhotos(guardianUser, { role: 'guardian' }, false, false)).toBe(true)
+    })
+
+    it('allows accounts with coach role to view photos', () => {
+      const coachUser = { uid: 'u_coach', email: 'coach@example.com' }
+      expect(canViewPhotos(coachUser, { role: 'coach' }, true, false)).toBe(true)
+    })
+
+    it('allows accounts with admin role to view photos', () => {
+      const adminUser = { uid: 'u_adm', email: 'admin@laxmtb.org' }
+      expect(canViewPhotos(adminUser, { role: 'admin' }, true, true)).toBe(true)
+    })
+
+    it('allows owner account to view photos', () => {
+      const ownerUser = { uid: 'u_owner', email: 'lmiller1708@gmail.com' }
+      expect(canViewPhotos(ownerUser, { role: 'owner' }, true, true)).toBe(true)
+    })
+
+    it('allows authorized coaches even if profile is not yet loaded', () => {
+      const coachUser = { uid: 'u_coach2', email: 'coach2@example.com' }
+      expect(canViewPhotos(coachUser, null, true, false)).toBe(true)
+    })
+
+    it('allows registered users with default profile without explicit member restriction', () => {
+      const defaultUser = { uid: 'u_def', email: 'newparent@gmail.com' }
+      expect(canViewPhotos(defaultUser, { name: 'Parent Rider' }, false, false)).toBe(true)
     })
   })
 
