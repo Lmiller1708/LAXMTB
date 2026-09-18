@@ -4,11 +4,13 @@ import { resolveLogoUrl } from '~/modules/races/composables/useCurrentRace'
 import { useSiteMedia } from '~/modules/core/composables/useSiteMedia'
 import { useSiteSponsors, type SiteSponsor } from '~/modules/core/composables/useSiteSponsors'
 import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
+import { useSiteLeadership, type LeaderMember } from '~/modules/core/composables/useSiteLeadership'
 import EditPhotoModal from './EditPhotoModal.vue'
 import EditSponsorModal from './EditSponsorModal.vue'
+import EditLeaderModal from './EditLeaderModal.vue'
 
 const emit = defineEmits<{
-  (e: 'navigate', route: 'race' | 'practice' | 'about'): void
+  (e: 'navigate', route: 'race' | 'practice' | 'about' | 'home'): void
   (e: 'selectRace', slug: string): void
   (e: 'openAuth', mode?: 'login' | 'signup'): void
   (e: 'toast', msg: string): void
@@ -18,8 +20,154 @@ const { races } = useCurrentRace()
 const { media, updateMediaItem } = useSiteMedia()
 const { isCoachAuth, canViewPhotos } = useCoachAuth()
 const { sponsors, addSponsor, updateSponsor, removeSponsor } = useSiteSponsors()
+const { leaders, addLeader, updateLeader, removeLeader } = useSiteLeadership()
 
 const isEditPhotoOpen = ref(false)
+const isEditCareyPhotoOpen = ref(false)
+
+const isEditLeaderModalOpen = ref(false)
+const selectedLeader = ref<LeaderMember | null>(null)
+const isNewLeader = ref(false)
+
+const openEditLeader = (leader: LeaderMember) => {
+  selectedLeader.value = { ...leader }
+  isNewLeader.value = false
+  isEditLeaderModalOpen.value = true
+}
+
+const openAddLeader = () => {
+  selectedLeader.value = {
+    id: `leader_${Date.now()}`,
+    name: '',
+    role: '',
+    photoKey: '',
+    image: '',
+    desc: ''
+  }
+  isNewLeader.value = true
+  isEditLeaderModalOpen.value = true
+}
+
+const handleSaveLeader = async (leaderData: LeaderMember) => {
+  try {
+    if (isNewLeader.value) {
+      await addLeader(leaderData)
+      emit('toast', `✅ Leadership member "${leaderData.name}" added!`)
+    } else {
+      await updateLeader(leaderData)
+      emit('toast', `✅ Leadership member "${leaderData.name}" updated!`)
+    }
+  } catch (e: any) {
+    emit('toast', `❌ Error saving leader: ${e?.message || e}`)
+  }
+}
+
+const handleDeleteLeader = async (leaderId: string) => {
+  try {
+    await removeLeader(leaderId)
+    emit('toast', '🗑️ Leadership member removed!')
+  } catch (e: any) {
+    emit('toast', `❌ Error deleting leader: ${e?.message || e}`)
+  }
+}
+
+// Collapsible About Us Accordion State
+const aboutCards = ref<Record<string, boolean>>({
+  philosophy: false,
+  values: false,
+  leadership: false,
+  programs: false,
+  ora: false,
+  faq: false
+})
+
+const toggleAboutCard = (key: string) => {
+  aboutCards.value[key] = !aboutCards.value[key]
+}
+
+const allAboutOpen = computed(() => {
+  return Object.values(aboutCards.value).every(Boolean)
+})
+
+const toggleAllAboutCards = () => {
+  const target = !allAboutOpen.value
+  for (const k of Object.keys(aboutCards.value)) {
+    aboutCards.value[k] = target
+  }
+}
+
+const openFaq = ref<number | null>(0)
+const toggleFaq = (idx: number) => {
+  openFaq.value = openFaq.value === idx ? null : idx
+}
+
+const values = [
+  {
+    letter: 'F',
+    word: 'FUN',
+    icon: '🎉',
+    desc: 'Inspiring a genuine, lifelong passion for mountain biking and the great outdoors. Smiles and trail high-fives come first.'
+  },
+  {
+    letter: 'I',
+    word: 'INCLUSIVITY',
+    icon: '🌈',
+    desc: 'No tryouts, no cuts, and zero benchwarmers. Every student-athlete participates, rides, and belongs regardless of ability.'
+  },
+  {
+    letter: 'E',
+    word: 'EQUITY',
+    icon: '⚖️',
+    desc: 'Ensuring fair opportunities, loaner bikes, and registration scholarships so financial circumstances never bar participation.'
+  },
+  {
+    letter: 'R',
+    word: 'RESPECT',
+    icon: '🤝',
+    desc: 'Treating teammates, competitors, coaches, land managers, trail users, and our natural environment with dignity.'
+  },
+  {
+    letter: 'C',
+    word: 'COMMUNITY',
+    icon: '🏕️',
+    desc: 'Fostering lifelong bonds between riders, coaches, families, and communities across Wisconsin and Minnesota.'
+  }
+]
+
+const faqs = [
+  {
+    q: 'Who can join the La Crosse Area Mountain Bike Team?',
+    a: 'Any student entering grades 6–12 for the 2026–2027 school year is welcome! We are a composite team representing riders from across the Coulee Region, including La Crosse, Onalaska, Holmen, West Salem, La Crescent, and Bangor.'
+  },
+  {
+    q: 'Do I have to race to be on the team?',
+    a: 'No! Racing is 100% optional. Many of our student-athletes join purely for the weekly practices, trail camaraderie, adventure trips, and skill clinics. Every rider enjoys the exact same coaching, team gear, and team community regardless of whether they ever pin on a race number.'
+  },
+  {
+    q: 'What kind of bike do I need?',
+    a: 'You will need a mountain bike with working front and rear hand brakes, multiple gears, and knobby off-road tires. If you do not have a bike, ORA Trails offers a Loaner Bike Program, and Trek offers generous NICA athlete purchase discounts.'
+  },
+  {
+    q: 'Are scholarships or financial aid available?',
+    a: 'Yes! Both WI-NICA and the La Crosse team offer need-based financial aid for league registration, team fees, and equipment. We are committed to making sure every child who wants to ride has the opportunity to ride.'
+  },
+  {
+    q: 'How can parents get involved?',
+    a: 'We are a 100% volunteer-led organization! Parents can become licensed ride leaders, assistant coaches, race day volunteers, feed-zone support, or help with camping meals. NICA provides all necessary online and on-the-bike coach training.'
+  }
+]
+
+const scrollToAbout = () => {
+  if (typeof window !== 'undefined') {
+    const el = document.getElementById('about')
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (!Object.values(aboutCards.value).some(Boolean)) {
+        aboutCards.value.philosophy = true
+      }
+    }
+  }
+}
 
 const isEditSponsorOpen = ref(false)
 const selectedSponsor = ref<SiteSponsor | null>(null)
@@ -214,9 +362,9 @@ const steps = [
   },
   {
     number: '03',
-    title: 'Tiered Trail Riding Pods',
+    title: 'Tiered Trail Riding Groups',
     duration: '60–75 Mins',
-    desc: 'Athletes split into ability and endurance pods. Every group is led by a licensed Lead Coach and accompanied by a Sweep Coach. Strict "No Rider Left Behind" rule.'
+    desc: 'Athletes split into ability and endurance groups. Every group is led by a licensed Lead Coach and accompanied by a Sweep Coach. Strict "No Rider Left Behind" rule.'
   },
   {
     number: '04',
@@ -253,6 +401,8 @@ onMounted(() => {
   if (typeof window !== 'undefined') {
     if (window.location.hash === '#practice' || window.location.search.includes('practice')) {
       setTimeout(() => scrollToPractice(), 150)
+    } else if (window.location.hash === '#about' || window.location.search.includes('about')) {
+      setTimeout(() => scrollToAbout(), 150)
     }
   }
 })
@@ -280,13 +430,17 @@ onMounted(() => {
         </p>
 
         <div class="hero-action-buttons">
+          <button class="btn-primary-hero" @click="scrollToAbout">
+            <span class="btn-icon-box red">👥</span>
+            <span class="btn-label">About Our Team</span>
+          </button>
+          <button class="btn-primary-hero" @click="scrollToPractice">
+            <span class="btn-icon-box red">🚵</span>
+            <span class="btn-label">Practice &amp; Trails</span>
+          </button>
           <button class="btn-primary-hero" @click="emit('navigate', 'race')">
             <span class="btn-icon-box red">🏁</span>
             <span class="btn-label">Explore Race Central</span>
-          </button>
-          <button class="btn-primary-hero" @click="emit('navigate', 'about')">
-            <span class="btn-icon-box red">👥</span>
-            <span class="btn-label">About Us</span>
           </button>
         </div>
 
@@ -337,80 +491,377 @@ onMounted(() => {
       />
     </section>
 
-    <!-- Core Philosophy / Who We Are -->
-    <section class="info-section">
+    <!-- About Us & Team Community (Unified Collapsible Accordion Section) -->
+    <section id="about" class="about-merged-section">
       <div class="section-header-centered">
-        <span class="section-eyebrow">OUR PHILOSOPHY</span>
-        <h2 class="section-heading">More Than A Team. A Community.</h2>
+        <span class="section-eyebrow">ABOUT LAX MTB &amp; OUR COMMUNITY</span>
+        <h2 class="section-heading">Who We Are &amp; Our Guiding Principles</h2>
         <p class="section-subtext">
-          The team began in 2013 with fewer than 20 riders. Today, it has grown into a vibrant community of more than 90 student-athletes from across Wisconsin and Minnesota.
+          Founded in 2013 with fewer than 20 riders, the La Crosse Area Mountain Bike Team has grown into a vibrant youth community of over 90 student-athletes and nearly 40 dedicated volunteer coaches across the 7 Rivers Region.
         </p>
       </div>
 
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon-box red">🏁</div>
-          <h3>No Racing Required</h3>
-          <p>
-            Whether you are hungry to climb the state podium or simply want to ride singletrack with friends, every athlete enjoys the exact same team experience and coaching.
-          </p>
-          <div class="feature-highlight">Just come ride!</div>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon-box green">🤝</div>
-          <h3>Grades 6–12 Co-Ed</h3>
-          <p>
-            Open to all middle school and high school riders across the 7 Rivers Region. No benchwarmers—everyone rides, everyone develops, and everyone belongs.
-          </p>
-          <div class="feature-highlight">Equal opportunity for all</div>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon-box blue">🧗</div>
-          <h3>All Abilities Welcomed</h3>
-          <p>
-            No prior mountain biking experience required. We teach bike safety, body position, shifting, and obstacle navigation from the ground up.
-          </p>
-          <div class="feature-highlight">Zero experience needed</div>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon-box yellow">🏕️</div>
-          <h3>Fall Camping Weekends</h3>
-          <p>
-            During the fall race series, families camp together across Wisconsin. From shared pasta dinners to roaring campfires, the memories last a lifetime.
-          </p>
-          <div class="feature-highlight">Unmatched family community</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Team Programs Grid -->
-    <section class="programs-section">
-      <div class="section-header-centered">
-        <span class="section-eyebrow">SPECIALIZED INITIATIVES</span>
-        <h2 class="section-heading">Signature Team Programs</h2>
-        <p class="section-subtext">
-          Fostering leadership, female empowerment, environmental stewardship, and backcountry outdoor mastery.
-        </p>
-      </div>
-
-      <div class="programs-grid">
-        <div
-          v-for="prog in programs"
-          :key="prog.id"
-          class="program-card"
-          :style="{ '--prog-color': prog.color }"
+      <!-- About Accordion Toolbar Controls -->
+      <div class="about-accordion-toolbar">
+        <span class="toolbar-hint">Tap any card below to explore our philosophy, core values, leadership team, signature programs, and FAQs</span>
+        <button
+          type="button"
+          class="btn-toggle-all"
+          :title="allAboutOpen ? 'Collapse all about sections' : 'Expand all about sections'"
+          @click="toggleAllAboutCards"
         >
-          <div class="program-top">
-            <span class="program-icon">{{ prog.icon }}</span>
-            <span class="program-badge">{{ prog.badge }}</span>
+          <span>{{ allAboutOpen ? '⊟ Collapse All' : '⊞ Expand All' }}</span>
+        </button>
+      </div>
+
+      <!-- Collapsible Cards Container -->
+      <div class="about-accordion">
+
+        <!-- Card 1: Head Coach Welcome & Team Philosophy -->
+        <div class="accordion-item" :class="{ 'is-open': aboutCards.philosophy }">
+          <button
+            type="button"
+            class="accordion-trigger"
+            :aria-expanded="aboutCards.philosophy"
+            @click="toggleAboutCard('philosophy')"
+          >
+            <div class="trigger-left">
+              <span class="trigger-icon-box">💬</span>
+              <div class="trigger-text">
+                <h3 class="trigger-title">Coach Welcome &amp; Team Philosophy</h3>
+                <p class="trigger-sub">Coach Carey Falkenberry's message and our 4 core philosophy pillars</p>
+              </div>
+            </div>
+            <div class="trigger-right">
+              <span class="trigger-badge">Our Philosophy</span>
+              <span class="trigger-chevron" :class="{ rotated: aboutCards.philosophy }">▾</span>
+            </div>
+          </button>
+          <div v-show="aboutCards.philosophy" class="accordion-content">
+            <!-- Head Coach Testimonial Banner -->
+            <div class="testimonial-card">
+              <span class="quote-mark">“</span>
+              <blockquote class="testimonial-quote">
+                My favorite part about being on the mountain bike team is the festival weekends – I love seeing athletes and families come together with the larger NICA community to embrace mountain bike adventures and cross country racing. From introducing the sport to new riders, to supporting racers hungry for competition, and all the growth and development between, I am honored to be part of the La Crosse Area Mountain Bike Team!
+              </blockquote>
+              <div class="testimonial-author">
+                <div class="author-avatar-wrapper">
+                  <div class="author-avatar-box">
+                    <img
+                      :src="media.careyPhoto || '/images/coach-carey.jpeg'"
+                      alt="Carey Falkenberry"
+                      class="author-avatar"
+                    />
+                  </div>
+                  <button
+                    v-if="isCoachAuth"
+                    type="button"
+                    class="btn-edit-avatar"
+                    title="Admin: Change Coach Carey Photo"
+                    @click="isEditCareyPhotoOpen = true"
+                  >
+                    📷
+                  </button>
+                </div>
+                <div>
+                  <div class="author-name">Carey Falkenberry</div>
+                  <div class="author-title">Head Coach (2022–2024)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Core Philosophy 4 Pillars Grid -->
+            <div class="features-grid" style="margin-top: 20px;">
+              <div class="feature-card">
+                <div class="feature-icon-box red">🏁</div>
+                <h3>No Racing Required</h3>
+                <p>
+                  Whether you are hungry to climb the state podium or simply want to ride singletrack with friends, every athlete enjoys the exact same team experience and coaching.
+                </p>
+                <div class="feature-highlight">Just come ride!</div>
+              </div>
+
+              <div class="feature-card">
+                <div class="feature-icon-box green">🤝</div>
+                <h3>Grades 6–12 Co-Ed</h3>
+                <p>
+                  Open to all middle school and high school riders across the 7 Rivers Region. No benchwarmers—everyone rides, everyone develops, and everyone belongs.
+                </p>
+                <div class="feature-highlight">Equal opportunity for all</div>
+              </div>
+
+              <div class="feature-card">
+                <div class="feature-icon-box blue">🧗</div>
+                <h3>All Abilities Welcomed</h3>
+                <p>
+                  No prior mountain biking experience required. We teach bike safety, body position, shifting, and obstacle navigation from the ground up.
+                </p>
+                <div class="feature-highlight">Zero experience needed</div>
+              </div>
+
+              <div class="feature-card">
+                <div class="feature-icon-box yellow">🏕️</div>
+                <h3>Fall Camping Weekends</h3>
+                <p>
+                  During the fall race series, families camp together across Wisconsin. From shared pasta dinners to roaring campfires, the memories last a lifetime.
+                </p>
+                <div class="feature-highlight">Unmatched family community</div>
+              </div>
+            </div>
           </div>
-          <h3 class="program-title">{{ prog.title }}</h3>
-          <div class="program-lead">{{ prog.lead }}</div>
-          <p class="program-desc">{{ prog.description }}</p>
         </div>
+
+        <!-- Card 2: Core "FIERC" Values -->
+        <div class="accordion-item" :class="{ 'is-open': aboutCards.values }">
+          <button
+            type="button"
+            class="accordion-trigger"
+            :aria-expanded="aboutCards.values"
+            @click="toggleAboutCard('values')"
+          >
+            <div class="trigger-left">
+              <span class="trigger-icon-box">⚡</span>
+              <div class="trigger-text">
+                <h3 class="trigger-title">Our Core "FIERC" Values</h3>
+                <p class="trigger-sub">Fun, Inclusivity, Equity, Respect, Community (NICA &amp; WI-League Pillars)</p>
+              </div>
+            </div>
+            <div class="trigger-right">
+              <span class="trigger-badge">5 Pillars</span>
+              <span class="trigger-chevron" :class="{ rotated: aboutCards.values }">▾</span>
+            </div>
+          </button>
+          <div v-show="aboutCards.values" class="accordion-content">
+            <div class="card-inner-header">
+              <p>As an official member of NICA and the Wisconsin High School Cycling League, our team operates on five core pillars.</p>
+            </div>
+            <div class="values-grid">
+              <div v-for="val in values" :key="val.letter" class="val-card">
+                <div class="val-top">
+                  <span class="val-letter">{{ val.letter }}</span>
+                  <span class="val-icon">{{ val.icon }}</span>
+                </div>
+                <h3 class="val-word">{{ val.word }}</h3>
+                <p class="val-desc">{{ val.desc }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: 2026 Leadership Team & Mentors -->
+        <div class="accordion-item" :class="{ 'is-open': aboutCards.leadership }">
+          <button
+            type="button"
+            class="accordion-trigger"
+            :aria-expanded="aboutCards.leadership"
+            @click="toggleAboutCard('leadership')"
+          >
+            <div class="trigger-left">
+              <span class="trigger-icon-box">👥</span>
+              <div class="trigger-text">
+                <h3 class="trigger-title">2026 Leadership Team &amp; Mentors</h3>
+                <p class="trigger-sub">Meet the directors, coordinators, and coaches dedicating their time to youth</p>
+              </div>
+            </div>
+            <div class="trigger-right">
+              <span class="trigger-badge">Team Staff</span>
+              <span class="trigger-chevron" :class="{ rotated: aboutCards.leadership }">▾</span>
+            </div>
+          </button>
+          <div v-show="aboutCards.leadership" class="accordion-content">
+            <div class="card-inner-header">
+              <p>Meet the directors, coordinators, and coaches dedicating their time to mentoring Coulee Region youth on and off the bike.</p>
+              <div v-if="isCoachAuth" style="margin-top: 14px;">
+                <button
+                  type="button"
+                  class="btn-add-leader-pill"
+                  @click="openAddLeader"
+                >
+                  ➕ Add Leadership Member
+                </button>
+              </div>
+            </div>
+
+            <div v-if="leaders.length > 0" class="leaders-grid">
+              <div v-for="leader in leaders" :key="leader.id || leader.name" class="leader-card">
+                <div class="leader-photo-wrap">
+                  <button
+                    v-if="isCoachAuth"
+                    type="button"
+                    class="btn-change-photo-overlay"
+                    :title="`Admin: Edit ${leader.name}`"
+                    @click="openEditLeader(leader)"
+                  >
+                    ✏️ Edit Member
+                  </button>
+                  <img :src="leader.image || 'https://www.oratrails.org/wp-content/plugins/salient-core/includes/img/team-member-default.jpg'" :alt="leader.name" class="leader-img" loading="lazy" />
+                </div>
+                <div class="leader-info">
+                  <h3 class="leader-name">{{ leader.name }}</h3>
+                  <div class="leader-role">{{ leader.role }}</div>
+                  <p class="leader-desc">{{ leader.desc }}</p>
+                </div>
+              </div>
+            </div>
+            <div v-else-if="isCoachAuth" class="admin-empty-notice">
+              No leadership members currently stored in the database. Click <strong>➕ Add Leadership Member</strong> above to add one.
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Signature Team Programs -->
+        <div class="accordion-item" :class="{ 'is-open': aboutCards.programs }">
+          <button
+            type="button"
+            class="accordion-trigger"
+            :aria-expanded="aboutCards.programs"
+            @click="toggleAboutCard('programs')"
+          >
+            <div class="trigger-left">
+              <span class="trigger-icon-box">🚵🏼</span>
+              <div class="trigger-text">
+                <h3 class="trigger-title">Signature Team Programs &amp; Initiatives</h3>
+                <p class="trigger-sub">GRiT (Girls Riding Together), Teen Trail Corps, and Adventure Program</p>
+              </div>
+            </div>
+            <div class="trigger-right">
+              <span class="trigger-badge">3 Initiatives</span>
+              <span class="trigger-chevron" :class="{ rotated: aboutCards.programs }">▾</span>
+            </div>
+          </button>
+          <div v-show="aboutCards.programs" class="accordion-content">
+            <div class="card-inner-header">
+              <p>Fostering leadership, female empowerment, environmental stewardship, and backcountry outdoor mastery.</p>
+            </div>
+            <div class="programs-grid">
+              <div
+                v-for="prog in programs"
+                :key="prog.id"
+                class="program-card"
+                :style="{ '--prog-color': prog.color }"
+              >
+                <div class="program-top">
+                  <span class="program-icon">{{ prog.icon }}</span>
+                  <span class="program-badge">{{ prog.badge }}</span>
+                </div>
+                <h3 class="program-title">{{ prog.title }}</h3>
+                <div class="program-lead">{{ prog.lead }}</div>
+                <p class="program-desc">{{ prog.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: A Proud Program of ORA Trails -->
+        <div class="accordion-item" :class="{ 'is-open': aboutCards.ora }">
+          <button
+            type="button"
+            class="accordion-trigger"
+            :aria-expanded="aboutCards.ora"
+            @click="toggleAboutCard('ora')"
+          >
+            <div class="trigger-left">
+              <span class="trigger-icon-box">🌲</span>
+              <div class="trigger-text">
+                <h3 class="trigger-title">A Proud Program of ORA Trails</h3>
+                <p class="trigger-sub">Silent sports partnership, trail centers, and governing affiliations</p>
+              </div>
+            </div>
+            <div class="trigger-right">
+              <span class="trigger-badge">Community Partnership</span>
+              <span class="trigger-chevron" :class="{ rotated: aboutCards.ora }">▾</span>
+            </div>
+          </button>
+          <div v-show="aboutCards.ora" class="accordion-content">
+            <div class="org-card-content">
+              <p>
+                The La Crosse Area Mountain Bike Team operates under the umbrella of <strong>ORA Trails</strong> (Outdoor Recreation Alliance). Together, we share a mission to create, maintain, and promote world-class silent sports trails that build strong communities.
+              </p>
+              <div class="org-address-grid">
+                <div class="address-box">
+                  <span class="address-label">Mailing Address</span>
+                  <strong>ORA Trails</strong>
+                  <span>PO Box 69</span>
+                  <span>La Crosse, WI 54602</span>
+                </div>
+                <div class="address-box">
+                  <span class="address-label">Community Trail Farm</span>
+                  <strong>W5723 HWY 33</strong>
+                  <span>La Crosse, WI 54601</span>
+                  <span>Home of trails, clinics &amp; community events</span>
+                </div>
+              </div>
+
+              <div class="org-links">
+                <a href="https://www.oratrails.org" target="_blank" rel="noopener" class="org-btn">
+                  <img src="/logos/ora-trails-white.png" alt="ORA Trails" class="org-btn-logo" />
+                  <span>ORA Trails Website ↗</span>
+                </a>
+                <a href="https://wisconsinmtb.org" target="_blank" rel="noopener" class="org-btn">
+                  <img src="/logos/wisconsin-league-logo.png" alt="Wisconsin League" class="org-btn-logo" />
+                  <span>Wisconsin League ↗</span>
+                </a>
+                <a href="https://nationalmtb.org" target="_blank" rel="noopener" class="org-btn">
+                  <img src="/logos/nica-logo.png" alt="NICA" class="org-btn-logo" />
+                  <span>National NICA ↗</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6: Frequently Asked Questions -->
+        <div class="accordion-item" :class="{ 'is-open': aboutCards.faq }">
+          <button
+            type="button"
+            class="accordion-trigger"
+            :aria-expanded="aboutCards.faq"
+            @click="toggleAboutCard('faq')"
+          >
+            <div class="trigger-left">
+              <span class="trigger-icon-box">❓</span>
+              <div class="trigger-text">
+                <h3 class="trigger-title">Frequently Asked Questions</h3>
+                <p class="trigger-sub">Eligibility, bike requirements, scholarships, and parent volunteering</p>
+              </div>
+            </div>
+            <div class="trigger-right">
+              <span class="trigger-badge">5 FAQs</span>
+              <span class="trigger-chevron" :class="{ rotated: aboutCards.faq }">▾</span>
+            </div>
+          </button>
+          <div v-show="aboutCards.faq" class="accordion-content">
+            <div class="faq-list">
+              <div
+                v-for="(faq, idx) in faqs"
+                :key="faq.q"
+                class="faq-item"
+                :class="{ open: openFaq === idx }"
+                @click="toggleFaq(idx)"
+              >
+                <div class="faq-header">
+                  <h3>{{ faq.q }}</h3>
+                  <span class="faq-toggle-icon">{{ openFaq === idx ? '−' : '+' }}</span>
+                </div>
+                <div v-show="openFaq === idx" class="faq-body">
+                  <p>{{ faq.a }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Ready to Ride & Contact Box -->
+      <div class="about-contact-callout">
+        <h2>Ready To Ride With Us?</h2>
+        <p>
+          Registration for the fall season opens in spring. If you have questions about equipment, financial aid, or joining practice, reach out to our team coordinators.
+        </p>
+        <a href="mailto:lacrossemtb@gmail.com" class="btn-email-us">
+          <span>✉️ lacrossemtb@gmail.com</span>
+        </a>
       </div>
     </section>
 
@@ -451,14 +902,14 @@ onMounted(() => {
           <span class="chip-icon">🤝</span>
           <div>
             <strong>Coaching Standard</strong>
-            <span>Lead &amp; Sweep on every pod</span>
+            <span>Lead &amp; Sweep on every group</span>
           </div>
         </div>
       </div>
 
       <!-- Accordion Toolbar Controls -->
       <div class="practice-accordion-toolbar">
-        <span class="toolbar-hint">Tap any card below to explore schedules, ability pods, trail systems, and gear</span>
+        <span class="toolbar-hint">Tap any card below to explore schedules, ability groups, trail systems, and gear</span>
         <button
           type="button"
           class="btn-toggle-all"
@@ -506,7 +957,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Card 2: Rider Ability & Pace Pods -->
+        <!-- Card 2: Rider Ability & Pace Groups -->
         <div class="accordion-item" :class="{ 'is-open': practiceCards.pods }">
           <button
             type="button"
@@ -517,7 +968,7 @@ onMounted(() => {
             <div class="trigger-left">
               <span class="trigger-icon-box">🟢</span>
               <div class="trigger-text">
-                <h3 class="trigger-title">Rider Ability &amp; Pace Pods</h3>
+                <h3 class="trigger-title">Rider Ability &amp; Pace Groups</h3>
                 <p class="trigger-sub">Beginner fundamentals, intermediate endurance, and race pace shredders</p>
               </div>
             </div>
@@ -601,7 +1052,7 @@ onMounted(() => {
               </div>
             </div>
             <div class="trigger-right">
-              <span class="trigger-badge">5 Networks</span>
+              <span class="trigger-badge">4 Networks</span>
               <span class="trigger-chevron" :class="{ rotated: practiceCards.locations }">▾</span>
             </div>
           </button>
@@ -799,14 +1250,13 @@ onMounted(() => {
 
             <!-- Volunteer Ride Leader Callout -->
             <div class="volunteer-box">
-              <h2>Want To Ride Along Or Coach?</h2>
+              <h2>Want To Coach?</h2>
               <p>
                 We are always looking for volunteer coaches and parent ride leaders! NICA provides online training, on-the-bike skills instruction, and background checks. No mountain bike racing experience is necessary.
               </p>
               <div style="margin-top:14px;">
-                <a href="mailto:lacrossemtb@gmail.com?subject=Practice%20Inquiry%20-%20LAX%20MTB%20Head%20Coach" class="btn-primary-hero">
-                  <span class="btn-icon-box red">✉️</span>
-                  <span class="btn-label">Contact Us</span>
+                <a href="mailto:lacrossemtb@gmail.com?subject=Practice%20Inquiry%20-%20LAX%20MTB%20Head%20Coach" class="home-email-btn">
+                  <span>✉️ lacrossemtb@gmail.com</span>
                 </a>
               </div>
             </div>
@@ -1072,6 +1522,26 @@ onMounted(() => {
       photo-key="coachesPhoto"
       photo-label="Coaches Photo (Practice Section)"
       @close="isEditCoachesPhotoOpen = false"
+      @toast="(msg) => emit('toast', msg)"
+    />
+
+    <!-- Admin Coach Carey Photo Editor Modal -->
+    <EditPhotoModal
+      :is-open="isEditCareyPhotoOpen"
+      photo-key="careyPhoto"
+      photo-label="Coach Carey Testimonial Photo"
+      @close="isEditCareyPhotoOpen = false"
+      @toast="(msg) => emit('toast', msg)"
+    />
+
+    <!-- Admin Leadership Member Modal -->
+    <EditLeaderModal
+      :is-open="isEditLeaderModalOpen"
+      :leader="selectedLeader"
+      :is-new="isNewLeader"
+      @close="isEditLeaderModalOpen = false"
+      @save="handleSaveLeader"
+      @delete="handleDeleteLeader"
       @toast="(msg) => emit('toast', msg)"
     />
 
@@ -2153,6 +2623,461 @@ onMounted(() => {
 }
 
 /* ============================================================
+   ABOUT US & TEAM COMMUNITY (MERGED COLLAPSIBLE SECTION)
+   ============================================================ */
+.about-merged-section {
+  margin: 36px 0 52px;
+  scroll-margin-top: calc(var(--site-header-height, 70px) + 20px);
+}
+
+.about-accordion-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0 auto 14px;
+  padding: 0 4px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.about-accordion {
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-inner-header {
+  padding: 12px 0 16px;
+}
+
+.card-inner-header p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Testimonial Card */
+.testimonial-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, var(--bg-card) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 16px;
+  padding: 28px 24px;
+  box-shadow: var(--shadow-card);
+  margin-top: 10px;
+}
+
+.quote-mark {
+  font-family: serif;
+  font-size: 64px;
+  line-height: 1;
+  color: var(--accent-red);
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  opacity: 0.3;
+}
+
+.testimonial-quote {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-main);
+  font-style: italic;
+  margin-bottom: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.author-avatar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.author-avatar-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--accent-red);
+}
+
+.btn-edit-avatar {
+  position: absolute;
+  bottom: -4px;
+  right: -6px;
+  background: rgba(13, 13, 13, 0.9);
+  border: 1px solid var(--accent-red);
+  color: #fff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  z-index: 2;
+}
+.btn-edit-avatar:hover {
+  transform: scale(1.15);
+  background: var(--accent-red);
+}
+
+.author-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.author-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.author-title {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Values Grid */
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.val-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.val-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+
+.val-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.val-letter {
+  font-family: 'Teko', sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--accent-red);
+  line-height: 1;
+}
+
+.val-icon {
+  font-size: 22px;
+}
+
+.val-word {
+  font-family: 'Teko', sans-serif;
+  font-size: 22px;
+  color: var(--text-main);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.val-desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* Leaders Grid */
+.leaders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.leader-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.leader-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+
+.leader-photo-wrap {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.leader-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 0.3s ease;
+}
+.leader-card:hover .leader-img {
+  transform: scale(1.03);
+}
+
+.leader-info {
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.leader-name {
+  font-family: 'Teko', sans-serif;
+  font-size: 22px;
+  line-height: 1.1;
+  color: var(--text-main);
+}
+
+.leader-role {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-red);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.leader-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.btn-add-leader-pill {
+  background: var(--bg-subtle);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: var(--text-main);
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-add-leader-pill:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+  transform: translateY(-2px);
+}
+
+.admin-empty-notice {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  font-size: 13.5px;
+  background: var(--bg-subtle);
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+}
+
+/* ORA Content */
+.org-card-content p {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.org-address-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.address-box {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.address-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--accent-red);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.address-box strong {
+  color: var(--text-main);
+  font-size: 14px;
+}
+
+.org-links {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.org-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.org-btn:hover {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+  transform: translateY(-2px);
+}
+
+.org-btn-logo {
+  height: 24px;
+  max-width: 60px;
+  object-fit: contain;
+}
+
+/* FAQ List */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.faq-item {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.faq-item:hover,
+.faq-item.open {
+  border-color: var(--border-strong);
+}
+
+.faq-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.faq-header h3 {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.faq-toggle-icon {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent-red);
+  flex-shrink: 0;
+}
+
+.faq-body {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.faq-body p {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* About Contact Callout */
+.about-contact-callout {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 20px;
+  text-align: center;
+  margin-top: 24px;
+}
+
+.about-contact-callout h2 {
+  font-family: 'Teko', sans-serif;
+  font-size: 28px;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.about-contact-callout p {
+  max-width: 620px;
+  margin: 0 auto 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.btn-email-us {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-red);
+  color: #ffffff;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+  transition: all 0.2s ease;
+}
+.btn-email-us:hover {
+  background: var(--accent-red-hover);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+}
+
+/* ============================================================
    PRACTICE & TRAIL SESSIONS (MERGED COLLAPSIBLE SECTION)
    ============================================================ */
 .practice-merged-section {
@@ -2404,7 +3329,7 @@ onMounted(() => {
   margin: 0;
 }
 
-/* Ability Pods */
+/* Ability Groups */
 .pods-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

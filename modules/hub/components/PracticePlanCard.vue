@@ -102,11 +102,11 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <!-- Trail Ride Groups & Coach Pods -->
+    <!-- Trail Ride Groups & Coaches -->
     <div v-if="plan.rideGroups && plan.rideGroups.length" class="section-container">
       <div class="section-title-bar">
         <span>🚵</span>
-        <h3>Trail Pod Assignments</h3>
+        <h3>Trail Group Assignments</h3>
       </div>
       <div class="groups-grid">
         <div v-for="(rg, idx) in plan.rideGroups" :key="idx" class="ride-group-card">
@@ -129,31 +129,26 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <!-- Cool-Down Notes -->
-    <div v-if="plan.coolDown" class="panel-box cooldown-box">
+    <!-- Cool-Down & Coach Wrap-Up Notes -->
+    <div v-if="plan.coolDown || plan.coachDebrief !== undefined" class="panel-box cooldown-box">
       <div class="panel-title">
         <span>🙌</span>
-        <span>Wrap-Up & Cool-Down</span>
+        <span>Cool-Down & Coach Wrap-Up</span>
       </div>
-      <p class="cooldown-text">{{ plan.coolDown }}</p>
-    </div>
+      <p v-if="plan.coolDown" class="cooldown-text">{{ plan.coolDown }}</p>
 
-    <!-- Google Doc Link & Attachments -->
-    <div v-if="plan.attachments && plan.attachments.length" class="attachments-footer">
-      <span class="attachments-label">Original Lesson Docs:</span>
-      <div class="doc-chips">
-        <a
-          v-for="(att, i) in plan.attachments"
-          :key="i"
-          :href="att.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="doc-chip-btn"
-        >
-          <span>📑</span>
-          <span>{{ att.label }}</span>
-          <span>↗</span>
-        </a>
+      <!-- Coach Debrief & Radio Return Panel -->
+      <div class="coach-debrief-panel">
+        <div class="debrief-panel-header">
+          <span class="debrief-radio-icon">📻</span>
+          <span class="debrief-panel-title">Coach Debrief & Radio Return</span>
+        </div>
+        <ol class="debrief-checklist">
+          <li>Anything to report?</li>
+          <li>What went well, do again?</li>
+          <li>What could be better?</li>
+        </ol>
+        <p v-if="plan.coachDebrief" class="debrief-custom-notes">{{ plan.coachDebrief }}</p>
       </div>
     </div>
   </div>
@@ -451,49 +446,53 @@ const emit = defineEmits<{
   color: var(--text-main, #e5e7eb);
 }
 
-/* Attachments Footer */
-.attachments-footer {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border, #262626);
-  flex-wrap: wrap;
+/* Coach Debrief & Radio Return */
+.coach-debrief-panel {
+  margin-top: 14px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-radius: 8px;
+  padding: 12px 16px;
 }
 
-.attachments-label {
-  font-size: 12px;
+.debrief-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.debrief-radio-icon {
+  font-size: 16px;
+}
+
+.debrief-panel-title {
+  font-size: 13px;
   font-weight: 800;
-  color: var(--text-dim, #707070);
+  color: #93c5fd;
+  letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 
-.doc-chips {
+.debrief-checklist {
+  margin: 0 0 0 18px;
+  padding: 0;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--text-main, #f3f4f6);
+  line-height: 1.4;
 }
 
-.doc-chip-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(59, 130, 246, 0.12);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #93c5fd;
-  padding: 6px 12px;
-  border-radius: 6px;
+.debrief-custom-notes {
+  margin: 10px 0 0 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(59, 130, 246, 0.2);
   font-size: 12.5px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: all 0.15s;
-}
-
-.doc-chip-btn:hover {
-  background: rgba(59, 130, 246, 0.22);
-  border-color: #60a5fa;
-  color: #ffffff;
+  color: var(--text-muted, #9ca3af);
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 
 /* Buttons */

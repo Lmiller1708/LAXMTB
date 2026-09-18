@@ -7,6 +7,7 @@ import type {
   CoachResource,
   QuickLink,
   HubConfig,
+  EmergencyPlan,
   EventItem,
   TeamNote,
   Attachment,
@@ -16,12 +17,13 @@ import type {
 
 const props = defineProps<{
   isOpen: boolean
-  initialTab?: 'weekly' | 'plan' | 'announcement' | 'links' | 'resource' | 'settings'
+  initialTab?: 'weekly' | 'plan' | 'announcement' | 'links' | 'eap' | 'resource' | 'settings'
   editingUpdate?: WeeklyUpdate | null
   editingPlan?: PracticePlan | null
   editingAnnouncement?: Announcement | null
   editingResource?: CoachResource | null
   quickLinks: QuickLink[]
+  emergencyPlans?: EmergencyPlan[]
   hubConfig: HubConfig
 }>()
 
@@ -32,13 +34,14 @@ const emit = defineEmits<{
   (e: 'saveAnnouncement', payload: { announcement: Announcement; sendEmail: boolean }): void
   (e: 'saveResource', res: CoachResource): void
   (e: 'saveQuickLinks', links: QuickLink[]): void
+  (e: 'saveEmergencyPlans', plans: EmergencyPlan[]): void
   (e: 'saveConfig', config: HubConfig): void
   (e: 'duplicateUpdate', sourceId?: string): void
   (e: 'duplicatePlan', sourceId?: string): void
   (e: 'toast', msg: string): void
 }>()
 
-const activeTab = ref<'weekly' | 'plan' | 'announcement' | 'links' | 'resource' | 'settings'>(
+const activeTab = ref<'weekly' | 'plan' | 'announcement' | 'links' | 'eap' | 'resource' | 'settings'>(
   props.initialTab || 'weekly'
 )
 
@@ -87,6 +90,7 @@ const planForm = ref<PracticePlan>({
     { name: 'Group A', coach: '', trail: '', focus: '' }
   ],
   coolDown: '',
+  coachDebrief: '',
   attachments: [],
   status: 'published'
 })
@@ -119,7 +123,10 @@ const tagsInput = ref('')
 // 5. Quick Links Form
 const linksList = ref<QuickLink[]>([])
 
-// 6. Hub Config Form
+// 6. Emergency Action Plans Form
+const eapList = ref<EmergencyPlan[]>([])
+
+// 7. Hub Config Form
 const configForm = ref<HubConfig>({
   googleGroupEmail: 'lax-mtb-team@googlegroups.com',
   webhookUrl: ''
@@ -161,9 +168,17 @@ watch(
     }
 
     linksList.value = JSON.parse(JSON.stringify(props.quickLinks || []))
+    eapList.value = JSON.parse(JSON.stringify(props.emergencyPlans || []))
     configForm.value = JSON.parse(JSON.stringify(props.hubConfig || {}))
   },
   { immediate: true }
+)
+
+watch(
+  () => props.emergencyPlans,
+  (plans) => {
+    if (plans) eapList.value = JSON.parse(JSON.stringify(plans))
+  }
 )
 
 watch(
@@ -254,6 +269,33 @@ const removeQuickLink = (i: number) => {
   linksList.value.splice(i, 1)
 }
 
+// Emergency Action Plans
+const addEapLocation = () => {
+  eapList.value.push({
+    id: `eap-${Date.now()}`,
+    location: '',
+    badge: '',
+    description: '',
+    docUrl: '',
+    order: eapList.value.length + 1
+  })
+}
+const removeEapLocation = (i: number) => {
+  eapList.value.splice(i, 1)
+}
+
+const isImageIcon = (icon?: string) => {
+  if (!icon) return false
+  return (
+    icon.startsWith('/') ||
+    icon.startsWith('http') ||
+    icon.includes('.png') ||
+    icon.includes('.svg') ||
+    icon.includes('.jpg') ||
+    icon.includes('.webp')
+  )
+}
+
 // --- Submit Handlers ---
 
 const handleSaveWeeklyDraft = () => {
@@ -261,6 +303,17 @@ const handleSaveWeeklyDraft = () => {
     emit('toast', 'Please enter a title for the update.')
     return
   }
+  updateForm.value.status = 'draft'
+  emit('saveUpdate', { update: updateForm.value, publishAndEmail: false })
+  emit('close')
+}
+
+const handleSaveWeekly = () => {
+  if (!updateForm.value.title) {
+    emit('toast', 'Please enter a title for the update.')
+    return
+  }
+  updateForm.value.status = 'published'
   emit('saveUpdate', { update: updateForm.value, publishAndEmail: false })
   emit('close')
 }
@@ -270,6 +323,7 @@ const handlePublishWeeklyWithEmail = () => {
     emit('toast', 'Please enter a title for the update.')
     return
   }
+  updateForm.value.status = 'published'
   emit('saveUpdate', { update: updateForm.value, publishAndEmail: true })
   emit('close')
 }
@@ -310,6 +364,11 @@ const handleSaveResource = () => {
 
 const handleSaveQuickLinks = () => {
   emit('saveQuickLinks', linksList.value)
+  emit('close')
+}
+
+const handleSaveEmergencyPlans = () => {
+  emit('saveEmergencyPlans', eapList.value)
   emit('close')
 }
 
@@ -368,10 +427,18 @@ const handleSaveConfig = () => {
         <button
           type="button"
           class="tab-nav-btn"
+          :class="{ active: activeTab === 'eap' }"
+          @click="activeTab = 'eap'"
+        >
+          🚨 EAP Locations
+        </button>
+        <button
+          type="button"
+          class="tab-nav-btn"
           :class="{ active: activeTab === 'resource' }"
           @click="activeTab = 'resource'"
         >
-          📚 Documents & EAPs
+          📚 Documents
         </button>
         <button
           type="button"
@@ -633,13 +700,23 @@ const handleSaveConfig = () => {
             <button
               type="button"
               class="hub-btn hub-btn-secondary"
+              title="Save as an unlisted draft"
               @click="handleSaveWeeklyDraft"
             >
               💾 Save as Draft
             </button>
             <button
               type="button"
+              class="hub-btn hub-btn-save"
+              title="Save changes and make live on Team Hub without sending an email"
+              @click="handleSaveWeekly"
+            >
+              💾 Save
+            </button>
+            <button
+              type="button"
               class="hub-btn hub-btn-primary"
+              title="Publish update and send email to team Google Group"
               @click="handlePublishWeeklyWithEmail"
             >
               🚀 Publish & Email Team Group
@@ -650,7 +727,7 @@ const handleSaveConfig = () => {
         <!-- ================= TAB 2: PRACTICE PLAN ================= -->
         <div v-if="activeTab === 'plan'" class="form-section">
           <div class="section-notice-bar">
-            <span>💡 <strong>Practice Plan:</strong> Enter weekly objectives, drills, and pod assignments for coaches.</span>
+            <span>💡 <strong>Practice Plan:</strong> Enter weekly objectives, drills, and group assignments for coaches.</span>
             <button
               type="button"
               class="hub-btn hub-btn-sm hub-btn-secondary"
@@ -780,9 +857,9 @@ const handleSaveConfig = () => {
           <!-- Ride Groups -->
           <div class="sub-form-card">
             <div class="sub-card-header">
-              <h4 class="sub-card-title">Trail Pod Assignments</h4>
+              <h4 class="sub-card-title">Trail Group Assignments</h4>
               <button type="button" class="hub-btn hub-btn-sm hub-btn-secondary" @click="addRideGroup">
-                ＋ Add Pod
+                ＋ Add Group
               </button>
             </div>
             <div
@@ -795,7 +872,7 @@ const handleSaveConfig = () => {
                   v-model="rg.name"
                   type="text"
                   class="form-input flex-1"
-                  placeholder="Group Name (e.g. Advanced Pod)"
+                  placeholder="Group Name (e.g. Advanced Group)"
                 />
                 <input
                   v-model="rg.coach"
@@ -822,15 +899,38 @@ const handleSaveConfig = () => {
             </div>
           </div>
 
-          <!-- Cool Down -->
+          <!-- Cool-Down & Coach Wrap-Up -->
           <div class="form-group">
-            <label class="form-label">Cool-Down / Wrap-Up Notes</label>
-            <input
-              v-model="planForm.coolDown"
-              type="text"
-              class="form-input"
-              placeholder="High fives, hydration check, and wrap-up."
-            />
+            <label class="form-label">Cool-Down & Coach Wrap-Up</label>
+            <div style="margin-bottom: 10px;">
+              <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 700;">Rider Cool-Down & Wrap-Up Notes</span>
+              <input
+                v-model="planForm.coolDown"
+                type="text"
+                class="form-input"
+                placeholder="High fives, hydration check, and remind riders about Monday trailwork!"
+              />
+            </div>
+
+            <!-- Coach Debrief & Radio Return -->
+            <div class="coach-debrief-editor-box">
+              <div class="debrief-box-header">
+                <span style="font-size: 15px;">📻</span>
+                <span class="debrief-box-title">Coach Debrief & Radio Return</span>
+              </div>
+              <div class="debrief-questions-box">
+                <div class="debrief-q"><span class="q-num">1.</span> Anything to report?</div>
+                <div class="debrief-q"><span class="q-num">2.</span> What went well, do again?</div>
+                <div class="debrief-q"><span class="q-num">3.</span> What could be better?</div>
+              </div>
+              <textarea
+                v-model="planForm.coachDebrief"
+                rows="2"
+                class="form-textarea"
+                placeholder="Additional coach debrief notes, radio return drop-off instructions, or debrief takeaways..."
+                style="margin-top: 8px;"
+              />
+            </div>
           </div>
 
           <!-- Save Button -->
@@ -918,11 +1018,18 @@ const handleSaveConfig = () => {
               class="repeater-card"
             >
               <div class="form-row">
+                <img
+                  v-if="isImageIcon(link.icon)"
+                  :src="link.icon"
+                  alt="icon"
+                  style="width: 28px; height: 28px; object-fit: contain; border-radius: 4px; flex-shrink: 0; background: #222;"
+                />
                 <input
                   v-model="link.icon"
                   type="text"
                   class="form-input icon-input"
-                  placeholder="🛒"
+                  placeholder="🛒 or /logos/nica-logo.png"
+                  title="Emoji or image path (e.g. /logos/nica-logo.png)"
                 />
                 <input
                   v-model="link.label"
@@ -952,7 +1059,90 @@ const handleSaveConfig = () => {
           </div>
         </div>
 
-        <!-- ================= TAB 5: COACH RESOURCES & EAPs ================= -->
+        <!-- ================= TAB: EMERGENCY ACTION PLANS (EAP) ================= -->
+        <div v-if="activeTab === 'eap'" class="form-section">
+          <div class="section-notice-bar">
+            <span>🚨 <strong>Emergency Action Plans (EAP):</strong> Manage location-specific emergency coordinates, 911 dispatch ingress, and trailhead evacuation documents.</span>
+            <button
+              type="button"
+              class="hub-btn hub-btn-sm hub-btn-secondary"
+              @click="addEapLocation"
+            >
+              ＋ Add Location
+            </button>
+          </div>
+
+          <div class="repeater-list">
+            <div
+              v-for="(eap, idx) in eapList"
+              :key="eap.id || idx"
+              class="repeater-card"
+            >
+              <div class="form-row">
+                <div class="form-group flex-2">
+                  <label class="form-label">Location / Trailhead Name *</label>
+                  <input
+                    v-model="eap.location"
+                    type="text"
+                    class="form-input"
+                    placeholder="e.g. Upper Hixon Forest"
+                  />
+                </div>
+                <div class="form-group flex-1">
+                  <label class="form-label">Badge / Sub-Location</label>
+                  <input
+                    v-model="eap.badge"
+                    type="text"
+                    class="form-input"
+                    placeholder="e.g. Rotary Reserve"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="remove-row-btn"
+                  title="Remove Location"
+                  @click="removeEapLocation(idx)"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Address &amp; Emergency Access Notes</label>
+                <input
+                  v-model="eap.description"
+                  type="text"
+                  class="form-input"
+                  placeholder="e.g. 2500 Coulee Dr • Primary Blufftop access & emergency ambulance pad."
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Emergency Action Plan (EAP) Document URL</label>
+                <input
+                  v-model="eap.docUrl"
+                  type="text"
+                  class="form-input"
+                  placeholder="https://docs.google.com/... or https://drive.google.com/..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div v-if="!eapList.length" class="empty-state-notice">
+            <p style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">
+              No emergency action plans configured. Click "＋ Add Location" above to add one.
+            </p>
+          </div>
+
+          <div class="form-actions-bar">
+            <button type="button" class="hub-btn hub-btn-primary" @click="handleSaveEmergencyPlans">
+              💾 Save EAP Locations
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= TAB 5: COACH RESOURCES ================= -->
         <div v-if="activeTab === 'resource'" class="form-section">
           <div class="form-group">
             <label class="form-label">Document Title *</label>
@@ -1064,6 +1254,8 @@ const handleSaveConfig = () => {
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overscroll-behavior: none !important;
+  touch-action: none;
 }
 
 .hub-modal-card {
@@ -1071,21 +1263,24 @@ const handleSaveConfig = () => {
   border: 1px solid var(--border-strong, #3f3f3f);
   border-radius: 14px;
   width: 100%;
-  max-width: 820px;
+  max-width: 860px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
   overflow: hidden;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y;
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 24px;
+  padding: 16px 22px;
   border-bottom: 1px solid var(--border, #262626);
   background: var(--bg-header, #141414);
+  flex-shrink: 0;
 }
 
 .hub-kicker {
@@ -1095,13 +1290,16 @@ const handleSaveConfig = () => {
   color: #dc2626;
   font-weight: 700;
   text-transform: uppercase;
+  line-height: 1;
+  display: block;
 }
 
 .modal-title {
-  margin: 2px 0 0 0;
+  margin: 3px 0 0 0;
   font-size: 20px;
   font-weight: 800;
   color: var(--text-main, #f3f4f6);
+  line-height: 1.2;
 }
 
 .close-btn {
@@ -1124,21 +1322,31 @@ const handleSaveConfig = () => {
   align-items: center;
   background: var(--bg-subtle, #202020);
   border-bottom: 1px solid var(--border, #262626);
-  padding: 4px 12px;
+  padding: 6px 14px;
   gap: 6px;
   overflow-x: auto;
+  flex-shrink: 0;
+  min-height: 48px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
 }
 
 .tab-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-muted, #9ca3af);
-  padding: 8px 12px;
+  padding: 7px 13px;
   font-size: 13px;
   font-weight: 700;
+  line-height: 1.2;
   border-radius: 6px;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
   transition: all 0.15s;
 }
 
@@ -1146,10 +1354,19 @@ const handleSaveConfig = () => {
   color: var(--text-main, #f3f4f6);
 }
 
+.tab-nav-btn:focus {
+  outline: none;
+}
+
+.tab-nav-btn:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 1px;
+}
+
 .tab-nav-btn.active {
   background: var(--bg-card, #171717);
   color: #dc2626;
-  border: 1px solid var(--border, #262626);
+  border-color: var(--border, #262626);
 }
 
 /* Modal Body */
@@ -1157,6 +1374,56 @@ const handleSaveConfig = () => {
   padding: 24px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
+  overscroll-behavior: contain !important;
+  overscroll-behavior-y: contain !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Coach Debrief & Radio Return Box */
+.coach-debrief-editor-box {
+  margin-top: 8px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.debrief-box-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.debrief-box-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #93c5fd;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.debrief-questions-box {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--text-main, #f3f4f6);
+  padding-left: 2px;
+  line-height: 1.4;
+}
+
+.debrief-q {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.q-num {
+  font-weight: 800;
+  color: #60a5fa;
+  font-size: 13px;
 }
 
 .form-section {
@@ -1364,6 +1631,15 @@ const handleSaveConfig = () => {
 
 .hub-btn-primary:hover {
   background: #b91c1c;
+}
+
+.hub-btn-save {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.hub-btn-save:hover {
+  background: #1d4ed8;
 }
 
 .hub-btn-secondary {

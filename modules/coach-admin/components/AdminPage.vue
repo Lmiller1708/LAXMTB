@@ -444,15 +444,43 @@ const handleAddCoach = async () => {
 // User Directory State (Search, Role Filter, Column Sorting)
 const userSearchQuery = ref('')
 const userRoleFilter = ref<'all' | 'admin' | 'coach' | 'guardian'>('all')
-const userSortField = ref<'name' | 'email' | 'role' | 'date'>('name')
-const userSortOrder = ref<'asc' | 'desc'>('asc')
+const userSortField = ref<'name' | 'email' | 'role' | 'date' | 'lastLogin'>('lastLogin')
+const userSortOrder = ref<'asc' | 'desc'>('desc')
 
-const toggleUserSort = (field: 'name' | 'email' | 'role' | 'date') => {
+const toggleUserSort = (field: 'name' | 'email' | 'role' | 'date' | 'lastLogin') => {
   if (userSortField.value === field) {
     userSortOrder.value = userSortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
     userSortField.value = field
-    userSortOrder.value = 'asc'
+    userSortOrder.value = field === 'lastLogin' || field === 'date' ? 'desc' : 'asc'
+  }
+}
+
+const formatLastLogin = (isoStr?: string): string => {
+  if (!isoStr) return 'Never'
+  try {
+    const d = new Date(isoStr)
+    if (isNaN(d.getTime())) return 'Never'
+    const now = new Date()
+    const diffMs = now.getTime() - d.getTime()
+    if (diffMs < 0) return 'Just now'
+    const diffMins = Math.floor(diffMs / (60 * 1000))
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24 && now.getDate() === d.getDate()) {
+      return `Today at ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+    }
+    const diffDays = Math.floor(diffHours / 24)
+    if (diffDays === 1 || (diffHours < 48 && now.getDate() - d.getDate() === 1)) {
+      return `Yesterday at ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+    }
+    if (diffDays < 7) {
+      return `${diffDays}d ago`
+    }
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+  } catch {
+    return 'Never'
   }
 }
 
@@ -487,6 +515,10 @@ const filteredUsers = computed(() => {
     } else if (userSortField.value === 'role') {
       const roleWeight = (r: string) => r === 'owner' ? 4 : (r === 'admin' ? 3 : (r === 'coach' ? 2 : 1))
       comparison = roleWeight(b.role) - roleWeight(a.role)
+    } else if (userSortField.value === 'lastLogin') {
+      const dateA = a.lastLoginAt ? new Date(a.lastLoginAt).getTime() : 0
+      const dateB = b.lastLoginAt ? new Date(b.lastLoginAt).getTime() : 0
+      comparison = dateB - dateA
     } else if (userSortField.value === 'date') {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
@@ -3053,9 +3085,12 @@ const handleSponsorLogoUpload = async (sponsor: Sponsor, event: Event) => {
                     Email {{ userSortField === 'email' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
                   </span>
                 </div>
-                <div style="display:flex;align-items:center;gap:20px;">
+                <div style="display:flex;align-items:center;gap:18px;">
                   <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px;" @click="toggleUserSort('role')">
-                    Role / Access {{ userSortField === 'role' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                    Role {{ userSortField === 'role' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
+                  </span>
+                  <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px;" @click="toggleUserSort('lastLogin')">
+                    Last Login {{ userSortField === 'lastLogin' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
                   </span>
                   <span style="cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px;" @click="toggleUserSort('date')">
                     Joined {{ userSortField === 'date' ? (userSortOrder === 'asc' ? '▲' : '▼') : '' }}
@@ -3115,9 +3150,12 @@ const handleSponsorLogoUpload = async (sponsor: Sponsor, event: Event) => {
                           title="Administrator added in database, awaiting account registration"
                         >Invited Admin</span>
                       </div>
-                      <div style="font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:8px;margin-top:2px;flex-wrap:wrap;">
+                      <div style="font-size:11.5px;color:var(--text-muted);display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap;">
                         <span style="word-break:break-all;">{{ u.email }}</span>
                         <span v-if="u.phone" style="opacity:0.8;">• 📞 {{ u.phone }}</span>
+                        <span style="display:inline-flex;align-items:center;gap:4px;color:var(--text-dim);">
+                          • 🕒 Last Login: <strong :style="u.lastLoginAt ? 'color:var(--text-main);font-weight:600;' : 'color:var(--text-muted);font-weight:normal;'">{{ formatLastLogin(u.lastLoginAt) }}</strong>
+                        </span>
                       </div>
                     </div>
                   </div>

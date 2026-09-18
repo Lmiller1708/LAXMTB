@@ -24,6 +24,7 @@ export interface CoachAdminItem {
   role?: 'admin' | 'coach' | 'owner'
   addedAt?: string
   addedBy?: string
+  lastLoginAt?: string
 }
 
 export type CoachItem = CoachAdminItem
@@ -59,6 +60,7 @@ export interface UserProfile {
   role?: UserRole
   createdAt?: string
   updatedAt?: string
+  lastLoginAt?: string
   savedStudents?: SavedStudentItem[]
   notificationSubscriptions?: {
     categories?: string[]
@@ -455,6 +457,7 @@ export const useCoachAuth = () => {
             localStorage.setItem('laxmtb_saved_students', JSON.stringify(profileSaved))
           } catch {}
         }
+        const now = new Date().toISOString()
         userProfile.value = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
@@ -464,10 +467,17 @@ export const useCoachAuth = () => {
           role: data.role || (isAdminCoach.value ? 'admin' : (isAuthorizedCoach.value ? 'coach' : undefined)),
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
+          lastLoginAt: now,
           savedStudents: profileSaved
         }
+        const updates: Record<string, any> = { lastLoginAt: now }
         if (firebaseUser.photoURL && data.photoURL !== firebaseUser.photoURL) {
-          setDoc(userRef, { photoURL: firebaseUser.photoURL }, { merge: true }).catch(() => {})
+          updates.photoURL = firebaseUser.photoURL
+        }
+        setDoc(userRef, updates, { merge: true }).catch(() => {})
+        if (firebaseUser.email) {
+          const cleanEmail = firebaseUser.email.toLowerCase().trim()
+          setDoc(doc(db, 'admins', cleanEmail), { lastLoginAt: now }, { merge: true }).catch(() => {})
         }
       } else {
         let initialRole: UserRole = 'guardian'
@@ -485,6 +495,7 @@ export const useCoachAuth = () => {
           }
         }
 
+        const now = new Date().toISOString()
         const initialProfile: UserProfile = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || '',
@@ -492,8 +503,9 @@ export const useCoachAuth = () => {
           phone: '',
           photoURL: firebaseUser.photoURL || '',
           role: initialRole,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          createdAt: now,
+          updatedAt: now,
+          lastLoginAt: now
         }
         await setDoc(userRef, initialProfile)
         userProfile.value = initialProfile
@@ -505,8 +517,9 @@ export const useCoachAuth = () => {
               email: cleanEmail,
               name: initialProfile.name,
               role: 'coach',
-              addedAt: new Date().toISOString(),
-              addedBy: 'invite-coach'
+              addedAt: now,
+              addedBy: 'invite-coach',
+              lastLoginAt: now
             }, { merge: true })
             coachRole.value = 'coach'
             isAuthorizedCoach.value = true
@@ -649,7 +662,8 @@ export const useCoachAuth = () => {
           name: data.name || d.id.split('@')[0],
           role: data.role === 'coach' ? 'coach' : (data.role === 'owner' ? 'owner' : 'admin'),
           addedAt: data.addedAt,
-          addedBy: data.addedBy
+          addedBy: data.addedBy,
+          lastLoginAt: data.lastLoginAt
         })
       })
       adminsList.value = list
@@ -672,14 +686,15 @@ export const useCoachAuth = () => {
         getDocs(collection(db, 'admins'))
       ])
 
-      const adminMap: Record<string, { role: string; name?: string; addedAt?: string; addedBy?: string }> = {}
+      const adminMap: Record<string, { role: string; name?: string; addedAt?: string; addedBy?: string; lastLoginAt?: string }> = {}
       adminsSnap.forEach((d) => {
         const data = d.data()
         adminMap[d.id.toLowerCase().trim()] = {
           role: data.role || 'admin',
           name: data.name,
           addedAt: data.addedAt,
-          addedBy: data.addedBy
+          addedBy: data.addedBy,
+          lastLoginAt: data.lastLoginAt
         }
       })
 
@@ -724,7 +739,7 @@ export const useCoachAuth = () => {
           photoURL: u.photoURL || '',
           role,
           createdAt: u.createdAt || adminMap[email]?.addedAt,
-          lastLoginAt: u.lastLoginAt || u.updatedAt
+          lastLoginAt: u.lastLoginAt || adminMap[email]?.lastLoginAt || u.updatedAt
         }
       })
 
@@ -739,6 +754,7 @@ export const useCoachAuth = () => {
             name: adm.name || adminEmail.split('@')[0],
             role: isOwner ? 'owner' : (adm.role === 'coach' ? 'coach' : 'admin'),
             createdAt: adm.addedAt,
+            lastLoginAt: adm.lastLoginAt,
             isPendingAdmin: true
           }
         }

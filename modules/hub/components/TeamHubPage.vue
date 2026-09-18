@@ -8,10 +8,11 @@ import type {
   Announcement,
   CoachResource,
   QuickLink,
-  HubConfig
+  HubConfig,
+  EmergencyPlan
 } from '../types/hub'
 import WeeklyUpdateCard from './WeeklyUpdateCard.vue'
-import AnnouncementsFeed from './AnnouncementsFeed.vue'
+import PracticePlanCard from './PracticePlanCard.vue'
 import HubEditorModal from './HubEditorModal.vue'
 
 const emit = defineEmits<{
@@ -20,7 +21,7 @@ const emit = defineEmits<{
   (e: 'navigate', route: string): void
 }>()
 
-const { isGuardianOrAbove, isAuthorizedCoach, isAdminCoach, user } = useCoachAuth()
+const { isGuardianOrAbove, isAuthorizedCoach, isAdminCoach } = useCoachAuth()
 
 const {
   weeklyUpdates,
@@ -33,6 +34,7 @@ const {
   activeAnnouncements,
   practiceUpdateAnnouncements,
   coachResources,
+  emergencyPlans,
   quickLinks,
   activeQuickLinks,
   hubConfig,
@@ -42,6 +44,7 @@ const {
   savePracticePlan,
   saveAnnouncement,
   saveCoachResource,
+  saveEmergencyPlans,
   saveQuickLinks,
   saveHubConfig,
   deleteHubItem
@@ -52,7 +55,7 @@ const isPastUpdatesOpen = ref(false)
 
 // Editor Modal state
 const isEditorOpen = ref(false)
-const editorInitialTab = ref<'weekly' | 'plan' | 'announcement' | 'links' | 'resource' | 'settings'>('weekly')
+const editorInitialTab = ref<'weekly' | 'plan' | 'announcement' | 'links' | 'eap' | 'resource' | 'settings'>('weekly')
 const editingUpdateItem = ref<WeeklyUpdate | null>(null)
 const editingPlanItem = ref<PracticePlan | null>(null)
 const editingAnnouncementItem = ref<Announcement | null>(null)
@@ -129,6 +132,18 @@ const openQuickLinksEditor = () => {
   isEditorOpen.value = true
 }
 
+const isImageIcon = (icon?: string) => {
+  if (!icon) return false
+  return (
+    icon.startsWith('/') ||
+    icon.startsWith('http') ||
+    icon.includes('.png') ||
+    icon.includes('.svg') ||
+    icon.includes('.jpg') ||
+    icon.includes('.webp')
+  )
+}
+
 const openHubSettings = () => {
   editorInitialTab.value = 'settings'
   isEditorOpen.value = true
@@ -141,8 +156,8 @@ const handleSaveUpdate = async (payload: { update: WeeklyUpdate; publishAndEmail
   if (res.success) {
     if (res.emailSent) {
       emit('toast', '🚀 Weekly update published and emailed to Google Group!')
-    } else if (payload.publishAndEmail) {
-      emit('toast', '✅ Weekly update published!')
+    } else if (payload.update.status === 'published' || payload.publishAndEmail) {
+      emit('toast', '✅ Weekly update saved & live on Hub!')
     } else {
       emit('toast', '💾 Draft update saved.')
     }
@@ -205,6 +220,15 @@ const handleSaveQuickLinks = async (links: QuickLink[]) => {
   }
 }
 
+const handleSaveEmergencyPlans = async (plans: EmergencyPlan[]) => {
+  const res = await saveEmergencyPlans(plans)
+  if (res.success) {
+    emit('toast', '✅ Emergency Action Plans saved!')
+  } else {
+    emit('toast', `❌ Error: ${res.error}`)
+  }
+}
+
 const handleSaveConfig = async (cfg: HubConfig) => {
   const res = await saveHubConfig(cfg)
   if (res.success) {
@@ -217,13 +241,13 @@ const handleSaveConfig = async (cfg: HubConfig) => {
 
 <template>
   <main class="hub-main-container">
-    <!-- 1. GATED ACCESS CHECK: Must be guardian or above -->
-    <div v-if="!isGuardianOrAbove" class="gated-access-card">
+    <!-- 1. GATED ACCESS CHECK: Must be admin -->
+    <div v-if="!isAdminCoach" class="gated-access-card">
       <div class="gated-lock-icon">🔒</div>
-      <span class="gated-kicker">PRIVATE TEAM PORTAL</span>
+      <span class="gated-kicker">ADMINISTRATOR PREVIEW</span>
       <h2 class="gated-title">LAX MTB Team Hub</h2>
       <p class="gated-desc">
-        The Team Hub contains private weekly updates, team store discounts, practice locations, and coach resources. Access is reserved for registered athletes, parents, and coaches.
+        The Team Hub contains private weekly updates, team store discounts, practice locations, and coach resources. Access is currently reserved for team administrators.
       </p>
 
       <div class="gated-actions">
@@ -353,7 +377,15 @@ const handleSaveConfig = async (cfg: HubConfig) => {
               rel="noopener noreferrer"
               class="link-tile-card"
             >
-              <div class="tile-icon-bubble">{{ link.icon || '🔗' }}</div>
+              <div class="tile-icon-bubble">
+                <img
+                  v-if="isImageIcon(link.icon)"
+                  :src="link.icon"
+                  :alt="link.label"
+                  class="tile-icon-img"
+                />
+                <span v-else>{{ link.icon || '🔗' }}</span>
+              </div>
               <div class="tile-content">
                 <h4 class="tile-title">{{ link.label }}</h4>
                 <span class="tile-arrow">Open Portal &rarr;</span>
@@ -372,6 +404,7 @@ const handleSaveConfig = async (cfg: HubConfig) => {
         :editing-announcement="editingAnnouncementItem"
         :editing-resource="editingResourceItem"
         :quick-links="quickLinks"
+        :emergency-plans="emergencyPlans"
         :hub-config="hubConfig"
         @close="isEditorOpen = false"
         @save-update="handleSaveUpdate"
@@ -379,6 +412,7 @@ const handleSaveConfig = async (cfg: HubConfig) => {
         @save-announcement="handleSaveAnnouncement"
         @save-resource="handleSaveResource"
         @save-quick-links="handleSaveQuickLinks"
+        @save-emergency-plans="handleSaveEmergencyPlans"
         @save-config="handleSaveConfig"
         @duplicate-update="handleDuplicateUpdate"
         @duplicate-plan="handleDuplicatePlan"
@@ -710,6 +744,14 @@ const handleSaveConfig = async (cfg: HubConfig) => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.tile-icon-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 .tile-content {

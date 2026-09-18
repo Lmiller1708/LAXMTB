@@ -131,7 +131,7 @@ onMounted(() => {
         <div class="brand-box" @click="handleNavigate('home')">
           <img src="/logo.png" alt="La Crosse Area MTB Team" class="team-logo" onerror="this.style.display='none'">
           <div class="brand-text">
-            <h1>LAX MTB <template v-if="activeNav && activeNav !== 'home'"><span class="brand-slash">//</span> <span class="brand-sub">{{ activeNav === 'race' ? 'RACE CENTRAL' : (activeNav === 'hub' ? 'HUB' : (activeNav === 'coaches' ? 'COACHES CORNER' : (activeNav === 'practice' ? 'PRACTICE' : 'ABOUT US'))) }}</span></template></h1>
+            <h1>LAX MTB <template v-if="activeNav && activeNav !== 'home' && activeNav !== 'about'"><span class="brand-slash">//</span> <span class="brand-sub">{{ activeNav === 'race' ? 'RACE CENTRAL' : (activeNav === 'hub' ? 'HUB' : (activeNav === 'coaches' ? 'COACHES CORNER' : (activeNav === 'practice' ? 'PRACTICE' : ''))) }}</span></template></h1>
           </div>
         </div>
 
@@ -193,19 +193,13 @@ onMounted(() => {
       <div class="nav-pills-container">
         <button
           class="pill-btn"
-          :class="{ active: activeNav === 'home' }"
+          :class="{ active: activeNav === 'home' || activeNav === 'about' }"
           @click="handleNavigate('home')"
         >
           Overview
         </button>
         <button
-          class="pill-btn"
-          :class="{ active: activeNav === 'about' }"
-          @click="handleNavigate('about')"
-        >
-          About Us
-        </button>
-        <button
+          v-if="isAdminCoach"
           class="pill-btn"
           :class="{ active: activeNav === 'hub' }"
           @click="handleNavigate('hub')"
@@ -213,7 +207,7 @@ onMounted(() => {
           Hub
         </button>
         <button
-          v-if="isAuthorizedCoach || isAdminCoach"
+          v-if="isAdminCoach"
           class="pill-btn"
           :class="{ active: activeNav === 'coaches' }"
           @click="handleNavigate('coaches')"
@@ -237,27 +231,17 @@ onMounted(() => {
       <div class="dropdown-section-title">NAVIGATION</div>
       <div
         class="mobile-menu-item"
-        :class="{ 'item-active': activeNav === 'home' }"
+        :class="{ 'item-active': activeNav === 'home' || activeNav === 'about' }"
         @click="handleNavigate('home')"
       >
         <div class="mobile-menu-item-left">
           <span class="mobile-menu-item-title">Overview</span>
         </div>
-        <span v-if="activeNav === 'home'" class="mobile-menu-badge active">Current</span>
+        <span v-if="activeNav === 'home' || activeNav === 'about'" class="mobile-menu-badge active">Current</span>
       </div>
 
       <div
-        class="mobile-menu-item"
-        :class="{ 'item-active': activeNav === 'about' }"
-        @click="handleNavigate('about')"
-      >
-        <div class="mobile-menu-item-left">
-          <span class="mobile-menu-item-title">About Us</span>
-        </div>
-        <span v-if="activeNav === 'about'" class="mobile-menu-badge active">Current</span>
-      </div>
-
-      <div
+        v-if="isAdminCoach"
         class="mobile-menu-item"
         :class="{ 'item-active': activeNav === 'hub' }"
         @click="handleNavigate('hub')"
@@ -269,7 +253,7 @@ onMounted(() => {
       </div>
 
       <div
-        v-if="isAuthorizedCoach || isAdminCoach"
+        v-if="isAdminCoach"
         class="mobile-menu-item"
         :class="{ 'item-active': activeNav === 'coaches' }"
         @click="handleNavigate('coaches')"

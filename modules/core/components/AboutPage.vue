@@ -322,7 +322,7 @@ const faqs = [
       <div class="contact-box">
         <h2>Ready To Ride With Us?</h2>
         <p>
-          Registration for the 2026 fall season opens in spring. If you have questions about equipment, financial aid, or joining practice, reach out to our team coordinators.
+          Registration for the fall season opens in spring. If you have questions about equipment, financial aid, or joining practice, reach out to our team coordinators.
         </p>
         <a href="mailto:lacrossemtb@gmail.com" class="btn-email-us">
           <span>✉️ lacrossemtb@gmail.com</span>

@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
 import { useHubData } from '../composables/useHubData'
-import type { PracticePlan, CoachResource, Announcement, HubConfig } from '../types/hub'
+import type { PracticePlan, CoachResource, Announcement, HubConfig, EmergencyPlan } from '../types/hub'
 import PracticePlanCard from './PracticePlanCard.vue'
 import HubEditorModal from './HubEditorModal.vue'
 
@@ -20,11 +20,13 @@ const {
   pastPracticePlans,
   practiceUpdateAnnouncements,
   coachResources,
+  emergencyPlans,
   quickLinks,
   hubConfig,
   duplicatePracticePlan,
   savePracticePlan,
   saveCoachResource,
+  saveEmergencyPlans,
   saveHubConfig,
   deleteHubItem
 } = useHubData()
@@ -34,9 +36,23 @@ const isArchiveOpen = ref(false)
 
 // Editor Modal State
 const isEditorOpen = ref(false)
-const editorInitialTab = ref<'weekly' | 'plan' | 'announcement' | 'links' | 'resource' | 'settings'>('plan')
+const editorInitialTab = ref<'weekly' | 'plan' | 'announcement' | 'links' | 'eap' | 'resource' | 'settings'>('plan')
 const editingPlanItem = ref<PracticePlan | null>(null)
 const editingResourceItem = ref<CoachResource | null>(null)
+
+const openEapsEditor = () => {
+  editorInitialTab.value = 'eap'
+  isEditorOpen.value = true
+}
+
+const handleSaveEmergencyPlans = async (plans: EmergencyPlan[]) => {
+  const res = await saveEmergencyPlans(plans)
+  if (res.success) {
+    emit('toast', '✅ Emergency Action Plans saved!')
+  } else {
+    emit('toast', `❌ Error: ${res.error}`)
+  }
+}
 
 const filteredResources = computed(() => {
   if (selectedCategory.value === 'all') return coachResources.value
@@ -103,13 +119,13 @@ const handleDeleteResource = async (id: string) => {
 
 <template>
   <main class="coaches-main-container">
-    <!-- 1. GATED ACCESS CHECK: Must be coach or admin -->
-    <div v-if="!isAuthorizedCoach && !isAdminCoach" class="coach-gate-card">
+    <!-- 1. GATED ACCESS CHECK: Must be admin -->
+    <div v-if="!isAdminCoach" class="coach-gate-card">
       <div class="coach-gate-icon">🚵</div>
-      <span class="coach-gate-kicker">LICENSED COACHES ONLY</span>
+      <span class="coach-gate-kicker">ADMINISTRATOR PREVIEW</span>
       <h2 class="coach-gate-title">Coaches Corner</h2>
       <p class="coach-gate-desc">
-        This portal contains weekly lesson plans, on-trail skills clinic guides, emergency action plans, and coaching documents. Access is reserved for licensed team coaches.
+        This portal contains weekly lesson plans, on-trail skills clinic guides, emergency action plans, and coaching documents. Access is currently reserved for team administrators.
       </p>
 
       <div class="coach-gate-actions">
@@ -220,73 +236,48 @@ const handleDeleteResource = async (id: string) => {
       <!-- Emergency Action Plans (EAP) Quick Access Grid -->
       <div class="eap-section">
         <div class="section-title-bar">
-          <span class="eap-icon">🚨</span>
-          <h3>Emergency Action Plans (EAP) by Location</h3>
+          <div class="section-title-left">
+            <span class="eap-icon">🚨</span>
+            <h3>Emergency Action Plans (EAP) by Location</h3>
+          </div>
+          <button
+            v-if="isAuthorizedCoach || isAdminCoach"
+            type="button"
+            class="hub-btn hub-btn-sm hub-btn-secondary"
+            title="Edit emergency action plan documents and access coordinates"
+            @click="openEapsEditor"
+          >
+            ✏️ Edit EAPs
+          </button>
         </div>
         <p class="section-subtext">
           Location-specific emergency coordinates, 911 dispatch ingress, and trailhead evacuation routes:
         </p>
 
         <div class="eap-cards-grid">
-          <div class="eap-card">
+          <div
+            v-for="eap in emergencyPlans"
+            :key="eap.id"
+            class="eap-card"
+          >
             <div class="eap-header">
-              <h4>Upper Hixon Forest</h4>
-              <span class="eap-badge">Rotary Reserve</span>
+              <h4>{{ eap.location }}</h4>
+              <div class="eap-header-right">
+                <span v-if="eap.badge" class="eap-badge">{{ eap.badge }}</span>
+                <button
+                  v-if="isAuthorizedCoach || isAdminCoach"
+                  type="button"
+                  class="eap-card-edit-btn"
+                  title="Edit this EAP location"
+                  @click="openEapsEditor"
+                >
+                  ✏️
+                </button>
+              </div>
             </div>
-            <p class="eap-desc">2500 Coulee Dr • Primary Blufftop access & emergency ambulance pad.</p>
+            <p class="eap-desc">{{ eap.description }}</p>
             <a
-              href="https://drive.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="eap-download-btn"
-            >
-              <span>Open EAP Doc</span>
-              <span>↗</span>
-            </a>
-          </div>
-
-          <div class="eap-card">
-            <div class="eap-header">
-              <h4>Lower Hixon Forest</h4>
-              <span class="eap-badge">Milson Park</span>
-            </div>
-            <p class="eap-desc">2799 Bluff Pass • Tech ascents & lower forest evacuation point.</p>
-            <a
-              href="https://drive.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="eap-download-btn"
-            >
-              <span>Open EAP Doc</span>
-              <span>↗</span>
-            </a>
-          </div>
-
-          <div class="eap-card">
-            <div class="eap-header">
-              <h4>Community Trail Farm (CTF)</h4>
-              <span class="eap-badge">Shelby</span>
-            </div>
-            <p class="eap-desc">W5723 HWY 33 • Pammel Creek access & private farm emergency gate.</p>
-            <a
-              href="https://drive.google.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="eap-download-btn"
-            >
-              <span>Open EAP Doc</span>
-              <span>↗</span>
-            </a>
-          </div>
-
-          <div class="eap-card">
-            <div class="eap-header">
-              <h4>Chad Erickson Memorial Park</h4>
-              <span class="eap-badge">Skills Field</span>
-            </div>
-            <p class="eap-desc">3601 S 28th St • Open field & beginner cornering loops access.</p>
-            <a
-              href="https://drive.google.com"
+              :href="eap.docUrl || '#'"
               target="_blank"
               rel="noopener noreferrer"
               class="eap-download-btn"
@@ -413,10 +404,12 @@ const handleDeleteResource = async (id: string) => {
         :editing-plan="editingPlanItem"
         :editing-resource="editingResourceItem"
         :quick-links="quickLinks"
+        :emergency-plans="emergencyPlans"
         :hub-config="hubConfig"
         @close="isEditorOpen = false"
         @save-plan="handleSavePlan"
         @save-resource="handleSaveResource"
+        @save-emergency-plans="handleSaveEmergencyPlans"
         @duplicate-plan="handleDuplicatePlan"
         @toast="emit('toast', $event)"
       />
@@ -653,8 +646,16 @@ const handleDeleteResource = async (id: string) => {
 .section-title-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 4px;
+}
+
+.section-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .section-title-bar h3 {
@@ -699,6 +700,29 @@ const handleDeleteResource = async (id: string) => {
   font-size: 14px;
   font-weight: 800;
   color: var(--text-main, #f3f4f6);
+}
+
+.eap-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.eap-card-edit-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 13px;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.eap-card-edit-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .eap-badge {

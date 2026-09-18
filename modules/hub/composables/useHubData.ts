@@ -16,10 +16,11 @@ import type {
   Announcement,
   CoachResource,
   QuickLink,
-  HubConfig
+  HubConfig,
+  EmergencyPlan
 } from '../types/hub'
 import { useHubEmail } from './useHubEmail'
-import { useCoachAuth } from '~/modules/coach-admin/composables/useCoachAuth'
+import { useCoachAuth } from '../../coach-admin/composables/useCoachAuth'
 
 export const DEFAULT_QUICK_LINKS: QuickLink[] = [
   {
@@ -34,7 +35,7 @@ export const DEFAULT_QUICK_LINKS: QuickLink[] = [
     id: 'league-info',
     label: 'League Info (WI NICA)',
     url: 'https://wisconsinmtb.org/',
-    icon: '🏔️',
+    icon: '/logos/nica-logo.png',
     enabled: true,
     order: 2
   },
@@ -137,7 +138,7 @@ export const DEFAULT_PRACTICE_PLAN: PracticePlan = {
     {
       id: 'act3',
       time: '5:10 - 6:15 PM',
-      activity: 'Trail Riding Pods',
+      activity: 'Trail Riding Groups',
       details: 'Trail groups depart with Lead & Sweep coaches. Emphasize breathing and line choice.'
     },
     {
@@ -150,27 +151,22 @@ export const DEFAULT_PRACTICE_PLAN: PracticePlan = {
   rideGroups: [
     {
       id: 'rg1',
-      name: 'Advanced Pod (Varsity / JV2)',
+      name: 'Advanced Group (Varsity / JV2)',
       coach: 'Coach Matt (Lead) & Coach Dave (Sweep)',
       trail: 'Blufftop Singletrack to Lower Switchbacks',
       focus: 'High speed cornering and recovery breathing'
     },
     {
       id: 'rg2',
-      name: 'Progression Pod (Middle School / Freshmen)',
+      name: 'Progression Group (Middle School / Freshmen)',
       coach: 'Coach Sarah (Lead) & Coach Mike (Sweep)',
       trail: 'Upper Flow Loops & Vista Rollers',
       focus: 'Neutral position & pedal ratcheting'
     }
   ],
   coolDown: 'High fives, hydration check, and remind riders about Monday trailwork!',
-  attachments: [
-    {
-      label: '9/17 Practice Plan - Google Docs',
-      url: 'https://docs.google.com/document/d/1X5MqBeYBnFPqMRv1MM7vEX_bm1qlVlhen2auzbaLtf0/edit?tab=t.0',
-      type: 'doc'
-    }
-  ],
+  coachDebrief: '',
+  attachments: [],
   status: 'published',
   createdAt: '2026-09-16T12:00:00.000Z',
   updatedAt: '2026-09-16T12:00:00.000Z',
@@ -262,15 +258,79 @@ export const DEFAULT_COACH_RESOURCES: CoachResource[] = [
   }
 ]
 
+export const DEFAULT_EMERGENCY_PLANS: EmergencyPlan[] = [
+  {
+    id: 'eap-upper-hixon',
+    location: 'Upper Hixon Forest',
+    badge: 'Rotary Reserve',
+    description: '2500 Coulee Dr • Primary Blufftop access & emergency ambulance pad.',
+    docUrl: 'https://drive.google.com',
+    order: 1
+  },
+  {
+    id: 'eap-lower-hixon',
+    location: 'Lower Hixon Forest',
+    badge: 'Milson Park',
+    description: '2799 Bluff Pass • Tech ascents & lower forest evacuation point.',
+    docUrl: 'https://drive.google.com',
+    order: 2
+  },
+  {
+    id: 'eap-ctf',
+    location: 'Community Trail Farm (CTF)',
+    badge: 'Shelby',
+    description: 'W5723 HWY 33 • Pammel Creek access & private farm emergency gate.',
+    docUrl: 'https://drive.google.com',
+    order: 3
+  },
+  {
+    id: 'eap-chad-erickson',
+    location: 'Chad Erickson Memorial Park',
+    badge: 'Skills Field',
+    description: '3601 S 28th St • Open field & beginner cornering loops access.',
+    docUrl: 'https://drive.google.com',
+    order: 4
+  }
+]
+
 export const useHubData = () => {
   const db = useFirestore()
   const { user, isAdminCoach, isGuardianOrAbove, isAuthorizedCoach } = useCoachAuth()
   const { sendEmailToGroup, formatWeeklyUpdateEmailHtml, formatAnnouncementEmailHtml } = useHubEmail()
 
-  const weeklyUpdates = useState<WeeklyUpdate[]>('hub_weekly_updates', () => [DEFAULT_WEEKLY_UPDATE])
-  const practicePlans = useState<PracticePlan[]>('hub_practice_plans', () => [DEFAULT_PRACTICE_PLAN])
-  const announcements = useState<Announcement[]>('hub_announcements', () => DEFAULT_ANNOUNCEMENTS)
-  const coachResources = useState<CoachResource[]>('hub_coach_resources', () => DEFAULT_COACH_RESOURCES)
+  const getCached = <T>(key: string, fallback: T): T => {
+    if (import.meta.client) {
+      try {
+        const raw = localStorage.getItem(key)
+        if (raw) return JSON.parse(raw)
+      } catch (e) {}
+    }
+    return fallback
+  }
+
+  const setCached = (key: string, data: any) => {
+    if (import.meta.client) {
+      try {
+        localStorage.setItem(key, JSON.stringify(data))
+      } catch (e) {}
+    }
+  }
+
+  const weeklyUpdates = useState<WeeklyUpdate[]>('hub_weekly_updates', () =>
+    getCached('cached_hub_weekly_updates', [DEFAULT_WEEKLY_UPDATE])
+  )
+  const practicePlans = useState<PracticePlan[]>('hub_practice_plans', () =>
+    getCached('cached_hub_practice_plans', [DEFAULT_PRACTICE_PLAN])
+  )
+  const announcements = useState<Announcement[]>('hub_announcements', () =>
+    getCached('cached_hub_announcements', DEFAULT_ANNOUNCEMENTS)
+  )
+  const coachResources = useState<CoachResource[]>('hub_coach_resources', () =>
+    getCached('cached_hub_coach_resources', DEFAULT_COACH_RESOURCES)
+  )
+  const emergencyPlans = useState<EmergencyPlan[]>('hub_emergency_plans', () =>
+    getCached('cached_hub_emergency_plans', DEFAULT_EMERGENCY_PLANS)
+  )
   const quickLinks = useState<QuickLink[]>('hub_quick_links', () => DEFAULT_QUICK_LINKS)
   const hubConfig = useState<HubConfig>('hub_config', () => ({
     googleGroupEmail: 'lax-mtb-team@googlegroups.com',
@@ -337,6 +397,12 @@ export const useHubData = () => {
   const activeQuickLinks = computed<QuickLink[]>(() => {
     return [...quickLinks.value]
       .filter((l) => l.enabled)
+      .map((l) => {
+        if (l.id === 'league-info' && (!l.icon || l.icon === '🏔️')) {
+          return { ...l, icon: '/logos/nica-logo.png' }
+        }
+        return l
+      })
       .sort((a, b) => (a.order || 0) - (b.order || 0))
   })
 
@@ -424,9 +490,31 @@ export const useHubData = () => {
         },
         (err) => console.warn('[useHubData] hubConfig listener err:', err)
       )
+
+      // 7. Emergency Action Plans in settings/hubEmergencyPlans
+      onSnapshot(
+        doc(db, 'settings', 'hubEmergencyPlans'),
+        (snap) => {
+          if (snap.exists()) {
+            const data = snap.data()
+            if (Array.isArray(data?.plans) && data.plans.length) {
+              emergencyPlans.value = data.plans
+              setCached('cached_hub_emergency_plans', data.plans)
+            }
+          }
+        },
+        (err) => console.warn('[useHubData] hubEmergencyPlans listener err:', err)
+      )
     } catch (e) {
       console.warn('[useHubData] Error initializing Firestore listeners:', e)
     }
+  }
+
+  // --- Duplicate Helpers (Week-to-Week Cloning) ---
+
+  // --- Helpers ---
+  const cleanForFirestore = <T extends Record<string, any>>(obj: T): T => {
+    return JSON.parse(JSON.stringify(obj))
   }
 
   // --- Duplicate Helpers (Week-to-Week Cloning) ---
@@ -443,16 +531,14 @@ export const useHubData = () => {
   }
 
   /**
-   * Clone previous weekly update as a new draft, advancing date by 7 days
+   * Clone previous week update as a new draft, advancing date by 7 days
    */
   const duplicateWeeklyUpdate = (sourceId?: string): WeeklyUpdate => {
     const source = sourceId
       ? weeklyUpdates.value.find((u) => u.id === sourceId) || weeklyUpdates.value[0]
       : weeklyUpdates.value[0] || DEFAULT_WEEKLY_UPDATE
 
-    const nextWeekOf = addDaysToIso(source.weekOf || new Date().toISOString().split('T')[0], 7)
-
-    // Generate new unique id
+    const nextWeekOf = addDaysToIso(source.weekOf, 7)
     const newId = `update-${Date.now()}`
 
     return {
@@ -462,7 +548,6 @@ export const useHubData = () => {
       title: `Next Week Update — Week of ${nextWeekOf}`,
       status: 'draft',
       emailSent: false,
-      emailSentAt: undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       updatedBy: user.value?.displayName || user.value?.email || 'Admin',
@@ -470,27 +555,23 @@ export const useHubData = () => {
     }
   }
 
-  /**
-   * Clone previous practice plan as a new draft, advancing date by 7 days
-   */
   const duplicatePracticePlan = (sourceId?: string): PracticePlan => {
     const source = sourceId
       ? practicePlans.value.find((p) => p.id === sourceId) || practicePlans.value[0]
       : practicePlans.value[0] || DEFAULT_PRACTICE_PLAN
 
-    const nextWeekOf = addDaysToIso(source.weekOf || new Date().toISOString().split('T')[0], 7)
+    const nextWeekOf = addDaysToIso(source.weekOf, 7)
     const newId = `plan-${Date.now()}`
 
     return {
       ...JSON.parse(JSON.stringify(source)),
       id: newId,
       weekOf: nextWeekOf,
-      date: `Practice — Week of ${nextWeekOf}`,
-      title: `Practice Plan — ${nextWeekOf}`,
-      status: 'draft',
+      title: `Practice Plan — Week of ${nextWeekOf}`,
+      status: 'published',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      updatedBy: user.value?.displayName || user.value?.email || 'Admin',
+      updatedBy: user.value?.displayName || user.value?.email || 'Coach',
       copiedFrom: source.id
     }
   }
@@ -501,18 +582,26 @@ export const useHubData = () => {
     item: WeeklyUpdate,
     publishAndEmail = false
   ): Promise<{ success: boolean; emailSent?: boolean; error?: string }> => {
-    if (!db) return { success: false, error: 'Database unavailable' }
-
-    const toSave: WeeklyUpdate = {
+    const toSave: WeeklyUpdate = cleanForFirestore({
       ...item,
       id: item.id || `update-${Date.now()}`,
+      createdAt: item.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      updatedBy: user.value?.displayName || user.value?.email || 'Admin'
-    }
+      updatedBy: user.value?.displayName || user.value?.email || 'Coach'
+    })
 
     if (publishAndEmail) {
       toSave.status = 'published'
     }
+
+    // Update local state and cache immediately so coach edits are never lost
+    const idx = weeklyUpdates.value.findIndex((u) => u.id === toSave.id)
+    if (idx >= 0) {
+      weeklyUpdates.value[idx] = toSave
+    } else {
+      weeklyUpdates.value.unshift(toSave)
+    }
+    setCached('cached_hub_weekly_updates', weeklyUpdates.value)
 
     let emailSentResult = false
 
@@ -534,19 +623,15 @@ export const useHubData = () => {
       }
     }
 
+    if (!db) {
+      return { success: true, emailSent: emailSentResult }
+    }
+
     try {
       await setDoc(doc(db, 'weeklyUpdates', toSave.id), toSave, { merge: true })
-
-      // Update local state immediately
-      const idx = weeklyUpdates.value.findIndex((u) => u.id === toSave.id)
-      if (idx >= 0) {
-        weeklyUpdates.value[idx] = toSave
-      } else {
-        weeklyUpdates.value.unshift(toSave)
-      }
-
       return { success: true, emailSent: emailSentResult }
     } catch (e: any) {
+      console.error('[useHubData] saveWeeklyUpdate error:', e)
       return { success: false, error: e.message || 'Failed to save weekly update' }
     }
   }
@@ -554,27 +639,32 @@ export const useHubData = () => {
   const savePracticePlan = async (
     item: PracticePlan
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!db) return { success: false, error: 'Database unavailable' }
-
-    const toSave: PracticePlan = {
+    const toSave: PracticePlan = cleanForFirestore({
       ...item,
       id: item.id || `plan-${Date.now()}`,
+      createdAt: item.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      updatedBy: user.value?.displayName || user.value?.email || 'Admin'
+      updatedBy: user.value?.displayName || user.value?.email || 'Coach'
+    })
+
+    // Update local state and cache immediately so coach edits are never lost
+    const idx = practicePlans.value.findIndex((p) => p.id === toSave.id)
+    if (idx >= 0) {
+      practicePlans.value[idx] = toSave
+    } else {
+      practicePlans.value.unshift(toSave)
+    }
+    setCached('cached_hub_practice_plans', practicePlans.value)
+
+    if (!db) {
+      return { success: true }
     }
 
     try {
       await setDoc(doc(db, 'practicePlans', toSave.id), toSave, { merge: true })
-
-      const idx = practicePlans.value.findIndex((p) => p.id === toSave.id)
-      if (idx >= 0) {
-        practicePlans.value[idx] = toSave
-      } else {
-        practicePlans.value.unshift(toSave)
-      }
-
       return { success: true }
     } catch (e: any) {
+      console.error('[useHubData] savePracticePlan error:', e)
       return { success: false, error: e.message || 'Failed to save practice plan' }
     }
   }
@@ -583,14 +673,22 @@ export const useHubData = () => {
     item: Announcement,
     dispatchEmail = false
   ): Promise<{ success: boolean; emailSent?: boolean; error?: string }> => {
-    if (!db) return { success: false, error: 'Database unavailable' }
-
-    const toSave: Announcement = {
+    const toSave: Announcement = cleanForFirestore({
       ...item,
       id: item.id || `ann-${Date.now()}`,
+      createdAt: item.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      updatedBy: user.value?.displayName || user.value?.email || 'Admin'
+      updatedBy: user.value?.displayName || user.value?.email || 'Coach'
+    })
+
+    // Update local state and cache immediately
+    const idx = announcements.value.findIndex((a) => a.id === toSave.id)
+    if (idx >= 0) {
+      announcements.value[idx] = toSave
+    } else {
+      announcements.value.unshift(toSave)
     }
+    setCached('cached_hub_announcements', announcements.value)
 
     let emailSentResult = false
 
@@ -611,18 +709,15 @@ export const useHubData = () => {
       }
     }
 
+    if (!db) {
+      return { success: true, emailSent: emailSentResult }
+    }
+
     try {
       await setDoc(doc(db, 'announcements', toSave.id), toSave, { merge: true })
-
-      const idx = announcements.value.findIndex((a) => a.id === toSave.id)
-      if (idx >= 0) {
-        announcements.value[idx] = toSave
-      } else {
-        announcements.value.unshift(toSave)
-      }
-
       return { success: true, emailSent: emailSentResult }
     } catch (e: any) {
+      console.error('[useHubData] saveAnnouncement error:', e)
       return { success: false, error: e.message || 'Failed to save announcement' }
     }
   }
@@ -630,13 +725,23 @@ export const useHubData = () => {
   const saveCoachResource = async (
     item: CoachResource
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!db) return { success: false, error: 'Database unavailable' }
-
-    const toSave: CoachResource = {
+    const toSave: CoachResource = cleanForFirestore({
       ...item,
       id: item.id || `res-${Date.now()}`,
       updatedAt: new Date().toISOString(),
-      updatedBy: user.value?.displayName || user.value?.email || 'Admin'
+      updatedBy: user.value?.displayName || user.value?.email || 'Coach'
+    })
+
+    const idx = coachResources.value.findIndex((r) => r.id === toSave.id)
+    if (idx >= 0) {
+      coachResources.value[idx] = toSave
+    } else {
+      coachResources.value.unshift(toSave)
+    }
+    setCached('cached_hub_coach_resources', coachResources.value)
+
+    if (!db) {
+      return { success: true }
     }
 
     try {
@@ -695,6 +800,32 @@ export const useHubData = () => {
     }
   }
 
+  const saveEmergencyPlans = async (
+    plans: EmergencyPlan[]
+  ): Promise<{ success: boolean; error?: string }> => {
+    const cleaned = cleanForFirestore(plans)
+    emergencyPlans.value = cleaned
+    setCached('cached_hub_emergency_plans', cleaned)
+
+    if (!db) return { success: true }
+
+    try {
+      await setDoc(
+        doc(db, 'settings', 'hubEmergencyPlans'),
+        {
+          plans: cleaned,
+          updatedAt: new Date().toISOString(),
+          updatedBy: user.value?.email || 'Coach'
+        },
+        { merge: true }
+      )
+      return { success: true }
+    } catch (e: any) {
+      console.error('[useHubData] saveEmergencyPlans error:', e)
+      return { success: false, error: e.message || 'Failed to save emergency action plans' }
+    }
+  }
+
   const deleteHubItem = async (
     collectionName: 'weeklyUpdates' | 'practicePlans' | 'announcements' | 'coachResources',
     id: string
@@ -738,6 +869,7 @@ export const useHubData = () => {
     activeAnnouncements,
     practiceUpdateAnnouncements,
     coachResources,
+    emergencyPlans,
     quickLinks,
     activeQuickLinks,
     hubConfig,
@@ -748,6 +880,7 @@ export const useHubData = () => {
     savePracticePlan,
     saveAnnouncement,
     saveCoachResource,
+    saveEmergencyPlans,
     saveQuickLinks,
     saveHubConfig,
     deleteHubItem

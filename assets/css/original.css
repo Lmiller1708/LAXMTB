@@ -444,20 +444,29 @@
     }
 
     /* Modal Overlay & Card */
+    html.modal-open,
     body.modal-open {
       overflow: hidden !important;
-      position: fixed;
-      width: 100%;
-      height: 100%;
+      overscroll-behavior: none !important;
+    }
+    body.modal-open .modal-overlay,
+    body.modal-open .modal-backdrop,
+    body.modal-open .cropper-backdrop {
       touch-action: none;
+      overscroll-behavior: none !important;
     }
-    body.modal-open .modal-overlay {
-      touch-action: auto;
-      overscroll-behavior: contain;
-    }
-    body.modal-open .modal-card {
-      touch-action: auto;
-      overscroll-behavior: contain;
+    body.modal-open .modal-card,
+    body.modal-open .modal-dialog,
+    body.modal-open .hub-modal-card,
+    body.modal-open .cropper-dialog,
+    body.modal-open .modal-body,
+    body.modal-open .modal-body-scroll,
+    body.modal-open .auth-modal-body,
+    body.modal-open .cropper-body {
+      touch-action: pan-y;
+      overscroll-behavior: contain !important;
+      overscroll-behavior-y: contain !important;
+      -webkit-overflow-scrolling: touch;
     }
 
     .modal-overlay {

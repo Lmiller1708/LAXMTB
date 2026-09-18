@@ -87,6 +87,7 @@ export interface PracticePlan {
   coachActivities: PlanSection[]
   rideGroups: RideGroup[]
   coolDown?: string
+  coachDebrief?: string
   attachments?: Attachment[]
   status: UpdateStatus
   createdAt: string
@@ -143,6 +144,17 @@ export interface QuickLink {
 export interface HubConfig {
   googleGroupEmail?: string
   webhookUrl?: string
+  updatedAt?: string
+  updatedBy?: string
+}
+
+export interface EmergencyPlan {
+  id: string
+  location: string
+  badge: string
+  description: string
+  docUrl: string
+  order?: number
   updatedAt?: string
   updatedBy?: string
 }

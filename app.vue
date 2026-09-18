@@ -6,7 +6,6 @@ import EventCoachCard from '~/modules/races/components/EventCoachCard.vue'
 import PwaUpdateBanner from '~/modules/core/components/PwaUpdateBanner.vue'
 import SiteAnnouncementBanner from '~/modules/core/components/SiteAnnouncementBanner.vue'
 import HomePage from '~/modules/core/components/HomePage.vue'
-import AboutPage from '~/modules/core/components/AboutPage.vue'
 import TeamHubPage from '~/modules/hub/components/TeamHubPage.vue'
 import CoachesCornerPage from '~/modules/hub/components/CoachesCornerPage.vue'
 
@@ -26,7 +25,7 @@ const adminInitialTab = ref('venue')
 const isAdminRoute = ref(false)
 
 const { currentRace, currentRaceSlug, races, currentRaceIndex, selectRace, selectRaceBySlug, updateRace } = useCurrentRace()
-const { user, isCoachAuth, acceptInviteForCurrentUser } = useCoachAuth()
+const { user, isCoachAuth, isAdminCoach, acceptInviteForCurrentUser } = useCoachAuth()
 
 const openAuthWithMode = (mode: 'login' | 'signup' = 'login') => {
   initialAuthMode.value = mode
@@ -145,6 +144,10 @@ const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
 const navigateTo = (target: 'home' | 'about' | 'hub' | 'coaches' | 'practice' | 'race', pushToHistory = true) => {
   isAdminRoute.value = false
 
+  if ((target === 'hub' || target === 'coaches') && !isAdminCoach.value) {
+    target = 'home'
+  }
+
   if (target === 'practice') {
     currentNav.value = 'home'
     if (!import.meta.client) return
@@ -173,11 +176,19 @@ const navigateTo = (target: 'home' | 'about' | 'hub' | 'coaches' | 'practice' | 
       router.push('/').catch(() => {})
     }
   } else if (target === 'about') {
-    if (window.location.pathname !== '/about') {
-      if (pushToHistory) window.history.pushState({ nav: 'about' }, '', '/about')
-      else window.history.replaceState({ nav: 'about' }, '', '/about')
-      router.push('/about').catch(() => {})
+    currentNav.value = 'home'
+    if (window.location.pathname !== '/' || window.location.hash !== '#about') {
+      if (pushToHistory) window.history.pushState({ nav: 'home' }, '', '/#about')
+      else window.history.replaceState({ nav: 'home' }, '', '/#about')
+      router.push('/#about').catch(() => {})
     }
+    nextTick(() => {
+      const el = document.getElementById('about')
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    })
+    return
   } else if (target === 'hub') {
     if (window.location.pathname !== '/hub') {
       if (pushToHistory) window.history.pushState({ nav: 'hub' }, '', '/hub')
@@ -323,14 +334,24 @@ const syncFromRoute = () => {
       return
     }
 
-    // Check if on /about route
-    if (path === '/about' || path.startsWith('/about') || route.path === '/about') {
-      currentNav.value = 'about'
+    // Check if on /about route or #about
+    if (path === '/about' || path.startsWith('/about') || route.path === '/about' || window.location.hash === '#about') {
+      currentNav.value = 'home'
+      nextTick(() => {
+        const el = document.getElementById('about')
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      })
       return
     }
 
     // Check if on /hub route
     if (path === '/hub' || path.startsWith('/hub') || route.path === '/hub') {
+      if (!isAdminCoach.value) {
+        currentNav.value = 'home'
+        return
+      }
       currentNav.value = 'hub'
       return
     }
@@ -344,6 +365,10 @@ const syncFromRoute = () => {
       route.path === '/coaches' ||
       route.path === '/coaches-corner'
     ) {
+      if (!isAdminCoach.value) {
+        currentNav.value = 'home'
+        return
+      }
       currentNav.value = 'coaches'
       return
     }
@@ -463,6 +488,7 @@ let updateTimer: ReturnType<typeof setInterval> | null = null
 
 const siteHeaderRef = ref<HTMLElement | null>(null)
 let headerResizeObserver: ResizeObserver | null = null
+let modalObserver: MutationObserver | null = null
 
 onMounted(() => {
   syncFromRoute()
@@ -486,6 +512,21 @@ onMounted(() => {
       headerResizeObserver.observe(siteHeaderRef.value)
     }
 
+    // Modal background scroll containment observer for all modal backdrops across the entire app
+    const updateModalScrollLock = () => {
+      const modalExists = Boolean(
+        document.querySelector('.modal-backdrop, .modal-overlay, .cropper-backdrop, .hub-modal-card, [role="dialog"]')
+      )
+      document.body.classList.toggle('modal-open', modalExists)
+      document.documentElement.classList.toggle('modal-open', modalExists)
+    }
+
+    if (typeof MutationObserver !== 'undefined') {
+      modalObserver = new MutationObserver(updateModalScrollLock)
+      modalObserver.observe(document.body, { childList: true, subtree: true })
+    }
+    updateModalScrollLock()
+
     // 30-second update timer for live timing feeds (only when on race view)
     updateTimer = setInterval(() => {
       if (currentNav.value === 'race') {
@@ -504,8 +545,13 @@ onUnmounted(() => {
   if (headerResizeObserver) {
     headerResizeObserver.disconnect()
   }
+  if (modalObserver) {
+    modalObserver.disconnect()
+  }
   if (import.meta.client) {
     window.removeEventListener('popstate', syncFromRoute)
+    document.body.classList.remove('modal-open')
+    document.documentElement.classList.remove('modal-open')
   }
 })
 
@@ -546,7 +592,15 @@ const handleSyncData = () => {
 
 watch([isWhatsNewOpen, isNotifOpen, isAuthOpen, isProfileOpen], ([wn, notif, auth, prof]) => {
   if (import.meta.client) {
-    document.body.classList.toggle('modal-open', Boolean(wn || notif || auth || prof))
+    const hasModal = Boolean(wn || notif || auth || prof || document.querySelector('.modal-backdrop, .modal-overlay, .cropper-backdrop, .hub-modal-card, [role="dialog"]'))
+    document.body.classList.toggle('modal-open', hasModal)
+    document.documentElement.classList.toggle('modal-open', hasModal)
+  }
+})
+
+watch(isAdminCoach, (isAdmin) => {
+  if (!isAdmin && (currentNav.value === 'hub' || currentNav.value === 'coaches')) {
+    navigateTo('home', true)
   }
 })
 
@@ -627,9 +681,9 @@ const handlePrint = () => {
         @toast="showNotifToast"
       />
 
-      <!-- View 1: Overview Page (Includes Practice & Trails Accordion) -->
+      <!-- View 1: Unified Team Overview & About Us Page (Includes Practice & About Accordions) -->
       <HomePage
-        v-if="currentNav === 'home' || currentNav === 'practice'"
+        v-if="currentNav === 'home' || currentNav === 'about' || currentNav === 'practice'"
         @navigate="navigateTo"
         @select-race="handleSelectRaceFromHome"
         @selectRace="handleSelectRaceFromHome"
@@ -637,24 +691,17 @@ const handlePrint = () => {
         @toast="showNotifToast"
       />
 
-      <!-- View 2: About Us Page -->
-      <AboutPage
-        v-else-if="currentNav === 'about'"
-        @navigate="navigateTo"
-        @toast="showNotifToast"
-      />
-
-      <!-- View 3: Hub Page (Gated for Guardians, Coaches & Admins) -->
+      <!-- View 3: Hub Page (Gated for Admins) -->
       <TeamHubPage
-        v-else-if="currentNav === 'hub'"
+        v-else-if="currentNav === 'hub' && isAdminCoach"
         @navigate="navigateTo"
         @open-auth="openAuthWithMode($event || 'login')"
         @toast="showNotifToast"
       />
 
-      <!-- View 4: Coaches Corner Page (Gated for Coaches) -->
+      <!-- View 4: Coaches Corner Page (Gated for Admins) -->
       <CoachesCornerPage
-        v-else-if="currentNav === 'coaches'"
+        v-else-if="currentNav === 'coaches' && isAdminCoach"
         @navigate="navigateTo"
         @open-auth="openAuthWithMode($event || 'login')"
         @toast="showNotifToast"
