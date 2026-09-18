@@ -8,7 +8,7 @@ import { usePwaUpdate } from '../composables/usePwaUpdate'
 
 const props = withDefaults(
   defineProps<{
-    activeNav?: 'home' | 'practice' | 'race' | 'about'
+    activeNav?: 'home' | 'about' | 'hub' | 'coaches' | 'practice' | 'race'
   }>(),
   {
     activeNav: 'race'
@@ -32,13 +32,13 @@ const emit = defineEmits<{
   (e: 'openProfile'): void
   (e: 'syncData'): void
   (e: 'toast', msg: string): void
-  (e: 'navigate', route: 'home' | 'practice' | 'race' | 'about'): void
+  (e: 'navigate', route: 'home' | 'about' | 'hub' | 'coaches' | 'practice' | 'race'): void
 }>()
 
 const toggleMenu = () => { isMenuOpen.value = !isMenuOpen.value }
 const closeMenu = () => { isMenuOpen.value = false }
 
-const handleNavigate = (route: 'home' | 'practice' | 'race' | 'about') => {
+const handleNavigate = (route: 'home' | 'about' | 'hub' | 'coaches' | 'practice' | 'race') => {
   closeMenu()
   emit('navigate', route)
 }
@@ -131,34 +131,9 @@ onMounted(() => {
         <div class="brand-box" @click="handleNavigate('home')">
           <img src="/logo.png" alt="La Crosse Area MTB Team" class="team-logo" onerror="this.style.display='none'">
           <div class="brand-text">
-            <h1>LAX MTB <template v-if="activeNav && activeNav !== 'home'"><span class="brand-slash">//</span> <span class="brand-sub">{{ activeNav === 'race' ? 'RACE CENTRAL' : (activeNav === 'practice' ? 'PRACTICE' : 'ABOUT US') }}</span></template></h1>
+            <h1>LAX MTB <template v-if="activeNav && activeNav !== 'home'"><span class="brand-slash">//</span> <span class="brand-sub">{{ activeNav === 'race' ? 'RACE CENTRAL' : (activeNav === 'hub' ? 'HUB' : (activeNav === 'coaches' ? 'COACHES CORNER' : (activeNav === 'practice' ? 'PRACTICE' : 'ABOUT US'))) }}</span></template></h1>
           </div>
         </div>
-
-        <!-- Desktop Navigation Center Pills (Sleek, No Icons, Mathematically Centered) -->
-        <nav class="desktop-nav-bar" aria-label="Main Navigation">
-          <button
-            class="top-nav-tab"
-            :class="{ active: activeNav === 'home' }"
-            @click="handleNavigate('home')"
-          >
-            Team Overview
-          </button>
-          <button
-            class="top-nav-tab"
-            :class="{ active: activeNav === 'race' }"
-            @click="handleNavigate('race')"
-          >
-            Race Central
-          </button>
-          <button
-            class="top-nav-tab"
-            :class="{ active: activeNav === 'about' }"
-            @click="handleNavigate('about')"
-          >
-            About Us
-          </button>
-        </nav>
 
         <!-- Controls -->
         <div class="header-controls">
@@ -213,32 +188,47 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Mobile Secondary Quick-Bar (Always visible 1-tap navigation on smaller screens, sleek no-icon pills) -->
-    <div class="mobile-nav-pills-bar">
-      <div class="mobile-nav-pills-container">
+    <!-- Navigation Pills Bar (Locked Full-Time on All Screen Sizes) -->
+    <nav class="nav-pills-bar" aria-label="Main Navigation">
+      <div class="nav-pills-container">
         <button
-          class="mobile-pill-btn"
+          class="pill-btn"
           :class="{ active: activeNav === 'home' }"
           @click="handleNavigate('home')"
         >
-          Team Overview
+          Overview
         </button>
         <button
-          class="mobile-pill-btn race"
-          :class="{ active: activeNav === 'race' }"
-          @click="handleNavigate('race')"
-        >
-          Race Central
-        </button>
-        <button
-          class="mobile-pill-btn"
+          class="pill-btn"
           :class="{ active: activeNav === 'about' }"
           @click="handleNavigate('about')"
         >
           About Us
         </button>
+        <button
+          class="pill-btn"
+          :class="{ active: activeNav === 'hub' }"
+          @click="handleNavigate('hub')"
+        >
+          Hub
+        </button>
+        <button
+          v-if="isAuthorizedCoach || isAdminCoach"
+          class="pill-btn"
+          :class="{ active: activeNav === 'coaches' }"
+          @click="handleNavigate('coaches')"
+        >
+          Coaches Corner
+        </button>
+        <button
+          class="pill-btn race"
+          :class="{ active: activeNav === 'race' }"
+          @click="handleNavigate('race')"
+        >
+          Race Central
+        </button>
       </div>
-    </div>
+    </nav>
 
     <!-- Dropdown Menu -->
     <div class="mobile-menu-dropdown" :class="{ show: isMenuOpen }">
@@ -251,20 +241,9 @@ onMounted(() => {
         @click="handleNavigate('home')"
       >
         <div class="mobile-menu-item-left">
-          <span class="mobile-menu-item-title">Team Overview</span>
+          <span class="mobile-menu-item-title">Overview</span>
         </div>
         <span v-if="activeNav === 'home'" class="mobile-menu-badge active">Current</span>
-      </div>
-
-      <div
-        class="mobile-menu-item"
-        :class="{ 'item-active': activeNav === 'race' }"
-        @click="handleNavigate('race')"
-      >
-        <div class="mobile-menu-item-left">
-          <span class="mobile-menu-item-title">Race Central</span>
-        </div>
-        <span class="mobile-menu-badge" style="background:rgba(239,68,68,0.18);border-color:rgba(239,68,68,0.4);color:var(--accent-red);font-weight:700;">Live Feed</span>
       </div>
 
       <div
@@ -276,6 +255,40 @@ onMounted(() => {
           <span class="mobile-menu-item-title">About Us</span>
         </div>
         <span v-if="activeNav === 'about'" class="mobile-menu-badge active">Current</span>
+      </div>
+
+      <div
+        class="mobile-menu-item"
+        :class="{ 'item-active': activeNav === 'hub' }"
+        @click="handleNavigate('hub')"
+      >
+        <div class="mobile-menu-item-left">
+          <span class="mobile-menu-item-title">Hub</span>
+        </div>
+        <span v-if="activeNav === 'hub'" class="mobile-menu-badge active">Current</span>
+      </div>
+
+      <div
+        v-if="isAuthorizedCoach || isAdminCoach"
+        class="mobile-menu-item"
+        :class="{ 'item-active': activeNav === 'coaches' }"
+        @click="handleNavigate('coaches')"
+      >
+        <div class="mobile-menu-item-left">
+          <span class="mobile-menu-item-title">Coaches Corner</span>
+        </div>
+        <span v-if="activeNav === 'coaches'" class="mobile-menu-badge active">Current</span>
+      </div>
+
+      <div
+        class="mobile-menu-item"
+        :class="{ 'item-active': activeNav === 'race' }"
+        @click="handleNavigate('race')"
+      >
+        <div class="mobile-menu-item-left">
+          <span class="mobile-menu-item-title">Race Central</span>
+        </div>
+        <span class="mobile-menu-badge" style="background:rgba(239,68,68,0.18);border-color:rgba(239,68,68,0.4);color:var(--accent-red);font-weight:700;">Live Feed</span>
       </div>
 
       <div style="height:1px;background:var(--border);margin:6px 14px;" />
@@ -426,77 +439,35 @@ onMounted(() => {
   width: 100%;
 }
 
-/* Desktop Navigation Center Pills (Mathematically Centered) */
-.desktop-nav-bar {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
-  padding: 3px 6px;
-  border-radius: 9999px;
-  margin: 0;
-  z-index: 10;
-}
-
-.top-nav-tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 16px;
-  border-radius: 9999px;
-  background: transparent;
-  border: none;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.25px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.top-nav-tab:hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.top-nav-tab.active {
-  color: #ffffff;
-  background: var(--accent-red);
-  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);
-}
-
-/* Mobile Quick Bar */
-.mobile-nav-pills-bar {
-  display: none;
+/* Navigation Pills Bar (Locked Full-Time on All Screens) */
+.nav-pills-bar {
+  display: block;
   background: var(--bg-card);
   border-top: 1px solid var(--border);
-  padding: 6px 12px;
+  padding: 6px 14px;
   overflow-x: auto;
   scrollbar-width: none;
 }
-.mobile-nav-pills-bar::-webkit-scrollbar {
+.nav-pills-bar::-webkit-scrollbar {
   display: none;
 }
 
-.mobile-nav-pills-container {
+.nav-pills-container {
+  max-width: 1220px;
+  margin: 0 auto;
   display: flex;
   gap: 8px;
   width: 100%;
   justify-content: space-between;
 }
 
-.mobile-pill-btn {
+.pill-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
+  padding: 6px 14px;
   border-radius: 9999px;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.2px;
   border: 1px solid var(--border);
@@ -509,20 +480,17 @@ onMounted(() => {
   text-align: center;
 }
 
-.mobile-pill-btn.active {
+.pill-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-strong, #3f3f3f);
+}
+
+.pill-btn.active {
   background: var(--accent-red);
   color: #ffffff;
   border-color: var(--accent-red);
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
-}
-
-@media (max-width: 920px) {
-  .desktop-nav-bar {
-    display: none;
-  }
-  .mobile-nav-pills-bar {
-    display: block;
-  }
 }
 
 .dropdown-section-title {

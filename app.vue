@@ -7,11 +7,13 @@ import PwaUpdateBanner from '~/modules/core/components/PwaUpdateBanner.vue'
 import SiteAnnouncementBanner from '~/modules/core/components/SiteAnnouncementBanner.vue'
 import HomePage from '~/modules/core/components/HomePage.vue'
 import AboutPage from '~/modules/core/components/AboutPage.vue'
+import TeamHubPage from '~/modules/hub/components/TeamHubPage.vue'
+import CoachesCornerPage from '~/modules/hub/components/CoachesCornerPage.vue'
 
 const route = useRoute()
 const router = useRouter()
 
-const currentNav = ref<'home' | 'practice' | 'about' | 'race'>('home')
+const currentNav = ref<'home' | 'about' | 'hub' | 'coaches' | 'practice' | 'race'>('home')
 const currentTab = ref<TabType>('details')
 const isWhatsNewOpen = ref(false)
 const isNotifOpen = ref(false)
@@ -140,7 +142,7 @@ const updateUrl = (raceSlug: string, tab: string, pushToHistory = true) => {
   }
 }
 
-const navigateTo = (target: 'home' | 'practice' | 'about' | 'race', pushToHistory = true) => {
+const navigateTo = (target: 'home' | 'about' | 'hub' | 'coaches' | 'practice' | 'race', pushToHistory = true) => {
   isAdminRoute.value = false
 
   if (target === 'practice') {
@@ -175,6 +177,18 @@ const navigateTo = (target: 'home' | 'practice' | 'about' | 'race', pushToHistor
       if (pushToHistory) window.history.pushState({ nav: 'about' }, '', '/about')
       else window.history.replaceState({ nav: 'about' }, '', '/about')
       router.push('/about').catch(() => {})
+    }
+  } else if (target === 'hub') {
+    if (window.location.pathname !== '/hub') {
+      if (pushToHistory) window.history.pushState({ nav: 'hub' }, '', '/hub')
+      else window.history.replaceState({ nav: 'hub' }, '', '/hub')
+      router.push('/hub').catch(() => {})
+    }
+  } else if (target === 'coaches') {
+    if (window.location.pathname !== '/coaches') {
+      if (pushToHistory) window.history.pushState({ nav: 'coaches' }, '', '/coaches')
+      else window.history.replaceState({ nav: 'coaches' }, '', '/coaches')
+      router.push('/coaches').catch(() => {})
     }
   } else if (target === 'race') {
     const race = currentRace.value || races.value[currentRaceIndex.value] || races.value[0]
@@ -312,6 +326,25 @@ const syncFromRoute = () => {
     // Check if on /about route
     if (path === '/about' || path.startsWith('/about') || route.path === '/about') {
       currentNav.value = 'about'
+      return
+    }
+
+    // Check if on /hub route
+    if (path === '/hub' || path.startsWith('/hub') || route.path === '/hub') {
+      currentNav.value = 'hub'
+      return
+    }
+
+    // Check if on /coaches or /coaches-corner route
+    if (
+      path === '/coaches' ||
+      path.startsWith('/coaches') ||
+      path === '/coaches-corner' ||
+      path.startsWith('/coaches-corner') ||
+      route.path === '/coaches' ||
+      route.path === '/coaches-corner'
+    ) {
+      currentNav.value = 'coaches'
       return
     }
 
@@ -608,6 +641,22 @@ const handlePrint = () => {
       <AboutPage
         v-else-if="currentNav === 'about'"
         @navigate="navigateTo"
+        @toast="showNotifToast"
+      />
+
+      <!-- View 3: Hub Page (Gated for Guardians, Coaches & Admins) -->
+      <TeamHubPage
+        v-else-if="currentNav === 'hub'"
+        @navigate="navigateTo"
+        @open-auth="openAuthWithMode($event || 'login')"
+        @toast="showNotifToast"
+      />
+
+      <!-- View 4: Coaches Corner Page (Gated for Coaches) -->
+      <CoachesCornerPage
+        v-else-if="currentNav === 'coaches'"
+        @navigate="navigateTo"
+        @open-auth="openAuthWithMode($event || 'login')"
         @toast="showNotifToast"
       />
 

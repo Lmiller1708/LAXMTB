@@ -118,5 +118,27 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin() || isAuthorizedCoach();
     }
+
+    // Team Hub: Weekly Updates & Team Announcements (guardian+ read, admin write)
+    match /weeklyUpdates/{docId} {
+      allow read: if isGuardianOrAbove();
+      allow write: if isAdmin();
+    }
+
+    match /announcements/{docId} {
+      allow read: if isGuardianOrAbove();
+      allow write: if isAdmin();
+    }
+
+    // Coaches Corner: Practice Plans & Coach Documents/EAPs (coach+ read, admin write)
+    match /practicePlans/{docId} {
+      allow read: if isAuthorizedCoach();
+      allow write: if isAdmin();
+    }
+
+    match /coachResources/{docId} {
+      allow read: if isAuthorizedCoach();
+      allow write: if isAdmin();
+    }
   }
 }
