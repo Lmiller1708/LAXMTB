@@ -148,3 +148,42 @@ body {
   color: #f59e0b;
 }
 
+/* ==========================================================
+   Prevent Background Scrolling & Scroll Chaining for All Modals
+   ========================================================== */
+html.modal-open,
+body.modal-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+.modal-backdrop,
+.modal-overlay,
+.cropper-backdrop {
+  overscroll-behavior: none !important;
+  touch-action: none;
+}
+
+.modal-card,
+.modal-dialog,
+.cropper-dialog,
+.hub-modal-card,
+.auth-modal-card,
+.profile-modal-card,
+.modal-body,
+.modal-body-scroll,
+.auth-modal-body,
+.profile-modal-body,
+.cropper-body,
+.repeater-list,
+[role="dialog"],
+[aria-modal="true"],
+.modal-content,
+[class*="modal-body"],
+[class*="modal-content"] {
+  overscroll-behavior: contain !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+

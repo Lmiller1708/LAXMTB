@@ -90,9 +90,9 @@ const steps = [
   },
   {
     number: '03',
-    title: 'Tiered Trail Riding Pods',
+    title: 'Tiered Trail Riding Groups',
     duration: '60–75 Mins',
-    desc: 'Athletes split into ability and endurance pods. Every group is led by a licensed Lead Coach and accompanied by a Sweep Coach. Strict "No Rider Left Behind" rule.'
+    desc: 'Athletes split into ability and endurance groups. Every group is led by a licensed Lead Coach and accompanied by a Sweep Coach. Strict "No Rider Left Behind" rule.'
   },
   {
     number: '04',
@@ -162,7 +162,7 @@ const openEmail = () => {
             <span class="chip-icon">🤝</span>
             <div>
               <strong>Coaching Standard</strong>
-              <span>Lead & Sweep on every pod</span>
+              <span>Lead & Sweep on every group</span>
             </div>
           </div>
         </div>
@@ -238,11 +238,11 @@ const openEmail = () => {
       </div>
     </section>
 
-    <!-- Ability Pods Breakdown -->
+    <!-- Ability Groups Breakdown -->
     <section class="pods-section">
       <div class="section-title-wrap">
         <span class="section-tag">ALL ABILITY LEVELS</span>
-        <h2>Rider Ability & Pace Pods</h2>
+        <h2>Rider Ability & Pace Groups</h2>
         <p>We believe every rider flourishes best when riding with peers at their comfortable pace and skill level.</p>
       </div>
 
@@ -823,7 +823,7 @@ const openEmail = () => {
   color: var(--text-muted);
 }
 
-/* Ability Pods */
+/* Ability Groups */
 .pods-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

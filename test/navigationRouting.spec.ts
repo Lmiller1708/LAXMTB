@@ -10,7 +10,7 @@ describe('Top-Level Navigation & Route Resolution', () => {
       return { nav: 'home', isAdmin: false, targetHash: '#practice' }
     }
     if (path === '/about' || path.startsWith('/about')) {
-      return { nav: 'about', isAdmin: false }
+      return { nav: 'home', isAdmin: false, targetHash: '#about' }
     }
     if (path === '/race' || path.startsWith('/race') || path === '/coach' || path.startsWith('/coach')) {
       return { nav: 'race', isAdmin: false }
@@ -31,13 +31,12 @@ describe('Top-Level Navigation & Route Resolution', () => {
     expect(result.isAdmin).toBe(false)
   })
 
-  it('streamlines primary header navigation tabs to Team Overview, Race Central, and About Us', () => {
+  it('streamlines primary header navigation tabs to Overview and Race Central', () => {
     const primaryNavTabs = [
-      { key: 'home', label: 'Team Overview' },
-      { key: 'race', label: 'Race Central' },
-      { key: 'about', label: 'About Us' }
+      { key: 'home', label: 'Overview' },
+      { key: 'race', label: 'Race Central' }
     ]
-    expect(primaryNavTabs.map(t => t.label)).toEqual(['Team Overview', 'Race Central', 'About Us'])
+    expect(primaryNavTabs.map(t => t.label)).toEqual(['Overview', 'Race Central'])
   })
 
   it('resolves "/practice" to overview page with #practice anchor', () => {
@@ -54,9 +53,10 @@ describe('Top-Level Navigation & Route Resolution', () => {
     expect(result.isAdmin).toBe(false)
   })
 
-  it('resolves "/about" to about page', () => {
+  it('resolves "/about" to overview page with #about anchor', () => {
     const result = resolveNavFromPath('/about')
-    expect(result.nav).toBe('about')
+    expect(result.nav).toBe('home')
+    expect(result.targetHash).toBe('#about')
     expect(result.isAdmin).toBe(false)
   })
 

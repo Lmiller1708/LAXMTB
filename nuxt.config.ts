@@ -87,6 +87,7 @@ export default defineNuxtConfig({
     { path: '~/modules/coach-admin/components', prefix: '' },
     { path: '~/modules/photos/components', prefix: '' },
     { path: '~/modules/notifications/components', prefix: '' },
+    { path: '~/modules/hub/components', prefix: '' },
     { path: '~/components', prefix: '' }
   ],
 
@@ -100,6 +101,7 @@ export default defineNuxtConfig({
       'modules/coach-admin/composables',
       'modules/photos/composables',
       'modules/notifications/composables',
+      'modules/hub/composables',
       'composables'
     ]
   },
